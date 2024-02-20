@@ -21,3 +21,5 @@ jobs:
 
       - name: run snapshot
         run: forge snapshot --via-ir
+        env:
+          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
