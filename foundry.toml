@@ -9,8 +9,6 @@ solc_version = "0.8.22"
 # these are defaults. explicitly setting them here for clarity.
 libs = ["lib"]
 out = "out/"
-src = "src/"
-test = "src/test/"
 
 [fmt]
 bracket_spacing = true
