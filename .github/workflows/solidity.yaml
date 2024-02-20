@@ -1,0 +1,21 @@
+on: [push]
+
+name: Solidity
+
+jobs:
+  check:
+    name: forge test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: install foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: run tests
+        run: forge test --via-ir -vvv
+
+      - name: run snapshot
+        run: forge snapshot
