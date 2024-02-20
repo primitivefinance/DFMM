@@ -85,7 +85,7 @@ contract ConstantSumTest is Test {
         _;
     }
 
-    function test_init() public basic_feeless {
+    function test_init() public basic {
         uint256 poolId = dfmm.nonce() - 1;
         (ConstantSum.ConstantSumParams memory params) = abi.decode(
             constantSum.getPoolParams(poolId), (ConstantSum.ConstantSumParams)
