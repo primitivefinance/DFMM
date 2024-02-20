@@ -86,7 +86,7 @@ contract DFMMInit is DFMMSetUp {
         assertEq(tokenY.balanceOf(address(this)), tokenYPreBalance - reserveY);
     }
 
-    function test_DFMM_init_EmitsInitEvent() public {
+    function test_dfmm_init_emitsinitevent() public {
         bytes memory data = abi.encode(uint256(1));
 
         IDFMM.InitParams memory params = IDFMM.InitParams({
@@ -100,7 +100,7 @@ contract DFMMInit is DFMMSetUp {
         emit IDFMM.Init(
             address(this),
             address(strategy),
-            address(0),
+            address(0xDD4c722d1614128933d6DC7EFA50A6913e804E12),
             address(tokenX),
             address(tokenY),
             0,
