@@ -161,13 +161,9 @@ contract G3MSolver {
         {
             if (swapXIn) {
                 uint256 fees = amountIn.mulWadUp(poolParams.swapFee);
-                uint256 weightedPrice = uint256(
-                    int256(startReserves.ry.divWadUp(startReserves.rx)).powWad(
-                        int256(poolParams.wY)
-                    )
+                uint256 deltaL = (ONE.divWadDown(2 * ONE)).mulWadUp(
+                    fees.mulWadUp(startComputedL).divWadUp(startReserves.rx)
                 );
-                uint256 deltaL = fees.mulWadUp(weightedPrice);
-                deltaL += 1;
 
                 endReserves.rx = startReserves.rx + amountIn;
                 endReserves.L = startComputedL + deltaL;
@@ -183,13 +179,9 @@ contract G3MSolver {
                 amountOut = startReserves.ry - endReserves.ry;
             } else {
                 uint256 fees = amountIn.mulWadUp(poolParams.swapFee);
-                uint256 weightedPrice = uint256(
-                    int256(startReserves.rx.divWadUp(startReserves.ry)).powWad(
-                        int256(poolParams.wX)
-                    )
+                uint256 deltaL = (ONE.divWadDown(2 * ONE)).mulWadUp(
+                    fees.mulWadUp(startComputedL).divWadUp(startReserves.rx)
                 );
-                uint256 deltaL = fees.mulWadUp(weightedPrice);
-                deltaL += 1;
 
                 endReserves.ry = startReserves.ry + amountIn;
                 endReserves.L = startComputedL + deltaL;
@@ -209,7 +201,6 @@ contract G3MSolver {
         bytes memory swapData =
             abi.encode(endReserves.rx, endReserves.ry, endReserves.L);
 
-        uint256 poolId = poolId;
         (bool valid,,,,,) =
             IStrategy(strategy).validateSwap(address(this), poolId, swapData);
         return (
