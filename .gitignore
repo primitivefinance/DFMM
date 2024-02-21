@@ -2,3 +2,4 @@
 cache
 out
 optimized-out
+.env
