@@ -2,4 +2,11 @@
 cache
 out
 optimized-out
+
+# Rust
+kit/target
+target
+
+# VSCode
+.vscode
 .env
