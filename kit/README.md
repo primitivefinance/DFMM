@@ -12,6 +12,11 @@ cargo run --bin kit
 from the root of the repository.
 Running this command will show the help menu for the `#[arbiter_macros::main]` macro. 
 
+If you want to run a specific simulation, you can do something like:
+```bash
+cargo run --bin kit simulation kit/configs/example.toml
+```
+
 ## Pool
 The `pool` module provides a generic `Pool<P: PoolType>` struct along with the `PoolType` trait.
 The `PoolType` trait should be implemented for any of the distinct types of pools that DFMM offers. 
