@@ -1,39 +1,32 @@
 # DFMM
 
-## Overview
+This repository contains the smart contracts source code for the DFMM protocol. 
 
-## Repository Structure
+## What is DFMM?
 
-```
-src/
- ├─DFMM.sol
- ├─...
- ├─interfaces/
- │  ├─IDFMM.sol
- │  └─...
- ├─lib/
- │  ├─ScalingLib.sol
- │  └─...
- ├─script/
- │  ├─Deployment.s.sol
- │  └─...
- ├─solvers/
- │  └─G3M/
- │     ├─G3MSolver.sol
- │     └─...
- ├─strategies/
- │  └─G3M/
- │     ├─G3MStrategy.sol
- │     └─...
- └─test/
-    ├─attack/
-    ├─fork/
-    ├─invariant/
-    ├─unit/
-    └─...
-```
+The DFMM protocol is a novel portfolio management system designed to leverage external strategy contracts. This system separates the operational logic and the mathematical model: the `DFMM` core contract completely relies on the strategies to validate the state of each interaction. On the other hand, this core contract acts as a single entry point and performs all the operations, such as:
+- Passing the input data to the strategies for validation
+- Safely transferring the assets between the users and the core contract
+- Tracking the reserves in a singleton pattern
+- Tokenizing the liquidity and distributing the LP tokens to the users
 
 ## Contracts Architecture
+
+The DFMM protocol relies on two main components: the `DFMM` core contract and the strategies.
+
+### DFMM
+
+This contract is the core of the protocol and is the single entry point for all the user interactions. It also handles all the following operations on the behalf of the strategies:
+- Deploying an ERC20 token for each new pool (using the minimal proxy pattern)
+- Wrapping / unwrapping native ETH when necessary
+- Transferring the assets from or to the user's wallet
+- Preventing reentrancy by locking the contract during the operations
+- Emitting according events for each interaction
+- Keeping track of the reserves for each pool
+
+### Strategies
+
+The strategies are the mathematical models that define the logic of the pools. They all implement a specific trading curve (for example `xy=k`) and are responsible for validating the state of the pool at each interaction.
 
 ### Initializing and updating a pool
 
@@ -72,13 +65,39 @@ flowchart LR
 
 ### Arbitrage
 
-## Deployments
+## Development
 
-| Designation | Network | Address |
-|---|---|---|
-| `DFMM` | Optimism Sepolia | `0x89a023e3cbccf1c96F00749F87D24C9B1124BaE1` |
-| `G3M` | Optimism Sepolia | `0xB5C2c5a4000FB230b289bB54f8b48F4dd8075F3D` |
-| `LogNormal` | Optimism Sepolia | `0x6A74a571c638dDDF13ae52F48A37D1019B916520` |
+### Installation
+
+This repository uses Foundry, be sure to have it installed or run the following command to install it:
+
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+```
+
+Then clone the repository along with its dependencies:
+
+```bash
+git clone git@github.com:primitivefinance/DFMM.git --recurse-submodules
+```
+
+One last step is to set up the environment variables, run this to copy the template:
+
+```bash
+cp .env.example .env
+```
+
+Then populate the `.env` file with the required environment variables.
+
+### Testing
+
+To run all the tests, simply run the following command:
+
+```bash
+forge t
+```
+
+### Deployment
 
 You can deploy the contracts with the following command:
 
@@ -86,6 +105,18 @@ You can deploy the contracts with the following command:
 $ forge script ./src/script/Deployment.s.sol --rpc-url $OPTIMISM_SEPOLIA_RPC_URL --broadcast --verify -vvv
 ```
 
-*Note: Be sure to populate your `.env` file with the required environment variables beforehand.*
+## Current Deployments
+
+The DFMM protocol is currently deployed on the following networks:
+
+| Designation | Network | Address |
+|---|---|---|
+| `DFMM` | Optimism Sepolia | `0x89a023e3cbccf1c96F00749F87D24C9B1124BaE1` |
+| `G3M` | Optimism Sepolia | `0xB5C2c5a4000FB230b289bB54f8b48F4dd8075F3D` |
+| `LogNormal` | Optimism Sepolia | `0x6A74a571c638dDDF13ae52F48A37D1019B916520` |
+
+## Contributing
+
+Contributions are welcome! Check out our [guidelines](./CONTRIBUTING.md).
 
 ## Licences
