@@ -168,16 +168,18 @@ contract G3M is IStrategy {
         if (nextRx > startRx) {
             amountIn = nextRx - startRx;
             fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRx);
+            minLiquidityDelta += (ONE.divWadDown(2 * ONE)).mulWadUp(
+                fees.mulWadUp(startL).divWadUp(startRx)
+            );
         } else if (nextRy > startRy) {
             amountIn = nextRy - startRy;
             fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRy);
+            minLiquidityDelta += (ONE.divWadDown(2 * ONE)).mulWadUp(
+                fees.mulWadUp(startL).divWadUp(startRy)
+            );
         } else {
             revert("invalid swap: inputs x and y have the same sign!");
         }
-
-        uint256 poolId = poolId;
 
         liquidityDelta = int256(nextL)
             - int256(
