@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "solmate/tokens/ERC20.sol";
+import "./ConstantSum.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/interfaces/IDFMM.sol";
 import "src/lib/StrategyLib.sol";
-import "src/strategies/ConstantSum/ConstantSum.sol";
+import "solmate/tokens/ERC20.sol";
 
 contract ConstantSumSolver {
     error NotEnoughLiquidity();
@@ -60,9 +60,6 @@ contract ConstantSumSolver {
             endReserves.rx = startReserves.rx + amountIn;
             endReserves.L = startReserves.L + deltaL;
 
-            console2.log("amountOut: ", amountOut);
-            console2.log("newL: ", endReserves.L);
-
             if (startReserves.ry < amountOut) {
                 revert NotEnoughLiquidity();
             }
@@ -76,9 +73,6 @@ contract ConstantSumSolver {
 
             endReserves.ry = startReserves.ry + amountIn;
             endReserves.L = startReserves.L + deltaL;
-
-            console2.log("amountOut: ", amountOut);
-            console2.log("newL: ", endReserves.L);
 
             if (startReserves.rx < amountOut) {
                 revert NotEnoughLiquidity();

@@ -1,8 +1,8 @@
 [profile.default]
 remappings = [
+  "solmate/=lib/solstat/lib/solmate/src/",
   "solstat/=lib/solstat/src/",
   "forge-std/=lib/solstat/lib/forge-std/src/",
-  "solmate/=lib/solstat/lib/solmate/src/",
 ]
 solc_version = "0.8.22"
 

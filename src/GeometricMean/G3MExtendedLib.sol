@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import "./G3M.sol";
+import "../lib/BisectionLib.sol";
+import "../lib/SignedWadMath.sol";
 import "solmate/tokens/ERC20.sol";
-import "src/strategies/G3M/G3M.sol";
 import "forge-std/console2.sol";
-import "../BisectionLib.sol";
-import "../../lib/SignedWadMath.sol";
+
 // import { wadMul, wadDiv } from "../../lib/SignedWadMath.sol";
 
 using FixedPointMathLib for uint256;
