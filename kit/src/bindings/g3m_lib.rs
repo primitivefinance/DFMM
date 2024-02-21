@@ -7,7 +7,7 @@ pub use g3m_lib::*;
     clippy::upper_case_acronyms,
     clippy::type_complexity,
     dead_code,
-    non_camel_case_types,
+    non_camel_case_types
 )]
 pub mod g3m_lib {
     #[allow(deprecated)]
@@ -21,22 +21,19 @@ pub mod g3m_lib {
             fallback: false,
         }
     }
-    ///The parsed JSON ABI of the contract.
-    pub static G3MLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> = ::ethers::contract::Lazy::new(
-        __abi,
-    );
+    /// The parsed JSON ABI of the contract.
+    pub static G3MLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
+        ::ethers::contract::Lazy::new(__abi);
     #[rustfmt::skip]
     const __BYTECODE: &[u8] = b"`\x80\x80`@R4`\x17W`:\x90\x81`\x1D\x8290\x81PP\xF3[`\0\x80\xFD\xFE`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \x8B`\xE3|\x04\x1B+C\xC4\xC0\xB2%\x83\x9EQ\xC7\xE1lTs\r\x9CbQ\xA3\xC8)\x96\xA2Q\xA9\x15dsolcC\0\x08\x16\x003";
     /// The bytecode of the contract.
-    pub static G3MLIB_BYTECODE: ::ethers::core::types::Bytes = ::ethers::core::types::Bytes::from_static(
-        __BYTECODE,
-    );
+    pub static G3MLIB_BYTECODE: ::ethers::core::types::Bytes =
+        ::ethers::core::types::Bytes::from_static(__BYTECODE);
     #[rustfmt::skip]
     const __DEPLOYED_BYTECODE: &[u8] = b"`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \x8B`\xE3|\x04\x1B+C\xC4\xC0\xB2%\x83\x9EQ\xC7\xE1lTs\r\x9CbQ\xA3\xC8)\x96\xA2Q\xA9\x15dsolcC\0\x08\x16\x003";
     /// The deployed bytecode of the contract.
-    pub static G3MLIB_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes = ::ethers::core::types::Bytes::from_static(
-        __DEPLOYED_BYTECODE,
-    );
+    pub static G3MLIB_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
+        ::ethers::core::types::Bytes::from_static(__DEPLOYED_BYTECODE);
     pub struct G3MLib<M>(::ethers::contract::Contract<M>);
     impl<M> ::core::clone::Clone for G3MLib<M> {
         fn clone(&self) -> Self {
@@ -56,38 +53,44 @@ pub mod g3m_lib {
     }
     impl<M> ::core::fmt::Debug for G3MLib<M> {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-            f.debug_tuple(::core::stringify!(G3MLib)).field(&self.address()).finish()
+            f.debug_tuple(::core::stringify!(G3MLib))
+                .field(&self.address())
+                .finish()
         }
     }
     impl<M: ::ethers::providers::Middleware> G3MLib<M> {
-        /// Creates a new contract instance with the specified `ethers` client at
-        /// `address`. The contract derefs to a `ethers::Contract` object.
+        /// Creates a new contract instance with the specified `ethers` client
+        /// at `address`. The contract derefs to a `ethers::Contract`
+        /// object.
         pub fn new<T: Into<::ethers::core::types::Address>>(
             address: T,
             client: ::std::sync::Arc<M>,
         ) -> Self {
-            Self(
-                ::ethers::contract::Contract::new(
-                    address.into(),
-                    G3MLIB_ABI.clone(),
-                    client,
-                ),
-            )
+            Self(::ethers::contract::Contract::new(
+                address.into(),
+                G3MLIB_ABI.clone(),
+                client,
+            ))
         }
-        /// Constructs the general purpose `Deployer` instance based on the provided constructor arguments and sends it.
-        /// Returns a new instance of a deployer that returns an instance of this contract after sending the transaction
+        /// Constructs the general purpose `Deployer` instance based on the
+        /// provided constructor arguments and sends it. Returns a new
+        /// instance of a deployer that returns an instance of this contract
+        /// after sending the transaction
         ///
         /// Notes:
-        /// - If there are no constructor arguments, you should pass `()` as the argument.
+        /// - If there are no constructor arguments, you should pass `()` as the
+        ///   argument.
         /// - The default poll duration is 7 seconds.
         /// - The default number of confirmations is 1 block.
         ///
         ///
         /// # Example
         ///
-        /// Generate contract bindings with `abigen!` and deploy a new contract instance.
+        /// Generate contract bindings with `abigen!` and deploy a new contract
+        /// instance.
         ///
-        /// *Note*: this requires a `bytecode` and `abi` object in the `greeter.json` artifact.
+        /// *Note*: this requires a `bytecode` and `abi` object in the
+        /// `greeter.json` artifact.
         ///
         /// ```ignore
         /// # async fn deploy<M: ethers::providers::Middleware>(client: ::std::sync::Arc<M>) {
@@ -114,8 +117,7 @@ pub mod g3m_lib {
             Ok(deployer)
         }
     }
-    impl<M: ::ethers::providers::Middleware> From<::ethers::contract::Contract<M>>
-    for G3MLib<M> {
+    impl<M: ::ethers::providers::Middleware> From<::ethers::contract::Contract<M>> for G3MLib<M> {
         fn from(contract: ::ethers::contract::Contract<M>) -> Self {
             Self::new(contract.address(), contract.client())
         }
