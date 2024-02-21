@@ -109,6 +109,31 @@ contract G3MTest is Test {
         _;
     }
 
+    /// @dev Initializes a basic pool in dfmm.
+    modifier deep() {
+        vm.warp(0);
+        G3M.G3MParams memory params = G3M.G3MParams({
+            wX: 0.5 ether,
+            wY: 0.5 ether,
+            swapFee: TEST_SWAP_FEE,
+            controller: address(0)
+        });
+        uint256 init_p = 1 ether;
+        uint256 init_x = 1_000_000 ether;
+        bytes memory initData =
+            solver.getInitialPoolData(init_x, init_p, params);
+
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+            strategy: address(g3m),
+            tokenX: tokenX,
+            tokenY: tokenY,
+            data: initData
+        });
+
+        dfmm.init(initParams);
+        _;
+    }
+
     function test_g3m_swap() public basic {
         uint256 amountIn = 10 ether;
         uint256 poolId = dfmm.nonce() - 1;
@@ -224,6 +249,62 @@ contract G3MTest is Test {
 
         console2.log("endReservesL: ", endReservesL);
         assertEq(endReservesL, 1.00015 ether);
+
+        dfmm.swap(poolId, swapData);
+    }
+
+    function test_g3m_swap_x_in_deep() public deep {
+        bool xIn = true;
+        uint256 amountIn = 0.1 ether;
+        uint256 poolId = dfmm.nonce() - 1;
+        (bool valid, uint256 amountOut, uint256 price, bytes memory swapData) =
+            solver.simulateSwap(poolId, xIn, amountIn);
+
+        console2.log("Valid: ", valid);
+        assert(valid);
+
+        console2.log("AmountOut: ", amountOut);
+        assertApproxEqRel(amountOut, 0.0997 ether, 1e11);
+
+        (uint256 endReservesRx, uint256 endReservesRy, uint256 endReservesL) =
+            abi.decode(swapData, (uint256, uint256, uint256));
+
+        console2.log("endReservesRx: ", endReservesRx);
+        assertEq(endReservesRx, 1_000_000.1 ether);
+
+        console2.log("endReservesRy: ", endReservesRy);
+        assertApproxEqRel(endReservesRy, 999_999.9003 ether, 1e10);
+
+        console2.log("endReservesL: ", endReservesL);
+        assertApproxEqRel(endReservesL, 1_000_000.00015 ether, 1e10);
+
+        dfmm.swap(poolId, swapData);
+    }
+
+    function test_g3m_swap_y_in_deep() public deep {
+        bool xIn = false;
+        uint256 amountIn = 0.1 ether;
+        uint256 poolId = dfmm.nonce() - 1;
+        (bool valid, uint256 amountOut, uint256 price, bytes memory swapData) =
+            solver.simulateSwap(poolId, xIn, amountIn);
+
+        console2.log("Valid: ", valid);
+        assert(valid);
+
+        console2.log("AmountOut: ", amountOut);
+        assertApproxEqRel(amountOut, 0.0997 ether, 1e11);
+
+        (uint256 endReservesRx, uint256 endReservesRy, uint256 endReservesL) =
+            abi.decode(swapData, (uint256, uint256, uint256));
+
+        console2.log("endReservesRx: ", endReservesRx);
+        assertApproxEqRel(endReservesRx, 999_999.9003 ether, 1e10);
+
+        console2.log("endReservesRy: ", endReservesRy);
+        assertEq(endReservesRy, 1_000_000.1 ether);
+
+        console2.log("endReservesL: ", endReservesL);
+        assertApproxEqRel(endReservesL, 1_000_000.00015 ether, 1e10);
 
         dfmm.swap(poolId, swapData);
     }
