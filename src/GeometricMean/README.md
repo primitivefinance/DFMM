@@ -21,7 +21,7 @@ $$
 
 The **trading function** is:
 $$
-\boxed{\varphi(x,y) = \left(\frac{x}{L}\right)^{w_X} \left(\frac{y}{L}\right)^{w_Y} -1}
+\boxed{\varphi(x,y;w_X,w_Y) = \left(\frac{x}{L}\right)^{w_X} \left(\frac{y}{L}\right)^{w_Y} -1}
 $$
 where $L$ is the **liquidity** of the pool. 
 
@@ -33,7 +33,7 @@ $$
 \end{equation}
 $$
 
-## Initializing Pool
+## Pool initialization
 We need to initalize a pool from a given price $S_0$ and an amount of a token $x_0$ or $y_0$. 
 
 
@@ -82,13 +82,13 @@ Allocations and deallocations should not change the price of a pool, so the rati
 $$
 P = \frac{w_x}{w_y} \frac{y}{x}  = \frac{w_x}{w_y} \frac{y+\Delta_y}{x+\Delta_x}.
 $$
-If a user wants to allocate a specific amount of $\Delta_X$, then they must also allocate:
+**Input $\Delta_X$:** If a user wants to allocate a specific amount of $\Delta_X$, then they must also allocate:
 $$
-\boxed{\Delta_y = \frac{y}{x}(x+\Delta_x)-y}
+\boxed{\Delta_Y = \frac{y}{x}(x+\Delta_X)-y}
 $$
-For a given $\Delta_y$, then they must have:
+**Input $\Delta_Y$:** For a given $\Delta_Y$, then they must have:
 $$
-\boxed{\Delta_x = \frac{x}{y}(y+\Delta_y)-x}
+\boxed{\Delta_X = \frac{x}{y}(y+\Delta_Y)-x}
 $$
 
 
