@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import "./GeometricMean.sol";
+import "../lib/StrategyLib.sol";
 import "solmate/utils/FixedPointMathLib.sol";
-import "../../lib/StrategyLib.sol";
-import "./G3M.sol";
 
-library G3MLib {
+library GeometricMeanLib {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
-    enum G3MUpdateCode {
+    enum GeometricMeanUpdateCode {
         Invalid,
         SwapFee,
         WeightX,
@@ -21,7 +21,7 @@ library G3MLib {
         pure
         returns (bytes memory)
     {
-        return abi.encode(G3MUpdateCode.SwapFee, uint256(swapFee));
+        return abi.encode(GeometricMeanUpdateCode.SwapFee, uint256(swapFee));
     }
 
     function decodeFeeUpdate(bytes memory data)
@@ -29,7 +29,8 @@ library G3MLib {
         pure
         returns (uint256)
     {
-        (, uint256 swapFee) = abi.decode(data, (G3MUpdateCode, uint256));
+        (, uint256 swapFee) =
+            abi.decode(data, (GeometricMeanUpdateCode, uint256));
         return swapFee;
     }
 
@@ -37,7 +38,9 @@ library G3MLib {
         uint256 targetWeightX,
         uint256 targetTimestamp
     ) internal pure returns (bytes memory data) {
-        return abi.encode(G3MUpdateCode.WeightX, targetWeightX, targetTimestamp);
+        return abi.encode(
+            GeometricMeanUpdateCode.WeightX, targetWeightX, targetTimestamp
+        );
     }
 
     function decodeWeightXUpdate(bytes memory data)
@@ -46,7 +49,7 @@ library G3MLib {
         returns (uint256 targetWeightX, uint256 targetTimestamp)
     {
         (, targetWeightX, targetTimestamp) =
-            abi.decode(data, (G3MUpdateCode, uint256, uint256));
+            abi.decode(data, (GeometricMeanUpdateCode, uint256, uint256));
     }
 
     function encodeControllerUpdate(address controller)
@@ -54,7 +57,7 @@ library G3MLib {
         pure
         returns (bytes memory data)
     {
-        return abi.encode(G3MUpdateCode.Controller, controller);
+        return abi.encode(GeometricMeanUpdateCode.Controller, controller);
     }
 
     function decodeControllerUpdate(bytes memory data)
@@ -62,14 +65,14 @@ library G3MLib {
         pure
         returns (address controller)
     {
-        (, controller) = abi.decode(data, (G3MUpdateCode, address));
+        (, controller) = abi.decode(data, (GeometricMeanUpdateCode, address));
     }
 
     function tradingFunction(
         uint256 rX,
         uint256 rY,
         uint256 L,
-        G3M.G3MParams memory params
+        GeometricMean.GeometricMeanParams memory params
     ) internal pure returns (int256) {
         uint256 a = uint256(int256(rX.divWadDown(L)).powWad(int256(params.wX)));
         uint256 b = uint256(int256(rY.divWadDown(L)).powWad(int256(params.wY)));
@@ -81,7 +84,7 @@ library G3MLib {
     function computeNextLiquidity(
         uint256 rX,
         uint256 rY,
-        G3M.G3MParams memory params
+        GeometricMean.GeometricMeanParams memory params
     ) internal pure returns (uint256 L) {
         return uint256(int256(rX).powWad(int256(params.wX))).mulWadUp(
             uint256(int256(rY).powWad(int256(params.wY)))

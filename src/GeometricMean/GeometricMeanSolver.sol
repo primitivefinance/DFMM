@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import "./G3MExtendedLib.sol";
 import "solmate/tokens/ERC20.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/interfaces/IDFMM.sol";
-import "src/solvers/G3M/G3MExtendedLib.sol";
 
-contract G3MSolver {
+contract GeometricMeanSolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 

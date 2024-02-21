@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import "./GeometricMeanLib.sol";
 import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/lib/DynamicParamLib.sol";
-import "./G3MLib.sol";
 
 /**
  * @notice Geometric Mean Market Maker.
  */
-contract G3M is IStrategy {
+contract GeometricMean is IStrategy {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
@@ -21,7 +21,7 @@ contract G3M is IStrategy {
     }
 
     /// @dev Parameterization of the G3M curve.
-    struct G3MParams {
+    struct GeometricMeanParams {
         uint256 wX;
         uint256 wY;
         uint256 swapFee;
@@ -97,11 +97,11 @@ contract G3M is IStrategy {
         internalParams[poolId].swapFee = swapFee;
         internalParams[poolId].controller = controller;
 
-        invariant = G3MLib.tradingFunction(
+        invariant = GeometricMeanLib.tradingFunction(
             reserveX,
             reserveY,
             totalLiquidity,
-            abi.decode(getPoolParams(poolId), (G3MParams))
+            abi.decode(getPoolParams(poolId), (GeometricMeanParams))
         );
 
         // todo: should the be EXACTLY 0? just positive? within an epsilon?
@@ -127,11 +127,11 @@ contract G3M is IStrategy {
         (reserveX, reserveY, totalLiquidity) =
             abi.decode(data, (uint256, uint256, uint256));
 
-        invariant = G3MLib.tradingFunction(
+        invariant = GeometricMeanLib.tradingFunction(
             reserveX,
             reserveY,
             totalLiquidity,
-            abi.decode(getPoolParams(poolId), (G3MParams))
+            abi.decode(getPoolParams(poolId), (GeometricMeanParams))
         );
 
         valid = -(EPSILON) < invariant && invariant < EPSILON;
@@ -154,7 +154,8 @@ contract G3M is IStrategy {
             uint256 nextL
         )
     {
-        G3MParams memory params = abi.decode(getPoolParams(poolId), (G3MParams));
+        GeometricMeanParams memory params =
+            abi.decode(getPoolParams(poolId), (GeometricMeanParams));
 
         (uint256 startRx, uint256 startRy, uint256 startL) =
             IDFMM(dfmm).getReservesAndLiquidity(poolId);
@@ -177,16 +178,17 @@ contract G3M is IStrategy {
             revert("invalid swap: inputs x and y have the same sign!");
         }
 
-        uint256 poolId = poolId;
-
         liquidityDelta = int256(nextL)
             - int256(
-                G3MLib.computeNextLiquidity(
-                    startRx, startRy, abi.decode(getPoolParams(poolId), (G3MParams))
+                GeometricMeanLib.computeNextLiquidity(
+                    startRx,
+                    startRy,
+                    abi.decode(getPoolParams(poolId), (GeometricMeanParams))
                 )
             );
 
-        invariant = G3MLib.tradingFunction(nextRx, nextRy, nextL, params);
+        invariant =
+            GeometricMeanLib.tradingFunction(nextRx, nextRy, nextL, params);
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
@@ -197,18 +199,23 @@ contract G3M is IStrategy {
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
-        G3MLib.G3MUpdateCode updateCode =
-            abi.decode(data, (G3MLib.G3MUpdateCode));
+        GeometricMeanLib.GeometricMeanUpdateCode updateCode =
+            abi.decode(data, (GeometricMeanLib.GeometricMeanUpdateCode));
 
-        if (updateCode == G3MLib.G3MUpdateCode.SwapFee) {
-            internalParams[poolId].swapFee = G3MLib.decodeFeeUpdate(data);
-        } else if (updateCode == G3MLib.G3MUpdateCode.WeightX) {
+        if (updateCode == GeometricMeanLib.GeometricMeanUpdateCode.SwapFee) {
+            internalParams[poolId].swapFee =
+                GeometricMeanLib.decodeFeeUpdate(data);
+        } else if (
+            updateCode == GeometricMeanLib.GeometricMeanUpdateCode.WeightX
+        ) {
             (uint256 targetWeightX, uint256 targetTimestamp) =
-                G3MLib.decodeWeightXUpdate(data);
+                GeometricMeanLib.decodeWeightXUpdate(data);
             internalParams[poolId].wX.set(targetWeightX, targetTimestamp);
-        } else if (updateCode == G3MLib.G3MUpdateCode.Controller) {
+        } else if (
+            updateCode == GeometricMeanLib.GeometricMeanUpdateCode.Controller
+        ) {
             internalParams[poolId].controller =
-                G3MLib.decodeControllerUpdate(data);
+                GeometricMeanLib.decodeControllerUpdate(data);
         } else {
             revert InvalidUpdateCode();
         }
@@ -216,7 +223,7 @@ contract G3M is IStrategy {
 
     /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId) public view returns (bytes memory) {
-        G3MParams memory params;
+        GeometricMeanParams memory params;
 
         params.wX = internalParams[poolId].wX.actualized();
         params.wY = ONE - params.wX;
@@ -233,8 +240,8 @@ contract G3M is IStrategy {
     ) external view returns (int256) {
         (uint256 rx, uint256 ry, uint256 L) =
             abi.decode(data, (uint256, uint256, uint256));
-        return G3MLib.tradingFunction(
-            rx, ry, L, abi.decode(getPoolParams(poolId), (G3MParams))
+        return GeometricMeanLib.tradingFunction(
+            rx, ry, L, abi.decode(getPoolParams(poolId), (GeometricMeanParams))
         );
     }
 }
