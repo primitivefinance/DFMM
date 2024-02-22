@@ -1,0 +1,63 @@
+name: rust
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+      - name: test
+        run: cargo test --workspace --all-features
+
+  clippy:
+    name: clippy
+    runs-on: ubuntu-latest
+
+    steps:
+        - uses: actions/checkout@v3
+
+        - name: install rust toolchain
+          uses: actions-rs/toolchain@v1
+          with:
+            toolchain: 1.75.0
+            components: clippy
+        - name: cargo clippy
+          run: cargo clippy --workspace --all-features -- -D warnings
+
+  udeps:
+    name: udeps
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v3
+        - name: install rust toolchain
+          uses: actions-rs/toolchain@v1
+          with:
+            toolchain: nightly
+        - name: install udeps
+          run: cargo install --git https://github.com/est31/cargo-udeps --locked
+        - name: cargo udeps
+          run: cargo +nightly udeps
+
+  fmt:
+    name: fmt
+    runs-on: ubuntu-latest
+        
+    steps:
+        - uses: actions/checkout@v3
+
+        - name: install rust toolchain
+          uses: actions-rs/toolchain@v1
+          with:
+            toolchain: nightly
+            components: rustfmt
+        - name: cargo fmt
+          run: cargo +nightly fmt --all -- --check          

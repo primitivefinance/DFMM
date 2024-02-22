@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "src/strategies/LogNormal/LogNormal.sol";
-import "src/solvers/LogNormal/LogNormalSolver.sol";
+import "src/LogNormal/LogNormal.sol";
+import "src/LogNormal/LogNormalSolver.sol";
 import "../../DFMM/SetUp.sol";
 
 contract LogNormalSetUp is SetUp {
