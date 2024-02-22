@@ -16,7 +16,7 @@ contract G3MInitTest is G3MSetUp {
     }
 
     function test_G3M_init_RevertsWhenInvalidWeightX() public {
-        G3M.G3MParams memory params = G3M.G3MParams({
+        GeometricMeanParams memory params = GeometricMeanParams({
             wX: 1.1 ether,
             wY: 0.5 ether,
             swapFee: TEST_SWAP_FEE,
@@ -33,7 +33,7 @@ contract G3MInitTest is G3MSetUp {
             data: defaultInitialPoolData
         });
 
-        vm.expectRevert(G3M.InvalidWeightX.selector);
+        vm.expectRevert(GeometricMean.InvalidWeightX.selector);
         dfmm.init(initParams);
     }
 

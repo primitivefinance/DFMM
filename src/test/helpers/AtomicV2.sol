@@ -3,7 +3,7 @@ pragma solidity ^0.8.14;
 
 import "solstat/Gaussian.sol";
 import "solmate/utils/FixedPointMathLib.sol";
-import "src/solvers/BisectionLib.sol";
+import "src/lib/BisectionLib.sol";
 import "forge-std/console2.sol";
 
 interface LiquidExchange {
