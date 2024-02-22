@@ -10,7 +10,7 @@ import "src/GeometricMean/GeometricMeanSolver.sol";
 import "src/DFMM.sol";
 import "../helpers/Lex.sol";
 
-contract G3MTest is Test {
+contract GeometricMeanTest is Test {
     using stdStorage for StdStorage;
     using FixedPointMathLib for uint256;
 
@@ -87,7 +87,7 @@ contract G3MTest is Test {
     /// @dev Initializes a basic pool in dfmm with 0 swapFee.
     modifier basic_feeless() {
         vm.warp(0);
-        G3M.G3MParams memory params = G3M.G3MParams({
+        GeometricMeanParams memory params = GeometricMeanParams({
             wX: 0.5 ether,
             wY: 0.5 ether,
             swapFee: 0,
@@ -112,7 +112,7 @@ contract G3MTest is Test {
     /// @dev Initializes a basic pool in dfmm.
     modifier deep() {
         vm.warp(0);
-        G3M.G3MParams memory params = G3M.G3MParams({
+        GeometricMeanParams memory params = GeometricMeanParams({
             wX: 0.5 ether,
             wY: 0.5 ether,
             swapFee: TEST_SWAP_FEE,

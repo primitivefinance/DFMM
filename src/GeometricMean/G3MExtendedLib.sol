@@ -230,7 +230,6 @@ function diffRaise(
 ) pure returns (int256) {
     (int256 wx, int256 wy, int256 swapFee) =
         (int256(params.wX), int256(params.wY), int256(params.swapFee));
-    int256 I_ONE = int256(ONE);
     int256 iS = int256(S);
     int256 iX = int256(rX);
     int256 iY = int256(rY);
