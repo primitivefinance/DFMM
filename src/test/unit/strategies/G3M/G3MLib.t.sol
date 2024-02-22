@@ -2,39 +2,41 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "src/strategies/G3M/G3MLib.sol";
+import "src/GeometricMean/GeometricMeanLib.sol";
 
-contract G3MLibTest is Test {
-    function testFuzz_G3MLib_encodeFeeUpdate(uint256 swapFee) public {
-        bytes memory data = G3MLib.encodeFeeUpdate(swapFee);
-        assertEq(swapFee, G3MLib.decodeFeeUpdate(data));
+contract GeometricMeanLibTest is Test {
+    function testFuzz_GeometricMeanLib_encodeFeeUpdate(uint256 swapFee)
+        public
+    {
+        bytes memory data = GeometricMeanLib.encodeFeeUpdate(swapFee);
+        assertEq(swapFee, GeometricMeanLib.decodeFeeUpdate(data));
     }
 
-    function testFuzz_G3MLib_encodeWeightXUpdate(
+    function testFuzz_GeometricMeanLib_encodeWeightXUpdate(
         uint256 targetWeightX,
         uint256 targetTimestamp
     ) public {
         bytes memory data =
-            G3MLib.encodeWeightXUpdate(targetWeightX, targetTimestamp);
+            GeometricMeanLib.encodeWeightXUpdate(targetWeightX, targetTimestamp);
 
         (uint256 decodedTargetWeightX, uint256 decodedTargetTimestamp) =
-            G3MLib.decodeWeightXUpdate(data);
+            GeometricMeanLib.decodeWeightXUpdate(data);
         assertEq(targetWeightX, decodedTargetWeightX);
         assertEq(targetTimestamp, decodedTargetTimestamp);
     }
 
-    function testFuzz_G3MLib_encodeControllerUpdate(address controller)
-        public
-    {
-        bytes memory data = G3MLib.encodeControllerUpdate(controller);
-        assertEq(controller, G3MLib.decodeControllerUpdate(data));
+    function testFuzz_GeometricMeanLib_encodeControllerUpdate(
+        address controller
+    ) public {
+        bytes memory data = GeometricMeanLib.encodeControllerUpdate(controller);
+        assertEq(controller, GeometricMeanLib.decodeControllerUpdate(data));
     }
 
-    function test_G3MLib_tradingFunction() public {
+    function test_GeometricMeanLib_tradingFunction() public {
         // TODO: Add a differential test here
     }
 
-    function test_G3MLib_computeLiquidity() public {
+    function test_GeometricMeanLib_computeLiquidity() public {
         // TODO: Add a differential test here
     }
 }

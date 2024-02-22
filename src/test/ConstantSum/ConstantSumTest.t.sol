@@ -3,10 +3,10 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import "../../DFMM.sol";
-import "../../strategies/ConstantSum/ConstantSum.sol";
-import "../../solvers/ConstantSum/ConstantSumSolver.sol";
-import "../helpers/Lex.sol";
+import "src/DFMM.sol";
+import "src/ConstantSum/ConstantSum.sol";
+import "src/ConstantSum/ConstantSumSolver.sol";
+import "src/test/helpers/Lex.sol";
 
 contract ConstantSumTest is Test {
     using stdStorage for StdStorage;

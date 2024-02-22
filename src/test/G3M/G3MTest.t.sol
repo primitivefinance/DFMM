@@ -5,9 +5,9 @@ import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 
-import "../../strategies/G3M/G3M.sol";
-import "../../solvers/G3M/G3MSolver.sol";
-import "../../DFMM.sol";
+import "src/GeometricMean/GeometricMean.sol";
+import "src/GeometricMean/GeometricMeanSolver.sol";
+import "src/DFMM.sol";
 import "../helpers/Lex.sol";
 
 contract G3MTest is Test {
@@ -15,8 +15,8 @@ contract G3MTest is Test {
     using FixedPointMathLib for uint256;
 
     DFMM dfmm;
-    G3M g3m;
-    G3MSolver solver;
+    GeometricMean g3m;
+    GeometricMeanSolver solver;
     address tokenX;
     address tokenY;
     Lex lex;
@@ -31,8 +31,8 @@ contract G3MTest is Test {
 
         lex = new Lex(tokenX, tokenY, ONE);
         dfmm = new DFMM(address(0));
-        g3m = new G3M(address(dfmm));
-        solver = new G3MSolver(address(g3m));
+        g3m = new GeometricMean(address(dfmm));
+        solver = new GeometricMeanSolver(address(g3m));
 
         MockERC20(tokenX).approve(address(dfmm), type(uint256).max);
         MockERC20(tokenY).approve(address(dfmm), type(uint256).max);
@@ -42,7 +42,7 @@ contract G3MTest is Test {
         uint256 reserveX = 1 ether;
         uint256 price = 2000 * 10 ** 18;
 
-        G3M.G3MParams memory params = G3M.G3MParams({
+        GeometricMeanParams memory params = GeometricMeanParams({
             wX: 0.5 ether,
             wY: 0.5 ether,
             swapFee: 0,
@@ -62,7 +62,7 @@ contract G3MTest is Test {
     /// @dev Initializes a basic pool in dfmm.
     modifier basic() {
         vm.warp(0);
-        G3M.G3MParams memory params = G3M.G3MParams({
+        GeometricMeanParams memory params = GeometricMeanParams({
             wX: 0.5 ether,
             wY: 0.5 ether,
             swapFee: TEST_SWAP_FEE,

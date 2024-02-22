@@ -1,38 +1,46 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import "./LogNormalLib.sol";
 import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/lib/DynamicParamLib.sol";
-import "./G3MLib.sol";
+import "src/lib/StrategyLib.sol";
 
-/**
- * @notice Geometric Mean Market Maker.
- */
-contract G3M is IStrategy {
+/// @notice Log Normal has three variable parameters:
+/// K - strike price
+/// sigma - volatility
+/// tau - time to expiry
+///
+/// Swaps are validated by the trading function:
+/// Gaussian.ppf(x / L) + Gaussian.ppf(y / KL) = -sigma * sqrt(tau)
+contract LogNormal is IStrategy {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
 
     struct InternalParams {
-        DynamicParam wX;
+        DynamicParam sigma;
+        DynamicParam tau;
+        DynamicParam strike;
         uint256 swapFee;
         address controller;
     }
 
-    /// @dev Parameterization of the G3M curve.
-    struct G3MParams {
-        uint256 wX;
-        uint256 wY;
+    /// @dev Parameterization of the Log Normal curve.
+    struct LogNormalParams {
+        uint256 strike;
+        uint256 sigma;
+        uint256 tau;
         uint256 swapFee;
         address controller;
     }
 
     /// @inheritdoc IStrategy
-    address public immutable dfmm;
+    address public dfmm;
 
     /// @inheritdoc IStrategy
-    string public constant name = "G3M";
+    string public constant name = "LogNormal";
 
     mapping(uint256 => InternalParams) public internalParams;
 
@@ -41,12 +49,8 @@ contract G3M is IStrategy {
         dfmm = dfmm_;
     }
 
-    // TODO: Move these errors into an interface
-    error InvalidWeightX();
-
-    /// @dev Restricts the caller to the DFMM contract.
     modifier onlyDFMM() {
-        if (msg.sender != address(dfmm)) revert NotDFMM();
+        if (msg.sender != dfmm) revert NotDFMM();
         _;
     }
 
@@ -56,7 +60,7 @@ contract G3M is IStrategy {
         uint256 poolId,
         bytes calldata data
     )
-        external
+        public
         onlyDFMM
         returns (
             bool valid,
@@ -66,10 +70,13 @@ contract G3M is IStrategy {
             uint256 totalLiquidity
         )
     {
-        (valid, invariant, reserveX, reserveY, totalLiquidity,,,) =
+        (valid, invariant, reserveX, reserveY, totalLiquidity,) =
             _decodeInit(poolId, data);
     }
 
+    /// @dev Decodes, stores and validates pool initialization parameters.
+    /// Note that this function was purely made to avoid the stack too deep
+    /// error in the `init()` function.
     function _decodeInit(
         uint256 poolId,
         bytes calldata data
@@ -81,29 +88,24 @@ contract G3M is IStrategy {
             uint256 reserveX,
             uint256 reserveY,
             uint256 totalLiquidity,
-            uint256 wX,
-            uint256 swapFee,
-            address controller
+            LogNormalParams memory params
         )
     {
-        (reserveX, reserveY, totalLiquidity, wX, swapFee, controller) = abi
-            .decode(data, (uint256, uint256, uint256, uint256, uint256, address));
+        (reserveX, reserveY, totalLiquidity, params) =
+            abi.decode(data, (uint256, uint256, uint256, LogNormalParams));
 
-        if (wX >= ONE) {
-            revert InvalidWeightX();
-        }
+        internalParams[poolId].sigma.lastComputedValue = params.sigma;
+        internalParams[poolId].tau.lastComputedValue = params.tau;
+        internalParams[poolId].strike.lastComputedValue = params.strike;
+        internalParams[poolId].swapFee = params.swapFee;
+        internalParams[poolId].controller = params.controller;
 
-        internalParams[poolId].wX.lastComputedValue = wX;
-        internalParams[poolId].swapFee = swapFee;
-        internalParams[poolId].controller = controller;
-
-        invariant = G3MLib.tradingFunction(
+        invariant = LogNormalLib.tradingFunction(
             reserveX,
             reserveY,
             totalLiquidity,
-            abi.decode(getPoolParams(poolId), (G3MParams))
+            abi.decode(getPoolParams(poolId), (LogNormalParams))
         );
-
         // todo: should the be EXACTLY 0? just positive? within an epsilon?
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
@@ -114,7 +116,7 @@ contract G3M is IStrategy {
         uint256 poolId,
         bytes calldata data
     )
-        external
+        public
         view
         returns (
             bool valid,
@@ -127,11 +129,11 @@ contract G3M is IStrategy {
         (reserveX, reserveY, totalLiquidity) =
             abi.decode(data, (uint256, uint256, uint256));
 
-        invariant = G3MLib.tradingFunction(
+        invariant = LogNormalLib.tradingFunction(
             reserveX,
             reserveY,
             totalLiquidity,
-            abi.decode(getPoolParams(poolId), (G3MParams))
+            abi.decode(getPoolParams(poolId), (LogNormalParams))
         );
 
         valid = -(EPSILON) < invariant && invariant < EPSILON;
@@ -143,7 +145,7 @@ contract G3M is IStrategy {
         uint256 poolId,
         bytes memory data
     )
-        external
+        public
         view
         returns (
             bool valid,
@@ -154,39 +156,36 @@ contract G3M is IStrategy {
             uint256 nextL
         )
     {
-        G3MParams memory params = abi.decode(getPoolParams(poolId), (G3MParams));
+        LogNormalParams memory params =
+            abi.decode(getPoolParams(poolId), (LogNormalParams));
 
         (uint256 startRx, uint256 startRy, uint256 startL) =
             IDFMM(dfmm).getReservesAndLiquidity(poolId);
 
         (nextRx, nextRy, nextL) = abi.decode(data, (uint256, uint256, uint256));
 
+        // Rounding up is advantageous towards the protocol, to make sure swap fees
+        // are fully paid for.
+        uint256 minLiquidityDelta;
         uint256 amountIn;
         uint256 fees;
-        uint256 minLiquidityDelta;
-
         if (nextRx > startRx) {
             amountIn = nextRx - startRx;
             fees = amountIn.mulWadUp(params.swapFee);
             minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRx);
         } else if (nextRy > startRy) {
+            // δl = δx * L / X, where δx = delta x * fee
             amountIn = nextRy - startRy;
             fees = amountIn.mulWadUp(params.swapFee);
             minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRy);
         } else {
+            // should never get here!
             revert("invalid swap: inputs x and y have the same sign!");
         }
 
-        uint256 poolId = poolId;
+        liquidityDelta = int256(nextL) - int256(startL);
 
-        liquidityDelta = int256(nextL)
-            - int256(
-                G3MLib.computeNextLiquidity(
-                    startRx, startRy, abi.decode(getPoolParams(poolId), (G3MParams))
-                )
-            );
-
-        invariant = G3MLib.tradingFunction(nextRx, nextRy, nextL, params);
+        invariant = LogNormalLib.tradingFunction(nextRx, nextRy, nextL, params);
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
@@ -197,18 +196,26 @@ contract G3M is IStrategy {
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
-        G3MLib.G3MUpdateCode updateCode =
-            abi.decode(data, (G3MLib.G3MUpdateCode));
+        LogNormalLib.LogNormalUpdateCode updateCode =
+            abi.decode(data, (LogNormalLib.LogNormalUpdateCode));
 
-        if (updateCode == G3MLib.G3MUpdateCode.SwapFee) {
-            internalParams[poolId].swapFee = G3MLib.decodeFeeUpdate(data);
-        } else if (updateCode == G3MLib.G3MUpdateCode.WeightX) {
-            (uint256 targetWeightX, uint256 targetTimestamp) =
-                G3MLib.decodeWeightXUpdate(data);
-            internalParams[poolId].wX.set(targetWeightX, targetTimestamp);
-        } else if (updateCode == G3MLib.G3MUpdateCode.Controller) {
+        if (updateCode == LogNormalLib.LogNormalUpdateCode.SwapFee) {
+            internalParams[poolId].swapFee = LogNormalLib.decodeFeeUpdate(data);
+        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Sigma) {
+            (uint256 targetSigma, uint256 targetTimestamp) =
+                LogNormalLib.decodeSigmaUpdate(data);
+            internalParams[poolId].sigma.set(targetSigma, targetTimestamp);
+        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Tau) {
+            (uint256 targetTau, uint256 targetTimestamp) =
+                LogNormalLib.decodeTauUpdate(data);
+            internalParams[poolId].tau.set(targetTau, targetTimestamp);
+        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Strike) {
+            (uint256 targetStrike, uint256 targetTimestamp) =
+                LogNormalLib.decodeStrikeUpdate(data);
+            internalParams[poolId].strike.set(targetStrike, targetTimestamp);
+        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Controller) {
             internalParams[poolId].controller =
-                G3MLib.decodeControllerUpdate(data);
+                LogNormalLib.decodeControllerUpdate(data);
         } else {
             revert InvalidUpdateCode();
         }
@@ -216,12 +223,12 @@ contract G3M is IStrategy {
 
     /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId) public view returns (bytes memory) {
-        G3MParams memory params;
+        LogNormalParams memory params;
 
-        params.wX = internalParams[poolId].wX.actualized();
-        params.wY = ONE - params.wX;
+        params.sigma = internalParams[poolId].sigma.actualized();
+        params.strike = internalParams[poolId].strike.actualized();
+        params.tau = internalParams[poolId].tau.actualized();
         params.swapFee = internalParams[poolId].swapFee;
-        params.controller = internalParams[poolId].controller;
 
         return abi.encode(params);
     }
@@ -230,11 +237,14 @@ contract G3M is IStrategy {
     function computeSwapConstant(
         uint256 poolId,
         bytes memory data
-    ) external view returns (int256) {
-        (uint256 rx, uint256 ry, uint256 L) =
+    ) public view returns (int256) {
+        (uint256 reserveX, uint256 reserveY, uint256 totalLiquidity) =
             abi.decode(data, (uint256, uint256, uint256));
-        return G3MLib.tradingFunction(
-            rx, ry, L, abi.decode(getPoolParams(poolId), (G3MParams))
+        return LogNormalLib.tradingFunction(
+            reserveX,
+            reserveY,
+            totalLiquidity,
+            abi.decode(getPoolParams(poolId), (LogNormalParams))
         );
     }
 }

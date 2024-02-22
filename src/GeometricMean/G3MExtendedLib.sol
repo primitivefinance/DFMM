@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import "./GeometricMean.sol";
+import "../lib/BisectionLib.sol";
+import "../lib/SignedWadMath.sol";
 import "solmate/tokens/ERC20.sol";
-import "src/strategies/G3M/G3M.sol";
 import "forge-std/console2.sol";
-import "../BisectionLib.sol";
-import "../../lib/SignedWadMath.sol";
+
 // import { wadMul, wadDiv } from "../../lib/SignedWadMath.sol";
 
 using FixedPointMathLib for uint256;
@@ -15,7 +16,7 @@ using SignedWadMathLib for int256;
 function computeLGivenX(
     uint256 x,
     uint256 S,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256) {
     int256 a = int256(params.wY.divWadUp(params.wX).mulWadUp(S));
     int256 b = a.powWad(int256(params.wY));
@@ -25,7 +26,7 @@ function computeLGivenX(
 function computeLGivenY(
     uint256 y,
     uint256 S,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256) {
     return y.mulWadUp(params.wX).divWadUp(params.wY.mulWadUp(S));
 }
@@ -33,7 +34,7 @@ function computeLGivenY(
 function computeXGivenL(
     uint256 L,
     uint256 S,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256) {
     return params.wX.mulWadUp(L).divWadUp(params.wY.mulWadUp(S));
 }
@@ -41,7 +42,7 @@ function computeXGivenL(
 function computeYGivenL(
     uint256 L,
     uint256 S,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256) {
     return params.wY.mulWadUp(L).divWadUp(params.wX.mulWadUp(S));
 }
@@ -49,7 +50,7 @@ function computeYGivenL(
 function computeY(
     uint256 x,
     uint256 S,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256) {
     return params.wY.divWadDown(params.wX).mulWadDown(S).mulWadDown(x);
 }
@@ -57,7 +58,7 @@ function computeY(
 function computeX(
     uint256 y,
     uint256 S,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256) {
     return params.wX.divWadDown(params.wY.mulWadDown(S)).mulWadDown(y);
 }
@@ -65,7 +66,7 @@ function computeX(
 function computeL(
     uint256 x,
     uint256 y,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256) {
     uint256 a = uint256(int256(x).powWad(int256(params.wX)));
     uint256 b = uint256(int256(y).powWad(int256(params.wY)));
@@ -76,13 +77,17 @@ function computeL(
 function computeInitialPoolData(
     uint256 amountX,
     uint256 initialPrice,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (bytes memory) {
     uint256 rY = computeY(amountX, initialPrice, params);
     uint256 L = computeL(amountX, rY, params);
 
-    int256 invariant =
-        G3MLib.tradingFunction({ rX: amountX, rY: rY, L: L, params: params });
+    int256 invariant = GeometricMeanLib.tradingFunction({
+        rX: amountX,
+        rY: rY,
+        L: L,
+        params: params
+    });
 
     L = computeNextLiquidity(amountX, rY, invariant, L, params);
 
@@ -94,7 +99,7 @@ function computeInitialPoolData(
 function computeNextRy(
     uint256 rX,
     uint256 liquidity,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256 rY) {
     rY = uint256(
         int256(
@@ -107,7 +112,7 @@ function computeNextRy(
 function computeNextRx(
     uint256 rY,
     uint256 liquidity,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256 rX) {
     rX = uint256(
         int256(
@@ -120,7 +125,7 @@ function computeNextRx(
 function computePrice(
     uint256 rX,
     uint256 rY,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256 price) {
     uint256 n = rY.divWadDown(params.wY);
     uint256 d = rX.divWadDown(params.wX);
@@ -134,20 +139,39 @@ function findRootLiquidity(
     bytes memory data,
     uint256 L
 ) pure returns (int256) {
-    (uint256 rX, uint256 rY,, G3M.G3MParams memory params) =
-        abi.decode(data, (uint256, uint256, int256, G3M.G3MParams));
-    return G3MLib.tradingFunction({ rX: rX, rY: rY, L: L, params: params });
+    (uint256 rX, uint256 rY,, GeometricMeanParams memory params) =
+        abi.decode(data, (uint256, uint256, int256, GeometricMeanParams));
+    return GeometricMeanLib.tradingFunction({
+        rX: rX,
+        rY: rY,
+        L: L,
+        params: params
+    });
 }
 
 function findRootLower(bytes memory data, uint256 v) pure returns (int256) {
-    (uint256 S, uint256 rX, uint256 rY, uint256 L, G3M.G3MParams memory params)
-    = abi.decode(data, (uint256, uint256, uint256, uint256, G3M.G3MParams));
+    (
+        uint256 S,
+        uint256 rX,
+        uint256 rY,
+        uint256 L,
+        GeometricMeanParams memory params
+    ) = abi.decode(
+        data, (uint256, uint256, uint256, uint256, GeometricMeanParams)
+    );
     return diffLower({ S: S, rX: rX, rY: rY, L: L, v: v, params: params });
 }
 
 function findRootRaise(bytes memory data, uint256 v) pure returns (int256) {
-    (uint256 S, uint256 rX, uint256 rY, uint256 L, G3M.G3MParams memory params)
-    = abi.decode(data, (uint256, uint256, uint256, uint256, G3M.G3MParams));
+    (
+        uint256 S,
+        uint256 rX,
+        uint256 rY,
+        uint256 L,
+        GeometricMeanParams memory params
+    ) = abi.decode(
+        data, (uint256, uint256, uint256, uint256, GeometricMeanParams)
+    );
     return diffRaise({ S: S, rX: rX, rY: rY, L: L, v: v, params: params });
 }
 
@@ -158,7 +182,7 @@ function diffLower(
     uint256 rY,
     uint256 L,
     uint256 v,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (int256) {
     (int256 wx, int256 wy) = (int256(params.wX), int256(params.wY));
     uint256 gamma = ONE - params.swapFee;
@@ -202,7 +226,7 @@ function diffRaise(
     uint256 rY,
     uint256 L,
     uint256 v,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (int256) {
     (int256 wx, int256 wy, int256 swapFee) =
         (int256(params.wX), int256(params.wY), int256(params.swapFee));
@@ -250,7 +274,7 @@ function computeOptimalLower(
     uint256 rY,
     uint256 L,
     uint256 vUpper,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256 v) {
     uint256 upper = vUpper;
     uint256 lower = 1000;
@@ -274,7 +298,7 @@ function computeOptimalRaise(
     uint256 rY,
     uint256 L,
     uint256 vUpper,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256 v) {
     uint256 upper = vUpper;
     uint256 lower = 1000;
@@ -297,7 +321,7 @@ function computeNextLiquidity(
     uint256 rY,
     int256 invariant,
     uint256 approximatedL,
-    G3M.G3MParams memory params
+    GeometricMeanParams memory params
 ) pure returns (uint256 L) {
     uint256 upper = approximatedL;
     uint256 lower = approximatedL;
@@ -305,7 +329,7 @@ function computeNextLiquidity(
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             lower = lower.mulDivDown(999, 1000);
-            computedInvariant = G3MLib.tradingFunction({
+            computedInvariant = GeometricMeanLib.tradingFunction({
                 rX: rX,
                 rY: rY,
                 L: lower,
@@ -315,7 +339,7 @@ function computeNextLiquidity(
     } else {
         while (computedInvariant > 0) {
             upper = upper.mulDivUp(1001, 1000);
-            computedInvariant = G3MLib.tradingFunction({
+            computedInvariant = GeometricMeanLib.tradingFunction({
                 rX: rX,
                 rY: rY,
                 L: upper,

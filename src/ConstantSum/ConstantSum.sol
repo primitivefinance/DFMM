@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import "./ConstantSumLib.sol";
 import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
-import "src/lib/DynamicParamLib.sol";
-import "./ConstantSumLib.sol";
 import "forge-std/Test.sol";
 
 contract ConstantSum is IStrategy {
     using FixedPointMathLib for uint256;
-    using DynamicParamLib for DynamicParam;
 
     struct InternalParams {
         uint256 price;
@@ -101,15 +99,11 @@ contract ConstantSum is IStrategy {
         uint256 fees;
         if (nextRx > startRy) {
             amountIn = nextRx - startRx;
-            console2.log("amountIn in validate: ", amountIn);
             fees = amountIn.mulWadUp(params.swapFee);
-            console2.log("fees in validate: ", fees);
             minLiquidityDelta += fees;
         } else if (nextRy > startRy) {
             amountIn = nextRy - startRy;
-            console2.log("amountIn in validate: ", amountIn);
             fees = amountIn.mulWadUp(params.swapFee);
-            console2.log("fees in validate: ", fees);
             minLiquidityDelta += fees.divWadUp(params.price);
         } else {
             revert("invalid swap: inputs x and y have the same sign!");
@@ -118,12 +112,9 @@ contract ConstantSum is IStrategy {
         liquidityDelta = int256(nextL) - int256(startL);
         assert(liquidityDelta >= int256(minLiquidityDelta));
 
-        console2.log("liquidityDelta in validate: ", liquidityDelta);
-        console2.log("price: ", params.price);
         invariant =
             ConstantSumLib.tradingFunction(nextRx, nextRy, nextL, params.price);
 
-        console2.log("invariant in validate: ", invariant);
         valid = -EPSILON < invariant && invariant < EPSILON;
     }
 

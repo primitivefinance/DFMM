@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "solmate/tokens/ERC20.sol";
-import "solstat/Gaussian.sol";
+import "./LogNormalExtendedLib.sol";
+import "../lib/BisectionLib.sol";
 import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
-import "../BisectionLib.sol";
-import "./LogNormalExtendedLib.sol";
+import "solmate/tokens/ERC20.sol";
+import "solstat/Gaussian.sol";
 
 contract LogNormalSolver {
     using FixedPointMathLib for uint256;
