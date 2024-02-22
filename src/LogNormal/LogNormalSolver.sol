@@ -203,10 +203,7 @@ contract LogNormalSolver {
             );
 
             if (swapXIn) {
-                uint256 fees = amountIn.mulWadUp(poolParams.swapFee);
-                uint256 deltaL =
-                    fees.mulWadUp(startComputedL).divWadUp(startReserves.rx);
-                deltaL += 1;
+                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee);
 
                 endReserves.rx = startReserves.rx + amountIn;
                 endReserves.L = startComputedL + deltaL;
@@ -224,10 +221,9 @@ contract LogNormalSolver {
                 );
                 amountOut = startReserves.ry - endReserves.ry;
             } else {
-                uint256 fees = amountIn.mulWadUp(poolParams.swapFee);
-                uint256 deltaL =
-                    fees.mulWadUp(startComputedL).divWadUp(startReserves.ry);
-                deltaL += 1;
+                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee).divWadUp(
+                    poolParams.strike
+                );
 
                 endReserves.ry = startReserves.ry + amountIn;
                 endReserves.L = startComputedL + deltaL;
