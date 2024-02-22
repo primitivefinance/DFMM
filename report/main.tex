@@ -1,0 +1,345 @@
+% An extension of article to include 17pt font size
+\documentclass[14pt]{extarticle}
+
+\usepackage[T1]{fontenc}
+
+
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+% \usepackage[helvet]{sfmath}
+% \everymath={\sf}
+
+\usepackage{parskip}
+
+\usepackage[english]{babel}	
+\usepackage[left=2cm, right=2cm, top=2cm, bottom=2cm]{geometry}
+
+ % Math packages
+\usepackage{amsmath,amsfonts,amsthm}
+
+\usepackage[pdftex]{graphicx}	
+
+% For hyphenation of texttt:
+% https://tex.stackexchange.com/questions/299/how-to-get-long-texttt-sections-to-break
+\usepackage[htt]{hyphenat}
+
+% For syntax highlighting
+\usepackage{minted}
+\setminted[]{frame=single,fontsize=\small,samepage=true,breaklines=true}
+
+\usepackage{xcolor}
+\definecolor{spearbitlink}{HTML}{000066}
+
+% For links
+\usepackage[hyphens]{url}
+\PassOptionsToPackage{hyphens}{url}\usepackage[hidelinks = true, colorlinks = true, linkcolor = black, urlcolor = spearbitlink]{hyperref}
+
+% Fixing a pandoc related error
+% https://tex.stackexchange.com/questions/257418/error-tightlist-converting-md-file-into-pdf-using-pandoc
+\def\tightlist{}
+
+\usepackage{longtable}
+
+\usepackage{xcolor}
+\usepackage{relsize}
+\usepackage{fontspec}
+\usepackage{tikz}
+
+
+% Adding breaklines=true to minted's settings seems to produce some errors related to fonts. This is
+% the only fix that worked.
+% https://stackoverflow.com/questions/70075331/pdflatex-file-cmss10-t3-cannot-open-type-1-font-file-for-read
+
+\pdfmapfile{-mpfonts.map}
+\begin{document}
+\setmainfont{Daggersquare regular.otf}
+
+
+\begin{titlepage}
+    \begin{minipage}[c]{0.4\textwidth}
+      \includegraphics[width=0.70\textwidth]{img/primitive-wordmark-dark.png} \\  % Logo at the top left, made bigger 
+    \end{minipage}
+    \hspace{0.4\textwidth}
+    \begin{minipage}[c]{0.2\textwidth}
+      \begin{flushleft}
+          \small
+          \textit{\textbf{Primitive Bits, Inc.}\\  % Made text italic
+          New York, NY\\
+          \href{http://primitive.xyz}{primitive.xyz}\\}
+      \end{flushleft}
+    \end{minipage} \\
+    \begin{flushleft}
+      {\small\color{gray}{
+      \today}}
+      \vspace{2cm}  % Add some vertical space
+      \hspace{2cm}  % First indentation
+      \hspace{2cm}  % Second indentation
+      \hrule 
+      \vspace{0.5cm}  % Add some vertical space
+      \hspace{2cm}  % First indentation
+      \hspace{2cm}  % Second indentation
+    \end{flushleft}
+    \begin{flushleft}
+      \textsc{\LARGE \bfseries Arbiter Security Review}\\[0.5 cm]  % Title
+      \textsc{\large Engagement II}\\[2.0 cm]  % Subtitle
+  
+      \begin{tabular}{ll}  % Reviewer section in table format
+        Waylon Jepsen & Lead \\
+        Colin Roberts & Lead \\
+        Could be you & Researcher \\
+      \end{tabular}
+  
+      \vfill
+  
+    \end{flushleft}
+  \end{titlepage}
+
+\hypertarget{executive-summary}{%
+\section{Executive Summary}\label{executive-summary}}
+
+% FIXME
+Over the course of X days in total, \href{https://protocolname.come}{Protocolname} engaged with
+\href{https://spearbit.com}{Spearbit} to review
+% FIXME
+\href{https://github.com/permalink-to-protocolname}{Protocolname protocol}. 
+
+We found a total of X issues with Protocolname. 
+
+\begin{longtable}[c]{|l|l|}
+\hline \textbf{Repository} & \textbf{Commit} \\
+
+\hline
+% FIXME
+\href{https://github.com/permalink}{Projectname} &
+% FIXME The commit hash
+\href{https://github.com/permalink/commit/commithash}{commithash} \\
+\hline
+\end{longtable}
+
+\begin{longtable}[]{|l|l|}
+
+\caption*{\textbf{Summary}}
+% FIXME
+\hline Type of Project & TYPE \\   
+% FIXME
+\hline Timeline & Feb 29, 2022 - Feb 31, 2022   \\
+% FIXME
+\hline Methods & Manual Review \\
+% FIXME
+\hline Documentation & High \\
+% FIXME
+\hline Testing Coverage & High  \\
+\hline
+\end{longtable}
+
+
+\begin{longtable}[]{|l|l|}
+\caption*{\textbf{Total Issues}}
+% FIXME
+\hline Critical Risk & 1 \\
+% FIXME
+\hline High Risk & 1 \\
+% FIXME
+\hline Medium Risk & 0 \\ 
+% FIXME
+\hline Low Risk & 0 \\
+\hline Gas Optimizations and Informational & 0 \\
+\hline
+\end{longtable}
+
+\tableofcontents
+
+\section{Primitive}\label{primitive}
+
+Primitive is a team of deeply technical passionate indciduals, building
+the future of finance.
+You can find more information about us at \href{https://primitive.finance}{primitive.finance}.
+
+\section{Introduction}\label{introduction}
+
+This report is a security review of the Optimism Decentralization infrastructure: The dispute game.
+
+\subsection{Dispute Game}\label{dispute-game}
+
+The dispute game is a game theoretic game that will decentralize the technical infrastructure of the Optimism Stack.
+This engadgement is designed to investigate these assumptions at both a game thoeritic level and a technical level.
+The focus of the security review was trying to break the two assumptions
+
+\subsubsection{How does OpLabs define sucess}
+I asked ben how he would define sucess for the engadgement and he was thinking (very rough estimates we can change)
+Sucess: 
+
+\begin{itemize}
+  \item 100M Sims run on a (single or many but takes about 45min to compute) connon trace (on avg 1.5b instructions) with at least 5 agents behaviors.
+  \item Bonding: Something showing the volatility at risk of bonding profile (the probability of a bond going under water for given gas worst case gas movement and what that would mean for Layer one). (was a specific ask), I think we can make suggestions on the best way to price bonds here.
+  \item A report with analysis insights outlined for decision makers (this document will evolve into this).
+  \item I(Waylon) believe there is value to be offered in theoretical results of strong security properties. This is more the tastful way in which we can deliver this.
+\end{itemize}
+
+\subsubsection{How Does Primtive Define Sucess}
+
+\begin{itemize}
+  \item A report with analysis insights outlined for decision makers (this document will evolve into this).
+  \item By meeting optimisms success criteria.
+  \item Improving our arbiter api and number of arbiter related assets.
+  \item Capturing Brand value 
+\end{itemize}
+
+\subsubsection{Conservative Time Estimates}
+I believe that is we allocated 2-3 people (Waylon, Colin, maybe Matt), full time work it would take 8 Weeks (ben was trying to convince me we could do it in a month), its possible we could get it done in less. 
+I think that we can't work on all of it all the time but there is certainly going to be things that everyone can help out with.
+That being said I think that Matt and Colin and I have the most experience with Arbiter and are the strongest candidates for the job.
+\subsubsection{Resources on the dispute game}
+
+\begin{itemize}
+  \item \href{https://www.youtube.com/watch?v=nIN5sNc6nQM}{Optimism Dispute Game Overview}
+  \item \href{https://github.com/ethereum-optimism/optimism/blob/develop/specs/fault-dispute-game.md}{Optimism Specs}
+  \item \href{https://github.com/anton-rs/durin}{Durin}
+  \item \href{https://www.notion.so/oplabs/Bondorama-886cd1cfefcc44649f3e16f47d9a4477?pvs=4}{notion on some elementary bond analysis}
+  \item Our Shared Repository: Pending clabby on this
+\end{itemize}
+
+A dispute game is an abstraction over a state machine that takes in an input from an ordered set (instruction).
+
+State machine is defined as a five tuple $\{\Sigma, S, S_0, \delta, F\}$ follows:
+
+$\Sigma$ is the Set of all inputs denoted by an alphabet $\sigma$. $\Sigma$ represents all the possible states of the MIPs Cannon VM (link to cannon), which is a subset of 55 instructions of the MIPs architecture and several linux sys calls. The system calls are for user io which are done through the kernal.}
+
+In the dispute game state machine both the states and the inputs are the same such that $\Sigma = \S$.
+
+The initial State $S_0$ is the state a constant refered to as the absolute prestate. 
+
+The state transition function denoted $\delta: (S,O) \rightarrow S$ where $O$ is external data from a system call to a contract asking for the pri-image of a hash (could be any 0-4.8MBs of data(can we compute the size of that search space?))) and returns a new state. In practice, this is implemented by querying a pre-image of a hash
+  \text{Final state is a state s in S}
+
+The two big high level assumptions we are trying to break are:
+\begin{enumerate}
+  \tightlist
+  \item An honest player should never loose the dispute game.
+  \item It should always be profitable to be an honest player.
+\end{enumerate}
+Meaning we want to attempt to provide evidence by counter example. 
+
+\paragraph{Game resolution (solving the game)}
+
+This is what a \emph{connon-trace provider} does when it solves for the correct trace. 
+This is also how durin will be solving our game states.
+
+The game state is a binary tree where each node is a state and each leaf is an instruction.
+The instructions are ordered left to right (first to last) and read in (Ask ben how many at a time).
+
+For any node $n$ on the set of nodes in our tree $N$ The position of a node as an index, which is calculated using the formula $f(n) = 2^{n_d} + n_{i}(Ask ben here)$ where $n_d$ is the depth of the node in the tree and $n_i$ is the index zero indexed from left to right at this depth.
+
+In the context of the game, the only actions a player can take are to either agree or disagree to play. Durin functions as a state machine, taking in inputs (r).
+The way durin's cannon trace solver works is described in the bisection algorithm. The same first move (disagree, or disagree) must always be made in order to disagree with a trace.
+this is done by a tree bisdection algorithm in practice, where the leafs of the nodes are the instructions 
+
+\emph{Disclaimer:} This security review does not guarantee against a
+hack. It is a snapshot in time of brink according to the specific commit
+by a three person team. Any modifications to the code will require a new
+security review.
+
+\subsection{Agent Based Modeling}\label{agent-based-modeling}
+
+Arbiter uses agent based modeling with the rust evm to provide security
+and risk analysis insights that are traditionally more difficult to
+audit. Our agent architecture for the dispute game is as follows:
+
+\begin{itemize}
+\tightlist
+\item
+  Oracle Agent: Responsible for syncing the dispute game state by
+  loading the latest claim and then solving the correct move for that
+  claim by making an api call to durin. The oracle agent will then send
+  honest moves to the honest agent.
+\item
+  Honest Agent: The Honest Agent is responsible for receiving the honest
+  moves from the oracle agent and then acting on them in the dispute
+  game.
+\item
+  Dishonest Agent: The Dishonest Agent is responsible for acting
+  attempting to resolve an incorrect move in the dispute game, We will
+  perturb the dishonest agent to look for insecurities in the protocol.
+\end{itemize}
+
+\subsection{Simulation Components}\label{simulation-components}
+
+The system is composed of several agents and contracts. Below is a summary of the components:
+
+\begin{itemize}
+\item \textbf{Agents:}
+  \begin{itemize}
+  \item Oracle Agent: Responsible for syncing the dispute game state by loading the latest claim and then solving the correct move for that claim by making an api call to durin. The oracle agent will then send honest moves to the honest agent.
+  \item Honest Agent: Responsible for receiving the honest moves from the oracle agent and then acting on them in the dispute game.
+  \item Dishonest Agent: Responsible for attempting to resolve an incorrect move in the dispute game. We will perturb the dishonest agent to look for insecurities in the protocol.
+  \end{itemize}
+\item \textbf{Contracts:}
+  \begin{itemize}
+  \item Dispute Game: Holds all moves currently in the dispute game.
+  \item Dispute Game Factory: Has pointers to all created dispute games.
+  \end{itemize}
+\item \textbf{Oracle:}
+  \begin{itemize}
+  \item Durin: A single oracle used in the system.
+  \end{itemize}
+\end{itemize}
+
+% maybe put a nice photo from miro here
+
+\subsection{Simulation Setup}\label{simulation-setup}
+The state of the evm we simulated on was created by running a forge deploy script to an anvil instance and then dumping the state. The instance was then loaded into revm through arbiter.
+
+\subsection{Risk Modeling}\label{risk-modeling}
+
+We will perturb over the infinite space of dishost actors for the
+dispute game. We will also perturb various L1 preposals. This willenable us to model the risk of the protocol in a more robust way. We will also measure the bond mechanics of the dispute game to ensure that there are no game theoretic attacks that can be made on the protocol.
+
+\section{Findings}\label{findings}
+
+\subsection{Critical Risk}\label{critical-risk}
+
+\subsection{High Risk}\label{high-risk}
+
+\subsubsection{Issue title (Only first word should be capitalized;
+titles should never end with
+punctuation)}\label{issue-title-only-first-word-should-be-capitalized-titles-should-never-end-with-punctuation}
+
+\textbf{Severity:} High
+
+\textbf{Context:}
+\href{https://github.com/actuallink}{\texttt{Contract.sol\#L160-L165}}
+
+\textbf{Description:}
+
+\begin{minted}[]{solidity}
+contract Test {
+    ...
+    // Code blocks must be indented with 4 spaces.
+}
+\end{minted}
+
+\textbf{Recommendation:}
+
+\begin{minted}[]{diff}
++ use diff syntax to describe what should be changed
+- ...
+\end{minted}
+
+\textbf{Project:} Fixed in \href{Https://github.com/actuallink}{PR \#1}.
+
+\textbf{Spearbit:} Resolved.
+
+\subsection{Medium Risk}\label{medium-risk}
+
+\subsection{Low Risk}\label{low-risk}
+
+\subsection{Gas Optimizations}\label{gas-optimizations}
+
+\section{Additional Comments}\label{additional-comments}
+
+\textbackslash clearpage
+
+\section{Appendix}\label{appendix}
+
+
+\end{document}
