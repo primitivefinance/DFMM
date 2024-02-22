@@ -109,7 +109,7 @@ contract GeometricMeanTest is Test {
         _;
     }
 
-    /// @dev Initializes a basic pool in dfmm.
+    /// @dev Initializes a basic pool in dfmm with very deep liquidity.
     modifier deep() {
         vm.warp(0);
         GeometricMeanParams memory params = GeometricMeanParams({
