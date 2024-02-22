@@ -19,7 +19,5 @@ report/report.aux
 report/main.out
 report/img/.DS_Store
 report/summary.aux
-_minted-main/default.pygstyle
-report/assets/img/.DS_Store
-report/assets/img/.DS_Store
+_minted-main/*
 report/assets/img/.DS_Store
