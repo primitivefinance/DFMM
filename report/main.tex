@@ -23,16 +23,12 @@
 % https://tex.stackexchange.com/questions/299/how-to-get-long-texttt-sections-to-break
 \usepackage[htt]{hyphenat}
 
-% For syntax highlighting
-\usepackage{minted}
-\setminted[]{frame=single,fontsize=\small,samepage=true,breaklines=true}
-
 \usepackage{xcolor}
-\definecolor{spearbitlink}{HTML}{000066}
+\definecolor{arbiter}{HTML}{000066}
 
 % For links
 \usepackage[hyphens]{url}
-\PassOptionsToPackage{hyphens}{url}\usepackage[hidelinks = true, colorlinks = true, linkcolor = black, urlcolor = spearbitlink]{hyperref}
+\PassOptionsToPackage{hyphens}{url}\usepackage[hidelinks = true, colorlinks = true, linkcolor = black, urlcolor = arbiter]{hyperref}
 
 % Fixing a pandoc related error
 % https://tex.stackexchange.com/questions/257418/error-tightlist-converting-md-file-into-pdf-using-pandoc
@@ -46,18 +42,14 @@
 \usepackage{tikz}
 
 
-% Adding breaklines=true to minted's settings seems to produce some errors related to fonts. This is
-% the only fix that worked.
-% https://stackoverflow.com/questions/70075331/pdflatex-file-cmss10-t3-cannot-open-type-1-font-file-for-read
-
 \pdfmapfile{-mpfonts.map}
 \begin{document}
-\setmainfont{Daggersquare regular.otf}
+% \setmainfont{Daggersquare regular.otf}
 
 
 \begin{titlepage}
     \begin{minipage}[c]{0.4\textwidth}
-      \includegraphics[width=0.70\textwidth]{img/primitive-wordmark-dark.png} \\  % Logo at the top left, made bigger 
+      \includegraphics[width=0.70\textwidth]{report/assets/img/primitive-wordmark-dark.png} \\  % Logo at the top left, made bigger 
     \end{minipage}
     \hspace{0.4\textwidth}
     \begin{minipage}[c]{0.2\textwidth}
@@ -94,12 +86,12 @@
     \end{flushleft}
   \end{titlepage}
 
-\hypertarget{executive-summary}{%
-\section{Executive Summary}\label{executive-summary}}
+% \hypertarget{executive-summary}
+\section{Executive Summary}\label{executive-summary}
 
 % FIXME
 Over the course of X days in total, \href{https://protocolname.come}{Protocolname} engaged with
-\href{https://spearbit.com}{Spearbit} to review
+\href{https://github.com/primitivefinance}{Primitive} to review
 % FIXME
 \href{https://github.com/permalink-to-protocolname}{Protocolname protocol}. 
 
@@ -203,8 +195,7 @@ A dispute game is an abstraction over a state machine that takes in an input fro
 
 State machine is defined as a five tuple $\{\Sigma, S, S_0, \delta, F\}$ follows:
 
-$\Sigma$ is the Set of all inputs denoted by an alphabet $\sigma$. $\Sigma$ represents all the possible states of the MIPs Cannon VM (link to cannon), which is a subset of 55 instructions of the MIPs architecture and several linux sys calls. The system calls are for user io which are done through the kernal.}
-
+$\Sigma$ is the Set of all inputs denoted by an alphabet $\sigma$. $\Sigma$ represents all the possible states of the MIPs Cannon VM (link to cannon), which is a subset of 55 instructions of the MIPs architecture and several linux sys calls. The system calls are for user io which are done through the kernal.
 In the dispute game state machine both the states and the inputs are the same such that $\Sigma = \S$.
 
 The initial State $S_0$ is the state a constant refered to as the absolute prestate. 
@@ -311,23 +302,13 @@ punctuation)}\label{issue-title-only-first-word-should-be-capitalized-titles-sho
 
 \textbf{Description:}
 
-\begin{minted}[]{solidity}
-contract Test {
-    ...
-    // Code blocks must be indented with 4 spaces.
-}
-\end{minted}
 
 \textbf{Recommendation:}
 
-\begin{minted}[]{diff}
-+ use diff syntax to describe what should be changed
-- ...
-\end{minted}
 
 \textbf{Project:} Fixed in \href{Https://github.com/actuallink}{PR \#1}.
 
-\textbf{Spearbit:} Resolved.
+\textbf{Arbiter:} Resolved.
 
 \subsection{Medium Risk}\label{medium-risk}
 
