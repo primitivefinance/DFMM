@@ -184,10 +184,11 @@ $$
 Note that $L$ effectively changes as parameters of the trading function change.
 To see this, note that the trading function must always satisfy:
 $$
-\Phi^{-1}\left(\frac{x}{L}\right)+\Phi^{-1}\left(\frac{y}{KL}\right) + \sigma \sqrt{\tau} = 0.
+\Phi^{-1}\left(\frac{x}{L}\right)+\Phi^{-1}\left(\frac{y}{
+\mu L}\right) + \sigma  = 0.
 $$
-For new parameters, $K'$, $\sigma'$ and $\tau'$, we must find an $L'$ so that the trading function is satisfied:
+For new parameters $\mu'$ and $\sigma'$ we must find an $L'$ so that the trading function is satisfied:
 $$
-\Phi^{-1}\left(\frac{x}{L'}\right)+\Phi^{-1}\left(\frac{y}{K'L'}\right) + \sigma' \sqrt{\tau'} = 0.
+\Phi^{-1}\left(\frac{x}{L'}\right)+\Phi^{-1}\left(\frac{y}{\mu'L'}\right) + \sigma' = 0.
 $$
 We can find this new $L'$ using a root finding algorithm. 
