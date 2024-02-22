@@ -6,6 +6,14 @@ import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/lib/DynamicParamLib.sol";
 
+/// @dev Parameterization of the GeometricMean curve.
+struct GeometricMeanParams {
+    uint256 wX;
+    uint256 wY;
+    uint256 swapFee;
+    address controller;
+}
+
 /**
  * @notice Geometric Mean Market Maker.
  */
@@ -20,19 +28,11 @@ contract GeometricMean is IStrategy {
         address controller;
     }
 
-    /// @dev Parameterization of the G3M curve.
-    struct GeometricMeanParams {
-        uint256 wX;
-        uint256 wY;
-        uint256 swapFee;
-        address controller;
-    }
-
     /// @inheritdoc IStrategy
     address public immutable dfmm;
 
     /// @inheritdoc IStrategy
-    string public constant name = "G3M";
+    string public constant name = "GeometricMean";
 
     mapping(uint256 => InternalParams) public internalParams;
 

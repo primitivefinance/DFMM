@@ -72,7 +72,7 @@ library GeometricMeanLib {
         uint256 rX,
         uint256 rY,
         uint256 L,
-        GeometricMean.GeometricMeanParams memory params
+        GeometricMeanParams memory params
     ) internal pure returns (int256) {
         uint256 a = uint256(int256(rX.divWadDown(L)).powWad(int256(params.wX)));
         uint256 b = uint256(int256(rY.divWadDown(L)).powWad(int256(params.wY)));
@@ -84,7 +84,7 @@ library GeometricMeanLib {
     function computeNextLiquidity(
         uint256 rX,
         uint256 rY,
-        GeometricMean.GeometricMeanParams memory params
+        GeometricMeanParams memory params
     ) internal pure returns (uint256 L) {
         return uint256(int256(rX).powWad(int256(params.wX))).mulWadUp(
             uint256(int256(rY).powWad(int256(params.wY)))

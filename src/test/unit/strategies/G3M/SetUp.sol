@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "src/strategies/G3M/G3M.sol";
-import "src/solvers/G3M/G3MSolver.sol";
+import "src/GeometricMean/GeometricMean.sol";
+import "src/GeometricMean/GeometricMeanSolver.sol";
 import "../../DFMM/SetUp.sol";
 
 contract G3MSetUp is SetUp {
-    G3M g3m;
-    G3MSolver solver;
+    GeometricMean g3m;
+    GeometricMeanSolver solver;
 
     uint256 public POOL_ID;
 
-    G3M.G3MParams defaultParams = G3M.G3MParams({
+    GeometricMeanParams defaultParams = GeometricMeanParams({
         wX: 0.5 ether,
         wY: 0.5 ether,
         swapFee: TEST_SWAP_FEE,
@@ -32,8 +32,8 @@ contract G3MSetUp is SetUp {
 
         lex = new Lex(address(tokenX), address(tokenY), ONE);
         dfmm = new DFMM(address(0));
-        g3m = new G3M(address(dfmm));
-        solver = new G3MSolver(address(g3m));
+        g3m = new GeometricMean(address(dfmm));
+        solver = new GeometricMeanSolver(address(g3m));
 
         tokenX.approve(address(dfmm), type(uint256).max);
         tokenY.approve(address(dfmm), type(uint256).max);

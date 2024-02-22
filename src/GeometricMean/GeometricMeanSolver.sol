@@ -28,14 +28,15 @@ contract GeometricMeanSolver {
         pure
         returns (bytes memory data)
     {
-        return G3MLib.encodeFeeUpdate(swapFee);
+        return GeometricMeanLib.encodeFeeUpdate(swapFee);
     }
 
     function prepareWeightXUpdate(
         uint256 targetWeightX,
         uint256 targetTimestamp
     ) public pure returns (bytes memory) {
-        return G3MLib.encodeWeightXUpdate(targetWeightX, targetTimestamp);
+        return
+            GeometricMeanLib.encodeWeightXUpdate(targetWeightX, targetTimestamp);
     }
 
     function prepareControllerUpdate(address controller)
@@ -43,16 +44,16 @@ contract GeometricMeanSolver {
         pure
         returns (bytes memory)
     {
-        return G3MLib.encodeControllerUpdate(controller);
+        return GeometricMeanLib.encodeControllerUpdate(controller);
     }
 
     function fetchPoolParams(uint256 poolId)
         public
         view
-        returns (G3M.G3MParams memory)
+        returns (GeometricMeanParams memory)
     {
         return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (G3M.G3MParams)
+            IStrategy(strategy).getPoolParams(poolId), (GeometricMeanParams)
         );
     }
 
@@ -67,7 +68,7 @@ contract GeometricMeanSolver {
     function getInitialPoolData(
         uint256 rx,
         uint256 S,
-        G3M.G3MParams memory params
+        GeometricMeanParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolData(rx, S, params);
     }
@@ -121,7 +122,9 @@ contract GeometricMeanSolver {
         uint256 rx,
         uint256 ry
     ) public view returns (uint256) {
-        return G3MLib.computeNextLiquidity(rx, ry, fetchPoolParams(poolId));
+        return GeometricMeanLib.computeNextLiquidity(
+            rx, ry, fetchPoolParams(poolId)
+        );
     }
 
     function getNextReserveX(
@@ -150,11 +153,11 @@ contract GeometricMeanSolver {
         Reserves memory endReserves;
         (startReserves.rx, startReserves.ry, startReserves.L) =
             getReservesAndLiquidity(poolId);
-        G3M.G3MParams memory poolParams = fetchPoolParams(poolId);
+        GeometricMeanParams memory poolParams = fetchPoolParams(poolId);
 
         uint256 amountOut;
 
-        uint256 startComputedL = G3MLib.computeNextLiquidity(
+        uint256 startComputedL = GeometricMeanLib.computeNextLiquidity(
             startReserves.rx, startReserves.ry, fetchPoolParams(poolId)
         );
 
@@ -225,7 +228,7 @@ contract GeometricMeanSolver {
         uint256 S,
         uint256 vUpper
     ) public view returns (uint256) {
-        G3M.G3MParams memory params = fetchPoolParams(poolId);
+        GeometricMeanParams memory params = fetchPoolParams(poolId);
         (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
         return computeOptimalLower(S, rx, ry, L, vUpper, params);
     }
@@ -235,7 +238,7 @@ contract GeometricMeanSolver {
         uint256 S,
         uint256 vUpper
     ) public view returns (uint256) {
-        G3M.G3MParams memory params = fetchPoolParams(poolId);
+        GeometricMeanParams memory params = fetchPoolParams(poolId);
         (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
         return computeOptimalRaise(S, rx, ry, L, vUpper, params);
     }
@@ -245,7 +248,7 @@ contract GeometricMeanSolver {
         uint256 S,
         uint256 v
     ) public view returns (int256) {
-        G3M.G3MParams memory params = fetchPoolParams(poolId);
+        GeometricMeanParams memory params = fetchPoolParams(poolId);
         (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
         return diffLower(S, rx, ry, L, v, params);
     }
@@ -255,7 +258,7 @@ contract GeometricMeanSolver {
         uint256 S,
         uint256 v
     ) public view returns (int256) {
-        G3M.G3MParams memory params = fetchPoolParams(poolId);
+        GeometricMeanParams memory params = fetchPoolParams(poolId);
         (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
         return diffRaise(S, rx, ry, L, v, params);
     }
@@ -266,7 +269,7 @@ contract GeometricMeanSolver {
         view
         returns (uint256 price)
     {
-        G3M.G3MParams memory params = fetchPoolParams(poolId);
+        GeometricMeanParams memory params = fetchPoolParams(poolId);
         (uint256 rx, uint256 ry,) = getReservesAndLiquidity(poolId);
         price = computePrice(rx, ry, params);
     }
@@ -277,7 +280,7 @@ contract GeometricMeanSolver {
     ) public view returns (int256) {
         (uint256 rx, uint256 ry, uint256 L) =
             abi.decode(data, (uint256, uint256, uint256));
-        G3M.G3MParams memory params = fetchPoolParams(poolId);
-        return G3MLib.tradingFunction(rx, ry, L, params);
+        GeometricMeanParams memory params = fetchPoolParams(poolId);
+        return GeometricMeanLib.tradingFunction(rx, ry, L, params);
     }
 }
