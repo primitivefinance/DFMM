@@ -178,6 +178,8 @@ contract GeometricMean is IStrategy {
             revert("invalid swap: inputs x and y have the same sign!");
         }
 
+        uint256 poolId = poolId;
+
         liquidityDelta = int256(nextL)
             - int256(
                 GeometricMeanLib.computeNextLiquidity(
