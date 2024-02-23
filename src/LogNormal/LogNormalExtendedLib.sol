@@ -315,35 +315,33 @@ function diffLower(
     int256 iV = int256(v);
     int256 gamma = I_ONE - swapFee;
 
-    int256 ierfcNum = I_TWO.wadMul(iX).wadMul(iV + iX);
-    int256 ierfcDen = iL.wadMul(iV + iX - iV.wadMul(gamma));
+    int256 ierfcNum = I_TWO.wadMul(iV + iX);
+    int256 ierfcDen = iL + iV - iV.wadMul(gamma);
     int256 ierfcRes = Gaussian.ierfc(ierfcNum.wadDiv(ierfcDen));
 
-    int256 firstFrac;
+    int256 a;
     {
-        int256 firstExp = -(sigma.powWad(I_TWO).wadMul(tau).wadDiv(I_TWO));
+        int256 firstExp = -(sigma.wadMul(sigma).wadMul(tau).wadDiv(I_TWO));
         int256 secondExp =
             sqrtTwo.wadMul(sigma).wadMul(sqrtTau).wadMul(ierfcRes);
 
         int256 first = FixedPointMathLib.expWad(firstExp + secondExp);
-        int256 second = strike.wadMul(iX).wadMul(gamma);
+        int256 second = strike.wadMul(iL + iX.wadMul(-I_ONE + gamma));
 
         int256 firstNum = first.wadMul(second);
-        int256 firstDen = iV + iX - iV.wadMul(gamma);
-        firstFrac = firstNum.wadDiv(firstDen);
+        int256 firstDen = iL + iV - iV.wadMul(gamma);
+        a = firstNum.wadDiv(firstDen);
     }
 
-    int256 secondFrac;
+    int256 b;
     {
-        int256 first = strike.wadMul(iL).wadMul(-I_ONE + gamma);
+        int256 first = I_HALF.wadMul(strike).wadMul(-I_ONE + gamma);
         int256 erfcFirst = sigma.wadMul(sqrtTau).wadDiv(sqrtTwo);
         int256 erfcSecond = ierfcRes;
-        int256 num = first.wadMul(Gaussian.erfc(erfcFirst - erfcSecond));
-        int256 den = I_TWO.wadMul(iX);
-        secondFrac = num.wadDiv(den);
+        b = first.wadMul(Gaussian.erfc(erfcFirst - erfcSecond));
     }
 
-    return -iS + firstFrac + secondFrac;
+    return -iS + a + b;
 }
 
 function diffRaise(
@@ -363,40 +361,40 @@ function diffRaise(
     int256 sqrtTwo = int256(FixedPointMathLib.sqrt(TWO) * 1e9);
     int256 sqrtTau = int256(FixedPointMathLib.sqrt(params.tau) * 1e9);
     int256 iS = int256(S);
-    int256 iX = int256(rX);
     int256 iY = int256(rY);
     int256 iL = int256(L);
     int256 iV = int256(v);
     int256 gamma = I_ONE - swapFee;
 
-    int256 ierfcNum = I_TWO.wadMul(iY).wadMul(iV + iY);
-    int256 ierfcDen = -strike.wadMul(iL).wadMul(iV + iY)
-        + strike.wadMul(iL).wadMul(iV).wadMul(gamma);
-    int256 ierfcRes = Gaussian.ierfc(-ierfcNum.wadDiv(ierfcDen));
+    int256 ierfcNum = I_TWO.wadMul(iV + iY);
+    int256 ierfcDen = strike.wadMul(iL) + iV - iV.wadMul(gamma);
+    int256 ierfcRes = Gaussian.ierfc(ierfcNum.wadDiv(ierfcDen));
 
-    int256 firstFrac;
+    int256 a;
     {
-        int256 firstExp = -(sigma.powWad(I_TWO).wadMul(tau).wadDiv(I_TWO));
+        int256 firstExp = -(sigma.wadMul(sigma).wadMul(tau).wadDiv(I_TWO));
         int256 secondExp =
             sqrtTwo.wadMul(sigma).wadMul(sqrtTau).wadMul(ierfcRes);
         int256 first = FixedPointMathLib.expWad(firstExp + secondExp);
-        int256 second = iS.wadMul(iY).wadMul(gamma);
-        int256 firstNum = first.wadMul(second);
-        int256 firstDen = strike.wadMul(iV + iY - iV.wadMul(gamma));
-        firstFrac = firstNum.wadDiv(firstDen);
+        int256 second = iS.wadMul(strike.wadMul(iL) + iY.wadMul(-I_ONE + gamma));
+
+        int256 num = first.wadMul(second);
+        int256 den = strike.wadMul(strike.wadMul(iL) + iV - iV.wadMul(gamma));
+        a = num.wadDiv(den);
     }
 
-    int256 secondFrac;
+    int256 b;
     {
-        int256 first = iL.wadMul(iS).wadMul(-I_ONE + gamma);
+        int256 first = iS.wadMul(-I_ONE + gamma);
         int256 erfcFirst = sigma.wadMul(sqrtTau).wadDiv(sqrtTwo);
         int256 erfcSecond = ierfcRes;
         int256 num = first.wadMul(Gaussian.erfc(erfcFirst - erfcSecond));
-        int256 den = I_TWO.wadMul(iY);
-        secondFrac = num.wadDiv(den);
+        int256 den = I_TWO.wadMul(strike);
+
+        b = num.wadDiv(den);
     }
 
-    return -I_ONE + firstFrac + secondFrac;
+    return -I_ONE + a + b;
 }
 
 function computeOptimalLower(
