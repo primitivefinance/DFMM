@@ -6,13 +6,24 @@ import "solmate/utils/FixedPointMathLib.sol";
 import "src/lib/BisectionLib.sol";
 import "forge-std/console2.sol";
 
+struct LogNormalParams {
+    uint256 strike;
+    uint256 sigma;
+    uint256 tau;
+    uint256 swapFee;
+    address controller;
+}
+
 interface LiquidExchange {
     function swap(address token, uint256 amount) external;
     function price() external returns (uint256);
 }
 
-interface StrategyLike {
+interface DfmmLike {
     function swap(uint256 poolId, bytes calldata data) external;
+}
+
+interface SolverLike {
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
@@ -31,7 +42,17 @@ interface StrategyLike {
         external
         view
         returns (uint256, uint256, uint256);
+    function strategy() external view returns (address);
 }
+
+interface LogNormalStrategyLike {
+  function fetchPoolParams(uint256 poolId) external view returns (LogNormalParams memory);
+}
+
+interface StrategyLike {
+  function name() external view returns (string memory);
+}
+
 
 interface TokenLike {
     function transferFrom(address, address, uint256) external;
@@ -69,6 +90,9 @@ contract AtomicV2 {
     address public solver;
     address public asset;
     address public quote;
+    address public strategy;
+
+    string public strategyName;
 
     /// @dev Since token x is transferred inside the arbitrage loop, this stores that value in the last arb loop.
     uint256 public intermediateTokenXBalance;
@@ -90,16 +114,36 @@ contract AtomicV2 {
         liquidExchange = liquidExchangeAddress;
         asset = assetAddress;
         quote = quoteAddress;
+        strategy = SolverLike(solver).strategy();
+        strategyName = StrategyLike(strategy).name();
     }
 
     bool public XTOY = true;
     bool public YTOX = false;
 
     error AttemptedProfit(int256 profit);
+    event LogDfmmData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry, uint256 liq, uint256 strike, uint256 sigma, uint256 tau);
+    event LogLexData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry);
+    event LogArbData(uint256 xBalance, uint256 yBalance, uint256 timestamp);
 
     function lower_exchange_price(uint256 poolId, uint256 input) external {
-        uint256 price = StrategyLike(solver).internalPrice(poolId);
-        emit Price(price, block.timestamp);
+        uint256 price = SolverLike(solver).internalPrice(poolId);
+
+        if (keccak256(abi.encode(strategyName)) == keccak256(abi.encode("LogNormal"))) {
+          (uint256 rx, uint256 ry, uint256 L) = SolverLike(solver).getReservesAndLiquidity(poolId);
+          LogNormalParams memory params = LogNormalStrategyLike(solver).fetchPoolParams(poolId);
+          emit LogDfmmData(price, block.timestamp, rx, ry, L, params.strike, params.sigma, params.tau);
+        }
+
+        uint256 lexPrice = LiquidExchange(liquidExchange).price();
+        uint256 lexBalanceX = TokenLike(asset).balanceOf(liquidExchange);
+        uint256 lexBalanceY = TokenLike(quote).balanceOf(liquidExchange);
+        emit LogLexData(lexPrice,  block.timestamp, lexBalanceX, lexBalanceY);
+
+        uint256 arbBalanceX = TokenLike(asset).balanceOf(msg.sender);
+        uint256 arbBalanceY = TokenLike(quote).balanceOf(msg.sender);
+        emit LogArbData(arbBalanceX, arbBalanceY, block.timestamp);
+
         // Arbitrageur Y -> AtomicV2
         _invoice(input);
 
@@ -114,8 +158,22 @@ contract AtomicV2 {
     }
 
     function raise_exchange_price(uint256 poolId, uint256 input) external {
-        uint256 price = StrategyLike(solver).internalPrice(poolId);
-        emit Price(price, block.timestamp);
+        uint256 price = SolverLike(solver).internalPrice(poolId);
+        if (keccak256(abi.encode(strategyName)) == keccak256(abi.encode("LogNormal"))) {
+          (uint256 rx, uint256 ry, uint256 L) = SolverLike(solver).getReservesAndLiquidity(poolId);
+          LogNormalParams memory params = LogNormalStrategyLike(solver).fetchPoolParams(poolId);
+          emit LogDfmmData(price, block.timestamp, rx, ry, L, params.strike, params.sigma, params.tau);
+        }
+
+        uint256 lexPrice = LiquidExchange(liquidExchange).price();
+        uint256 lexBalanceX = TokenLike(asset).balanceOf(liquidExchange);
+        uint256 lexBalanceY = TokenLike(quote).balanceOf(liquidExchange);
+        emit LogLexData(lexPrice,  block.timestamp, lexBalanceX, lexBalanceY);
+
+        uint256 arbBalanceX = TokenLike(asset).balanceOf(msg.sender);
+        uint256 arbBalanceY = TokenLike(quote).balanceOf(msg.sender);
+        emit LogArbData(arbBalanceX, arbBalanceY, block.timestamp);
+
         // Arbitrageur Y -> AtomicV2
         _invoice(input);
 
@@ -194,7 +252,7 @@ contract AtomicV2 {
             uint256 estimatedOut,
             uint256 estimatedPrice,
             bytes memory payload
-        ) = StrategyLike(solver).simulateSwap(poolId, swapXIn, amountIn);
+        ) = SolverLike(solver).simulateSwap(poolId, swapXIn, amountIn);
 
         if (!valid) {
             revert SimulatedSwapFailure(
@@ -203,7 +261,7 @@ contract AtomicV2 {
         }
 
         // Execute the swap.
-        try StrategyLike(exchange).swap(poolId, payload) {
+        try DfmmLike(exchange).swap(poolId, payload) {
             // Swap succeeded, do nothing other than store the intermediary balance.
             if (swapXIn) {
                 // If X -> Y
@@ -262,7 +320,7 @@ contract AtomicV2 {
             bytes memory payload
         )
     {
-        return StrategyLike(solver).simulateSwap(poolId, swapXIn, amountIn);
+        return SolverLike(solver).simulateSwap(poolId, swapXIn, amountIn);
     }
 
     function cdf(int256 input) public pure returns (int256 output) {
