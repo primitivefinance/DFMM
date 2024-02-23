@@ -293,6 +293,44 @@ function findRootRaise(bytes memory data, uint256 v) pure returns (int256) {
     return diffRaise({ S: S, rX: rX, rY: rY, L: L, v: v, params: params });
 }
 
+struct DiffLowerStruct {
+    int256 ierfcNum;
+    int256 ierfcDen;
+    int256 ierfcRes;
+    uint256 sigma;
+    uint256 tau;
+    int256 sqrtTau;
+    uint256 rX;
+    uint256 strike;
+    uint256 v;
+    int256 sqrtTwo;
+    int256 gamma;
+}
+
+function computeDiffLowerFirstFrac(DiffLowerStruct memory params)
+    pure
+    returns (int256)
+{
+    int256 firstExp = -(
+        int256(params.sigma).powWad(I_TWO).wadMul(int256(params.tau)).wadDiv(
+            I_TWO
+        )
+    );
+    int256 secondExp = params.sqrtTwo.wadMul(int256(params.sigma)).wadMul(
+        params.sqrtTau
+    ).wadMul(params.ierfcRes);
+
+    int256 first = FixedPointMathLib.expWad(firstExp + secondExp);
+    int256 second = int256(params.strike).wadMul(int256(params.rX)).wadMul(
+        int256(params.gamma)
+    );
+
+    int256 firstNum = first.wadMul(second);
+    int256 firstDen = int256(params.v) + int256(params.rX)
+        - int256(params.v).wadMul(int256(params.gamma));
+    return firstNum.wadDiv(firstDen);
+}
+
 function diffLower(
     uint256 S,
     uint256 rX,
@@ -301,49 +339,60 @@ function diffLower(
     uint256 v,
     LogNormal.LogNormalParams memory params
 ) pure returns (int256) {
+    /*
     (int256 strike, int256 sigma, int256 tau, int256 swapFee) = (
         int256(params.strike),
         int256(params.sigma),
         int256(params.tau),
         int256(params.swapFee)
     );
+    */
     int256 sqrtTwo = int256(FixedPointMathLib.sqrt(TWO) * 1e9);
     int256 sqrtTau = int256(FixedPointMathLib.sqrt(params.tau) * 1e9);
+    /*
     int256 iS = int256(S);
     int256 iX = int256(rX);
     int256 iL = int256(L);
     int256 iV = int256(v);
     int256 gamma = I_ONE - swapFee;
+    */
 
-    int256 ierfcNum = I_TWO.wadMul(iX).wadMul(iV + iX);
-    int256 ierfcDen = iL.wadMul(iV + iX - iV.wadMul(gamma));
+    int256 ierfcNum = I_TWO.wadMul(int256(rX)).wadMul(int256(v) + int256(rX));
+    int256 ierfcDen = int256(L).wadMul(
+        int256(v) + (int256(rX))
+            - int256(v).wadMul(I_ONE - int256(params.swapFee))
+    );
     int256 ierfcRes = Gaussian.ierfc(ierfcNum.wadDiv(ierfcDen));
 
-    int256 firstFrac;
-    {
-        int256 firstExp = -(sigma.powWad(I_TWO).wadMul(tau).wadDiv(I_TWO));
-        int256 secondExp =
-            sqrtTwo.wadMul(sigma).wadMul(sqrtTau).wadMul(ierfcRes);
+    DiffLowerStruct memory parameters = DiffLowerStruct({
+        ierfcNum: ierfcNum,
+        ierfcDen: ierfcDen,
+        ierfcRes: ierfcRes,
+        sigma: params.sigma,
+        tau: params.tau,
+        sqrtTau: sqrtTau,
+        rX: rX,
+        strike: params.strike,
+        v: v,
+        sqrtTwo: sqrtTwo,
+        gamma: I_ONE - int256(params.swapFee)
+    });
 
-        int256 first = FixedPointMathLib.expWad(firstExp + secondExp);
-        int256 second = strike.wadMul(iX).wadMul(gamma);
-
-        int256 firstNum = first.wadMul(second);
-        int256 firstDen = iV + iX - iV.wadMul(gamma);
-        firstFrac = firstNum.wadDiv(firstDen);
-    }
+    int256 firstFrac = computeDiffLowerFirstFrac(parameters);
 
     int256 secondFrac;
     {
-        int256 first = strike.wadMul(iL).wadMul(-I_ONE + gamma);
-        int256 erfcFirst = sigma.wadMul(sqrtTau).wadDiv(sqrtTwo);
+        int256 first = int256(params.strike).wadMul(int256(L)).wadMul(
+            -I_ONE + I_ONE - int256(params.swapFee)
+        );
+        int256 erfcFirst = int256(params.sigma).wadMul(sqrtTau).wadDiv(sqrtTwo);
         int256 erfcSecond = ierfcRes;
         int256 num = first.wadMul(Gaussian.erfc(erfcFirst - erfcSecond));
-        int256 den = I_TWO.wadMul(iX);
+        int256 den = I_TWO.wadMul(int256(rX));
         secondFrac = num.wadDiv(den);
     }
 
-    return -iS + firstFrac + secondFrac;
+    return -int256(S) + firstFrac + secondFrac;
 }
 
 function diffRaise(
