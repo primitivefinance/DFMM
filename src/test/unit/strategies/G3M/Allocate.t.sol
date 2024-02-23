@@ -35,6 +35,17 @@ contract G3MAllocateTest is G3MSetUp {
         */
     }
 
+    function test_G3M_allocate_MultipleTimes() public init {
+        uint256 maxDeltaX = 0.1 ether;
+
+        (uint256 maxDeltaY, uint256 deltaLiquidity) =
+            solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
+
+        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
+        (uint256 deltaX, uint256 deltaY) = dfmm.allocate(POOL_ID, data);
+        (deltaX, deltaY) = dfmm.allocate(POOL_ID, data);
+    }
+
     function test_G3M_allocate_GivenY() public init {
         uint256 maxDeltaY = 0.1 ether;
 
