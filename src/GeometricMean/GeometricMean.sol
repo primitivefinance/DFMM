@@ -135,23 +135,9 @@ contract GeometricMean is IStrategy {
         // directly, let's fix this later.
         deltaLiquidity = deltaL;
 
-        GeometricMeanParams memory params =
-            abi.decode(getPoolParams(poolId), (GeometricMeanParams));
-
-        uint256 adjustedReserveX = computeXGivenL(
-            pool.totalLiquidity + deltaLiquidity,
-            computePrice(pool.reserveX, pool.reserveY, params),
-            params
-        );
-
-        uint256 adjustedReserveY = computeYGivenL(
-            pool.totalLiquidity + deltaLiquidity,
-            computePrice(pool.reserveX, pool.reserveY, params),
-            params
-        );
-
-        deltaX = adjustedReserveX - pool.reserveX;
-        deltaY = adjustedReserveY - pool.reserveY;
+        deltaX =
+            computeDeltaXGivenDeltaL(deltaL, pool.totalLiquidity, pool.reserveX);
+        deltaY = computeDeltaYGivenDeltaX(deltaX, pool.reserveX, pool.reserveY);
 
         if (deltaX > maxDeltaX) {
             revert DeltaError(maxDeltaX, deltaX);
@@ -161,12 +147,12 @@ contract GeometricMean is IStrategy {
             revert DeltaError(maxDeltaY, deltaY);
         }
 
-        uint256 adjustedLiquidity = pool.totalLiquidity + deltaLiquidity;
+        uint256 poolId = poolId;
 
         invariant = GeometricMeanLib.tradingFunction(
-            adjustedReserveX,
-            adjustedReserveY,
-            adjustedLiquidity,
+            pool.reserveX + deltaX,
+            pool.reserveY + deltaY,
+            pool.totalLiquidity + deltaLiquidity,
             abi.decode(getPoolParams(poolId), (GeometricMeanParams))
         );
 
@@ -194,23 +180,9 @@ contract GeometricMean is IStrategy {
             abi.decode(data, (uint256, uint256, uint256));
         deltaLiquidity = deltaL;
 
-        GeometricMeanParams memory params =
-            abi.decode(getPoolParams(poolId), (GeometricMeanParams));
-
-        uint256 adjustedReserveX = computeXGivenL(
-            pool.totalLiquidity - deltaLiquidity,
-            computePrice(pool.reserveX, pool.reserveY, params),
-            params
-        );
-
-        uint256 adjustedReserveY = computeYGivenL(
-            pool.totalLiquidity - deltaLiquidity,
-            computePrice(pool.reserveX, pool.reserveY, params),
-            params
-        );
-
-        deltaX = pool.reserveX - adjustedReserveX;
-        deltaY = pool.reserveY - adjustedReserveY;
+        deltaX =
+            computeDeltaXGivenDeltaL(deltaL, pool.totalLiquidity, pool.reserveX);
+        deltaY = computeDeltaYGivenDeltaX(deltaX, pool.reserveX, pool.reserveY);
 
         if (minDeltaX > deltaX) {
             revert DeltaError(minDeltaX, deltaX);
@@ -220,12 +192,12 @@ contract GeometricMean is IStrategy {
             revert DeltaError(minDeltaY, deltaY);
         }
 
-        uint256 adjustedLiquidity = pool.totalLiquidity - deltaLiquidity;
+        uint256 poolId = poolId;
 
         invariant = GeometricMeanLib.tradingFunction(
-            adjustedReserveX,
-            adjustedReserveY,
-            adjustedLiquidity,
+            pool.reserveX - deltaX,
+            pool.reserveY - deltaY,
+            pool.totalLiquidity - deltaLiquidity,
             abi.decode(getPoolParams(poolId), (GeometricMeanParams))
         );
 
