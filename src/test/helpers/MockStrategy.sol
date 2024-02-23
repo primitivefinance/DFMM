@@ -16,6 +16,7 @@ contract MockStrategy is IStrategy {
     function init(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -46,9 +47,10 @@ contract MockStrategy is IStrategy {
         }
     }
 
-    function validateAllocateOrDeallocate(
+    function validateAllocate(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -84,9 +86,27 @@ contract MockStrategy is IStrategy {
         }
     }
 
+    function validateDeallocate(
+        address sender,
+        uint256 poolId,
+        IDFMM.Pool calldata pool,
+        bytes calldata data
+    )
+        external
+        view
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256 reserveX,
+            uint256 reserveY,
+            uint256 totalLiquidity
+        )
+    { }
+
     function validateSwap(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -104,6 +124,7 @@ contract MockStrategy is IStrategy {
     function update(
         address sender,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     ) external { }
 
