@@ -7,7 +7,7 @@ pub use dynamic_param_lib::*;
     clippy::upper_case_acronyms,
     clippy::type_complexity,
     dead_code,
-    non_camel_case_types
+    non_camel_case_types,
 )]
 pub mod dynamic_param_lib {
     #[allow(deprecated)]
@@ -16,30 +16,37 @@ pub mod dynamic_param_lib {
             constructor: ::core::option::Option::None,
             functions: ::std::collections::BTreeMap::new(),
             events: ::std::collections::BTreeMap::new(),
-            errors: ::core::convert::From::from([(
-                ::std::borrow::ToOwned::to_owned("InvalidUpdateEnd"),
-                ::std::vec![::ethers::core::abi::ethabi::AbiError {
-                    name: ::std::borrow::ToOwned::to_owned("InvalidUpdateEnd"),
-                    inputs: ::std::vec![],
-                },],
-            )]),
+            errors: ::core::convert::From::from([
+                (
+                    ::std::borrow::ToOwned::to_owned("InvalidUpdateEnd"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned("InvalidUpdateEnd"),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+            ]),
             receive: false,
             fallback: false,
         }
     }
-    /// The parsed JSON ABI of the contract.
-    pub static DYNAMICPARAMLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
-        ::ethers::contract::Lazy::new(__abi);
+    ///The parsed JSON ABI of the contract.
+    pub static DYNAMICPARAMLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> = ::ethers::contract::Lazy::new(
+        __abi,
+    );
     #[rustfmt::skip]
     const __BYTECODE: &[u8] = b"`\x80\x80`@R4`\x17W`:\x90\x81`\x1D\x8290\x81PP\xF3[`\0\x80\xFD\xFE`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xE4Yu]\x9A\x91\r\x10\xC3\x0C\xFA.;\x06\rU\xDA\x97\xBC\x17\xA3%]\xCDrK\xB5\x01\x98<\rxdsolcC\0\x08\x16\x003";
     /// The bytecode of the contract.
-    pub static DYNAMICPARAMLIB_BYTECODE: ::ethers::core::types::Bytes =
-        ::ethers::core::types::Bytes::from_static(__BYTECODE);
+    pub static DYNAMICPARAMLIB_BYTECODE: ::ethers::core::types::Bytes = ::ethers::core::types::Bytes::from_static(
+        __BYTECODE,
+    );
     #[rustfmt::skip]
     const __DEPLOYED_BYTECODE: &[u8] = b"`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xE4Yu]\x9A\x91\r\x10\xC3\x0C\xFA.;\x06\rU\xDA\x97\xBC\x17\xA3%]\xCDrK\xB5\x01\x98<\rxdsolcC\0\x08\x16\x003";
     /// The deployed bytecode of the contract.
-    pub static DYNAMICPARAMLIB_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
-        ::ethers::core::types::Bytes::from_static(__DEPLOYED_BYTECODE);
+    pub static DYNAMICPARAMLIB_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes = ::ethers::core::types::Bytes::from_static(
+        __DEPLOYED_BYTECODE,
+    );
     pub struct DynamicParamLib<M>(::ethers::contract::Contract<M>);
     impl<M> ::core::clone::Clone for DynamicParamLib<M> {
         fn clone(&self) -> Self {
@@ -65,38 +72,34 @@ pub mod dynamic_param_lib {
         }
     }
     impl<M: ::ethers::providers::Middleware> DynamicParamLib<M> {
-        /// Creates a new contract instance with the specified `ethers` client
-        /// at `address`. The contract derefs to a `ethers::Contract`
-        /// object.
+        /// Creates a new contract instance with the specified `ethers` client at
+        /// `address`. The contract derefs to a `ethers::Contract` object.
         pub fn new<T: Into<::ethers::core::types::Address>>(
             address: T,
             client: ::std::sync::Arc<M>,
         ) -> Self {
-            Self(::ethers::contract::Contract::new(
-                address.into(),
-                DYNAMICPARAMLIB_ABI.clone(),
-                client,
-            ))
+            Self(
+                ::ethers::contract::Contract::new(
+                    address.into(),
+                    DYNAMICPARAMLIB_ABI.clone(),
+                    client,
+                ),
+            )
         }
-        /// Constructs the general purpose `Deployer` instance based on the
-        /// provided constructor arguments and sends it. Returns a new
-        /// instance of a deployer that returns an instance of this contract
-        /// after sending the transaction
+        /// Constructs the general purpose `Deployer` instance based on the provided constructor arguments and sends it.
+        /// Returns a new instance of a deployer that returns an instance of this contract after sending the transaction
         ///
         /// Notes:
-        /// - If there are no constructor arguments, you should pass `()` as the
-        ///   argument.
+        /// - If there are no constructor arguments, you should pass `()` as the argument.
         /// - The default poll duration is 7 seconds.
         /// - The default number of confirmations is 1 block.
         ///
         ///
         /// # Example
         ///
-        /// Generate contract bindings with `abigen!` and deploy a new contract
-        /// instance.
+        /// Generate contract bindings with `abigen!` and deploy a new contract instance.
         ///
-        /// *Note*: this requires a `bytecode` and `abi` object in the
-        /// `greeter.json` artifact.
+        /// *Note*: this requires a `bytecode` and `abi` object in the `greeter.json` artifact.
         ///
         /// ```ignore
         /// # async fn deploy<M: ethers::providers::Middleware>(client: ::std::sync::Arc<M>) {
@@ -124,14 +127,12 @@ pub mod dynamic_param_lib {
         }
     }
     impl<M: ::ethers::providers::Middleware> From<::ethers::contract::Contract<M>>
-        for DynamicParamLib<M>
-    {
+    for DynamicParamLib<M> {
         fn from(contract: ::ethers::contract::Contract<M>) -> Self {
             Self::new(contract.address(), contract.client())
         }
     }
-    /// Custom Error type `InvalidUpdateEnd` with signature `InvalidUpdateEnd()`
-    /// and selector `0xcde205da`
+    ///Custom Error type `InvalidUpdateEnd` with signature `InvalidUpdateEnd()` and selector `0xcde205da`
     #[derive(
         Clone,
         ::ethers::contract::EthError,
@@ -142,7 +143,7 @@ pub mod dynamic_param_lib {
         Debug,
         PartialEq,
         Eq,
-        Hash,
+        Hash
     )]
     #[etherror(name = "InvalidUpdateEnd", abi = "InvalidUpdateEnd()")]
     pub struct InvalidUpdateEnd;

@@ -7,7 +7,7 @@ pub use strategy_lib::*;
     clippy::upper_case_acronyms,
     clippy::type_complexity,
     dead_code,
-    non_camel_case_types
+    non_camel_case_types,
 )]
 pub mod strategy_lib {
     #[allow(deprecated)]
@@ -21,9 +21,10 @@ pub mod strategy_lib {
             fallback: false,
         }
     }
-    /// The parsed JSON ABI of the contract.
-    pub static STRATEGYLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
-        ::ethers::contract::Lazy::new(__abi);
+    ///The parsed JSON ABI of the contract.
+    pub static STRATEGYLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> = ::ethers::contract::Lazy::new(
+        __abi,
+    );
     pub struct StrategyLib<M>(::ethers::contract::Contract<M>);
     impl<M> ::core::clone::Clone for StrategyLib<M> {
         fn clone(&self) -> Self {
@@ -49,21 +50,23 @@ pub mod strategy_lib {
         }
     }
     impl<M: ::ethers::providers::Middleware> StrategyLib<M> {
-        /// Creates a new contract instance with the specified `ethers` client
-        /// at `address`. The contract derefs to a `ethers::Contract`
-        /// object.
+        /// Creates a new contract instance with the specified `ethers` client at
+        /// `address`. The contract derefs to a `ethers::Contract` object.
         pub fn new<T: Into<::ethers::core::types::Address>>(
             address: T,
             client: ::std::sync::Arc<M>,
         ) -> Self {
-            Self(::ethers::contract::Contract::new(
-                address.into(),
-                STRATEGYLIB_ABI.clone(),
-                client,
-            ))
+            Self(
+                ::ethers::contract::Contract::new(
+                    address.into(),
+                    STRATEGYLIB_ABI.clone(),
+                    client,
+                ),
+            )
         }
     }
-    impl<M: ::ethers::providers::Middleware> From<::ethers::contract::Contract<M>> for StrategyLib<M> {
+    impl<M: ::ethers::providers::Middleware> From<::ethers::contract::Contract<M>>
+    for StrategyLib<M> {
         fn from(contract: ::ethers::contract::Contract<M>) -> Self {
             Self::new(contract.address(), contract.client())
         }
