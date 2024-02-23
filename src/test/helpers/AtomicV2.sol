@@ -123,14 +123,14 @@ contract AtomicV2 {
 
     error AttemptedProfit(int256 profit);
     event LogDfmmData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry, uint256 liq, uint256 strike, uint256 sigma, uint256 tau);
-    event LogAssetData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry);
+    event LogAssetData(uint256 lexPrice, uint256 timestamp, uint256 rx, uint256 ry);
     event LogArbData(uint256 xBalance, uint256 yBalance, uint256 timestamp);
 
     function logData(uint256 poolId) external {
-        uint256 price = SolverLike(solver).internalPrice(poolId);
 
         if (keccak256(abi.encode(strategyName)) == keccak256(abi.encode("LogNormal"))) {
           (uint256 rx, uint256 ry, uint256 L) = SolverLike(solver).getReservesAndLiquidity(poolId);
+          uint256 price = SolverLike(solver).internalPrice(poolId);
           LogNormalParams memory params = LogNormalStrategyLike(solver).fetchPoolParams(poolId);
           emit LogDfmmData(price, block.timestamp, rx, ry, L, params.strike, params.sigma, params.tau);
         }
