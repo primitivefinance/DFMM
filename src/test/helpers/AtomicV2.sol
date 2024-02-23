@@ -123,7 +123,7 @@ contract AtomicV2 {
 
     error AttemptedProfit(int256 profit);
     event LogDfmmData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry, uint256 liq, uint256 strike, uint256 sigma, uint256 tau);
-    event LogLiquidData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry);
+    event LogAssetData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry);
     event LogArbData(uint256 xBalance, uint256 yBalance, uint256 timestamp);
 
     function logData(uint256 poolId) external {
