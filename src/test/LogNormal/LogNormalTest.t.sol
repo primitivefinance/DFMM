@@ -186,6 +186,6 @@ contract LogNormalTest is Test {
     }
 
     function test_atomic_events() public basic {
-      atomic.lower_exchange_price(dfmm.nonce() - 1, 0.01 ether);
+      atomic.logData(dfmm.nonce() - 1);
     }
 }

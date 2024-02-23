@@ -124,7 +124,7 @@ contract AtomicV2 {
     error AttemptedProfit(int256 profit);
     event LogDfmmData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry, uint256 liq, uint256 strike, uint256 sigma, uint256 tau);
     event LogLexData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry);
-    event LogArbData(uint256 xBalance, uint256 yBalance, uint256 timestamp);
+    event LogTraderData(uint256 xBalance, uint256 yBalance, uint256 timestamp);
 
     function logData(uint256 poolId) external {
         uint256 price = SolverLike(solver).internalPrice(poolId);
@@ -142,7 +142,7 @@ contract AtomicV2 {
 
         uint256 arbBalanceX = TokenLike(asset).balanceOf(msg.sender);
         uint256 arbBalanceY = TokenLike(quote).balanceOf(msg.sender);
-        emit LogArbData(arbBalanceX, arbBalanceY, block.timestamp);
+        emit LogTraderData(arbBalanceX, arbBalanceY, block.timestamp);
 
     }
 
