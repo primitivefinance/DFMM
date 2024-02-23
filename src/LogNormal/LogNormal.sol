@@ -6,6 +6,7 @@ import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/lib/DynamicParamLib.sol";
 import "src/lib/StrategyLib.sol";
+import "./LogNormalExtendedLib.sol";
 
 /// @notice Log Normal has three variable parameters:
 /// K - strike price
@@ -111,6 +112,8 @@ contract LogNormal is IStrategy {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
+    error DeltaError(uint256 expected, uint256 actual);
+
     /// @inheritdoc IStrategy
     function validateAllocate(
         address,
@@ -123,22 +126,31 @@ contract LogNormal is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
         )
     {
-        (uint256 deltaX, uint256 deltaY, uint256 deltaLiquidity) =
+        (uint256 maxDeltaX, uint256 maxDeltaY, uint256 deltaL) =
             abi.decode(data, (uint256, uint256, uint256));
 
-        reserveX = pool.reserveX + deltaX;
-        reserveY = pool.reserveY + deltaY;
-        totalLiquidity = pool.totalLiquidity + deltaLiquidity;
+        deltaLiquidity = deltaL;
+
+        LogNormalParams memory params =
+            abi.decode(getPoolParams(poolId), (LogNormalParams));
+        uint256 S = LogNormalLib.computePriceGivenX(
+            pool.reserveX, pool.totalLiquidity, params
+        );
+        deltaX = computeXGivenL(deltaL, S, params);
+        deltaY = computeYGivenL(deltaL, S, params);
+
+        if (deltaX > maxDeltaX) revert DeltaError(maxDeltaX, deltaX);
+        if (deltaY > maxDeltaY) revert DeltaError(maxDeltaY, deltaY);
 
         invariant = LogNormalLib.tradingFunction(
-            reserveX,
-            reserveY,
-            totalLiquidity,
+            pool.reserveX + deltaX,
+            pool.reserveY + deltaY,
+            pool.totalLiquidity + deltaLiquidity,
             abi.decode(getPoolParams(poolId), (LogNormalParams))
         );
 
@@ -157,22 +169,31 @@ contract LogNormal is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
         )
     {
-        (uint256 deltaX, uint256 deltaY, uint256 deltaLiquidity) =
+        (uint256 minDeltaX, uint256 minDeltaY, uint256 deltaL) =
             abi.decode(data, (uint256, uint256, uint256));
 
-        reserveX = pool.reserveX - deltaX;
-        reserveY = pool.reserveY - deltaY;
-        totalLiquidity = pool.totalLiquidity - deltaLiquidity;
+        deltaLiquidity = deltaL;
+
+        LogNormalParams memory params =
+            abi.decode(getPoolParams(poolId), (LogNormalParams));
+        uint256 S = LogNormalLib.computePriceGivenX(
+            pool.reserveX, pool.totalLiquidity, params
+        );
+        deltaX = computeXGivenL(deltaL, S, params);
+        deltaY = computeXGivenL(deltaL, S, params);
+
+        if (minDeltaX > deltaX) revert DeltaError(minDeltaX, deltaX);
+        if (minDeltaY > deltaY) revert DeltaError(minDeltaY, deltaY);
 
         invariant = LogNormalLib.tradingFunction(
-            reserveX,
-            reserveY,
-            totalLiquidity,
+            pool.reserveX - deltaX,
+            pool.reserveY - deltaY,
+            pool.totalLiquidity - deltaLiquidity,
             abi.decode(getPoolParams(poolId), (LogNormalParams))
         );
 
