@@ -138,7 +138,7 @@ contract AtomicV2 {
         uint256 lexPrice = LiquidExchange(liquidExchange).price();
         uint256 lexBalanceX = TokenLike(asset).balanceOf(liquidExchange);
         uint256 lexBalanceY = TokenLike(quote).balanceOf(liquidExchange);
-        emit LogLiquidData(lexPrice,  block.timestamp, lexBalanceX, lexBalanceY);
+        emit LogAssetData(lexPrice,  block.timestamp, lexBalanceX, lexBalanceY);
 
         uint256 arbBalanceX = TokenLike(asset).balanceOf(msg.sender);
         uint256 arbBalanceY = TokenLike(quote).balanceOf(msg.sender);
