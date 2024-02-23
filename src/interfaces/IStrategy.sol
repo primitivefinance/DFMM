@@ -68,9 +68,9 @@ interface IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
         );
 
     function validateDeallocate(
@@ -84,9 +84,9 @@ interface IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
         );
 
     function validateSwap(
