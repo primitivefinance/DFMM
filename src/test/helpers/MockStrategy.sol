@@ -58,9 +58,9 @@ contract MockStrategy is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
         )
     {
         uint256 status = abi.decode(data, (uint256));
@@ -68,21 +68,21 @@ contract MockStrategy is IStrategy {
         if (status == 1) {
             valid = true;
             invariant = 1 ether;
-            reserveX = 50 ether;
-            reserveY = 50 ether;
-            totalLiquidity = 5 ether;
+            deltaX = 50 ether;
+            deltaY = 50 ether;
+            deltaLiquidity = 5 ether;
         } else if (status == 9) {
             valid = true;
             invariant = 1 ether;
-            reserveX = 100 ether;
-            reserveY = 120 ether;
-            totalLiquidity = 10 ether;
+            deltaX = 100 ether;
+            deltaY = 120 ether;
+            deltaLiquidity = 10 ether;
         } else if (status == 8) {
             valid = true;
             invariant = 1 ether;
-            reserveX = 120 ether;
-            reserveY = 100 ether;
-            totalLiquidity = 10 ether;
+            deltaX = 120 ether;
+            deltaY = 100 ether;
+            deltaLiquidity = 10 ether;
         }
     }
 
@@ -97,9 +97,9 @@ contract MockStrategy is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
         )
     { }
 
