@@ -135,17 +135,15 @@ contract LogNormal is IStrategy {
             abi.decode(data, (uint256, uint256, uint256));
 
         deltaLiquidity = deltaL;
-
-        LogNormalParams memory params =
-            abi.decode(getPoolParams(poolId), (LogNormalParams));
-        uint256 S = LogNormalLib.computePriceGivenX(
-            pool.reserveX, pool.totalLiquidity, params
+        deltaX = computeDeltaXGivenDeltaL(
+            deltaLiquidity, pool.totalLiquidity, pool.reserveX
         );
-        deltaX = computeXGivenL(deltaL, S, params);
-        deltaY = computeYGivenL(deltaL, S, params);
+        deltaY = computeDeltaYGivenDeltaX(deltaX, pool.reserveX, pool.reserveY);
 
         if (deltaX > maxDeltaX) revert DeltaError(maxDeltaX, deltaX);
         if (deltaY > maxDeltaY) revert DeltaError(maxDeltaY, deltaY);
+
+        uint256 poolId = poolId;
 
         invariant = LogNormalLib.tradingFunction(
             pool.reserveX + deltaX,
@@ -178,17 +176,15 @@ contract LogNormal is IStrategy {
             abi.decode(data, (uint256, uint256, uint256));
 
         deltaLiquidity = deltaL;
-
-        LogNormalParams memory params =
-            abi.decode(getPoolParams(poolId), (LogNormalParams));
-        uint256 S = LogNormalLib.computePriceGivenX(
-            pool.reserveX, pool.totalLiquidity, params
+        deltaX = computeDeltaXGivenDeltaL(
+            deltaLiquidity, pool.totalLiquidity, pool.reserveX
         );
-        deltaX = computeXGivenL(deltaL, S, params);
-        deltaY = computeXGivenL(deltaL, S, params);
+        deltaY = computeDeltaYGivenDeltaX(deltaX, pool.reserveX, pool.reserveY);
 
         if (minDeltaX > deltaX) revert DeltaError(minDeltaX, deltaX);
         if (minDeltaY > deltaY) revert DeltaError(minDeltaY, deltaY);
+
+        uint256 poolId = poolId;
 
         invariant = LogNormalLib.tradingFunction(
             pool.reserveX - deltaX,
