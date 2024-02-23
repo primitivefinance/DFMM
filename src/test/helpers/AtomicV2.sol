@@ -126,7 +126,7 @@ contract AtomicV2 {
     event LogLexData(uint256 price, uint256 timestamp, uint256 rx, uint256 ry);
     event LogArbData(uint256 xBalance, uint256 yBalance, uint256 timestamp);
 
-    function lower_exchange_price(uint256 poolId, uint256 input) external {
+    function logData(uint256 poolId) external {
         uint256 price = SolverLike(solver).internalPrice(poolId);
 
         if (keccak256(abi.encode(strategyName)) == keccak256(abi.encode("LogNormal"))) {
@@ -144,6 +144,9 @@ contract AtomicV2 {
         uint256 arbBalanceY = TokenLike(quote).balanceOf(msg.sender);
         emit LogArbData(arbBalanceX, arbBalanceY, block.timestamp);
 
+    }
+
+    function lower_exchange_price(uint256 poolId, uint256 input) external {
         // Arbitrageur Y -> AtomicV2
         _invoice(input);
 
@@ -158,22 +161,6 @@ contract AtomicV2 {
     }
 
     function raise_exchange_price(uint256 poolId, uint256 input) external {
-        uint256 price = SolverLike(solver).internalPrice(poolId);
-        if (keccak256(abi.encode(strategyName)) == keccak256(abi.encode("LogNormal"))) {
-          (uint256 rx, uint256 ry, uint256 L) = SolverLike(solver).getReservesAndLiquidity(poolId);
-          LogNormalParams memory params = LogNormalStrategyLike(solver).fetchPoolParams(poolId);
-          emit LogDfmmData(price, block.timestamp, rx, ry, L, params.strike, params.sigma, params.tau);
-        }
-
-        uint256 lexPrice = LiquidExchange(liquidExchange).price();
-        uint256 lexBalanceX = TokenLike(asset).balanceOf(liquidExchange);
-        uint256 lexBalanceY = TokenLike(quote).balanceOf(liquidExchange);
-        emit LogLexData(lexPrice,  block.timestamp, lexBalanceX, lexBalanceY);
-
-        uint256 arbBalanceX = TokenLike(asset).balanceOf(msg.sender);
-        uint256 arbBalanceY = TokenLike(quote).balanceOf(msg.sender);
-        emit LogArbData(arbBalanceX, arbBalanceY, block.timestamp);
-
         // Arbitrageur Y -> AtomicV2
         _invoice(input);
 
