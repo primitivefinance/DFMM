@@ -247,10 +247,16 @@ contract LogNormalSolver {
             }
         }
 
+        IDFMM.Pool memory pool;
+        pool.reserveX = startReserves.rx;
+        pool.reserveY = startReserves.ry;
+        pool.totalLiquidity = startReserves.L;
+
         bytes memory swapData =
             abi.encode(endReserves.rx, endReserves.ry, endReserves.L);
-        (bool valid,,,,,) =
-            IStrategy(strategy).validateSwap(address(this), poolId, swapData);
+        (bool valid,,,,,) = IStrategy(strategy).validateSwap(
+            address(this), poolId, pool, swapData
+        );
         return (
             valid,
             amountOut,
