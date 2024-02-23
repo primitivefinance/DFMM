@@ -58,6 +58,7 @@ contract LogNormal is IStrategy {
     function init(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         public
@@ -111,9 +112,10 @@ contract LogNormal is IStrategy {
     }
 
     /// @inheritdoc IStrategy
-    function validateAllocateOrDeallocate(
+    function validateAllocate(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         public
@@ -126,8 +128,46 @@ contract LogNormal is IStrategy {
             uint256 totalLiquidity
         )
     {
-        (reserveX, reserveY, totalLiquidity) =
+        (uint256 deltaX, uint256 deltaY, uint256 deltaLiquidity) =
             abi.decode(data, (uint256, uint256, uint256));
+
+        reserveX = pool.reserveX + deltaX;
+        reserveY = pool.reserveY + deltaY;
+        totalLiquidity = pool.totalLiquidity + deltaLiquidity;
+
+        invariant = LogNormalLib.tradingFunction(
+            reserveX,
+            reserveY,
+            totalLiquidity,
+            abi.decode(getPoolParams(poolId), (LogNormalParams))
+        );
+
+        valid = -(EPSILON) < invariant && invariant < EPSILON;
+    }
+
+    /// @inheritdoc IStrategy
+    function validateDeallocate(
+        address,
+        uint256 poolId,
+        IDFMM.Pool calldata pool,
+        bytes calldata data
+    )
+        public
+        view
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256 reserveX,
+            uint256 reserveY,
+            uint256 totalLiquidity
+        )
+    {
+        (uint256 deltaX, uint256 deltaY, uint256 deltaLiquidity) =
+            abi.decode(data, (uint256, uint256, uint256));
+
+        reserveX = pool.reserveX - deltaX;
+        reserveY = pool.reserveY - deltaY;
+        totalLiquidity = pool.totalLiquidity - deltaLiquidity;
 
         invariant = LogNormalLib.tradingFunction(
             reserveX,
@@ -143,6 +183,7 @@ contract LogNormal is IStrategy {
     function validateSwap(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes memory data
     )
         public
@@ -159,9 +200,6 @@ contract LogNormal is IStrategy {
         LogNormalParams memory params =
             abi.decode(getPoolParams(poolId), (LogNormalParams));
 
-        (uint256 startRx, uint256 startRy, uint256 startL) =
-            IDFMM(dfmm).getReservesAndLiquidity(poolId);
-
         (nextRx, nextRy, nextL) = abi.decode(data, (uint256, uint256, uint256));
 
         // Rounding up is advantageous towards the protocol, to make sure swap fees
@@ -169,21 +207,23 @@ contract LogNormal is IStrategy {
         uint256 minLiquidityDelta;
         uint256 amountIn;
         uint256 fees;
-        if (nextRx > startRx) {
-            amountIn = nextRx - startRx;
+        if (nextRx > pool.reserveX) {
+            amountIn = nextRx - pool.reserveX;
             fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRx);
-        } else if (nextRy > startRy) {
+            minLiquidityDelta +=
+                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveX);
+        } else if (nextRy > pool.reserveY) {
             // δl = δx * L / X, where δx = delta x * fee
-            amountIn = nextRy - startRy;
+            amountIn = nextRy - pool.reserveY;
             fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRy);
+            minLiquidityDelta +=
+                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveY);
         } else {
             // should never get here!
             revert("invalid swap: inputs x and y have the same sign!");
         }
 
-        liquidityDelta = int256(nextL) - int256(startL);
+        liquidityDelta = int256(nextL) - int256(pool.totalLiquidity);
 
         invariant = LogNormalLib.tradingFunction(nextRx, nextRy, nextL, params);
         valid = -(EPSILON) < invariant && invariant < EPSILON;
@@ -193,6 +233,7 @@ contract LogNormal is IStrategy {
     function update(
         address sender,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
