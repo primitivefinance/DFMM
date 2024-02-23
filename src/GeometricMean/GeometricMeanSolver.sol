@@ -84,16 +84,16 @@ contract GeometricMeanSolver {
         return (nextRx, nextRy, nextL);
     }
 
-    function allocateGivenXDeltas(
+    function allocateGivenDeltaX(
         uint256 poolId,
-        uint256 amountX
-    ) public view returns (uint256, uint256, uint256) {
-        (uint256 rx, uint256 reserveY, uint256 L) =
-            getReservesAndLiquidity(poolId);
-        (uint256 nextRx, uint256 nextL) =
-            computeAllocationGivenX(true, amountX, rx, L);
-        uint256 nextRy = getNextReserveY(poolId, nextRx, nextL);
-        return (amountX, nextRy - reserveY, nextL - L);
+        uint256 deltaX
+    ) public view returns (uint256, uint256) {
+        (uint256 reserveX, uint256 reserveY,) = getReservesAndLiquidity(poolId);
+        GeometricMeanParams memory params = getPoolParams(poolId);
+        uint256 S = computePrice(reserveX, reserveY, params);
+        uint256 deltaLiquidity = computeLGivenX(deltaX, S, params);
+        uint256 deltaY = computeY(deltaX, S, params);
+        return (deltaY, deltaLiquidity);
     }
 
     function allocateGivenY(
