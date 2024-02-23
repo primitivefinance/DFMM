@@ -288,6 +288,8 @@ contract LogNormalSolver {
 
         bytes memory swapData =
             abi.encode(endReserves.rx, endReserves.ry, endReserves.L);
+
+        uint256 poolId = poolId;
         (bool valid,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
