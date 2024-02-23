@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "./GeometricMeanLib.sol";
-import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/lib/DynamicParamLib.sol";
+import "./G3MExtendedLib.sol";
 
 /// @dev Parameterization of the GeometricMean curve.
 struct GeometricMeanParams {
@@ -54,6 +54,7 @@ contract GeometricMean is IStrategy {
     function init(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -108,10 +109,13 @@ contract GeometricMean is IStrategy {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
+    error DeltaError(uint256 expected, uint256 actual);
+
     /// @inheritdoc IStrategy
-    function validateAllocateOrDeallocate(
+    function validateAllocate(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -119,18 +123,104 @@ contract GeometricMean is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
         )
     {
-        (reserveX, reserveY, totalLiquidity) =
+        (uint256 maxDeltaX, uint256 maxDeltaY, uint256 deltaLiquidity) =
             abi.decode(data, (uint256, uint256, uint256));
 
+        GeometricMeanParams memory params =
+            abi.decode(getPoolParams(poolId), (GeometricMeanParams));
+
+        uint256 adjustedReserveX = computeXGivenL(
+            pool.totalLiquidity + deltaLiquidity,
+            computePrice(pool.reserveX, pool.reserveY, params),
+            params
+        );
+
+        uint256 adjustedReserveY = computeYGivenL(
+            pool.totalLiquidity + deltaLiquidity,
+            computePrice(pool.reserveX, pool.reserveY, params),
+            params
+        );
+
+        deltaX = adjustedReserveX - pool.reserveX;
+        deltaY = adjustedReserveY - pool.reserveY;
+
+        if (deltaX > maxDeltaX) {
+            revert DeltaError(maxDeltaX, deltaX);
+        }
+
+        if (deltaY > maxDeltaY) {
+            revert DeltaError(maxDeltaY, deltaY);
+        }
+
+        uint256 adjustedLiquidity = pool.totalLiquidity + deltaLiquidity;
+
         invariant = GeometricMeanLib.tradingFunction(
-            reserveX,
-            reserveY,
-            totalLiquidity,
+            adjustedReserveX,
+            adjustedReserveY,
+            adjustedLiquidity,
+            abi.decode(getPoolParams(poolId), (GeometricMeanParams))
+        );
+
+        valid = -(EPSILON) < invariant && invariant < EPSILON;
+    }
+
+    /// @inheritdoc IStrategy
+    function validateDeallocate(
+        address,
+        uint256 poolId,
+        IDFMM.Pool calldata pool,
+        bytes calldata data
+    )
+        external
+        view
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
+        )
+    {
+        (uint256 minDeltaX, uint256 minDeltaY, uint256 deltaLiquidity) =
+            abi.decode(data, (uint256, uint256, uint256));
+
+        GeometricMeanParams memory params =
+            abi.decode(getPoolParams(poolId), (GeometricMeanParams));
+
+        uint256 adjustedReserveX = computeXGivenL(
+            pool.totalLiquidity - deltaLiquidity,
+            computePrice(pool.reserveX, pool.reserveY, params),
+            params
+        );
+
+        uint256 adjustedReserveY = computeYGivenL(
+            pool.totalLiquidity - deltaLiquidity,
+            computePrice(pool.reserveX, pool.reserveY, params),
+            params
+        );
+
+        deltaX = pool.reserveX - adjustedReserveX;
+        deltaY = pool.reserveY - adjustedReserveY;
+
+        if (minDeltaX > deltaX) {
+            revert DeltaError(minDeltaX, deltaX);
+        }
+
+        if (minDeltaY > deltaY) {
+            revert DeltaError(minDeltaY, deltaY);
+        }
+
+        uint256 adjustedLiquidity = pool.totalLiquidity - deltaLiquidity;
+
+        invariant = GeometricMeanLib.tradingFunction(
+            adjustedReserveX,
+            adjustedReserveY,
+            adjustedLiquidity,
             abi.decode(getPoolParams(poolId), (GeometricMeanParams))
         );
 
@@ -141,6 +231,7 @@ contract GeometricMean is IStrategy {
     function validateSwap(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes memory data
     )
         external
@@ -157,23 +248,22 @@ contract GeometricMean is IStrategy {
         GeometricMeanParams memory params =
             abi.decode(getPoolParams(poolId), (GeometricMeanParams));
 
-        (uint256 startRx, uint256 startRy, uint256 startL) =
-            IDFMM(dfmm).getReservesAndLiquidity(poolId);
-
         (nextRx, nextRy, nextL) = abi.decode(data, (uint256, uint256, uint256));
 
         uint256 amountIn;
         uint256 fees;
         uint256 minLiquidityDelta;
 
-        if (nextRx > startRx) {
-            amountIn = nextRx - startRx;
+        if (nextRx > pool.reserveX) {
+            amountIn = nextRx - pool.reserveX;
             fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRx);
-        } else if (nextRy > startRy) {
-            amountIn = nextRy - startRy;
+            minLiquidityDelta +=
+                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveX);
+        } else if (nextRy > pool.reserveY) {
+            amountIn = nextRy - pool.reserveY;
             fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRy);
+            minLiquidityDelta +=
+                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveY);
         } else {
             revert("invalid swap: inputs x and y have the same sign!");
         }
@@ -183,8 +273,8 @@ contract GeometricMean is IStrategy {
         liquidityDelta = int256(nextL)
             - int256(
                 GeometricMeanLib.computeNextLiquidity(
-                    startRx,
-                    startRy,
+                    pool.reserveX,
+                    pool.reserveY,
                     abi.decode(getPoolParams(poolId), (GeometricMeanParams))
                 )
             );
@@ -198,6 +288,7 @@ contract GeometricMean is IStrategy {
     function update(
         address sender,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
