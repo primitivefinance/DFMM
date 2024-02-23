@@ -52,6 +52,14 @@ function computeDeltaLGivenDeltaX(
     return liquidity.mulWadDown(deltaX.divWadDown(reserveX));
 }
 
+function computeDeltaLGivenDeltaY(
+    uint256 deltaY,
+    uint256 liquidity,
+    uint256 reserveY
+) pure returns (uint256 deltaL) {
+    return liquidity.mulWadDown(deltaY.divWadDown(reserveY));
+}
+
 function computeDeltaYGivenDeltaX(
     uint256 deltaX,
     uint256 reserveX,
