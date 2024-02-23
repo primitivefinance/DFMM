@@ -128,8 +128,12 @@ contract GeometricMean is IStrategy {
             uint256 deltaLiquidity
         )
     {
-        (uint256 maxDeltaX, uint256 maxDeltaY, uint256 deltaLiquidity) =
+        (uint256 maxDeltaX, uint256 maxDeltaY, uint256 deltaL) =
             abi.decode(data, (uint256, uint256, uint256));
+
+        // TODO: This is a small trick because `deltaLiquidity` cannot be used
+        // directly, let's fix this later.
+        deltaLiquidity = deltaL;
 
         GeometricMeanParams memory params =
             abi.decode(getPoolParams(poolId), (GeometricMeanParams));
