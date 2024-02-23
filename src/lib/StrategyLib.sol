@@ -43,3 +43,27 @@ function computeAllocationGivenY(
     nextRy = add ? ry + amountY : ry - amountY;
     nextL = add ? L + deltaL : L - deltaL;
 }
+
+function computeDeltaLGivenDeltaX(
+    uint256 deltaX,
+    uint256 liquidity,
+    uint256 reserveX
+) pure returns (uint256 deltaL) {
+    return liquidity.mulWadDown(deltaX.divWadDown(reserveX));
+}
+
+function computeDeltaYGivenDeltaX(
+    uint256 deltaX,
+    uint256 reserveX,
+    uint256 reserveY
+) pure returns (uint256 deltaY) {
+    return reserveY.mulWadDown(deltaX.divWadDown(reserveX));
+}
+
+function computeDeltaXGivenDeltaL(
+    uint256 deltaL,
+    uint256 liquidity,
+    uint256 reserveX
+) pure returns (uint256 deltaX) {
+    return reserveX.mulWadDown(deltaL.divWadDown(liquidity));
+}
