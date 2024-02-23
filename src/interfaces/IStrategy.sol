@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import "src/interfaces/IDFMM.sol";
+
 /**
  * @title Strategy Interface.
  * @author Primitive
@@ -34,6 +36,7 @@ interface IStrategy {
     function init(
         address sender,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -54,9 +57,26 @@ interface IStrategy {
      */
     function name() external view returns (string memory);
 
-    function validateAllocateOrDeallocate(
+    function validateAllocate(
         address sender,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
+        bytes calldata data
+    )
+        external
+        view
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256 reserveX,
+            uint256 reserveY,
+            uint256 totalLiquidity
+        );
+
+    function validateDeallocate(
+        address sender,
+        uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -72,6 +92,7 @@ interface IStrategy {
     function validateSwap(
         address sender,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -88,6 +109,7 @@ interface IStrategy {
     function update(
         address sender,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     ) external;
 
