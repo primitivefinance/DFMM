@@ -142,15 +142,11 @@ interface IDFMM {
      * @param data An array of bytes used by the strategy contract.
      * @return deltaX Amount of token X allocated into the pool.
      * @return deltaY Amount of token Y allocated into the pool.
-     * @return deltaL Amount of liquidity received by the allocator.
      */
     function allocate(
         uint256 poolId,
         bytes calldata data
-    )
-        external
-        payable
-        returns (uint256 deltaX, uint256 deltaY, uint256 deltaL);
+    ) external payable returns (uint256 deltaX, uint256 deltaY);
 
     /**
      * @notice Deallocates liquidity from the pool `poolId`.
@@ -158,12 +154,11 @@ interface IDFMM {
      * @param data An array of bytes used by the strategy contract.
      * @return deltaX Amount of token X deallocated from the pool.
      * @return deltaY Amount of token Y deallocated from the pool.
-     * @return deltaL Amount of liquidity being deallocated.
      */
     function deallocate(
         uint256 poolId,
         bytes calldata data
-    ) external returns (uint256 deltaX, uint256 deltaY, uint256 deltaL);
+    ) external returns (uint256 deltaX, uint256 deltaY);
 
     /**
      * @notice Swaps tokens into pool `poolId`.
