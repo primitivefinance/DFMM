@@ -7,8 +7,12 @@ contract LogNormalAllocateTest is LogNormalSetUp {
     function test_LogNormal_allocate_GivenX() public init {
         uint256 maxDeltaX = 0.1 ether;
 
-        (uint256 maxDeltaY, uint256 deltaLiquidity) =
-            solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
+        (uint256 reserveX, uint256 reserveY, uint256 liquidity) =
+            dfmm.getReservesAndLiquidity(POOL_ID);
+        uint256 deltaLiquidity =
+            computeDeltaLGivenDeltaX(maxDeltaX, liquidity, reserveX);
+        uint256 maxDeltaY =
+            computeDeltaYGivenDeltaX(maxDeltaX, reserveX, reserveY);
 
         console.log("maxDeltaX:", maxDeltaX);
         console.log("maxDeltaY:", maxDeltaY);
