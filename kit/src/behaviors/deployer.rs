@@ -47,7 +47,10 @@ impl Behavior<()> for Deployer {
 
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use arbiter_engine::{agent::Agent, world::World};
+    use ethers::types::Address;
     use futures_util::StreamExt;
     use tracing_subscriber::FmtSubscriber;
     use crate::behaviors::deployer::{Deployer, DeploymentData};
@@ -59,7 +62,7 @@ mod tests {
 
 
         let mut world = World::new("test");
-        let mut messager = world.messager.clone();
+        let messager = world.messager.clone();
 
         let deployer = Deployer {};
 
@@ -82,11 +85,11 @@ mod tests {
 
             println!("{:?}", parsed_data);
 
-            assert_eq!("0xb00efcb70090a21d46660adf95a16ec69623f694", parsed_data.weth.to_string());
-            assert_eq!("0x27781b40bd019ccb1dcb0c809135db71222e9353", parsed_data.dfmm.to_string());
-            assert_eq!("0x6e0035324097bfc66442e2d3f37ef378fb3750b2", parsed_data.g3m.to_string());
-            assert_eq!("0x4be050270d209ef9f0c0435736c731767486279f", parsed_data.log_normal.to_string());
-            assert_eq!("0xaeb166f1355c6254d01a54317ef8d4d21bfcb4b0", parsed_data.constant_sum.to_string());
+            assert_eq!(Address::from_str("0xb00efcb70090a21d46660adf95a16ec69623f694").unwrap(), parsed_data.weth);
+            assert_eq!(Address::from_str("0x27781b40bd019ccb1dcb0c809135db71222e9353").unwrap(), parsed_data.dfmm);
+            assert_eq!(Address::from_str("0x6e0035324097bfc66442e2d3f37ef378fb3750b2").unwrap(), parsed_data.g3m);
+            assert_eq!(Address::from_str("0x4be050270d209ef9f0c0435736c731767486279f").unwrap(), parsed_data.log_normal);
+            assert_eq!(Address::from_str("0xaeb166f1355c6254d01a54317ef8d4d21bfcb4b0").unwrap(), parsed_data.constant_sum);
 
         }
     }
