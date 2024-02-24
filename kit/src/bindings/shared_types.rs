@@ -1,4 +1,4 @@
-///`DynamicParam(uint256,uint256,int256,uint256)`
+/// `DynamicParam(uint256,uint256,int256,uint256)`
 #[derive(
     Clone,
     ::ethers::contract::EthAbiType,
@@ -9,7 +9,7 @@
     Debug,
     PartialEq,
     Eq,
-    Hash
+    Hash,
 )]
 pub struct DynamicParam {
     pub last_computed_value: ::ethers::core::types::U256,
@@ -17,7 +17,7 @@ pub struct DynamicParam {
     pub update_per_second: ::ethers::core::types::I256,
     pub last_update_at: ::ethers::core::types::U256,
 }
-///`InitParams(address,address,address,bytes)`
+/// `InitParams(address,address,address,bytes)`
 #[derive(
     Clone,
     ::ethers::contract::EthAbiType,
@@ -28,7 +28,7 @@ pub struct DynamicParam {
     Debug,
     PartialEq,
     Eq,
-    Hash
+    Hash,
 )]
 pub struct InitParams {
     pub strategy: ::ethers::core::types::Address,
@@ -36,7 +36,7 @@ pub struct InitParams {
     pub token_y: ::ethers::core::types::Address,
     pub data: ::ethers::core::types::Bytes,
 }
-///`FuzzInterface(address,string[])`
+/// `FuzzInterface(address,string[])`
 #[derive(
     Clone,
     ::ethers::contract::EthAbiType,
@@ -47,13 +47,13 @@ pub struct InitParams {
     Debug,
     PartialEq,
     Eq,
-    Hash
+    Hash,
 )]
 pub struct FuzzInterface {
     pub addr: ::ethers::core::types::Address,
     pub artifacts: ::std::vec::Vec<::std::string::String>,
 }
-///`FuzzSelector(address,bytes4[])`
+/// `FuzzSelector(address,bytes4[])`
 #[derive(
     Clone,
     ::ethers::contract::EthAbiType,
@@ -64,7 +64,7 @@ pub struct FuzzInterface {
     Debug,
     PartialEq,
     Eq,
-    Hash
+    Hash,
 )]
 pub struct FuzzSelector {
     pub addr: ::ethers::core::types::Address,

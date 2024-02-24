@@ -31,12 +31,22 @@ impl PoolType for ConstantSumPool {
         }
     }
 
-    async fn update_data(&self, new_price: eU256) -> Result<Bytes> {
-        let price_update_data = self.solver_contract.prepare_price_update(new_price).call().await?;
+    async fn update_data(&self, parameters: Self::Parameters) -> Result<Bytes> {
+        let price_update_data = self
+            .solver_contract
+            .prepare_price_update(parameters.price)
+            .call()
+            .await?;
         Ok(price_update_data)
     }
 
-    async fn change_allocation_data(& self, pool_id: eU256, is_allocate: bool, amount_x: eU256, amount_y: eU256) -> Result<Bytes> {
+    async fn change_allocation_data(
+        &self,
+        pool_id: eU256,
+        is_allocate: bool,
+        amount_x: eU256,
+        amount_y: eU256,
+    ) -> Result<Bytes> {
         let (valid, data) = self
             .solver_contract
             .simulate_allocate_or_deallocate(pool_id, is_allocate, amount_x, amount_y)
