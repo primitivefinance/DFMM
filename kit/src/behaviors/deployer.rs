@@ -17,6 +17,8 @@ pub struct DeploymentData {
     pub g3m: Address,
     pub log_normal: Address,
     pub constant_sum: Address,
+    pub token_x: Address,
+    pub token_y: Address,
 }
 
 #[async_trait::async_trait]
@@ -38,13 +40,30 @@ impl Behavior<()> for Deployer {
             .send()
             .await?;
 
+        let token_x = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
+            client.clone(),
+            ("Token_x".to_owned(),
+            "ARBX".to_owned(),
+            18),
+        )?.send().await?;
+
+        let token_y = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
+            client.clone(),
+            ("Token_y".to_owned(),
+            "ARBY".to_owned(),
+            18),
+        )?.send().await?;
+
         let deployment_data = DeploymentData {
             weth: weth.address(),
             dfmm: dfmm.address(),
             g3m: g3m.address(),
             log_normal: log_normal.address(),
             constant_sum: constant_sum.address(),
+            token_x: token_x.address(),
+            token_y: token_y.address(),
         };
+
         messager
             .send(To::All, serde_json::to_string(&deployment_data)?)
             .await?;
