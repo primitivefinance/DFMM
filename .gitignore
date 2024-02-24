@@ -10,3 +10,14 @@ target
 # VSCode
 .vscode
 .env
+report/main.aux
+report/main.pyg
+report/main.toc
+report/main.log
+report/title.aux
+report/report.aux
+report/main.out
+report/img/.DS_Store
+report/summary.aux
+_minted-main/*
+report/assets/img/.DS_Store
