@@ -13,6 +13,7 @@ pub trait PoolType {
     type Parameters;
     type StrategyContract;
     type SolverContract;
+    type AllocationData;
 
     #[allow(async_fn_in_trait)]
     async fn swap_data(&self, pool_id: eU256, swap_x_in: bool, amount_in: eU256) -> Result<Bytes>;
@@ -24,10 +25,13 @@ pub trait PoolType {
     async fn change_allocation_data(
         &self,
         pool_id: eU256,
-        is_allocate: bool,
-        amount_x: eU256,
-        amount_y: eU256,
+        allocation_date: Self::AllocationData,
     ) -> Result<Bytes>;
+}
+
+pub enum AllocateOrDeallocate {
+    Allocate,
+    Deallocate,
 }
 
 pub struct Pool<P: PoolType> {

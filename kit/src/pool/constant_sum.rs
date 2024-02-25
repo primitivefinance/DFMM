@@ -17,6 +17,7 @@ impl PoolType for ConstantSumPool {
     type Parameters = ConstantSumParameters;
     type StrategyContract = ConstantSum<ArbiterMiddleware>;
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
+    type AllocationData = (AllocateOrDeallocate, eU256, eU256);
 
     async fn swap_data(&self, pool_id: eU256, swap_x_in: bool, amount_in: eU256) -> Result<Bytes> {
         let (valid, _, data) = self
@@ -43,13 +44,15 @@ impl PoolType for ConstantSumPool {
     async fn change_allocation_data(
         &self,
         pool_id: eU256,
-        is_allocate: bool,
-        amount_x: eU256,
-        amount_y: eU256,
+        allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
+        let (amount_x, amount_y, allocate) = match allocation_data.0 {
+            AllocateOrDeallocate::Allocate => (allocation_data.1, allocation_data.2, true),
+            AllocateOrDeallocate::Deallocate => (allocation_data.1, 0.into(), false),
+        };
         let (valid, data) = self
             .solver_contract
-            .simulate_allocate_or_deallocate(pool_id, is_allocate, amount_x, amount_y)
+            .simulate_allocate_or_deallocate(pool_id, allocate, amount_x, amount_y)
             .call()
             .await?;
         if valid {

@@ -42,17 +42,17 @@ impl Behavior<()> for Deployer {
 
         let token_x = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
             client.clone(),
-            ("Token_x".to_owned(),
-            "ARBX".to_owned(),
-            18),
-        )?.send().await?;
+            ("Token_x".to_owned(), "ARBX".to_owned(), 18),
+        )?
+        .send()
+        .await?;
 
         let token_y = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
             client.clone(),
-            ("Token_y".to_owned(),
-            "ARBY".to_owned(),
-            18),
-        )?.send().await?;
+            ("Token_y".to_owned(), "ARBY".to_owned(), 18),
+        )?
+        .send()
+        .await?;
 
         let deployment_data = DeploymentData {
             weth: weth.address(),
@@ -74,7 +74,6 @@ impl Behavior<()> for Deployer {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-
     use anyhow::Ok;
     use arbiter_engine::{agent::Agent, world::World};
     use ethers::types::Address;
@@ -83,8 +82,8 @@ mod tests {
 
     use crate::behaviors::deployer::{Deployer, DeploymentData};
 
-    #[tokio::test]
-    async fn token_admin_behavior_test() -> anyhow::Result<()>{
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn token_admin_behavior_test() -> anyhow::Result<()> {
         let subscriber = FmtSubscriber::builder().finish();
         tracing::subscriber::set_global_default(subscriber)?;
 
@@ -99,6 +98,7 @@ mod tests {
         world.run().await.expect("World failed to run");
 
         let mut stream = messager.stream().expect("Failed to get messager stream");
+
         if let Some(res) = stream.next().await {
             let token_res_data = &res.data;
             println!("{}", token_res_data);
@@ -132,9 +132,9 @@ mod tests {
                 parsed_data.constant_sum
             );
             Ok(())
+        } else {
+            panic!("No message received");
         }
-        else {
-            Err(anyhow::anyhow!("No message received"))
-        }
+
     }
 }
