@@ -74,6 +74,7 @@ impl Behavior<()> for Deployer {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
+
     use anyhow::Ok;
     use arbiter_engine::{agent::Agent, world::World};
     use ethers::types::Address;
@@ -135,6 +136,5 @@ mod tests {
         } else {
             panic!("No message received");
         }
-
     }
 }
