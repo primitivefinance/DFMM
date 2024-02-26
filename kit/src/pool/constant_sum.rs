@@ -19,12 +19,26 @@ impl PoolType for ConstantSumPool {
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = (AllocateOrDeallocate, eU256, eU256);
 
-    async fn swap_data(&self, pool_id: eU256, swap_x_in: bool, amount_in: eU256) -> Result<Bytes> {
-        let (valid, _, data) = self
-            .solver_contract
-            .simulate_swap(pool_id, swap_x_in, amount_in)
-            .call()
-            .await?;
+    async fn swap_data(
+        &self,
+        pool_id: eU256,
+        input_token: InputToken,
+        amount_in: eU256,
+    ) -> Result<Bytes> {
+        let (valid, _, data) = match input_token {
+            InputToken::TokenX => {
+                self.solver_contract
+                    .simulate_swap(pool_id, true, amount_in)
+                    .call()
+                    .await?
+            }
+            InputToken::TokenY => {
+                self.solver_contract
+                    .simulate_swap(pool_id, false, amount_in)
+                    .call()
+                    .await?
+            }
+        };
         if valid {
             Ok(data)
         } else {
