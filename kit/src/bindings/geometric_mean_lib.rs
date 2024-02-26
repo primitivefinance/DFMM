@@ -1,4 +1,4 @@
-pub use g3m_lib::*;
+pub use geometric_mean_lib::*;
 /// This module was auto-generated with ethers-rs Abigen.
 /// More information at: <https://github.com/gakonst/ethers-rs>
 #[allow(
@@ -9,7 +9,7 @@ pub use g3m_lib::*;
     dead_code,
     non_camel_case_types
 )]
-pub mod g3m_lib {
+pub mod geometric_mean_lib {
     #[allow(deprecated)]
     fn __abi() -> ::ethers::core::abi::Abi {
         ::ethers::core::abi::ethabi::Contract {
@@ -22,43 +22,43 @@ pub mod g3m_lib {
         }
     }
     /// The parsed JSON ABI of the contract.
-    pub static G3MLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
+    pub static GEOMETRICMEANLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
         ::ethers::contract::Lazy::new(__abi);
     #[rustfmt::skip]
-    const __BYTECODE: &[u8] = b"`\x80\x80`@R4`\x17W`:\x90\x81`\x1D\x8290\x81PP\xF3[`\0\x80\xFD\xFE`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \x8B`\xE3|\x04\x1B+C\xC4\xC0\xB2%\x83\x9EQ\xC7\xE1lTs\r\x9CbQ\xA3\xC8)\x96\xA2Q\xA9\x15dsolcC\0\x08\x16\x003";
+    const __BYTECODE: &[u8] = b"`\x80\x80`@R4`\x17W`:\x90\x81`\x1D\x8290\x81PP\xF3[`\0\x80\xFD\xFE`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xED\x92<\xC62\xE9\x92\xAB\xE2\xE0\x14\xB25\xA2\x18\x98\xA6\n\x88C|\xFDk\x86\xDF\x96\xC58\xD1\xA5\xBB\xC3dsolcC\0\x08\x16\x003";
     /// The bytecode of the contract.
-    pub static G3MLIB_BYTECODE: ::ethers::core::types::Bytes =
+    pub static GEOMETRICMEANLIB_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__BYTECODE);
     #[rustfmt::skip]
-    const __DEPLOYED_BYTECODE: &[u8] = b"`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \x8B`\xE3|\x04\x1B+C\xC4\xC0\xB2%\x83\x9EQ\xC7\xE1lTs\r\x9CbQ\xA3\xC8)\x96\xA2Q\xA9\x15dsolcC\0\x08\x16\x003";
+    const __DEPLOYED_BYTECODE: &[u8] = b"`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xED\x92<\xC62\xE9\x92\xAB\xE2\xE0\x14\xB25\xA2\x18\x98\xA6\n\x88C|\xFDk\x86\xDF\x96\xC58\xD1\xA5\xBB\xC3dsolcC\0\x08\x16\x003";
     /// The deployed bytecode of the contract.
-    pub static G3MLIB_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
+    pub static GEOMETRICMEANLIB_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__DEPLOYED_BYTECODE);
-    pub struct G3MLib<M>(::ethers::contract::Contract<M>);
-    impl<M> ::core::clone::Clone for G3MLib<M> {
+    pub struct GeometricMeanLib<M>(::ethers::contract::Contract<M>);
+    impl<M> ::core::clone::Clone for GeometricMeanLib<M> {
         fn clone(&self) -> Self {
             Self(::core::clone::Clone::clone(&self.0))
         }
     }
-    impl<M> ::core::ops::Deref for G3MLib<M> {
+    impl<M> ::core::ops::Deref for GeometricMeanLib<M> {
         type Target = ::ethers::contract::Contract<M>;
         fn deref(&self) -> &Self::Target {
             &self.0
         }
     }
-    impl<M> ::core::ops::DerefMut for G3MLib<M> {
+    impl<M> ::core::ops::DerefMut for GeometricMeanLib<M> {
         fn deref_mut(&mut self) -> &mut Self::Target {
             &mut self.0
         }
     }
-    impl<M> ::core::fmt::Debug for G3MLib<M> {
+    impl<M> ::core::fmt::Debug for GeometricMeanLib<M> {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-            f.debug_tuple(::core::stringify!(G3MLib))
+            f.debug_tuple(::core::stringify!(GeometricMeanLib))
                 .field(&self.address())
                 .finish()
         }
     }
-    impl<M: ::ethers::providers::Middleware> G3MLib<M> {
+    impl<M: ::ethers::providers::Middleware> GeometricMeanLib<M> {
         /// Creates a new contract instance with the specified `ethers` client
         /// at `address`. The contract derefs to a `ethers::Contract`
         /// object.
@@ -68,7 +68,7 @@ pub mod g3m_lib {
         ) -> Self {
             Self(::ethers::contract::Contract::new(
                 address.into(),
-                G3MLIB_ABI.clone(),
+                GEOMETRICMEANLIB_ABI.clone(),
                 client,
             ))
         }
@@ -108,8 +108,8 @@ pub mod g3m_lib {
             ::ethers::contract::ContractError<M>,
         > {
             let factory = ::ethers::contract::ContractFactory::new(
-                G3MLIB_ABI.clone(),
-                G3MLIB_BYTECODE.clone().into(),
+                GEOMETRICMEANLIB_ABI.clone(),
+                GEOMETRICMEANLIB_BYTECODE.clone().into(),
                 client,
             );
             let deployer = factory.deploy(constructor_args)?;
@@ -117,7 +117,9 @@ pub mod g3m_lib {
             Ok(deployer)
         }
     }
-    impl<M: ::ethers::providers::Middleware> From<::ethers::contract::Contract<M>> for G3MLib<M> {
+    impl<M: ::ethers::providers::Middleware> From<::ethers::contract::Contract<M>>
+        for GeometricMeanLib<M>
+    {
         fn from(contract: ::ethers::contract::Contract<M>) -> Self {
             Self::new(contract.address(), contract.client())
         }
