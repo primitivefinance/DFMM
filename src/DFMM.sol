@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "solmate/utils/FixedPointMathLib.sol";
-import "solmate/utils/SafeTransferLib.sol";
-import "solmate/utils/LibString.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
+import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
+import { LibString } from "solmate/utils/LibString.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
-import "solstat/Units.sol";
-import "./interfaces/IDFMM.sol";
-import "./interfaces/IStrategy.sol";
-import "./lib/ScalingLib.sol";
+import { abs } from "solstat/Units.sol";
+import { IDFMM } from "./interfaces/IDFMM.sol";
+import { IStrategy } from "./interfaces/IStrategy.sol";
+import {
+    computeScalingFactor,
+    downscaleDown,
+    downscaleUp
+} from "./lib/ScalingLib.sol";
 import "./LPToken.sol";
 
 /**
