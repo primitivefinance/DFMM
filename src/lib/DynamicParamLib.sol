@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "solmate/utils/FixedPointMathLib.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 struct DynamicParam {
     uint256 lastComputedValue;
