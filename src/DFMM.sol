@@ -13,7 +13,7 @@ import {
     downscaleDown,
     downscaleUp
 } from "./lib/ScalingLib.sol";
-import "./LPToken.sol";
+import { LPToken } from "./LPToken.sol";
 
 /**
  * @title DFMM
