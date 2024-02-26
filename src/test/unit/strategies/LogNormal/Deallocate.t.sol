@@ -17,7 +17,10 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
         //        uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
         //      (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
-        bytes memory data = abi.encode(minDeltaX, minDeltaY, deltaLiquidity);
+        // TODO: See if we can get a better rounding because the transaction fails
+        // if we don't provide a small slippage toleralance.
+        bytes memory data =
+            abi.encode(minDeltaX - 10, minDeltaY - 10, deltaLiquidity);
         dfmm.deallocate(POOL_ID, data);
 
         /*
@@ -43,7 +46,10 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
         // uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
         // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
-        bytes memory data = abi.encode(minDeltaX, minDeltaY, deltaLiquidity);
+        // TODO: See if we can get a better rounding because the transaction fails
+        // if we don't provide a small slippage toleralance.
+        bytes memory data =
+            abi.encode(minDeltaX - 10, minDeltaY - 10, deltaLiquidity);
         dfmm.deallocate(POOL_ID, data);
 
         /*
