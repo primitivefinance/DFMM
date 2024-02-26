@@ -29,6 +29,8 @@ interface IDFMM {
 
     error OnlyWETH();
 
+    error InvalidTransfer();
+
     /// @dev Thrown when the invariant is invalid.
     error Invalid(bool negative, uint256 swapConstantGrowth);
 
