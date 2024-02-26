@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "../../interfaces/IDFMM.sol";
-import "../../interfaces/IStrategy.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { IStrategy } from "src/interfaces/IStrategy.sol";
 
 contract MockStrategy is IStrategy {
     address public immutable dfmm;
@@ -11,6 +11,15 @@ contract MockStrategy is IStrategy {
 
     constructor(address dfmm_) {
         dfmm = dfmm_;
+    }
+
+    function equals(
+        string memory a,
+        string memory b
+    ) internal pure returns (bool) {
+        return (
+            keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b)))
+        );
     }
 
     function init(
@@ -22,29 +31,14 @@ contract MockStrategy is IStrategy {
         external
         returns (
             bool valid,
-            int256 swapConstantGrowth,
+            int256 invariant,
             uint256 reserveX,
             uint256 reserveY,
             uint256 totalLiquidity
         )
     {
-        uint256 status = abi.decode(data, (uint256));
-
-        if (status == 1) {
-            valid = true;
-            swapConstantGrowth = 1 ether;
-            reserveX = 2 ether;
-            reserveY = 3 ether;
-            totalLiquidity = 4 ether;
-        }
-
-        if (status == 2) {
-            valid = true;
-            swapConstantGrowth = 1 ether;
-            reserveX = 100 ether;
-            reserveY = 100 ether;
-            totalLiquidity = 10 ether;
-        }
+        (valid, invariant, reserveX, reserveY, totalLiquidity) =
+            abi.decode(data, (bool, int256, uint256, uint256, uint256));
     }
 
     function validateAllocate(
@@ -63,27 +57,8 @@ contract MockStrategy is IStrategy {
             uint256 deltaLiquidity
         )
     {
-        uint256 status = abi.decode(data, (uint256));
-
-        if (status == 1) {
-            valid = true;
-            invariant = 1 ether;
-            deltaX = 50 ether;
-            deltaY = 50 ether;
-            deltaLiquidity = 5 ether;
-        } else if (status == 9) {
-            valid = true;
-            invariant = 1 ether;
-            deltaX = 100 ether;
-            deltaY = 120 ether;
-            deltaLiquidity = 10 ether;
-        } else if (status == 8) {
-            valid = true;
-            invariant = 1 ether;
-            deltaX = 120 ether;
-            deltaY = 100 ether;
-            deltaLiquidity = 10 ether;
-        }
+        (valid, invariant, deltaX, deltaY, deltaLiquidity) =
+            abi.decode(data, (bool, int256, uint256, uint256, uint256));
     }
 
     function validateDeallocate(
@@ -102,15 +77,8 @@ contract MockStrategy is IStrategy {
             uint256 deltaLiquidity
         )
     {
-        uint256 status = abi.decode(data, (uint256));
-
-        if (status == 1) {
-            valid = true;
-            invariant = 1 ether;
-            deltaX = 50 ether;
-            deltaY = 50 ether;
-            deltaLiquidity = 5 ether;
-        }
+        (valid, invariant, deltaX, deltaY, deltaLiquidity) =
+            abi.decode(data, (bool, int256, uint256, uint256, uint256));
     }
 
     function validateSwap(
@@ -123,7 +91,7 @@ contract MockStrategy is IStrategy {
         view
         returns (
             bool valid,
-            int256 swapConstantGrowth,
+            int256 invariant,
             int256 liquidityDelta,
             uint256 reserveX,
             uint256 reserveY,
