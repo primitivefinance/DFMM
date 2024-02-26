@@ -4,78 +4,60 @@ pragma solidity ^0.8.13;
 import "./SetUp.sol";
 
 contract DFMMInit is DFMMSetUp {
-    function test_DFMM_init_StoresStrategyInitialReserves() public {
-        bytes memory data = abi.encode(uint256(1));
+    bool valid;
+    int256 initialInvariant = 1 ether;
+    uint256 initialReserveX = 1 ether;
+    uint256 initialReserveY = 1 ether;
+    uint256 initialLiquidity = 1 ether;
 
-        IDFMM.InitParams memory params = IDFMM.InitParams({
-            strategy: address(strategy),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
-            data: data
-        });
+    IDFMM.InitParams defaultParams = IDFMM.InitParams({
+        strategy: address(strategy),
+        tokenX: address(tokenX),
+        tokenY: address(tokenY),
+        data: abi.encode(
+            valid,
+            initialInvariant,
+            initialReserveX,
+            initialReserveY,
+            initialLiquidity
+            )
+    });
 
-        (uint256 poolId,,,) = dfmm.init(params);
+    function test_DFMM_init_StoresStrategyInitialReservesAndLiquidity()
+        public
+    {
+        (uint256 poolId,,,) = dfmm.init(defaultParams);
         (uint256 reserveX, uint256 reserveY, uint256 totalLiquidity) =
             dfmm.getReservesAndLiquidity(poolId);
-
-        assertEq(reserveX, 2 ether);
-        assertEq(reserveY, 3 ether);
-        assertEq(totalLiquidity, 4 ether);
+        assertEq(initialLiquidity, totalLiquidity);
+        assertEq(initialReserveX, reserveX);
+        assertEq(initialReserveY, reserveY);
     }
 
     function test_DFMM_init_ReturnsStrategyInitialReserves() public {
-        bytes memory data = abi.encode(uint256(1));
-
-        IDFMM.InitParams memory params = IDFMM.InitParams({
-            strategy: address(strategy),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
-            data: data
-        });
-
-        (uint256 poolId, uint256 reserveX, uint256 reserveY, uint256 liquidity)
-        = dfmm.init(params);
-
-        assertEq(poolId, 0);
-        assertEq(reserveX, 2 ether);
-        assertEq(reserveY, 3 ether);
-        assertEq(liquidity, 4 ether - 1000);
+        (, uint256 reserveX, uint256 reserveY, uint256 totalLiquidity) =
+            dfmm.init(defaultParams);
+        // A bit of the liquidity is burnt
+        assertEq(initialLiquidity, totalLiquidity - 1000);
+        assertEq(initialReserveX, reserveX);
+        assertEq(initialReserveY, reserveY);
     }
 
     function test_DFMM_init_IncrementsPoolId() public {
-        bytes memory data = abi.encode(uint256(1));
-
-        IDFMM.InitParams memory params = IDFMM.InitParams({
-            strategy: address(strategy),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
-            data: data
-        });
-
-        (uint256 poolId,,,) = dfmm.init(params);
+        (uint256 poolId,,,) = dfmm.init(defaultParams);
         assertEq(poolId, 0);
-
-        (poolId,,,) = dfmm.init(params);
+        (poolId,,,) = dfmm.init(defaultParams);
         assertEq(poolId, 1);
     }
 
     function test_DFMM_init_TransfersInitialReserves() public {
-        bytes memory data = abi.encode(uint256(1));
-
-        IDFMM.InitParams memory params = IDFMM.InitParams({
-            strategy: address(strategy),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
-            data: data
-        });
-
         uint256 dfmmPreBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 dfmmPreBalanceY = tokenY.balanceOf(address(dfmm));
 
         uint256 tokenXPreBalance = tokenX.balanceOf(address(this));
         uint256 tokenYPreBalance = tokenY.balanceOf(address(this));
 
-        (uint256 poolId,,,) = dfmm.init(params);
+        (uint256 poolId,,,) = dfmm.init(defaultParams);
         (uint256 reserveX, uint256 reserveY,) =
             dfmm.getReservesAndLiquidity(poolId);
 
@@ -86,16 +68,7 @@ contract DFMMInit is DFMMSetUp {
         assertEq(tokenY.balanceOf(address(this)), tokenYPreBalance - reserveY);
     }
 
-    function test_dfmm_init_emitsinitevent() public {
-        bytes memory data = abi.encode(uint256(1));
-
-        IDFMM.InitParams memory params = IDFMM.InitParams({
-            strategy: address(strategy),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
-            data: data
-        });
-
+    function test_dfmm_init_EmitsInitEvent() public {
         vm.expectEmit(true, true, true, true, address(dfmm));
         emit IDFMM.Init(
             address(this),
@@ -104,12 +77,12 @@ contract DFMMInit is DFMMSetUp {
             address(tokenX),
             address(tokenY),
             0,
-            2 ether,
-            3 ether,
-            4 ether
+            initialReserveX,
+            initialReserveY,
+            initialLiquidity
         );
 
-        dfmm.init(params);
+        dfmm.init(defaultParams);
     }
 
     function test_DFMM_init_DeploysLPTokenClone() public init {
