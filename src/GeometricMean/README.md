@@ -78,17 +78,30 @@ $$
 
 
 ## Allocations and Deallocations
-Allocations and deallocations should not change the price of a pool, so the ratio of reserves cannot change:
+**Input $\delta_X$:** If a user wants to allocate a specific amount of $\delta_X$, then it must be that:
 $$
-P = \frac{w_x}{w_y} \frac{y}{x}  = \frac{w_x}{w_y} \frac{y+\Delta_y}{x+\Delta_x}.
+\frac{x}{L} = \frac{x+\Delta_X}{L+\Delta_L}
 $$
-**Input $\Delta_X$:** If a user wants to allocate a specific amount of $\Delta_X$, then they must also allocate:
+which yields:
 $$
-\boxed{\Delta_Y = \frac{y}{x}(x+\Delta_X)-y}
+\Delta_L = L \frac{\Delta_X}{x}
 $$
-**Input $\Delta_Y$:** For a given $\Delta_Y$, then they must have:
+Then it must be that since the ratio of reserves cannot change.
 $$
-\boxed{\Delta_X = \frac{x}{y}(y+\Delta_Y)-x}
+\Delta_Y = y\frac{\Delta_X}{x} 
+$$
+
+**Input $\Delta_Y$:** To allocate a specific amount of $\Delta_Y$, then it must be that:
+$$
+\frac{y}{\mu L} = \frac{y+\Delta_Y}{\mu(L+\Delta_L)}
+$$
+which yields:
+$$
+\Delta_L = L \frac{\Delta_Y}{y}
+$$
+and we likewise get
+$$
+\Delta_X = x\frac{\Delta_Y}{y}
 $$
 
 
