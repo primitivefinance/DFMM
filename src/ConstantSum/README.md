@@ -1,5 +1,5 @@
 # Constant Sum Market Maker
-This will be all the background needed to understand the `GeometricMean` DFMM.
+This will be all the background needed to understand the `ConstantSum` DFMM.
 
 ## Conceptual Overview
 The `ConstantSum` DFMM gives the LP a portfolio that will allow exchange of a pair of tokens at a single price.
@@ -63,7 +63,7 @@ Allocations and deallocations should not change the price of a pool and since th
 We need only compute the new $L$.
 Specifically:
 $$
-L + \Delta_L = x+\Delta_X + \frac{y+\Delta_Y}{P}
+\Delta_L = \Delta_X + \frac{\Delta_Y}{P}
 $$
 
 
