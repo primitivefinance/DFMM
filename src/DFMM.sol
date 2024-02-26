@@ -289,22 +289,8 @@ contract DFMM is IDFMM {
         pools[poolId].reserveX = adjustedReserveX;
         pools[poolId].reserveY = adjustedReserveY;
 
-        uint256 preInputBalance = ERC20(inputToken).balanceOf(address(this));
-        uint256 preOutputBalance = ERC20(outputToken).balanceOf(address(this));
-
         _transferFrom(inputToken, inputAmount);
         _transfer(outputToken, msg.sender, outputAmount);
-
-        uint256 postInputBalance = ERC20(inputToken).balanceOf(address(this));
-        uint256 postOutputBalance = ERC20(outputToken).balanceOf(address(this));
-
-        if (postInputBalance < preInputBalance + inputAmount) {
-            revert InvalidSwapInputTransfer();
-        }
-
-        if (postOutputBalance < preOutputBalance - outputAmount) {
-            revert InvalidSwapOutputTransfer();
-        }
 
         return (isSwapXForY, inputToken, outputToken, inputAmount, outputAmount);
     }
@@ -329,9 +315,14 @@ contract DFMM is IDFMM {
         } else {
             uint256 downscaledAmount =
                 downscaleUp(amount, computeScalingFactor(token));
+            uint256 preBalance = ERC20(token).balanceOf(address(this));
             SafeTransferLib.safeTransferFrom(
                 ERC20(token), msg.sender, address(this), downscaledAmount
             );
+            uint256 postBalance = ERC20(token).balanceOf(address(this));
+            if (postBalance < preBalance + downscaledAmount) {
+                revert InvalidTransfer();
+            }
         }
     }
 
@@ -349,7 +340,12 @@ contract DFMM is IDFMM {
         } else {
             uint256 downscaledAmount =
                 downscaleDown(amount, computeScalingFactor(token));
+            uint256 preBalance = ERC20(token).balanceOf(address(this));
             SafeTransferLib.safeTransfer(ERC20(token), to, downscaledAmount);
+            uint256 postBalance = ERC20(token).balanceOf(address(this));
+            if (postBalance < preBalance - downscaledAmount) {
+                revert InvalidTransfer();
+            }
         }
     }
 
