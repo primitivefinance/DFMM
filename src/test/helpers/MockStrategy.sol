@@ -101,7 +101,17 @@ contract MockStrategy is IStrategy {
             uint256 deltaY,
             uint256 deltaLiquidity
         )
-    { }
+    {
+        uint256 status = abi.decode(data, (uint256));
+
+        if (status == 1) {
+            valid = true;
+            invariant = 1 ether;
+            deltaX = 50 ether;
+            deltaY = 50 ether;
+            deltaLiquidity = 5 ether;
+        }
+    }
 
     function validateSwap(
         address,
