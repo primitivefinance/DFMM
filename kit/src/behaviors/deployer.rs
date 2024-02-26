@@ -42,14 +42,14 @@ impl Behavior<()> for Deployer {
 
         let token_x = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
             client.clone(),
-            ("Token_x".to_owned(), "ARBX".to_owned(), 18),
+            ("Token_x".to_owned(), "ARBX".to_owned(), 18u8),
         )?
         .send()
         .await?;
 
         let token_y = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
             client.clone(),
-            ("Token_y".to_owned(), "ARBY".to_owned(), 18),
+            ("Token_y".to_owned(), "ARBY".to_owned(), 18u8),
         )?
         .send()
         .await?;
@@ -67,6 +67,7 @@ impl Behavior<()> for Deployer {
         messager
             .send(To::All, serde_json::to_string(&deployment_data)?)
             .await?;
+        println!("MESSAGE SENT");
         Ok(None)
     }
 }
@@ -75,7 +76,6 @@ impl Behavior<()> for Deployer {
 mod tests {
     use std::str::FromStr;
 
-    use anyhow::Ok;
     use arbiter_engine::{agent::Agent, world::World};
     use ethers::types::Address;
     use futures_util::StreamExt;
@@ -84,20 +84,17 @@ mod tests {
     use crate::behaviors::deployer::{Deployer, DeploymentData};
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-    async fn token_admin_behavior_test() -> anyhow::Result<()> {
+    async fn deployer_behavior_test() {
         let subscriber = FmtSubscriber::builder().finish();
-        tracing::subscriber::set_global_default(subscriber)?;
+        tracing::subscriber::set_global_default(subscriber).unwrap();
 
         let mut world = World::new("test");
         let messager = world.messager.clone();
 
-        let deployer = Deployer {};
-
         let agent = Agent::builder("token_admin_agent");
-        world.add_agent(agent.with_behavior(deployer));
+        world.add_agent(agent.with_behavior(Deployer {}));
 
-        world.run().await.expect("World failed to run");
-
+        world.run().await.unwrap();
         let mut stream = messager.stream().expect("Failed to get messager stream");
 
         if let Some(res) = stream.next().await {
@@ -113,26 +110,25 @@ mod tests {
             println!("{:?}", parsed_data);
 
             assert_eq!(
-                Address::from_str("0xb00efcb70090a21d46660adf95a16ec69623f694")?,
+                Address::from_str("0xb00efcb70090a21d46660adf95a16ec69623f694").unwrap(),
                 parsed_data.weth
             );
             assert_eq!(
-                Address::from_str("0x27781b40bd019ccb1dcb0c809135db71222e9353")?,
+                Address::from_str("0x27781b40bd019ccb1dcb0c809135db71222e9353").unwrap(),
                 parsed_data.dfmm
             );
             assert_eq!(
-                Address::from_str("0x6e0035324097bfc66442e2d3f37ef378fb3750b2")?,
+                Address::from_str("0x6e0035324097bfc66442e2d3f37ef378fb3750b2").unwrap(),
                 parsed_data.g3m
             );
             assert_eq!(
-                Address::from_str("0x4be050270d209ef9f0c0435736c731767486279f")?,
+                Address::from_str("0x4be050270d209ef9f0c0435736c731767486279f").unwrap(),
                 parsed_data.log_normal
             );
             assert_eq!(
-                Address::from_str("0xaeb166f1355c6254d01a54317ef8d4d21bfcb4b0")?,
+                Address::from_str("0xaeb166f1355c6254d01a54317ef8d4d21bfcb4b0").unwrap(),
                 parsed_data.constant_sum
             );
-            Ok(())
         } else {
             panic!("No message received");
         }

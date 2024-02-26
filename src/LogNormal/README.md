@@ -146,7 +146,7 @@ $$
 $$
 Then it must be that
 $$
-\Delta_Y = y\frac{\Delta_X}{x} 
+\Delta_Y = y\frac{\Delta_X}{x} #
 $$
 
 **Input $\Delta_Y$:** To allocate a specific amount of $\Delta_Y$, then it must be that:
