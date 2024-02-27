@@ -1,6 +1,5 @@
 use bindings::{geometric_mean::GeometricMean, geometric_mean_solver::GeometricMeanSolver};
 use ethers::types::Address;
-use futures_util::future::ok;
 
 use super::*;
 
@@ -21,25 +20,7 @@ pub enum UpdateParameters {
     TargetWeightX(eU256),
     TargetController(Address),
 }
-// function allocateGivenX(
-//     uint256 poolId,
-//     uint256 amountX
-// ) public view returns (uint256, uint256, uint256)
 
-// function allocateGivenY(
-//     uint256 poolId,
-//     uint256 amountY
-// ) public view returns (uint256, uint256, uint256)
-
-// function deallocateGivenX(
-//     uint256 poolId,
-//     uint256 amountX
-// ) public view returns (uint256, uint256, uint256)
-
-// function deallocateGivenY(
-//     uint256 poolId,
-//     uint256 amountY
-// ) public view returns (uint256, uint256, uint256)
 pub enum GeometricMeanAllocationData {
     AllocateGivenX(eU256),
     AllocateGivenY(eU256),
@@ -138,9 +119,13 @@ impl PoolType for GeometricMeanPool {
                     .await?
             }
         };
-        // Byte hell, need to convert the eU256's to bytes
-        // let bytes = ethers::abi::encode(&[(next_x, next_y, next_l)]);
-        // Ok(to_bytes(&bytes))
-        todo!("finish this")
+        // Byte hell to convert the eU256's to bytes
+        let token_1 = ethers::abi::Token::Uint(next_x);
+        let token_2 = ethers::abi::Token::Uint(next_y);
+        let token_3 = ethers::abi::Token::Uint(next_l);
+        let bytes: Bytes = ethers::abi::encode(&[token_1, token_2, token_3])
+            .iter()
+            .collect();
+        Ok(bytes)
     }
 }
