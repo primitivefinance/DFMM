@@ -1,32 +1,28 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "./SetUp.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { DFMMSetUp } from "./SetUp.sol";
 
 contract DFMMInit is DFMMSetUp {
-    bool valid;
+    bool valid = true;
     int256 initialInvariant = 1 ether;
     uint256 initialReserveX = 1 ether;
     uint256 initialReserveY = 1 ether;
     uint256 initialLiquidity = 1 ether;
-
-    IDFMM.InitParams defaultParams = IDFMM.InitParams({
-        strategy: address(strategy),
-        tokenX: address(tokenX),
-        tokenY: address(tokenY),
-        data: abi.encode(
-            valid,
-            initialInvariant,
-            initialReserveX,
-            initialReserveY,
-            initialLiquidity
-            )
-    });
+    bytes defaultData = abi.encode(
+        valid,
+        initialInvariant,
+        initialReserveX,
+        initialReserveY,
+        initialLiquidity
+    );
 
     function test_DFMM_init_StoresStrategyInitialReservesAndLiquidity()
         public
     {
-        (uint256 poolId,,,) = dfmm.init(defaultParams);
+        bytes memory foo;
+        (uint256 poolId,,,) = dfmm.init(getDefaultPoolParams(foo));
         (uint256 reserveX, uint256 reserveY, uint256 totalLiquidity) =
             dfmm.getReservesAndLiquidity(poolId);
         assertEq(initialLiquidity, totalLiquidity);
@@ -36,17 +32,17 @@ contract DFMMInit is DFMMSetUp {
 
     function test_DFMM_init_ReturnsStrategyInitialReserves() public {
         (, uint256 reserveX, uint256 reserveY, uint256 totalLiquidity) =
-            dfmm.init(defaultParams);
+            dfmm.init(getDefaultPoolParams(defaultData));
         // A bit of the liquidity is burnt
-        assertEq(initialLiquidity, totalLiquidity - 1000);
+        assertEq(initialLiquidity - 1000, totalLiquidity);
         assertEq(initialReserveX, reserveX);
         assertEq(initialReserveY, reserveY);
     }
 
     function test_DFMM_init_IncrementsPoolId() public {
-        (uint256 poolId,,,) = dfmm.init(defaultParams);
+        (uint256 poolId,,,) = dfmm.init(getDefaultPoolParams(defaultData));
         assertEq(poolId, 0);
-        (poolId,,,) = dfmm.init(defaultParams);
+        (poolId,,,) = dfmm.init(getDefaultPoolParams(defaultData));
         assertEq(poolId, 1);
     }
 
@@ -57,7 +53,7 @@ contract DFMMInit is DFMMSetUp {
         uint256 tokenXPreBalance = tokenX.balanceOf(address(this));
         uint256 tokenYPreBalance = tokenY.balanceOf(address(this));
 
-        (uint256 poolId,,,) = dfmm.init(defaultParams);
+        (uint256 poolId,,,) = dfmm.init(getDefaultPoolParams(defaultData));
         (uint256 reserveX, uint256 reserveY,) =
             dfmm.getReservesAndLiquidity(poolId);
 
@@ -82,10 +78,10 @@ contract DFMMInit is DFMMSetUp {
             initialLiquidity
         );
 
-        dfmm.init(defaultParams);
+        dfmm.init(getDefaultPoolParams(defaultData));
     }
 
-    function test_DFMM_init_DeploysLPTokenClone() public init {
+    function test_DFMM_init_DeploysLPTokenClone() public initPool {
         (,,,,,, address liquidityToken) = dfmm.pools(POOL_ID);
         assertTrue(liquidityToken != address(0));
         assertTrue(liquidityToken.code.length > 0);
