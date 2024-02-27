@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./ConstantSum.sol";
+import "./ConstantSumLib.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/interfaces/IDFMM.sol";
 import "src/lib/StrategyLib.sol";
@@ -155,5 +156,8 @@ contract ConstantSumSolver {
             address(this), poolId, pool, deallocateData
         );
         return (valid, deallocateData);
+}
+    function preparePriceUpdate(uint256 newPrice) public pure returns (bytes memory) {
+        return ConstantSumLib.encodePriceUpdate(newPrice);
     }
 }

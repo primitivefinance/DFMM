@@ -147,7 +147,7 @@ contract LogNormalTest is Test {
     function test_ln_diff_lower() public basic {
         uint256 poolId = dfmm.nonce() - 1;
         int256 diffLowered = solver.calculateDiffLower(
-            poolId, 1.9 ether, 160_249_195_342_896_967
+            poolId, 1.9 ether, 171_917_954_632_821_596
         );
 
         console2.log(diffLowered);
@@ -156,7 +156,7 @@ contract LogNormalTest is Test {
     function test_ln_diff_raise() public basic {
         uint256 poolId = dfmm.nonce() - 1;
         int256 diffLowered = solver.calculateDiffRaise(
-            poolId, 2.1 ether, 302_756_023_375_108_995
+            poolId, 2.1 ether, 326_118_838_819_816_034
         );
 
         console2.log(diffLowered);

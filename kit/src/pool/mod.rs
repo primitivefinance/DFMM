@@ -13,9 +13,30 @@ pub trait PoolType {
     type Parameters;
     type StrategyContract;
     type SolverContract;
+    type AllocationData;
 
     #[allow(async_fn_in_trait)]
-    async fn swap_data(&self, pool_id: eU256, swap_x_in: bool, amount_in: eU256) -> Result<Bytes>;
+    async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
+    /// Change Parameters
+    #[allow(async_fn_in_trait)]
+    async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes>;
+    /// Change Allocation Date
+    #[allow(async_fn_in_trait)]
+    async fn change_allocation_data(
+        &self,
+        pool_id: eU256,
+        allocation_date: Self::AllocationData,
+    ) -> Result<Bytes>;
+}
+
+pub enum InputToken {
+    TokenX,
+    TokenY,
+}
+
+pub enum AllocateOrDeallocate {
+    Allocate,
+    Deallocate,
 }
 
 pub struct Pool<P: PoolType> {
@@ -27,17 +48,27 @@ pub struct Pool<P: PoolType> {
 }
 
 impl<P: PoolType> Pool<P> {
-    pub async fn swap(
-        &self,
-        amount_in: eU256,
-        token_in: &ArbiterToken<ArbiterMiddleware>,
-    ) -> Result<()> {
-        let swap_x_in = token_in.address() == self.token_x.address();
-        let data = self
-            .instance
-            .swap_data(self.id, swap_x_in, amount_in)
-            .await?;
+    pub async fn swap(&self, amount_in: eU256, token_in: InputToken) -> Result<()> {
+        let data = match token_in {
+            InputToken::TokenX => {
+                self.instance
+                    .swap_data(self.id, token_in, amount_in)
+                    .await?
+            }
+            InputToken::TokenY => {
+                self.instance
+                    .swap_data(self.id, token_in, amount_in)
+                    .await?
+            }
+        };
         self.dfmm.swap(self.id, data).send().await?.await?;
         Ok(())
     }
 }
+
+// async fn swap_data(
+//     &self,
+//     pool_id: eU256,
+//     swap: Self::AllocationData,
+//     amount_in: eU256,
+// ) -> Result<Bytes>;

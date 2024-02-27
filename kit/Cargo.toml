@@ -12,6 +12,7 @@ readme = "../README.md"
 arbiter-core = "0.10.2"
 arbiter-engine = "0.3.0"
 arbiter-macros = "0.1.2"
+arbiter-bindings = "0.1.6"
 
 # Ethereum
 ethers = "2.0.13"
@@ -19,6 +20,7 @@ ethers = "2.0.13"
 # Async
 tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1.77"
+futures-util = "0.3.30"
 
 # Serde 
 serde = { version = "1.0.197", features = ["derive"] }

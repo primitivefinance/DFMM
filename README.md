@@ -105,6 +105,12 @@ You can deploy the contracts with the following command:
 $ forge script ./src/script/Deployment.s.sol --rpc-url $OPTIMISM_SEPOLIA_RPC_URL --broadcast --verify -vvv
 ```
 
+### Arbiter Security Report
+To build the arbiter run
+```bash
+$ make tex
+```
+
 ## Current Deployments
 
 The DFMM protocol is currently deployed on the following networks:

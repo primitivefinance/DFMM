@@ -25,12 +25,12 @@ pub mod log_normal_lib {
     pub static LOGNORMALLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
         ::ethers::contract::Lazy::new(__abi);
     #[rustfmt::skip]
-    const __BYTECODE: &[u8] = b"`\x80\x80`@R4`\x17W`:\x90\x81`\x1D\x8290\x81PP\xF3[`\0\x80\xFD\xFE`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xE0\x10\xA7\x82\xE0e\xFC\xA0,5@\xC9P\x96\xF3|\xE5t/WG\nV\xFC\xC6\xEF\xA6Z\xA0\xE4\xFDWdsolcC\0\x08\x16\x003";
+    const __BYTECODE: &[u8] = b"`\x80\x80`@R4`\x17W`:\x90\x81`\x1D\x8290\x81PP\xF3[`\0\x80\xFD\xFE`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xDC\"E\xA8|\x02\x01\x90\x17\xDA\xF1Y\x9B8\xAA\xA3\x1CID^n\x9BU\xC8\x82p\x1C\x06;\x1DE\xD9dsolcC\0\x08\x16\x003";
     /// The bytecode of the contract.
     pub static LOGNORMALLIB_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__BYTECODE);
     #[rustfmt::skip]
-    const __DEPLOYED_BYTECODE: &[u8] = b"`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xE0\x10\xA7\x82\xE0e\xFC\xA0,5@\xC9P\x96\xF3|\xE5t/WG\nV\xFC\xC6\xEF\xA6Z\xA0\xE4\xFDWdsolcC\0\x08\x16\x003";
+    const __DEPLOYED_BYTECODE: &[u8] = b"`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xDC\"E\xA8|\x02\x01\x90\x17\xDA\xF1Y\x9B8\xAA\xA3\x1CID^n\x9BU\xC8\x82p\x1C\x06;\x1DE\xD9dsolcC\0\x08\x16\x003";
     /// The deployed bytecode of the contract.
     pub static LOGNORMALLIB_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__DEPLOYED_BYTECODE);

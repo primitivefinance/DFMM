@@ -126,7 +126,7 @@ $$
 If we want to trade in $\Delta_X$ for $\Delta_Y$, 
 we first accumulate fees by taking 
 $$
-\Delta_L = (1-\gamma) \Delta_X.
+\Delta_L = \frac{1-\gamma}{\mu} \Delta_Y.
 $$
 Then we can use our invariant equation and solve for $\Delta_X$ in terms of $\Delta_Y$ to get:
 $$
@@ -146,7 +146,7 @@ $$
 $$
 Then it must be that
 $$
-\Delta_Y = y\frac{\Delta_X}{x} 
+\Delta_Y = y\frac{\Delta_X}{x} #
 $$
 
 **Input $\Delta_Y$:** To allocate a specific amount of $\Delta_Y$, then it must be that:
