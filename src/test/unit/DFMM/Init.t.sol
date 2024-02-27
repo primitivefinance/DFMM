@@ -102,13 +102,21 @@ contract DFMMInit is DFMMSetUp {
     function test_DFMM_init_RevertsWhenNotValid() public {
         IDFMM.InitParams memory params = IDFMM.InitParams({
             strategy: address(strategy),
-            tokenX: address(0xbeef),
-            tokenY: address(0xdead),
-            data: abi.encode(uint256(0))
+            tokenX: address(tokenX),
+            tokenY: address(tokenY),
+            data: abi.encode(
+                false,
+                initialInvariant,
+                initialReserveX,
+                initialReserveY,
+                initialLiquidity
+                )
         });
 
         vm.expectRevert(
-            abi.encodeWithSelector(IDFMM.Invalid.selector, false, 0)
+            abi.encodeWithSelector(
+                IDFMM.Invalid.selector, false, initialInvariant
+            )
         );
         dfmm.init(params);
     }
