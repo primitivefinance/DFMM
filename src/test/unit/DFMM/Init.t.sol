@@ -22,8 +22,7 @@ contract DFMMInit is DFMMSetUp, Script {
     function test_DFMM_init_StoresStrategyInitialReservesAndLiquidity()
         public
     {
-        bytes memory foo;
-        (uint256 poolId,,,) = dfmm.init(getDefaultPoolParams(foo));
+        (uint256 poolId,,,) = dfmm.init(getDefaultPoolParams(defaultData));
         (uint256 reserveX, uint256 reserveY, uint256 totalLiquidity) =
             dfmm.getReservesAndLiquidity(poolId);
         assertEq(initialLiquidity, totalLiquidity);
