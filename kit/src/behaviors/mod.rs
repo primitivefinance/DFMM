@@ -11,6 +11,8 @@ use self::deployer::Deployer;
 use super::*;
 
 pub mod deployer;
+pub mod initialize;
+pub mod liquidity_provision;
 
 #[derive(Behaviors, Debug, Deserialize, Serialize)]
 pub enum Behaviors {

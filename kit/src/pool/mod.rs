@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use arbiter_core::middleware::ArbiterMiddleware;
 use ethers::types::Bytes;
 
@@ -9,14 +11,14 @@ pub mod constant_sum;
 pub mod geometric_mean;
 pub mod log_normal;
 
-pub trait PoolType {
+pub trait PoolType: Debug + Send + Sync {
     type Parameters;
     type StrategyContract;
     type SolverContract;
     type AllocationData;
 
     #[allow(async_fn_in_trait)]
-    async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
+    async fn swap_data(&self, pool_id: eU256, swap: Token, amount_in: eU256) -> Result<Bytes>;
     /// Change Parameters
     #[allow(async_fn_in_trait)]
     async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes>;
@@ -29,7 +31,7 @@ pub trait PoolType {
     ) -> Result<Bytes>;
 }
 
-pub enum InputToken {
+pub enum Token {
     TokenX,
     TokenY,
 }
@@ -39,23 +41,24 @@ pub enum AllocateOrDeallocate {
     Deallocate,
 }
 
+#[derive(Debug)]
 pub struct Pool<P: PoolType> {
     pub id: eU256,
-    pub dfmm: DFMM<ArbiterMiddleware>,
     pub instance: P,
+    pub dfmm: DFMM<ArbiterMiddleware>,
     pub token_x: ArbiterToken<ArbiterMiddleware>,
     pub token_y: ArbiterToken<ArbiterMiddleware>,
 }
 
 impl<P: PoolType> Pool<P> {
-    pub async fn swap(&self, amount_in: eU256, token_in: InputToken) -> Result<()> {
+    pub async fn swap(&self, amount_in: eU256, token_in: Token) -> Result<()> {
         let data = match token_in {
-            InputToken::TokenX => {
+            Token::TokenX => {
                 self.instance
                     .swap_data(self.id, token_in, amount_in)
                     .await?
             }
-            InputToken::TokenY => {
+            Token::TokenY => {
                 self.instance
                     .swap_data(self.id, token_in, amount_in)
                     .await?
