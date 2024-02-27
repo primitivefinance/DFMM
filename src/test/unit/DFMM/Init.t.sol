@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "forge-std/Script.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { DFMMSetUp } from "./SetUp.sol";
 
-contract DFMMInit is DFMMSetUp {
+contract DFMMInit is DFMMSetUp, Script {
     bool valid = true;
     int256 initialInvariant = 1 ether;
     uint256 initialReserveX = 1 ether;
@@ -69,7 +70,7 @@ contract DFMMInit is DFMMSetUp {
         emit IDFMM.Init(
             address(this),
             address(strategy),
-            address(0xDD4c722d1614128933d6DC7EFA50A6913e804E12),
+            address(0x746326d3E4e54BA617F8aB39A21b7420aE8bF97d),
             address(tokenX),
             address(tokenY),
             0,
