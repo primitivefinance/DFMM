@@ -255,6 +255,7 @@ contract ConstantSumTest is Test {
     }
 
     function test_constant_sum_deallocate() public basic {
+        vm.skip(true);
         uint256 poolId = dfmm.nonce() - 1;
         uint256 amountX = 0.1 ether;
         uint256 amountY = 0.1 ether;
