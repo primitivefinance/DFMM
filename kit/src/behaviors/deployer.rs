@@ -1,9 +1,4 @@
-use arbiter_bindings::bindings::weth::WETH;
 use arbiter_engine::messager::To;
-use bindings::{
-    constant_sum::ConstantSum, dfmm::DFMM, geometric_mean::GeometricMean, log_normal::LogNormal,
-};
-use ethers::types::Address;
 
 use super::*;
 
@@ -11,13 +6,16 @@ use super::*;
 pub struct Deployer {}
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DeploymentData {
-    pub weth: Address,
-    pub dfmm: Address,
-    pub geometric_mean: Address,
-    pub log_normal: Address,
-    pub constant_sum: Address,
-    pub token_x: Address,
-    pub token_y: Address,
+    pub weth: eAddress,
+    pub dfmm: eAddress,
+    pub geometric_mean: eAddress,
+    pub geometric_mean_solver: eAddress,
+    pub log_normal: eAddress,
+    pub log_normal_solver: eAddress,
+    pub constant_sum: eAddress,
+    pub constant_sum_solver: eAddress,
+    pub token_x: eAddress,
+    pub token_y: eAddress,
 }
 
 #[async_trait::async_trait]
@@ -36,25 +34,48 @@ impl Behavior<()> for Deployer {
         let geometric_mean = GeometricMean::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
-        trace!("GeometricMean deployed at {:?}", geometric_mean.address());
+        let geometric_mean_solver =
+            GeometricMeanSolver::deploy(client.clone(), geometric_mean.address())?
+                .send()
+                .await?;
+        trace!(
+            "GeometricMean deployed at {:?} with solver at {:?}",
+            geometric_mean.address(),
+            geometric_mean_solver.address()
+        );
 
         let log_normal = LogNormal::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
-        trace!("LogNormal deployed at {:?}", log_normal.address());
+        let log_normal_solver = LogNormalSolver::deploy(client.clone(), log_normal.address())?
+            .send()
+            .await?;
+        trace!(
+            "LogNormal deployed at {:?} with solver at {:?}",
+            log_normal.address(),
+            log_normal_solver.address()
+        );
 
         let constant_sum = ConstantSum::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
-        trace!("ConstantSum deployed at {:?}", constant_sum.address());
+        let constant_sum_solver =
+            ConstantSumSolver::deploy(client.clone(), constant_sum.address())?
+                .send()
+                .await?;
+        trace!(
+            "ConstantSum deployed at {:?} with solver at {:?}",
+            constant_sum.address(),
+            constant_sum_solver.address()
+        );
 
-        let token_x = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
+        let token_x = ArbiterToken::deploy(
             client.clone(),
             ("Token X".to_owned(), "ARBX".to_owned(), 18u8),
         )?
         .send()
         .await?;
-        let token_y = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
+        let token_y = ArbiterToken::deploy(
             client.clone(),
             ("Token Y".to_owned(), "ARBY".to_owned(), 18u8),
         )?
@@ -71,8 +92,11 @@ impl Behavior<()> for Deployer {
             weth: weth.address(),
             dfmm: dfmm.address(),
             geometric_mean: geometric_mean.address(),
+            geometric_mean_solver: geometric_mean_solver.address(),
             log_normal: log_normal.address(),
+            log_normal_solver: log_normal_solver.address(),
             constant_sum: constant_sum.address(),
+            constant_sum_solver: constant_sum_solver.address(),
             token_x: token_x.address(),
             token_y: token_y.address(),
         };

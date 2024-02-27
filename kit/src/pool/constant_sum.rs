@@ -1,22 +1,14 @@
-use bindings::{constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver};
-
 use super::*;
 
 #[derive(Debug)]
 pub struct ConstantSumPool {
     pub strategy_contract: ConstantSum<ArbiterMiddleware>,
     pub solver_contract: ConstantSumSolver<ArbiterMiddleware>,
-    pub parameters: ConstantSumParameters,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct ConstantSumParameters {
-    pub price: eU256,
-    pub swap_fee: eU256,
+    pub parameters: ConstantSumParams,
 }
 
 impl PoolType for ConstantSumPool {
-    type Parameters = ConstantSumParameters;
+    type Parameters = ConstantSumParams;
     type StrategyContract = ConstantSum<ArbiterMiddleware>;
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = (AllocateOrDeallocate, eU256, eU256);
