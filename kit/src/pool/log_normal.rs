@@ -17,9 +17,11 @@ pub enum LogNormalUpdateParameters {
     ControllerUpdate(Address),
 }
 
-pub struct LogNormalAllocationData {
-    pub allocate: bool,
-    pub amount: eU256,
+pub enum LogNormalAllocationData {
+    AllocateGivenX(eU256),
+    AllocateGivenY(eU256),
+    DeallocateGivenX(eU256),
+    DeallocateGivenY(eU256),
 }
 
 impl PoolType for LogNormalPool {
@@ -91,8 +93,40 @@ impl PoolType for LogNormalPool {
     async fn change_allocation_data(
         &self,
         pool_id: eU256,
-        allocation_date: Self::AllocationData,
+        allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        todo!()
+        let (next_x, next_y, next_l) = match allocation_data {
+            LogNormalAllocationData::AllocateGivenX(amount_x) => {
+                self.solver_contract
+                    .allocate_given_x(pool_id, amount_x)
+                    .call()
+                    .await?
+            }
+            LogNormalAllocationData::AllocateGivenY(amount_y) => {
+                self.solver_contract
+                    .allocate_given_y(pool_id, amount_y)
+                    .call()
+                    .await?
+            }
+            LogNormalAllocationData::DeallocateGivenX(amount_x) => {
+                self.solver_contract
+                    .deallocate_given_x(pool_id, amount_x)
+                    .call()
+                    .await?
+            }
+            LogNormalAllocationData::DeallocateGivenY(amount_y) => {
+                self.solver_contract
+                    .deallocate_given_y(pool_id, amount_y)
+                    .call()
+                    .await?
+            }
+        };
+        let token_1 = ethers::abi::Token::Uint(next_x);
+        let token_2 = ethers::abi::Token::Uint(next_y);
+        let token_3 = ethers::abi::Token::Uint(next_l);
+        let bytes: Bytes = ethers::abi::encode(&[token_1, token_2, token_3])
+            .iter()
+            .collect();
+        Ok(bytes)
     }
 }
