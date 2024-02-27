@@ -463,7 +463,6 @@ function computeOptimalLower(
 
 function computeOptimalRaise(
     int256 S,
-    int256 rX,
     int256 rY,
     int256 L,
     uint256 vUpper,
