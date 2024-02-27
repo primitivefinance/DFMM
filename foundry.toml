@@ -2,7 +2,6 @@
 remappings = [
   "solmate/=lib/solstat/lib/solmate/src/",
   "solstat/=lib/solstat/src/",
-  "forge-std/=lib/solstat/lib/forge-std/src/",
 ]
 solc_version = "0.8.22"
 
