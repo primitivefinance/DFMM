@@ -16,7 +16,12 @@ pub trait PoolType {
     type AllocationData;
 
     #[allow(async_fn_in_trait)]
-    async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
+    async fn swap_data(
+        &self,
+        pool_id: eU256,
+        input_token: InputToken,
+        amount_in: eU256,
+    ) -> Result<Bytes>;
     /// Change Parameters
     #[allow(async_fn_in_trait)]
     async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes>;
