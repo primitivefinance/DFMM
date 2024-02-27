@@ -156,8 +156,13 @@ contract ConstantSumSolver {
             address(this), poolId, pool, deallocateData
         );
         return (valid, deallocateData);
-}
-    function preparePriceUpdate(uint256 newPrice) public pure returns (bytes memory) {
+    }
+
+    function preparePriceUpdate(uint256 newPrice)
+        public
+        pure
+        returns (bytes memory)
+    {
         return ConstantSumLib.encodePriceUpdate(newPrice);
     }
 }
