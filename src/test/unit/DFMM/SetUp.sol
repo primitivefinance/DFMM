@@ -14,15 +14,28 @@ contract DFMMSetUp is SetUp {
         strategy = new MockStrategy(address(dfmm));
     }
 
-    modifier init() {
-        IDFMM.InitParams memory params = IDFMM.InitParams({
+    function getDefaultPoolParams(bytes memory data)
+        internal
+        view
+        returns (IDFMM.InitParams memory)
+    {
+        return IDFMM.InitParams({
             strategy: address(strategy),
             tokenX: address(tokenX),
             tokenY: address(tokenY),
-            data: abi.encode(uint256(2))
+            data: data
         });
+    }
 
-        (POOL_ID,,,) = dfmm.init(params);
+    modifier initPool() {
+        bytes memory params = abi.encode(
+            true,
+            int256(1 ether),
+            uint256(1 ether),
+            uint256(1 ether),
+            uint256(1 ether)
+        );
+        (POOL_ID,,,) = dfmm.init(getDefaultPoolParams(params));
         _;
     }
 }
