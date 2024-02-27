@@ -405,7 +405,7 @@ function diffLower(
     return -iS + a + b;
     
     */
-    
+
     int256 ierfcNum = I_TWO.wadMul(int256(rX)).wadMul(int256(v) + int256(rX));
     int256 ierfcDen = int256(L).wadMul(
         int256(v) + (int256(rX))
@@ -526,9 +526,8 @@ function diffRaise(
 
     int256 firstFrac = computeDiffRaiseFirstFrac(parameters);
     int256 secondFrac = computeDiffRaiseSecondFrac(parameters);
- 
- 
- /* Main
+
+    /* Main
     int256 iS = int256(S);
     int256 iY = int256(rY);
     int256 iL = int256(L);
@@ -564,9 +563,7 @@ function diffRaise(
     }
  */
 
-
-
-    return -I_ONE + a + b;
+    return -I_ONE + firstFrac + secondFrac;
 }
 
 function computeOptimalLower(
