@@ -333,8 +333,8 @@ contract LogNormalSolver {
         uint256 v
     ) public view returns (int256) {
         LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
-        (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
-        return diffLower(S, rx, ry, L, v, params);
+        (uint256 rx,, uint256 L) = getReservesAndLiquidity(poolId);
+        return diffLower(int256(S), int256(rx), int256(L), int256(v), params);
     }
 
     function calculateDiffRaise(
@@ -343,8 +343,8 @@ contract LogNormalSolver {
         uint256 v
     ) public view returns (int256) {
         LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
-        (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
-        return diffRaise(S, rx, ry, L, v, params);
+        (, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
+        return diffRaise(int256(S), int256(ry), int256(L), int256(v), params);
     }
 
     function computeOptimalArbLowerPrice(
@@ -353,8 +353,8 @@ contract LogNormalSolver {
         uint256 vUpper
     ) public view returns (uint256) {
         LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
-        (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
-        return computeOptimalLower(S, rx, ry, L, vUpper, params);
+        (uint256 rx,, uint256 L) = getReservesAndLiquidity(poolId);
+        return computeOptimalLower(int256(S), int256(rx), int256(L), vUpper, params);
     }
 
     function computeOptimalArbRaisePrice(
@@ -364,6 +364,6 @@ contract LogNormalSolver {
     ) public view returns (uint256) {
         LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
         (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
-        return computeOptimalRaise(S, rx, ry, L, vUpper, params);
+        return computeOptimalRaise(int256(S), int256(rx), int256(ry), int256(L), vUpper, params);
     }
 }
