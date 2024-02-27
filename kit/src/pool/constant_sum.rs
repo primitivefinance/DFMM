@@ -14,7 +14,7 @@ pub struct ConstantSumParameters {
 }
 
 impl PoolType for ConstantSumPool {
-    type Parameters = ConstantSumParameters;
+    type UpdateParameters = ConstantSumParameters;
     type StrategyContract = ConstantSum<ArbiterMiddleware>;
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = (AllocateOrDeallocate, eU256, eU256);
@@ -46,7 +46,7 @@ impl PoolType for ConstantSumPool {
         }
     }
 
-    async fn update_data(&self, parameters: Self::Parameters) -> Result<Bytes> {
+    async fn update_data(&self, parameters: Self::UpdateParameters) -> Result<Bytes> {
         let price_update_data = self
             .solver_contract
             .prepare_price_update(parameters.price)
@@ -60,15 +60,30 @@ impl PoolType for ConstantSumPool {
         pool_id: eU256,
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        let (amount_x, amount_y, allocate) = match allocation_data.0 {
-            AllocateOrDeallocate::Allocate => (allocation_data.1, allocation_data.2, true),
-            AllocateOrDeallocate::Deallocate => (allocation_data.1, 0.into(), false),
+        let (valid, data) = match allocation_data.0 {
+            AllocateOrDeallocate::Allocate => {
+                self.solver_contract
+                    .simulate_allocate_or_deallocate(
+                        pool_id,
+                        true,
+                        allocation_data.1,
+                        allocation_data.2,
+                    )
+                    .call()
+                    .await?
+            }
+            AllocateOrDeallocate::Deallocate => {
+                self.solver_contract
+                    .simulate_allocate_or_deallocate(
+                        pool_id,
+                        false,
+                        allocation_data.2,
+                        allocation_data.1,
+                    )
+                    .call()
+                    .await?
+            }
         };
-        let (valid, data) = self
-            .solver_contract
-            .simulate_allocate_or_deallocate(pool_id, allocate, amount_x, amount_y)
-            .call()
-            .await?;
         if valid {
             Ok(data)
         } else {

@@ -1,4 +1,6 @@
 use bindings::{geometric_mean::GeometricMean, geometric_mean_solver::GeometricMeanSolver};
+use ethers::types::Address;
+use futures_util::future::ok;
 
 use super::*;
 
@@ -9,29 +11,136 @@ pub struct GeometricMeanPool {
 }
 
 pub struct GeometricMeanParameters {
-    pub price: eU256,
     pub swap_fee: eU256,
+    pub update_parameters: UpdateParameters,
+}
+
+pub enum UpdateParameters {
+    SwapFee(eU256),
+    TargetTimestamp(eU256),
+    TargetWeightX(eU256),
+    TargetController(Address),
+}
+// function allocateGivenX(
+//     uint256 poolId,
+//     uint256 amountX
+// ) public view returns (uint256, uint256, uint256)
+
+// function allocateGivenY(
+//     uint256 poolId,
+//     uint256 amountY
+// ) public view returns (uint256, uint256, uint256)
+
+// function deallocateGivenX(
+//     uint256 poolId,
+//     uint256 amountX
+// ) public view returns (uint256, uint256, uint256)
+
+// function deallocateGivenY(
+//     uint256 poolId,
+//     uint256 amountY
+// ) public view returns (uint256, uint256, uint256)
+pub enum GeometricMeanAllocationData {
+    AllocateGivenX(eU256),
+    AllocateGivenY(eU256),
+    DeallocateGivenX(eU256),
+    DeallocateGivenY(eU256),
 }
 
 impl PoolType for GeometricMeanPool {
-    type Parameters = GeometricMeanParameters;
+    type UpdateParameters = GeometricMeanParameters;
     type StrategyContract = GeometricMean<ArbiterMiddleware>;
     type SolverContract = GeometricMeanSolver<ArbiterMiddleware>;
-    type AllocationData = (AllocateOrDeallocate, eU256, eU256);
+    type AllocationData = GeometricMeanAllocationData;
 
-    async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes> {
-        todo!()
+    async fn swap_data(
+        &self,
+        pool_id: eU256,
+        input_token: InputToken,
+        amount_in: eU256,
+    ) -> Result<Bytes> {
+        let (valid, _, _, data) = match input_token {
+            InputToken::TokenX => {
+                self.solver_contract
+                    .simulate_swap(pool_id, true, amount_in)
+                    .call()
+                    .await?
+            }
+            InputToken::TokenY => {
+                self.solver_contract
+                    .simulate_swap(pool_id, false, amount_in)
+                    .call()
+                    .await?
+            }
+        };
+        if valid {
+            Ok(data)
+        } else {
+            anyhow::bail!("swap was invalid!")
+        }
     }
 
-    async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes> {
-        todo!()
+    async fn update_data(&self, new_data: Self::UpdateParameters) -> Result<Bytes> {
+        let data = match new_data.update_parameters {
+            UpdateParameters::SwapFee(fee) => {
+                self.solver_contract.prepare_fee_update(fee).call().await?
+            }
+            UpdateParameters::TargetTimestamp(timestamp) => {
+                self.solver_contract
+                    .prepare_weight_x_update(timestamp, timestamp)
+                    .call()
+                    .await?
+            }
+            UpdateParameters::TargetWeightX(weight_x) => {
+                self.solver_contract
+                    .prepare_weight_x_update(weight_x, weight_x)
+                    .call()
+                    .await?
+            }
+            UpdateParameters::TargetController(controller) => {
+                self.solver_contract
+                    .prepare_controller_update(controller)
+                    .call()
+                    .await?
+            }
+        };
+        Ok(data)
     }
 
     async fn change_allocation_data(
         &self,
         pool_id: eU256,
-        allocation_date: Self::AllocationData,
+        allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        todo!()
+        let (next_x, next_y, next_l) = match allocation_data {
+            GeometricMeanAllocationData::AllocateGivenX(amount_x) => {
+                self.solver_contract
+                    .allocate_given_x(pool_id, amount_x)
+                    .call()
+                    .await?
+            }
+            GeometricMeanAllocationData::AllocateGivenY(amount_y) => {
+                self.solver_contract
+                    .allocate_given_y(pool_id, amount_y)
+                    .call()
+                    .await?
+            }
+            GeometricMeanAllocationData::DeallocateGivenX(amount_x) => {
+                self.solver_contract
+                    .deallocate_given_x(pool_id, amount_x)
+                    .call()
+                    .await?
+            }
+            GeometricMeanAllocationData::DeallocateGivenY(amount_y) => {
+                self.solver_contract
+                    .deallocate_given_y(pool_id, amount_y)
+                    .call()
+                    .await?
+            }
+        };
+        // Byte hell, need to convert the eU256's to bytes
+        // let bytes = ethers::abi::encode(&[(next_x, next_y, next_l)]);
+        // Ok(to_bytes(&bytes))
+        todo!("finish this")
     }
 }

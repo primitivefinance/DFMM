@@ -10,7 +10,7 @@ pub mod geometric_mean;
 pub mod log_normal;
 
 pub trait PoolType {
-    type Parameters;
+    type UpdateParameters;
     type StrategyContract;
     type SolverContract;
     type AllocationData;
@@ -19,7 +19,7 @@ pub trait PoolType {
     async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
     /// Change Parameters
     #[allow(async_fn_in_trait)]
-    async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes>;
+    async fn update_data(&self, new_data: Self::UpdateParameters) -> Result<Bytes>;
     /// Change Allocation Date
     #[allow(async_fn_in_trait)]
     async fn change_allocation_data(
