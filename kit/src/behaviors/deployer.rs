@@ -1,5 +1,4 @@
 use arbiter_bindings::bindings::weth::WETH;
-use arbiter_core::middleware::ArbiterMiddleware;
 use arbiter_engine::messager::To;
 use bindings::{
     constant_sum::ConstantSum, dfmm::DFMM, geometric_mean::GeometricMean, log_normal::LogNormal,
@@ -14,7 +13,7 @@ pub struct Deployer {}
 pub struct DeploymentData {
     pub weth: Address,
     pub dfmm: Address,
-    pub g3m: Address,
+    pub geometric_mean: Address,
     pub log_normal: Address,
     pub constant_sum: Address,
     pub token_x: Address,
@@ -29,35 +28,49 @@ impl Behavior<()> for Deployer {
         messager: Messager,
     ) -> Result<Option<EventStream<()>>> {
         let weth = WETH::deploy(client.clone(), ())?.send().await?;
+        trace!("WETH deployed at {:?}", weth.address());
+
         let dfmm = DFMM::deploy(client.clone(), weth.address())?.send().await?;
-        let g3m = GeometricMean::deploy(client.clone(), dfmm.address())?
+        trace!("DFMM deployed at {:?}", dfmm.address());
+
+        let geometric_mean = GeometricMean::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
+        trace!("GeometricMean deployed at {:?}", geometric_mean.address());
+
         let log_normal = LogNormal::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
+        trace!("LogNormal deployed at {:?}", log_normal.address());
+
         let constant_sum = ConstantSum::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
+        trace!("ConstantSum deployed at {:?}", constant_sum.address());
 
         let token_x = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
             client.clone(),
-            ("Token_x".to_owned(), "ARBX".to_owned(), 18u8),
+            ("Token X".to_owned(), "ARBX".to_owned(), 18u8),
+        )?
+        .send()
+        .await?;
+        let token_y = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
+            client.clone(),
+            ("Token Y".to_owned(), "ARBY".to_owned(), 18u8),
         )?
         .send()
         .await?;
 
-        let token_y = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
-            client.clone(),
-            ("Token_y".to_owned(), "ARBY".to_owned(), 18u8),
-        )?
-        .send()
-        .await?;
+        trace!(
+            "Tokens deployed at {:?} and {:?}",
+            token_x.address(),
+            token_y.address()
+        );
 
         let deployment_data = DeploymentData {
             weth: weth.address(),
             dfmm: dfmm.address(),
-            g3m: g3m.address(),
+            geometric_mean: geometric_mean.address(),
             log_normal: log_normal.address(),
             constant_sum: constant_sum.address(),
             token_x: token_x.address(),
@@ -67,7 +80,6 @@ impl Behavior<()> for Deployer {
         messager
             .send(To::All, serde_json::to_string(&deployment_data)?)
             .await?;
-        println!("MESSAGE SENT");
         Ok(None)
     }
 }
@@ -119,7 +131,7 @@ mod tests {
             );
             assert_eq!(
                 Address::from_str("0x6e0035324097bfc66442e2d3f37ef378fb3750b2").unwrap(),
-                parsed_data.g3m
+                parsed_data.geometric_mean
             );
             assert_eq!(
                 Address::from_str("0x4be050270d209ef9f0c0435736c731767486279f").unwrap(),
