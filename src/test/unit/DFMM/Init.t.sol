@@ -95,6 +95,13 @@ contract DFMMInit is DFMMSetUp, Script {
         assertEq(lpToken.symbol(), "DFMM-MockStrategy-TSTX-TSTY-0");
     }
 
+    function test_DFMM_init_MintsLPTokens() public initPool {
+        (,,,,,, address liquidityToken) = dfmm.pools(POOL_ID);
+        LPToken lpToken = LPToken(liquidityToken);
+        assertEq(lpToken.balanceOf(address(this)), initialLiquidity - 1000);
+        assertEq(lpToken.balanceOf(address(0)), 1000);
+    }
+
     function test_DFMM_init_RevertsWhenSameTokens() public {
         IDFMM.InitParams memory params = IDFMM.InitParams({
             strategy: address(strategy),
