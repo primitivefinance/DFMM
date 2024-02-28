@@ -16,4 +16,8 @@ contract DFMMAllocateTest is DFMMSetUp {
         vm.expectRevert(stdError.indexOOBError);
         dfmm.allocate(0, empty);
     }
+
+    function test_DFMM_allocate_EmitsAllocateEvent() public {
+        skip();
+    }
 }

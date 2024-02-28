@@ -81,15 +81,20 @@ contract ConstantSumSolver {
             endReserves.rx = startReserves.rx - amountOut;
         }
 
+        IDFMM.Pool memory pool;
+        pool.reserveX = startReserves.rx;
+        pool.reserveY = startReserves.rx;
+        pool.totalLiquidity = startReserves.L;
+
         bytes memory swapData = abi.encode(endReserves);
-        (bool valid,,,,,) =
-            IStrategy(strategy).validateSwap(address(this), poolId, swapData);
+        (bool valid,,,,,) = IStrategy(strategy).validateSwap(
+            address(this), poolId, pool, swapData
+        );
         return (valid, amountOut, swapData);
     }
 
-    function simulateAllocateOrDeallocate(
+    function simulateAllocate(
         uint256 poolId,
-        bool IsAllocate,
         uint256 amountX,
         uint256 amountY
     ) public view returns (bool, bytes memory) {
@@ -102,28 +107,62 @@ contract ConstantSumSolver {
             (ConstantSum.ConstantSumParams)
         );
 
-        if (IsAllocate) {
-            endReserves.rx = startReserves.rx + amountX;
-            endReserves.ry = startReserves.ry + amountY;
-            endReserves.L =
-                endReserves.rx + endReserves.ry.divWadUp(poolParams.price);
-        } else {
-            if (startReserves.rx < amountX || startReserves.ry < amountY) {
-                revert NotEnoughLiquidity();
-            }
-            endReserves.rx = startReserves.rx - amountX;
-            endReserves.ry = startReserves.ry - amountY;
-            endReserves.L =
-                endReserves.rx + endReserves.ry.divWadUp(poolParams.price);
-        }
+        endReserves.rx = startReserves.rx + amountX;
+        endReserves.ry = startReserves.ry + amountY;
+        endReserves.L =
+            endReserves.rx + endReserves.ry.divWadUp(poolParams.price);
+
+        IDFMM.Pool memory pool;
+        pool.reserveX = startReserves.rx;
+        pool.reserveY = startReserves.ry;
+        pool.totalLiquidity = startReserves.L;
 
         bytes memory allocateData = abi.encode(endReserves);
-        (bool valid,,,,) = IStrategy(strategy).validateAllocateOrDeallocate(
-            address(this), poolId, allocateData
+        (bool valid,,,,) = IStrategy(strategy).validateAllocate(
+            address(this), poolId, pool, allocateData
         );
         return (valid, allocateData);
     }
-    function preparePriceUpdate(uint256 newPrice) public pure returns (bytes memory) {
+
+    function simulateDeallocate(
+        uint256 poolId,
+        uint256 amountX,
+        uint256 amountY
+    ) public view returns (bool, bytes memory) {
+        Reserves memory startReserves;
+        Reserves memory endReserves;
+        (startReserves.rx, startReserves.ry, startReserves.L) =
+            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        ConstantSum.ConstantSumParams memory poolParams = abi.decode(
+            IStrategy(strategy).getPoolParams(poolId),
+            (ConstantSum.ConstantSumParams)
+        );
+
+        if (startReserves.rx < amountX || startReserves.ry < amountY) {
+            revert NotEnoughLiquidity();
+        }
+        endReserves.rx = startReserves.rx - amountX;
+        endReserves.ry = startReserves.ry - amountY;
+        endReserves.L =
+            endReserves.rx + endReserves.ry.divWadUp(poolParams.price);
+
+        IDFMM.Pool memory pool;
+        pool.reserveX = startReserves.rx;
+        pool.reserveY = startReserves.ry;
+        pool.totalLiquidity = startReserves.L;
+
+        bytes memory deallocateData = abi.encode(endReserves);
+        (bool valid,,,,) = IStrategy(strategy).validateDeallocate(
+            address(this), poolId, pool, deallocateData
+        );
+        return (valid, deallocateData);
+    }
+
+    function preparePriceUpdate(uint256 newPrice)
+        public
+        pure
+        returns (bytes memory)
+    {
         return ConstantSumLib.encodePriceUpdate(newPrice);
     }
 }

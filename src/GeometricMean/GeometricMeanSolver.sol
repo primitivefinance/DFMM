@@ -84,6 +84,30 @@ contract GeometricMeanSolver {
         return (nextRx, nextRy, nextL);
     }
 
+    function allocateGivenDeltaX(
+        uint256 poolId,
+        uint256 deltaX
+    ) public view returns (uint256, uint256) {
+        (uint256 reserveX, uint256 reserveY,) = getReservesAndLiquidity(poolId);
+        GeometricMeanParams memory params = getPoolParams(poolId);
+        uint256 S = computePrice(reserveX, reserveY, params);
+        uint256 deltaLiquidity = computeLGivenX(deltaX, S, params);
+        uint256 deltaY = computeY(deltaX, S, params);
+        return (deltaY, deltaLiquidity);
+    }
+
+    function allocateGivenDeltaY(
+        uint256 poolId,
+        uint256 deltaY
+    ) public view returns (uint256, uint256) {
+        (uint256 reserveX, uint256 reserveY,) = getReservesAndLiquidity(poolId);
+        GeometricMeanParams memory params = getPoolParams(poolId);
+        uint256 S = computePrice(reserveX, reserveY, params);
+        uint256 deltaLiquidity = computeLGivenY(deltaY, S, params);
+        uint256 deltaX = computeX(deltaY, S, params);
+        return (deltaX, deltaLiquidity);
+    }
+
     function allocateGivenY(
         uint256 poolId,
         uint256 amountY
@@ -104,6 +128,28 @@ contract GeometricMeanSolver {
             computeAllocationGivenX(false, amountX, rx, L);
         uint256 nextRy = getNextReserveY(poolId, nextRx, nextL);
         return (nextRx, nextRy, nextL);
+    }
+
+    function deallocateGivenXReturnDeltas(
+        uint256 poolId,
+        uint256 amountX
+    ) public view returns (uint256, uint256, uint256) {
+        (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
+        (uint256 nextRx, uint256 nextL) =
+            computeAllocationGivenX(false, amountX, rx, L);
+        uint256 nextRy = getNextReserveY(poolId, nextRx, nextL);
+        return (rx - nextRx, ry - nextRy, L - nextL);
+    }
+
+    function deallocateGivenYReturnDeltas(
+        uint256 poolId,
+        uint256 amountY
+    ) public view returns (uint256, uint256, uint256) {
+        (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
+        (uint256 nextRy, uint256 nextL) =
+            computeAllocationGivenX(false, amountY, ry, L);
+        uint256 nextRx = getNextReserveX(poolId, nextRy, nextL);
+        return (rx - nextRx, ry - nextRy, L - nextL);
     }
 
     function deallocateGivenY(
@@ -212,9 +258,15 @@ contract GeometricMeanSolver {
         bytes memory swapData =
             abi.encode(endReserves.rx, endReserves.ry, endReserves.L);
 
+        IDFMM.Pool memory pool;
+        pool.reserveX = startReserves.rx;
+        pool.reserveY = startReserves.ry;
+        pool.totalLiquidity = startComputedL;
+
         uint256 poolId = poolId;
-        (bool valid,,,,,) =
-            IStrategy(strategy).validateSwap(address(this), poolId, swapData);
+        (bool valid,,,,,) = IStrategy(strategy).validateSwap(
+            address(this), poolId, pool, swapData
+        );
         return (
             valid,
             amountOut,
@@ -282,5 +334,15 @@ contract GeometricMeanSolver {
             abi.decode(data, (uint256, uint256, uint256));
         GeometricMeanParams memory params = fetchPoolParams(poolId);
         return GeometricMeanLib.tradingFunction(rx, ry, L, params);
+    }
+
+    function getPoolParams(uint256 poolId)
+        public
+        view
+        returns (GeometricMeanParams memory params)
+    {
+        return abi.decode(
+            IStrategy(strategy).getPoolParams(poolId), (GeometricMeanParams)
+        );
     }
 }

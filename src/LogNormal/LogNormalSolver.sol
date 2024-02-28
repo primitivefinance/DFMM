@@ -92,6 +92,40 @@ contract LogNormalSolver {
         return computeInitialPoolData(rx, S, params);
     }
 
+    function allocateGivenDeltaX(
+        uint256 poolId,
+        uint256 deltaX
+    ) public view returns (uint256 deltaY, uint256 deltaLiquidity) {
+        (uint256 reserveX, uint256 reserveY, uint256 liquidity) =
+            getReservesAndLiquidity(poolId);
+        (uint256 adjustedReserveX, uint256 adjustedLiquidity) =
+            computeAllocationGivenX(true, deltaX, reserveX, liquidity);
+        uint256 approximatedPrice =
+            getPriceGivenXL(poolId, adjustedReserveX, adjustedLiquidity);
+        uint256 adjustedReserveY = getNextReserveY(
+            poolId, adjustedReserveX, adjustedLiquidity, approximatedPrice
+        );
+        deltaY = adjustedReserveY - reserveY;
+        deltaLiquidity = adjustedLiquidity - liquidity;
+    }
+
+    function allocateGivenDeltaY(
+        uint256 poolId,
+        uint256 deltaY
+    ) public view returns (uint256 deltaX, uint256 deltaLiquidity) {
+        (uint256 reserveX, uint256 reserveY, uint256 liquidity) =
+            getReservesAndLiquidity(poolId);
+        (uint256 adjustedReserveY, uint256 adjustedLiquidity) =
+            computeAllocationGivenY(true, deltaY, reserveY, liquidity);
+        uint256 approximatedPrice =
+            getPriceGivenYL(poolId, adjustedReserveY, adjustedLiquidity);
+        uint256 adjustedReserveX = getNextReserveX(
+            poolId, adjustedReserveY, adjustedLiquidity, approximatedPrice
+        );
+        deltaX = adjustedReserveX - reserveX;
+        deltaLiquidity = adjustedLiquidity - liquidity;
+    }
+
     function allocateGivenX(
         uint256 poolId,
         uint256 amountX
@@ -243,10 +277,18 @@ contract LogNormalSolver {
             }
         }
 
+        IDFMM.Pool memory pool;
+        pool.reserveX = startReserves.rx;
+        pool.reserveY = startReserves.ry;
+        pool.totalLiquidity = startReserves.L;
+
         bytes memory swapData =
             abi.encode(endReserves.rx, endReserves.ry, endReserves.L);
-        (bool valid,,,,,) =
-            IStrategy(strategy).validateSwap(address(this), poolId, swapData);
+
+        uint256 poolId = poolId;
+        (bool valid,,,,,) = IStrategy(strategy).validateSwap(
+            address(this), poolId, pool, swapData
+        );
         return (
             valid,
             amountOut,
@@ -291,8 +333,8 @@ contract LogNormalSolver {
         uint256 v
     ) public view returns (int256) {
         LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
-        (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
-        return diffLower(S, rx, ry, L, v, params);
+        (uint256 rx,, uint256 L) = getReservesAndLiquidity(poolId);
+        return diffLower(int256(S), int256(rx), int256(L), int256(v), params);
     }
 
     function calculateDiffRaise(
@@ -301,8 +343,8 @@ contract LogNormalSolver {
         uint256 v
     ) public view returns (int256) {
         LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
-        (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
-        return diffRaise(S, rx, ry, L, v, params);
+        (, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
+        return diffRaise(int256(S), int256(ry), int256(L), int256(v), params);
     }
 
     function computeOptimalArbLowerPrice(
@@ -311,8 +353,10 @@ contract LogNormalSolver {
         uint256 vUpper
     ) public view returns (uint256) {
         LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
-        (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
-        return computeOptimalLower(S, rx, ry, L, vUpper, params);
+        (uint256 rx,, uint256 L) = getReservesAndLiquidity(poolId);
+        return computeOptimalLower(
+            int256(S), int256(rx), int256(L), vUpper, params
+        );
     }
 
     function computeOptimalArbRaisePrice(
@@ -321,7 +365,9 @@ contract LogNormalSolver {
         uint256 vUpper
     ) public view returns (uint256) {
         LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
-        (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
-        return computeOptimalRaise(S, rx, ry, L, vUpper, params);
+        (, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
+        return computeOptimalRaise(
+            int256(S), int256(ry), int256(L), vUpper, params
+        );
     }
 }

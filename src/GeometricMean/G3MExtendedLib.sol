@@ -175,6 +175,80 @@ function findRootRaise(bytes memory data, uint256 v) pure returns (int256) {
     return diffRaise({ S: S, rX: rX, rY: rY, L: L, v: v, params: params });
 }
 
+struct DiffLowerStruct {
+    uint256 wX;
+    uint256 rX;
+    uint256 rY;
+    uint256 L;
+    uint256 v;
+    uint256 yOverXPowWx;
+    uint256 yOverXPowWy;
+    uint256 gamma;
+}
+
+function computeDiffLowerNumerator(DiffLowerStruct memory params)
+    pure
+    returns (uint256)
+{
+    uint256 first = params.L.mulWadDown(params.wX).mulWadDown(params.rX)
+        .mulWadDown(params.yOverXPowWx);
+    uint256 second = (params.v - params.v.mulWadDown(params.wX) + params.rX)
+        .mulWadDown(params.rY).mulWadDown(ONE - params.gamma);
+    uint256 third =
+        uint256(int256(params.v + params.rX).powWad(-int256(params.wX)));
+    uint256 fourth = params.L
+        + params.v.mulWadDown(params.yOverXPowWy).mulWadDown(ONE - params.gamma);
+    return (first - second).mulWadDown(
+        uint256(
+            int256(third.mulWadDown(fourth)).powWad(
+                int256(ONE.divWadDown(ONE - params.wX))
+            )
+        )
+    );
+}
+
+function computeDiffLowerDenominator(DiffLowerStruct memory params)
+    pure
+    returns (uint256)
+{
+    uint256 dFirst = ONE - params.wX;
+    uint256 dSecond = params.v + params.rX;
+    uint256 dThird =
+        params.L.mulWadDown(params.rX).mulWadDown(uint256(params.yOverXPowWx));
+    uint256 dFourth =
+        params.v.mulWadDown(params.rY).mulWadDown(ONE - params.gamma);
+    return dFirst.mulWadDown(dSecond).mulWadDown(dThird + dFourth);
+}
+
+function computeDiffLowerResult(
+    uint256 wX,
+    uint256 wY,
+    uint256 rX,
+    uint256 rY,
+    uint256 S,
+    uint256 L,
+    uint256 v,
+    uint256 gamma
+) pure returns (int256) {
+    int256 yOverX = int256(rY.divWadDown(rX));
+
+    DiffLowerStruct memory params = DiffLowerStruct({
+        wX: wX,
+        rX: rX,
+        rY: rY,
+        L: L,
+        v: v,
+        yOverXPowWx: uint256(yOverX.powWad(int256(wX))),
+        yOverXPowWy: uint256(yOverX.powWad(int256(wY))),
+        gamma: gamma
+    });
+
+    uint256 numerator = computeDiffLowerNumerator(params);
+    uint256 denominator = computeDiffLowerDenominator(params);
+
+    return -int256(S) + int256(numerator.divWadDown(denominator));
+}
+
 // todo(matt): refactor this to only use int256
 function diffLower(
     uint256 S,
@@ -184,40 +258,67 @@ function diffLower(
     uint256 v,
     GeometricMeanParams memory params
 ) pure returns (int256) {
-    (int256 wx, int256 wy) = (int256(params.wX), int256(params.wY));
     uint256 gamma = ONE - params.swapFee;
-    int256 yOverX = int256(rY.divWadDown(rX));
-    uint256 yOverXPowWx = uint256(yOverX.powWad(wx));
-    uint256 yOverXPowWy = uint256(yOverX.powWad(wy));
+    return computeDiffLowerResult(params.wX, params.wY, rX, rY, S, L, v, gamma);
+}
 
-    uint256 numerator;
-    {
-        uint256 first =
-            L.mulWadDown(params.wX).mulWadDown(rX).mulWadDown(yOverXPowWx);
-        uint256 second = (v - v.mulWadDown(params.wX) + rX).mulWadDown(rY)
-            .mulWadDown(ONE - gamma);
-        uint256 third = uint256(int256(v + rX).powWad(-wx));
-        uint256 fourth = L + v.mulWadDown(yOverXPowWy).mulWadDown(ONE - gamma);
-        numerator = (first - second).mulWadDown(
-            uint256(
-                int256(third.mulWadDown(fourth)).powWad(
-                    int256(ONE.divWadDown(ONE - params.wX))
-                )
-            )
-        );
-    }
+function computeDiffRaiseNumerator(DiffRaiseStruct memory params)
+    pure
+    returns (int256)
+{
+    int256 first =
+        int256(params.wX).wadMul(int256(params.v) + int256(params.rY));
+    int256 third = (params.vPlusYPow.wadMul(params.lMinusVTimesXOverYPowWx))
+        .powWad(I_ONE.wadDiv(int256(params.wX)));
+    int256 fourth = int256(params.L).wadMul(-I_ONE + int256(params.wX));
+    int256 fifth = params.xOverYPowWx.wadMul(
+        int256(params.v).wadMul(int256(params.wX)) + int256(params.rY)
+    ).wadMul(-I_ONE + params.gamma);
+    return first.wadMul(params.lMinusVTimesXOverYPowWx)
+        + int256(params.S).wadMul(third).wadMul(fourth - fifth);
+}
 
-    uint256 denominator;
-    {
-        uint256 dFirst = ONE - params.wX;
-        uint256 dSecond = v + rX;
-        uint256 dThird = L.mulWadDown(rX).mulWadDown(uint256(yOverXPowWx));
-        uint256 dFourth = v.mulWadDown(rY).mulWadDown(ONE - gamma);
-        denominator = dFirst.mulWadDown(dSecond).mulWadDown(dThird + dFourth);
-    }
+struct DiffRaiseStruct {
+    uint256 wX;
+    uint256 v;
+    uint256 rY;
+    int256 lMinusVTimesXOverYPowWx;
+    int256 vPlusYPow;
+    uint256 L;
+    int256 xOverYPowWx;
+    int256 gamma;
+    uint256 S;
+    int256 vTimesXOverYPowWx;
+}
 
-    int256 result = -int256(S) + int256(numerator.divWadDown(denominator));
-    return result;
+function getDiffRaiseStruct(
+    uint256 wX,
+    uint256 rX,
+    uint256 v,
+    uint256 rY,
+    uint256 L,
+    uint256 S,
+    uint256 swapFee
+) pure returns (DiffRaiseStruct memory) {
+    int256 vPlusYPow = (int256(v) + int256(rY)).powWad(-I_ONE + int256(wX));
+    int256 xOverYPowWx = (int256(rX).wadDiv(int256(rY))).powWad(int256(wX));
+    int256 vTimesXOverYPowWx = int256(v).wadMul(xOverYPowWx);
+    int256 gamma = I_ONE - int256(swapFee);
+    int256 lMinusVTimesXOverYPowWx =
+        int256(L) - vTimesXOverYPowWx.wadMul(-I_ONE + gamma);
+
+    return DiffRaiseStruct({
+        wX: wX,
+        v: v,
+        rY: rY,
+        lMinusVTimesXOverYPowWx: lMinusVTimesXOverYPowWx,
+        vPlusYPow: vPlusYPow,
+        L: L,
+        xOverYPowWx: xOverYPowWx,
+        gamma: gamma,
+        S: S,
+        vTimesXOverYPowWx: vTimesXOverYPowWx
+    });
 }
 
 function diffRaise(
@@ -228,40 +329,18 @@ function diffRaise(
     uint256 v,
     GeometricMeanParams memory params
 ) pure returns (int256) {
-    (int256 wx, int256 wy, int256 swapFee) =
-        (int256(params.wX), int256(params.wY), int256(params.swapFee));
-    int256 I_ONE = int256(ONE);
-    int256 iS = int256(S);
-    int256 iX = int256(rX);
-    int256 iY = int256(rY);
-    int256 iL = int256(L);
-    int256 iV = int256(v);
-    int256 gamma = I_ONE - swapFee;
+    DiffRaiseStruct memory diffRaiseParams =
+        getDiffRaiseStruct(params.wX, rX, v, rY, L, S, params.swapFee);
 
-    int256 vPlusYPow = (iV + iY).powWad(-I_ONE + wx);
-
-    int256 xOverYPowWx = (iX.wadDiv(iY)).powWad(wx);
-    int256 vTimesXOverYPowWx = iV.wadMul(xOverYPowWx);
-    int256 lMinusVTimesXOverYPowWx =
-        iL - vTimesXOverYPowWx.wadMul(-I_ONE + gamma);
-
-    int256 numerator;
-    {
-        int256 first = wx.wadMul(iV + iY);
-        int256 second = lMinusVTimesXOverYPowWx;
-        int256 third =
-            (vPlusYPow.wadMul(lMinusVTimesXOverYPowWx)).powWad(I_ONE.wadDiv(wx));
-        int256 fourth = iL.wadMul(-I_ONE + wx);
-        int256 fifth =
-            xOverYPowWx.wadMul(iV.wadMul(wx) + iY).wadMul(-I_ONE + gamma);
-        numerator =
-            first.wadMul(second) + iS.wadMul(third).wadMul(fourth - fifth);
-    }
+    int256 numerator = computeDiffRaiseNumerator(diffRaiseParams);
 
     int256 denominator;
     {
-        int256 first = wx.wadMul(iV + iY);
-        int256 second = -iL + vTimesXOverYPowWx.wadMul(-I_ONE + gamma);
+        int256 first = int256(params.wX).wadMul(int256(v) + int256(rY));
+        int256 second = -int256(L)
+            + diffRaiseParams.vTimesXOverYPowWx.wadMul(
+                -I_ONE + diffRaiseParams.gamma
+            );
         denominator = first.wadMul(second);
     }
 
