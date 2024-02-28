@@ -29,6 +29,7 @@ contract DFMM is IDFMM {
     /// @inheritdoc IDFMM
     address public immutable lpTokenImplementation;
 
+    /// @inheritdoc IDFMM
     address public immutable weth;
 
     /// @dev Part of the reentrancy lock, 1 = unlocked, 2 = locked.

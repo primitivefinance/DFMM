@@ -186,6 +186,9 @@ interface IDFMM {
     /// @notice Address of the implementation of the LPToken contract.
     function lpTokenImplementation() external view returns (address);
 
+    /// @notice Address of the WETH contract.
+    function weth() external view returns (address);
+
     function getReservesAndLiquidity(uint256 poolId)
         external
         view
