@@ -8,4 +8,10 @@ contract DFMMReceiveTest is DFMMSetUp {
         vm.expectRevert(IDFMM.OnlyWETH.selector);
         payable(address(dfmm)).transfer(1 ether);
     }
+
+    function test_DFMM_receive_CanReceiveETHfromWETH() public {
+        vm.deal(address(weth), 1 ether);
+        vm.prank(address(weth));
+        payable(address(dfmm)).transfer(1 ether);
+    }
 }
