@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { LPToken } from "src/LPToken.sol";
 import { DFMMSetUp } from "./SetUp.sol";
 
 contract DFMMInit is DFMMSetUp, Script {
@@ -85,6 +86,13 @@ contract DFMMInit is DFMMSetUp, Script {
         (,,,,,, address liquidityToken) = dfmm.pools(POOL_ID);
         assertTrue(liquidityToken != address(0));
         assertTrue(liquidityToken.code.length > 0);
+    }
+
+    function test_DFMM_init_SetsLPTokenMetadata() public initPool {
+        (,,,,,, address liquidityToken) = dfmm.pools(POOL_ID);
+        LPToken lpToken = LPToken(liquidityToken);
+        assertEq(lpToken.name(), "DFMM-MockStrategy-TSTX-TSTY-0");
+        assertEq(lpToken.symbol(), "DFMM-MockStrategy-TSTX-TSTY-0");
     }
 
     function test_DFMM_init_RevertsWhenSameTokens() public {
