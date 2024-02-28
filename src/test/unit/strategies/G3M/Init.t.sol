@@ -38,8 +38,9 @@ contract G3MInitTest is G3MSetUp {
     }
 
     function test_G3M_init_RevertsWhenSenderNotDFMM() public {
-        vm.expectRevert(IStrategy.NotDFMM.selector);
         bytes memory empty;
-        g3m.init(address(this), 0, empty);
+        IDFMM.Pool memory pool;
+        vm.expectRevert(IStrategy.NotDFMM.selector);
+        g3m.init(address(this), 0, pool, empty);
     }
 }

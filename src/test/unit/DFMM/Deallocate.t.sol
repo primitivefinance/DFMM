@@ -58,7 +58,7 @@ contract DFMMDeallocateTest is DFMMSetUp {
             strategy: address(strategy),
             tokenX: address(tokenX),
             tokenY: address(tokenY),
-            data: abi.encode(uint256(1))
+            data: abi.encode(true, int256(1 ether), 1 ether, 1 ether, 1 ether)
         });
 
         (uint256 poolId,,,) = dfmm.init(params);
@@ -67,7 +67,9 @@ contract DFMMDeallocateTest is DFMMSetUp {
         tokenY.mint(address(dfmm), 1000 ether);
 
         vm.expectRevert(stdError.arithmeticError);
-        dfmm.deallocate(poolId, abi.encode(uint256(8)));
+        dfmm.deallocate(
+            poolId, abi.encode(true, int256(1 ether), 2 ether, 1 ether, 1 ether)
+        );
     }
 
     function test_DFMM_deallocate_CannotDrainReserveY() public {
@@ -75,7 +77,7 @@ contract DFMMDeallocateTest is DFMMSetUp {
             strategy: address(strategy),
             tokenX: address(tokenX),
             tokenY: address(tokenY),
-            data: abi.encode(uint256(1))
+            data: abi.encode(true, int256(1 ether), 1 ether, 1 ether, 1 ether)
         });
 
         (uint256 poolId,,,) = dfmm.init(params);
@@ -84,6 +86,8 @@ contract DFMMDeallocateTest is DFMMSetUp {
         tokenY.mint(address(dfmm), 1000 ether);
 
         vm.expectRevert(stdError.arithmeticError);
-        dfmm.deallocate(poolId, abi.encode(uint256(9)));
+        dfmm.deallocate(
+            poolId, abi.encode(true, int256(1 ether), 1 ether, 2 ether, 1 ether)
+        );
     }
 }

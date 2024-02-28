@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "solmate/tokens/ERC20.sol";
-import "solmate/utils/FixedPointMathLib.sol";
+import { ERC20 } from "solmate/tokens/ERC20.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 using FixedPointMathLib for uint256;
 
