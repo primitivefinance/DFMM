@@ -41,6 +41,7 @@ contract ConstantSum is IStrategy {
     function init(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         public
@@ -73,6 +74,7 @@ contract ConstantSum is IStrategy {
     function validateSwap(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -89,27 +91,24 @@ contract ConstantSum is IStrategy {
         ConstantSumParams memory params =
             abi.decode(getPoolParams(poolId), (ConstantSumParams));
 
-        (uint256 startRx, uint256 startRy, uint256 startL) =
-            IDFMM(dfmm).getReservesAndLiquidity(poolId);
-
         (nextRx, nextRy, nextL) = abi.decode(data, (uint256, uint256, uint256));
 
         uint256 minLiquidityDelta;
         uint256 amountIn;
         uint256 fees;
-        if (nextRx > startRy) {
-            amountIn = nextRx - startRx;
+        if (nextRx > pool.reserveX) {
+            amountIn = nextRx - pool.reserveX;
             fees = amountIn.mulWadUp(params.swapFee);
             minLiquidityDelta += fees;
-        } else if (nextRy > startRy) {
-            amountIn = nextRy - startRy;
+        } else if (nextRy > pool.reserveY) {
+            amountIn = nextRy - pool.reserveY;
             fees = amountIn.mulWadUp(params.swapFee);
             minLiquidityDelta += fees.divWadUp(params.price);
         } else {
             revert("invalid swap: inputs x and y have the same sign!");
         }
 
-        liquidityDelta = int256(nextL) - int256(startL);
+        liquidityDelta = int256(nextL) - int256(pool.totalLiquidity);
         assert(liquidityDelta >= int256(minLiquidityDelta));
 
         invariant =
@@ -133,9 +132,10 @@ contract ConstantSum is IStrategy {
     }
 
     // This should literally always work lol
-    function validateAllocateOrDeallocate(
+    function validateAllocate(
         address,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -143,18 +143,48 @@ contract ConstantSum is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
         )
     {
-        (reserveX, reserveY, totalLiquidity) =
+        (deltaX, deltaY, deltaLiquidity) =
             abi.decode(data, (uint256, uint256, uint256));
 
         invariant = ConstantSumLib.tradingFunction(
-            reserveX,
-            reserveY,
-            totalLiquidity,
+            pool.reserveX + deltaX,
+            pool.reserveX + deltaY,
+            pool.totalLiquidity + deltaLiquidity,
+            abi.decode(getPoolParams(poolId), (ConstantSumParams)).price
+        );
+
+        valid = -EPSILON < invariant && invariant < EPSILON;
+    }
+
+    // This should literally always work lol
+    function validateDeallocate(
+        address,
+        uint256 poolId,
+        IDFMM.Pool calldata pool,
+        bytes calldata data
+    )
+        external
+        view
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
+        )
+    {
+        (deltaX, deltaY, deltaLiquidity) =
+            abi.decode(data, (uint256, uint256, uint256));
+
+        invariant = ConstantSumLib.tradingFunction(
+            pool.reserveX - deltaX,
+            pool.reserveY - deltaY,
+            pool.totalLiquidity - deltaLiquidity,
             abi.decode(getPoolParams(poolId), (ConstantSumParams)).price
         );
 
@@ -164,6 +194,7 @@ contract ConstantSum is IStrategy {
     function update(
         address sender,
         uint256 poolId,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();

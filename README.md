@@ -121,6 +121,25 @@ The DFMM protocol is currently deployed on the following networks:
 | `G3M` | Optimism Sepolia | `0xB5C2c5a4000FB230b289bB54f8b48F4dd8075F3D` |
 | `LogNormal` | Optimism Sepolia | `0x6A74a571c638dDDF13ae52F48A37D1019B916520` |
 
+## Terminology
+
+These terms are used to name specific variables throuhout the codebase and the documentation. They are noted here for clarity and are expected to be reused in the future by strategy developers or contributors.
+
+- The prefix `delta` is used to denote the amount of tokens or liquidity to be added or removed from a pool: `deltaX`, `deltaY`, `deltaLiquidity`.
+- The prefix `adjusted` is used to denote the amount of tokens or liquidity after the addition or removal of liquidity: `adjustedReserveX`, `adjustedReserveY`, `adjustedLiquidity`.
+
+| Term | Definition |
+|---|---|
+| `reserveX` | The amount of token X held by a pool |
+| `reserveY` | The amount of token Y held by a pool |
+| `liquidity` | The amount of liquidity held by a pool |
+| `deltaX` | The amount of token X to be added or removed from a pool |
+| `deltaY` | The amount of token Y to be added or removed from a pool |
+| `deltaLiquidity` | The amount of liquidity to be added or removed from a pool |
+| `adjustedReserveX` | The amount of token X after the addition or removal of liquidity |
+| `adjustedReserveY` | The amount of token Y after the addition or removal of liquidity |
+| `adjustedLiquidity` | The amount of liquidity after the addition or removal of liquidity |
+
 ## Contributing
 
 Contributions are welcome! Check out our [guidelines](./CONTRIBUTING.md).
