@@ -63,23 +63,13 @@ impl PoolType for ConstantSumPool {
         let (valid, data) = match allocation_data.0 {
             AllocateOrDeallocate::Allocate => {
                 self.solver_contract
-                    .simulate_allocate_or_deallocate(
-                        pool_id,
-                        true,
-                        allocation_data.1,
-                        allocation_data.2,
-                    )
+                    .simulate_allocate(pool_id, allocation_data.1, allocation_data.2)
                     .call()
                     .await?
             }
             AllocateOrDeallocate::Deallocate => {
                 self.solver_contract
-                    .simulate_allocate_or_deallocate(
-                        pool_id,
-                        false,
-                        allocation_data.2,
-                        allocation_data.1,
-                    )
+                    .simulate_deallocate(pool_id, allocation_data.2, allocation_data.1)
                     .call()
                     .await?
             }

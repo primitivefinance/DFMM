@@ -31,12 +31,12 @@ pub mod invariant {
     pub static INVARIANT_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
         ::ethers::contract::Lazy::new(__abi);
     #[rustfmt::skip]
-    const __BYTECODE: &[u8] = b"`\x80\x80`@R4`\x17W`:\x90\x81`\x1D\x8290\x81PP\xF3[`\0\x80\xFD\xFE`\0\x80\xFD\xFE\xA2dipfsX\"\x12 J\x11\xD2\x9Cd\xB9\\\xB0\xFA\xF5\x9B\xA3AS\x9D\xCD9#\xFB\xA6@\xC2\xE6\x9E|\xA3\xD2:rp\xB1\0dsolcC\0\x08\x16\x003";
+    const __BYTECODE: &[u8] = b"`V`7`\x0B\x82\x82\x829\x80Q`\0\x1A`s\x14`*WcNH{q`\xE0\x1B`\0R`\0`\x04R`$`\0\xFD[0`\0R`s\x81S\x82\x81\xF3\xFEs\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x000\x14`\x80`@R`\0\x80\xFD\xFE\xA2dipfsX\"\x12 I\x8E\x02\x82\x80ot\xE3\xD9\xA6\x93x\xFAe\xF4\xA8\xB6\x8EK=\xF1\xEC\xC1\xA5\xD5\xA5\xFE\x9E\xBE\xA4\xC2\x11dsolcC\0\x08\x16\x003";
     /// The bytecode of the contract.
     pub static INVARIANT_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__BYTECODE);
     #[rustfmt::skip]
-    const __DEPLOYED_BYTECODE: &[u8] = b"`\0\x80\xFD\xFE\xA2dipfsX\"\x12 J\x11\xD2\x9Cd\xB9\\\xB0\xFA\xF5\x9B\xA3AS\x9D\xCD9#\xFB\xA6@\xC2\xE6\x9E|\xA3\xD2:rp\xB1\0dsolcC\0\x08\x16\x003";
+    const __DEPLOYED_BYTECODE: &[u8] = b"s\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x000\x14`\x80`@R`\0\x80\xFD\xFE\xA2dipfsX\"\x12 I\x8E\x02\x82\x80ot\xE3\xD9\xA6\x93x\xFAe\xF4\xA8\xB6\x8EK=\xF1\xEC\xC1\xA5\xD5\xA5\xFE\x9E\xBE\xA4\xC2\x11dsolcC\0\x08\x16\x003";
     /// The deployed bytecode of the contract.
     pub static INVARIANT_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__DEPLOYED_BYTECODE);

@@ -65,10 +65,3 @@ impl<P: PoolType> Pool<P> {
         Ok(())
     }
 }
-
-// async fn swap_data(
-//     &self,
-//     pool_id: eU256,
-//     swap: Self::AllocationData,
-//     amount_in: eU256,
-// ) -> Result<Bytes>;
