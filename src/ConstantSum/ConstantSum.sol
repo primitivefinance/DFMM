@@ -82,37 +82,37 @@ contract ConstantSum is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            int256 liquidityDelta,
-            uint256 nextRx,
-            uint256 nextRy,
-            uint256 nextL
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity,
+            bool isSwapXForY
         )
     {
         ConstantSumParams memory params =
             abi.decode(getPoolParams(poolId), (ConstantSumParams));
 
-        (nextRx, nextRy, nextL) = abi.decode(data, (uint256, uint256, uint256));
+        (deltaX, deltaY, isSwapXForY) =
+            abi.decode(data, (uint256, uint256, bool));
 
-        uint256 minLiquidityDelta;
-        uint256 amountIn;
-        uint256 fees;
-        if (nextRx > pool.reserveX) {
-            amountIn = nextRx - pool.reserveX;
-            fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees;
-        } else if (nextRy > pool.reserveY) {
-            amountIn = nextRy - pool.reserveY;
-            fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees.divWadUp(params.price);
+        if (isSwapXForY) {
+            uint256 fees = deltaX.mulWadUp(params.swapFee);
+            deltaLiquidity = fees;
+            invariant = ConstantSumLib.tradingFunction(
+                pool.reserveX + deltaX,
+                pool.reserveY - deltaY,
+                pool.totalLiquidity + deltaLiquidity,
+                params.price
+            );
         } else {
-            revert("invalid swap: inputs x and y have the same sign!");
+            uint256 fees = deltaY.mulWadUp(params.swapFee);
+            deltaLiquidity = fees.divWadUp(params.price);
+            invariant = ConstantSumLib.tradingFunction(
+                pool.reserveX - deltaX,
+                pool.reserveY + deltaY,
+                pool.totalLiquidity + deltaLiquidity,
+                params.price
+            );
         }
-
-        liquidityDelta = int256(nextL) - int256(pool.totalLiquidity);
-        assert(liquidityDelta >= int256(minLiquidityDelta));
-
-        invariant =
-            ConstantSumLib.tradingFunction(nextRx, nextRy, nextL, params.price);
 
         valid = -EPSILON < invariant && invariant < EPSILON;
     }
