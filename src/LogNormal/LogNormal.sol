@@ -208,41 +208,40 @@ contract LogNormal is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            int256 liquidityDelta,
-            uint256 nextRx,
-            uint256 nextRy,
-            uint256 nextL
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity,
+            bool isSwapXForY
         )
     {
         LogNormalParams memory params =
             abi.decode(getPoolParams(poolId), (LogNormalParams));
 
-        (nextRx, nextRy, nextL) = abi.decode(data, (uint256, uint256, uint256));
+        (deltaX, deltaY, isSwapXForY) =
+            abi.decode(data, (uint256, uint256, bool));
 
-        // Rounding up is advantageous towards the protocol, to make sure swap fees
-        // are fully paid for.
-        uint256 minLiquidityDelta;
-        uint256 amountIn;
-        uint256 fees;
-        if (nextRx > pool.reserveX) {
-            amountIn = nextRx - pool.reserveX;
-            fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta +=
+        if (isSwapXForY) {
+            uint256 fees = deltaX.mulWadUp(params.swapFee);
+            deltaLiquidity =
                 fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveX);
-        } else if (nextRy > pool.reserveY) {
-            // δl = δx * L / X, where δx = delta x * fee
-            amountIn = nextRy - pool.reserveY;
-            fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta +=
-                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveY);
+            invariant = LogNormalLib.tradingFunction(
+                pool.reserveX + deltaX,
+                pool.reserveY - deltaY,
+                pool.totalLiquidity + deltaLiquidity,
+                params
+            );
         } else {
-            // should never get here!
-            revert("invalid swap: inputs x and y have the same sign!");
+            uint256 fees = deltaY.mulWadUp(params.swapFee);
+            deltaLiquidity =
+                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveY);
+            invariant = LogNormalLib.tradingFunction(
+                pool.reserveX - deltaX,
+                pool.reserveY + deltaY,
+                pool.totalLiquidity + deltaLiquidity,
+                params
+            );
         }
 
-        liquidityDelta = int256(nextL) - int256(pool.totalLiquidity);
-
-        invariant = LogNormalLib.tradingFunction(nextRx, nextRy, nextL, params);
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
