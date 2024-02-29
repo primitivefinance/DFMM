@@ -92,10 +92,10 @@ contract MockStrategy is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            int256 liquidityDelta,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity,
+            bool isSwapXForY
         )
     { }
 
