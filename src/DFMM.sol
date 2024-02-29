@@ -223,10 +223,10 @@ contract DFMM is IDFMM {
         (
             bool valid,
             int256 invariant,
-            ,
-            uint256 adjustedReserveX,
-            uint256 adjustedReserveY,
-            uint256 adjustedTotalLiquidity
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity,
+            bool isSwapXForY
         ) = IStrategy(pools[poolId].strategy).validateSwap(
             msg.sender, poolId, pools[poolId], data
         );
@@ -235,14 +235,23 @@ contract DFMM is IDFMM {
             revert Invalid(invariant < 0, abs(invariant));
         }
 
-        pools[poolId].totalLiquidity = adjustedTotalLiquidity;
+        pools[poolId].totalLiquidity += deltaLiquidity;
 
-        (bool isSwapXForY,,, uint256 inputAmount, uint256 outputAmount) =
-            _settle(poolId, adjustedReserveX, adjustedReserveY);
+        if (isSwapXForY) {
+            pools[poolId].reserveX += deltaX;
+            pools[poolId].reserveY -= deltaY;
+            _transferFrom(pools[poolId].tokenX, deltaX);
+            _transfer(pools[poolId].tokenY, msg.sender, deltaY);
+        } else {
+            pools[poolId].reserveX -= deltaX;
+            pools[poolId].reserveY += deltaY;
+            _transferFrom(pools[poolId].tokenY, deltaY);
+            _transfer(pools[poolId].tokenX, msg.sender, deltaX);
+        }
 
-        emit Swap(msg.sender, poolId, isSwapXForY, inputAmount, outputAmount);
+        emit Swap(msg.sender, poolId, isSwapXForY, deltaX, deltaX);
 
-        return (inputAmount, outputAmount);
+        return (deltaX, deltaY);
     }
 
     /// @inheritdoc IDFMM
@@ -250,50 +259,6 @@ contract DFMM is IDFMM {
         IStrategy(pools[poolId].strategy).update(
             msg.sender, poolId, pools[poolId], data
         );
-    }
-
-    /// @dev Computes the changes in reserves and transfers the tokens in and out.
-    function _settle(
-        uint256 poolId,
-        uint256 adjustedReserveX,
-        uint256 adjustedReserveY
-    )
-        internal
-        returns (
-            bool isSwapXForY,
-            address inputToken,
-            address outputToken,
-            uint256 inputAmount,
-            uint256 outputAmount
-        )
-    {
-        uint256 originalReserveX = pools[poolId].reserveX;
-        uint256 originalReserveY = pools[poolId].reserveY;
-
-        isSwapXForY = adjustedReserveX > originalReserveX;
-
-        if (isSwapXForY) {
-            if (adjustedReserveY >= originalReserveY) revert InvalidSwap();
-            inputToken = pools[poolId].tokenX;
-            outputToken = pools[poolId].tokenY;
-            inputAmount = adjustedReserveX - originalReserveX;
-            outputAmount = originalReserveY - adjustedReserveY;
-        } else {
-            if (adjustedReserveX >= originalReserveX) revert InvalidSwap();
-            inputToken = pools[poolId].tokenY;
-            outputToken = pools[poolId].tokenX;
-            inputAmount = adjustedReserveY - originalReserveY;
-            outputAmount = originalReserveX - adjustedReserveX;
-        }
-
-        // Do the state updates to the reserves before calling untrusted addresses.
-        pools[poolId].reserveX = adjustedReserveX;
-        pools[poolId].reserveY = adjustedReserveY;
-
-        _transferFrom(inputToken, inputAmount);
-        _transfer(outputToken, msg.sender, outputAmount);
-
-        return (isSwapXForY, inputToken, outputToken, inputAmount, outputAmount);
     }
 
     // Internals
