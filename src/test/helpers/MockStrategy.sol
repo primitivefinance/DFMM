@@ -97,7 +97,10 @@ contract MockStrategy is IStrategy {
             uint256 deltaLiquidity,
             bool isSwapXForY
         )
-    { }
+    {
+        (valid, invariant, deltaX, deltaY, deltaLiquidity, isSwapXForY) =
+            abi.decode(data, (bool, int256, uint256, uint256, uint256, bool));
+    }
 
     function update(
         address sender,
