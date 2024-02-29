@@ -216,48 +216,42 @@ contract GeometricMean is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            int256 liquidityDelta,
-            uint256 nextRx,
-            uint256 nextRy,
-            uint256 nextL
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity,
+            bool isSwapXForY
         )
     {
         GeometricMeanParams memory params =
             abi.decode(getPoolParams(poolId), (GeometricMeanParams));
 
-        (nextRx, nextRy, nextL) = abi.decode(data, (uint256, uint256, uint256));
+        (deltaX, deltaY, isSwapXForY) =
+            abi.decode(data, (uint256, uint256, bool));
 
-        uint256 amountIn;
-        uint256 fees;
-        uint256 minLiquidityDelta;
-
-        if (nextRx > pool.reserveX) {
-            amountIn = nextRx - pool.reserveX;
-            fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta +=
-                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveX);
-        } else if (nextRy > pool.reserveY) {
-            amountIn = nextRy - pool.reserveY;
-            fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta +=
-                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveY);
+        if (isSwapXForY) {
+            uint256 fees = deltaX.mulWadUp(params.swapFee);
+            deltaLiquidity = fees.mulWadUp(pool.totalLiquidity).divWadUp(
+                pool.reserveX
+            ).mulWadUp(params.wX);
+            invariant = GeometricMeanLib.tradingFunction(
+                pool.reserveX + deltaX,
+                pool.reserveY - deltaY,
+                pool.totalLiquidity + deltaLiquidity,
+                params
+            );
         } else {
-            revert("invalid swap: inputs x and y have the same sign!");
+            uint256 fees = deltaY.mulWadUp(params.swapFee);
+            deltaLiquidity = fees.mulWadUp(pool.totalLiquidity).divWadUp(
+                pool.reserveY
+            ).mulWadUp(params.wY);
+            invariant = GeometricMeanLib.tradingFunction(
+                pool.reserveX - deltaX,
+                pool.reserveY + deltaY,
+                pool.totalLiquidity + deltaLiquidity,
+                params
+            );
         }
 
-        uint256 poolId = poolId;
-
-        liquidityDelta = int256(nextL)
-            - int256(
-                GeometricMeanLib.computeNextLiquidity(
-                    pool.reserveX,
-                    pool.reserveY,
-                    abi.decode(getPoolParams(poolId), (GeometricMeanParams))
-                )
-            );
-
-        invariant =
-            GeometricMeanLib.tradingFunction(nextRx, nextRy, nextL, params);
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
