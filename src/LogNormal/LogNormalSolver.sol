@@ -282,8 +282,13 @@ contract LogNormalSolver {
         pool.reserveY = startReserves.ry;
         pool.totalLiquidity = startReserves.L;
 
-        bytes memory swapData =
-            abi.encode(endReserves.rx, endReserves.ry, endReserves.L);
+        bytes memory swapData;
+
+        if (swapXIn) {
+            swapData = abi.encode(amountIn, amountOut, true);
+        } else {
+            swapData = abi.encode(amountOut, amountIn, false);
+        }
 
         uint256 poolId = poolId;
         (bool valid,,,,,) = IStrategy(strategy).validateSwap(
