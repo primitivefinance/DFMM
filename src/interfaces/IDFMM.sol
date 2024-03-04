@@ -210,4 +210,6 @@ interface IDFMM {
             uint256 totalLiquidity,
             address liquidityToken
         );
+
+    function getPool(uint256 poolId) external view returns (Pool memory pool);
 }
