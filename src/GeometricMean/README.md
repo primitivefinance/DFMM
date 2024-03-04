@@ -42,11 +42,19 @@ Using the price formula above in Eq. (1), we can solve for $y_0$:
 $$
 \boxed{y_0 = \frac{w_Y}{w_X}S_0 x_0}
 $$
+From here, we get:
+$$
+\boxed{L_0 = x_0^{w_X}y_0^{w_Y}}
+$$
 
 ### Given $y$ and price
 Again, using Eq. (1), we get:
 $$
 \boxed{x_0 = \frac{w_X}{w_Y}\frac{1}{S_0}y_0}
+$$
+And again:
+$$
+\boxed{L_0 = x_0^{w_X}y_0^{w_Y}}
 $$
 
 ## Swap 
