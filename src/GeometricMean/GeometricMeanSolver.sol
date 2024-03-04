@@ -69,7 +69,7 @@ contract GeometricMeanSolver {
         uint256 rx,
         uint256 S,
         GeometricMeanParams memory params
-    ) public pure returns (bytes memory) {
+    ) public view returns (bytes memory) {
         return computeInitialPoolData(rx, S, params);
     }
 

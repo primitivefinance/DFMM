@@ -94,18 +94,18 @@ contract LogNormalTest is Test {
         _;
     }
 
-    modifier revert_scenario() {
+    modifier oob_scenario() {
         vm.warp(0);
 
         LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
-            strike: 0.67323818941934077 ether,
-            sigma: ONE,
+            strike: ONE,
+            sigma: 100_000_000_000_000,
             tau: ONE,
-            swapFee: TEST_SWAP_FEE,
+            swapFee: 10000000000000,
             controller: address(0)
         });
-        uint256 init_p = 1_329_956_352_651_532_999;
-        uint256 init_x = 70.658087306013359413 ether;
+        uint256 init_p = 1 ether;
+        uint256 init_x = 100 ether;
         bytes memory initData =
             solver.getInitialPoolData(init_x, init_p, params);
 
@@ -147,6 +147,30 @@ contract LogNormalTest is Test {
         uint256 priceGivenY = solver.getPriceGivenYL(poolId, ry, L);
         uint256 priceGivenX = solver.getPriceGivenXL(poolId, rx, L);
         assertApproxEqAbs(priceGivenY, priceGivenX, 100);
+    }
+
+    function test_oob_diff_raise() public oob_scenario {
+        uint256 poolId = dfmm.nonce() - 1;
+        int256 diffRaised = solver.calculateDiffRaise(
+            poolId, 868046956976567012, 868046956976577012
+        );
+
+        console2.log(diffRaised);
+    }
+
+    function test_bisect_oob_error() public oob_scenario {
+        bool xIn = true;
+        uint256 poolId = dfmm.nonce() - 1;
+        uint256 amountIn = 97506664135616951612;
+        (,,, bytes memory swapData) = solver.simulateSwap(poolId, xIn, amountIn);
+
+        dfmm.swap(poolId, swapData);
+
+        (uint256 rx, uint256 ry, uint256 L) = solver.getReservesAndLiquidity(poolId);
+        console2.log(rx);
+        console2.log(ry);
+        uint256 internalPrice = solver.internalPrice(poolId);
+        console2.log(internalPrice);
     }
 
     function test_ln_diff_lower() public basic {

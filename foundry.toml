@@ -9,7 +9,7 @@ solc_version = "0.8.22"
 # these are defaults. explicitly setting them here for clarity.
 libs = ["lib"]
 out = "out/"
-via-ir = true
+via-ir = false 
 
 [fmt]
 bracket_spacing = true

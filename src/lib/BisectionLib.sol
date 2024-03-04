@@ -28,8 +28,8 @@ function bisection(
     uint256 upper,
     uint256 epsilon,
     uint256 maxIterations,
-    function (bytes memory,uint256) pure returns (int256) fx
-) pure returns (uint256 root) {
+    function (bytes memory,uint256) view returns (int256) fx
+) view returns (uint256 root) {
     if (lower > upper) revert BisectionLib_InvalidBounds(lower, upper);
     // Passes the lower and upper bounds to the optimized function.
     // Reverts if the optimized function `fx` returns both negative or both positive values.
