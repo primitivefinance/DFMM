@@ -213,6 +213,27 @@ contract LogNormalTest is Test {
       atomic.logData(dfmm.nonce() - 1);
     }
 
+    function test_complete_arb_flow_dy() public basic {
+      uint256 poolId = dfmm.nonce() - 1;
+      uint256 S = 2.1 ether;
+      int256 dy = solver.getDyGivenS(poolId, S);
+
+      uint256 optimalRaise = solver.computeOptimalArbRaisePrice(poolId, S, uint256(dy));
+
+      console2.log(optimalRaise);
+    }
+
+    function test_complete_arb_flow_dx() public basic {
+      uint256 poolId = dfmm.nonce() - 1;
+      uint256 S = 1.9 ether;
+      int256 dx = solver.getDxGivenS(poolId, S);
+
+      uint256 optimalLower = solver.computeOptimalArbLowerPrice(poolId, S, uint256(dx));
+
+      console2.log(optimalLower);
+    }
+
+
     function test_compute_dy() public basic {
       uint256 poolId = dfmm.nonce() - 1;
       int256 dy = solver.getDyGivenS(poolId, 2.1 ether);

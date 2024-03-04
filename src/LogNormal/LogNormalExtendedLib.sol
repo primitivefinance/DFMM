@@ -400,10 +400,7 @@ function createDiffRaiseStruct(
 ) view returns (DiffRaiseStruct memory) {
     int256 a = I_TWO.wadMul(v + ry);
     int256 b = int256(params.strike).wadMul(L) + v - v.wadMul(gamma);
-    int256 intermediate = a.wadDiv(b);
-    console2.log(intermediate);
     int256 ierfcRes = Gaussian.ierfc(a.wadDiv(b));
-    console2.log(ierfcRes);
 
     int256 sqrtTwo = int256(FixedPointMathLib.sqrt(TWO) * 1e9);
     int256 sqrtTau = int256(FixedPointMathLib.sqrt(params.tau) * 1e9);
@@ -477,7 +474,7 @@ function computeOptimalLower(
     LogNormal.LogNormalParams memory params
 ) view returns (uint256 v) {
     uint256 upper = vUpper;
-    uint256 lower = 1000;
+    uint256 lower = 1;
     int256 lowerBoundOutput = diffLower(S, rX, L, int256(lower), params);
     if (lowerBoundOutput < 0) {
         return 0;
@@ -500,7 +497,7 @@ function computeOptimalRaise(
     LogNormal.LogNormalParams memory params
 ) view returns (uint256 v) {
     uint256 upper = vUpper;
-    uint256 lower = 1000;
+    uint256 lower = 1;
     int256 lowerBoundOutput = diffRaise(S, rY, L, int256(lower), params);
     if (lowerBoundOutput < 0) {
         return 0;
@@ -514,66 +511,6 @@ function computeOptimalRaise(
         findRootRaise
     );
 }
-/*
-
-struct DyStruct {
-    int256 strike;
-    int256 sigma;
-    int256 tau;
-    int256 gamma;
-    int256 rY;
-    int256 L;
-    int256 S;
-}
-
-function createDyStruct(int256 S, int256 rY, int256 L, LogNormal.LogNormalParams memory params) view returns (DyStruct memory dyStruct) {
-  dyStruct = DyStruct({
-    S: S,
-    rY: rY,
-    L: L,
-    strike: int256(params.strike),
-    sigma: int256(params.sigma),
-    tau: int256(params.tau),
-    gamma: I_ONE - int256(params.swapFee)
-  });
-}
-
-function deltaCdf(int256 S, int256 strike, int256 sigma) view returns (int256) {
-  int256 lnSDivK = computeLnSDivK(uint256(S), uint256(strike));
-  int256 halfSigmaSquared = sigma.wadMul(sigma).wadDiv(I_TWO);
-
-  return Gaussian.cdf((lnSDivK - halfSigmaSquared).wadDiv(sigma));
-}
-
-function computeDyNumerator(DyStruct memory dyStruct) view returns (int256) {
-  int256 a = dyStruct.strike.wadMul(dyStruct.L);
-  int256 b = deltaCdf(dyStruct.S, dyStruct.strike, dyStruct.sigma);
-
-  return a.wadMul(b) - dyStruct.rY;
-}
-
-function computeDyDen(DyStruct memory dyStruct) view returns (int256) {
-  int256 a = I_ONE + (dyStruct.gamma - I_ONE);
-  int256 lnSDivK = computeLnSDivK(uint256(dyStruct.S), uint256(dyStruct.strike));
-  int256 halfSigmaSquared = dyStruct.sigma.wadMul(dyStruct.sigma).wadDiv(I_TWO);
-
-}
-
-
-function computeDyGivenTargetS(
-  int256 S,
-  int256 rY,
-  int256 L,
-  LogNormal.LogNormalParams memory params
-) view returns (int256 dy) {
-  DyStruct memory dyStruct = createDyStruct(S, rY, L, params);
-
-  int256 num = computeDyNumerator(dyStruct);
-
-
-
-}
-*/
 
 function computeDy(int256 S, int256 rY, int256 L, LogNormal.LogNormalParams memory params) view returns (int256 dy) {
   int256 gamma = I_ONE - int256(params.swapFee);
@@ -601,5 +538,6 @@ function computeDx(int256 S, int256 rX, int256 L, LogNormal.LogNormalParams memo
 
   dx = (delta - rX).wadDiv((gamma - I_ONE).wadMul(I_ONE - a).wadDiv(rX.wadDiv(L)) + I_ONE);
 }
+
 
 
