@@ -58,7 +58,7 @@ where either $\Delta_X$ or $\Delta_Y$ is given by user input and the $\Delta_L$ 
 
 In general, with a fee parameter $\gamma$, we have:
 $$
-\Delta_L = \frac{1}{2}(1-\gamma) L \frac{\Delta_R}{R}
+\Delta_L = w_R(1-\gamma) L \frac{\Delta_R}{R}
 $$
 where $R$ represents either token $X$ or $Y$.
 
@@ -73,7 +73,7 @@ $$
 If we want to trade in $\Delta_X$ for $\Delta_Y$, 
 we use our invariant equation and solve for $\Delta_Y$ in terms of $\Delta_X$ to get:
 $$
-\boxed{\Delta_X = \left(\frac{L + \Delta_L}{(y+\Delta_Y)^{w_Y}} \right)^{\frac{1}{w_X}} - y}
+\boxed{\Delta_X = \left(\frac{L + \Delta_L}{(y+\Delta_Y)^{w_Y}} \right)^{\frac{1}{w_X}} - x}
 $$
 
 
