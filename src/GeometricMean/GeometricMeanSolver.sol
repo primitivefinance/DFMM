@@ -195,64 +195,45 @@ contract GeometricMeanSolver {
         bool swapXIn,
         uint256 amountIn
     ) public view returns (bool, uint256, uint256, bytes memory) {
-        Reserves memory startReserves;
-        Reserves memory endReserves;
-        (startReserves.rx, startReserves.ry, startReserves.L) =
-            getReservesAndLiquidity(poolId);
-        GeometricMeanParams memory poolParams = fetchPoolParams(poolId);
+        GeometricMeanParams memory params = fetchPoolParams(poolId);
+        IDFMM.Pool memory pool =
+            IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
 
+        uint256 fees = amountIn.mulWadUp(params.swapFee);
         uint256 amountOut;
 
-        uint256 startComputedL = GeometricMeanLib.computeNextLiquidity(
-            startReserves.rx, startReserves.ry, fetchPoolParams(poolId)
-        );
-
-        {
-            if (swapXIn) {
-                uint256 fees = amountIn.mulWadUp(poolParams.swapFee);
-                uint256 weightedPrice = uint256(
-                    int256(startReserves.ry.divWadUp(startReserves.rx)).powWad(
-                        int256(poolParams.wY)
-                    )
-                );
-                uint256 deltaL = fees.mulWadUp(weightedPrice);
-                deltaL += 1;
-
-                endReserves.rx = startReserves.rx + amountIn;
-                endReserves.L = startComputedL + deltaL;
-
-                endReserves.ry =
-                    getNextReserveY(poolId, endReserves.rx, endReserves.L);
-                endReserves.ry += 1;
-
-                require(
-                    endReserves.ry < startReserves.ry,
-                    "invalid swap: y reserve increased!"
-                );
-                amountOut = startReserves.ry - endReserves.ry;
-            } else {
-                uint256 fees = amountIn.mulWadUp(poolParams.swapFee);
-                uint256 weightedPrice = uint256(
-                    int256(startReserves.rx.divWadUp(startReserves.ry)).powWad(
-                        int256(poolParams.wX)
-                    )
-                );
-                uint256 deltaL = fees.mulWadUp(weightedPrice);
-                deltaL += 1;
-
-                endReserves.ry = startReserves.ry + amountIn;
-                endReserves.L = startComputedL + deltaL;
-
-                endReserves.rx =
-                    getNextReserveX(poolId, endReserves.ry, endReserves.L);
-                endReserves.rx += 1;
-
-                require(
-                    endReserves.rx < startReserves.rx,
-                    "invalid swap: x reserve increased!"
-                );
-                amountOut = startReserves.rx - endReserves.rx;
-            }
+        if (swapXIn) {
+            uint256 deltaLiquidity = pool.totalLiquidity.divWadUp(pool.reserveX)
+                .mulWadUp(fees).mulWadUp(params.wX);
+            uint256 n = (pool.totalLiquidity + deltaLiquidity);
+            uint256 d = uint256(
+                int256((pool.reserveX + amountIn)).powWad(int256(params.wX))
+            );
+            uint256 a = uint256(
+                int256(n.divWadUp(d)).powWad(
+                    int256(FixedPointMathLib.WAD.divWadUp(params.wY))
+                )
+            );
+            amountOut = pool.reserveY - a;
+            pool.reserveX += amountIn;
+            pool.reserveY -= amountOut;
+            pool.totalLiquidity += deltaLiquidity;
+        } else {
+            uint256 deltaLiquidity = pool.totalLiquidity.divWadUp(pool.reserveY)
+                .mulWadUp(fees).mulWadUp(params.wY);
+            uint256 n = (pool.totalLiquidity + deltaLiquidity);
+            uint256 d = uint256(
+                int256((pool.reserveY + amountIn)).powWad(int256(params.wY))
+            );
+            uint256 a = uint256(
+                int256(n.divWadUp(d)).powWad(
+                    int256(FixedPointMathLib.WAD.divWadUp(params.wX))
+                )
+            );
+            amountOut = pool.reserveX - a;
+            pool.reserveX -= amountIn;
+            pool.reserveY += amountOut;
+            pool.totalLiquidity += deltaLiquidity;
         }
 
         bytes memory swapData;
@@ -260,22 +241,17 @@ contract GeometricMeanSolver {
         if (swapXIn) {
             swapData = abi.encode(amountIn, amountOut, true);
         } else {
-            swapData = abi.encode(amountOut, amountIn, true);
+            swapData = abi.encode(amountOut, amountIn, false);
         }
 
-        IDFMM.Pool memory pool;
-        pool.reserveX = startReserves.rx;
-        pool.reserveY = startReserves.ry;
-        pool.totalLiquidity = startComputedL;
-
-        uint256 poolId = poolId;
         (bool valid,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
+
         return (
             valid,
             amountOut,
-            computePrice(endReserves.rx, endReserves.ry, poolParams),
+            computePrice(pool.reserveX, pool.reserveY, params),
             swapData
         );
     }
