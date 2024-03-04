@@ -324,4 +324,22 @@ contract LogNormalSolver {
         (, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
         return computeOptimalRaise(int256(S), int256(ry), int256(L), vUpper, params);
     }
+
+    function getDyGivenS(
+      uint256 poolId,
+      uint256 S
+    ) public view returns (int256) {
+        LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
+        (, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
+        return computeDy(int256(S), int256(ry), int256(L), params);
+    }
+
+    function getDxGivenS(
+      uint256 poolId,
+      uint256 S
+    ) public view returns (int256) {
+        LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
+        (uint256 rx,, uint256 L) = getReservesAndLiquidity(poolId);
+        return computeDx(int256(S), int256(rx), int256(L), params);
+    }
 }

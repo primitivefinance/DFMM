@@ -212,4 +212,18 @@ contract LogNormalTest is Test {
     function test_atomic_events() public basic {
       atomic.logData(dfmm.nonce() - 1);
     }
+
+    function test_compute_dy() public basic {
+      uint256 poolId = dfmm.nonce() - 1;
+      int256 dy = solver.getDyGivenS(poolId, 2.1 ether);
+
+      console2.log(dy);
+    }
+
+    function test_compute_dx() public basic {
+      uint256 poolId = dfmm.nonce() - 1;
+      int256 dx = solver.getDxGivenS(poolId, 1.9 ether);
+
+      console2.log(dx);
+    }
 }
