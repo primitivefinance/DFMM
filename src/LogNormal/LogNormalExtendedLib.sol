@@ -474,7 +474,7 @@ function computeOptimalLower(
     LogNormal.LogNormalParams memory params
 ) view returns (uint256 v) {
     uint256 upper = vUpper;
-    uint256 lower = 1;
+    uint256 lower = 100;
     int256 lowerBoundOutput = diffLower(S, rX, L, int256(lower), params);
     if (lowerBoundOutput < 0) {
         return 0;
@@ -497,7 +497,7 @@ function computeOptimalRaise(
     LogNormal.LogNormalParams memory params
 ) view returns (uint256 v) {
     uint256 upper = vUpper;
-    uint256 lower = 1;
+    uint256 lower = 100;
     int256 lowerBoundOutput = diffRaise(S, rY, L, int256(lower), params);
     if (lowerBoundOutput < 0) {
         return 0;
