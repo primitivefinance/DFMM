@@ -166,13 +166,13 @@ interface IDFMM {
      * @notice Swaps tokens into pool `poolId`.
      * @param poolId Id of the pool to swap tokens into.
      * @param data An array of bytes used by the strategy contract.
-     * @return inputAmount Amount of tokens sent to the DFMM contract.
-     * @return outputAmount Amount of tokens received by the swapper.
+     * @return deltaX Amount of X.
+     * @return deltaY Amount of Y tokens.
      */
     function swap(
         uint256 poolId,
         bytes calldata data
-    ) external returns (uint256 inputAmount, uint256 outputAmount);
+    ) external returns (uint256 deltaX, uint256 deltaY);
 
     /**
      * @notice Updates pool `poolId` by calling the associated strategy.
