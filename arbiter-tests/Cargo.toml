@@ -1,0 +1,17 @@
+[package]
+name = "arbiter-tests"
+description = "Arbiter stateful tests for DFMM contracts."
+
+[dependencies]
+arbiter-core.workspace = true
+dfmm-kit.workspace = true
+
+# Ethereum
+ethers.workspace = true
+
+# Async
+tokio.workspace = true
+
+# Tracing
+tracing.workspace = true
+tracing-subscriber.workspace = true

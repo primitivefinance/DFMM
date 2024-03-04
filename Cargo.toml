@@ -1,2 +1,16 @@
 [workspace]
-members = ["kit"]
+members = ["kit", "arbiter-tests"]
+
+[workspace.dependencies]
+arbiter-core = "0.10.2"
+dfmm-kit = { path = "kit" }
+
+# Ethereum
+ethers = "2.0.13"
+
+# Async
+tokio = { version = "1.0", features = ["full"] }
+
+# Tracing
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"

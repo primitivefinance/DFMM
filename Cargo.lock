@@ -257,6 +257,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "arbiter-tests"
+version = "0.0.0"
+dependencies = [
+ "arbiter-core",
+ "dfmm-kit",
+ "ethers",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "argminmax"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

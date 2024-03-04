@@ -9,16 +9,16 @@ keywords = ["ethereum", "smart-contracts", "automated market makers"]
 readme = "../README.md"
 
 [dependencies]
-arbiter-core = "0.10.2"
+arbiter-core.workspace = true
 arbiter-engine = "0.3.0"
 arbiter-macros = "0.1.2"
 arbiter-bindings = "0.1.6"
 
 # Ethereum
-ethers = "2.0.13"
+ethers.workspace = true
 
 # Async
-tokio = { version = "1.0", features = ["full"] }
+tokio.workspace = true
 async-trait = "0.1.77"
 futures-util = "0.3.30"
 
@@ -28,8 +28,8 @@ serde_json = "1.0.114"
 
 # Errors and tracing
 anyhow = "1.0.80"
-tracing = "0.1.40"
-tracing-subscriber = "0.3.18"
+tracing.workspace = true
+tracing-subscriber.workspace = true
 
 # CLI
 clap = { version = "4.5.1", features = ["derive"] }
