@@ -14,9 +14,7 @@ We mark reserves as:
 - $P \equiv \mathtt{price}$ 
 
 The **trading function** is:
-$$
-\boxed{\varphi(x,y,L;P) = \frac{x}{L} + \frac{y}{LP} -1}
-$$
+$$\boxed{\varphi(x,y,L;P) = \frac{x}{L} + \frac{y}{LP} -1}$$
 where $L$ is the **liquidity** of the pool. 
 
 ## Price
