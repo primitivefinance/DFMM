@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/lib/DynamicParamLib.sol";
-import "./LogNormalExtendedLib.sol";
 import "./LogNormalLib.sol";
 
 /// @notice Log Normal has three variable parameters:
