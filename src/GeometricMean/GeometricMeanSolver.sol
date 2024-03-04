@@ -215,9 +215,6 @@ contract GeometricMeanSolver {
                 )
             );
             amountOut = pool.reserveY - a;
-            pool.reserveX += amountIn;
-            pool.reserveY -= amountOut;
-            pool.totalLiquidity += deltaLiquidity;
         } else {
             uint256 deltaLiquidity = pool.totalLiquidity.divWadUp(pool.reserveY)
                 .mulWadUp(fees).mulWadUp(params.wY);
@@ -231,9 +228,6 @@ contract GeometricMeanSolver {
                 )
             );
             amountOut = pool.reserveX - a;
-            pool.reserveX -= amountIn;
-            pool.reserveY += amountOut;
-            pool.totalLiquidity += deltaLiquidity;
         }
 
         bytes memory swapData;
