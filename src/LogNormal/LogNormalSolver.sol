@@ -346,7 +346,9 @@ contract LogNormalSolver {
     ) public view returns (int256) {
         LogNormal.LogNormalParams memory params = fetchPoolParams(poolId);
         (, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
-        return computeDy(int256(S), int256(ry), int256(L), params);
+        int256 dy = computeDy(int256(S), int256(ry), int256(L), params);
+        console2.log("====computed dy=====", dy);
+        return dy;
     }
 
     function getDxGivenS(
