@@ -242,6 +242,8 @@ contract LogNormalSolver {
             } else {
                 endReserves.ry = startReserves.ry + amountIn;
                 endReserves.L = startComputedL + computeDeltaL(amountIn, poolParams.swapFee, startReserves.L, startReserves.ry);
+                console2.log("end ry", endReserves.ry);
+                console2.log("end L", endReserves.L);
                 endReserves.approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
 
