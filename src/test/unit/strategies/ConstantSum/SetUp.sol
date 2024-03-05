@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "src/ConstantSum/ConstantSum.sol";
 import "src/ConstantSum/ConstantSumSolver.sol";
-import "../../DFMM/SetUp.sol";
+import "src/test/helpers/SetUp.sol";
 
 contract ConstantSumSetup is SetUp {
     ConstantSum constantSum;
@@ -25,17 +25,8 @@ contract ConstantSumSetup is SetUp {
 
     function setUp() public override {
         SetUp.setUp();
-        tokenX = new MockERC20("Token X", "TSTX", 18);
-        tokenY = new MockERC20("Token Y", "TSTY", 18);
-        tokenX.mint(address(this), 100e18);
-        tokenY.mint(address(this), 100e18);
-
-        dfmm = new DFMM(address(0));
         constantSum = new ConstantSum(address(dfmm));
         solver = new ConstantSumSolver(address(constantSum));
-
-        tokenX.approve(address(dfmm), type(uint256).max);
-        tokenY.approve(address(dfmm), type(uint256).max);
     }
 
     modifier defaultPool() {
