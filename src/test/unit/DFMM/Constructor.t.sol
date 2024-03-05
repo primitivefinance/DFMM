@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./SetUp.sol";
+import { LPToken } from "src/LPToken.sol";
 
 contract DFMMConstructorTest is DFMMSetUp {
     function test_DFMM_constructor_DeploysLPTokenImplementation() public {
