@@ -157,8 +157,9 @@ function computeNextLiquidity(
     int256 computedInvariant = invariant;
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
-            lower = rx > ry.divWadDown(params.strike) ? rx + 1000 : ry.divWadDown(params.strike) + 1000;
-            console2.log("rx div L", rx.divWadDown(lower));
+            lower = lower.mulDivDown(999, 1000);
+            uint256 min = rx > ry.divWadDown(params.strike) ? rx + 1000 : ry.divWadDown(params.strike) + 1000;
+            lower = lower < rx ? min : lower;
             computedInvariant = LogNormalLib.tradingFunction({
                 rx: rx,
                 ry: ry,
@@ -177,7 +178,6 @@ function computeNextLiquidity(
             });
         }
     }
-    console2.log("computedInvariant", computedInvariant);
     L = bisection(
         abi.encode(rx, ry, computedInvariant, params),
         lower,
