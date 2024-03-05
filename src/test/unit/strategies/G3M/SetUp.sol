@@ -30,7 +30,6 @@ contract G3MSetUp is SetUp {
         tokenX.mint(address(this), 100e18);
         tokenY.mint(address(this), 100e18);
 
-        lex = new Lex(address(tokenX), address(tokenY), ONE);
         dfmm = new DFMM(address(0));
         g3m = new GeometricMean(address(dfmm));
         solver = new GeometricMeanSolver(address(g3m));
