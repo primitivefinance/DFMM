@@ -6,7 +6,6 @@ import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { DFMM } from "src/DFMM.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
-import { LPToken } from "src/LPToken.sol";
 
 contract SetUp is Test {
     DFMM dfmm;
