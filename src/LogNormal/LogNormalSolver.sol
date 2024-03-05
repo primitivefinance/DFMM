@@ -152,6 +152,9 @@ contract LogNormalSolver {
         uint256 L
     ) public view returns (uint256) {
         bytes memory data = abi.encode(rx, ry, L);
+        console2.log("rx in nextL", rx);
+        console2.log("L in nextL", L);
+
         int256 invariant = IStrategy(strategy).computeSwapConstant(poolId, data);
         return
             computeNextLiquidity(rx, ry, invariant, L, fetchPoolParams(poolId));
