@@ -156,6 +156,7 @@ contract LogNormalSolver {
         console2.log("L in nextL", L);
 
         int256 invariant = IStrategy(strategy).computeSwapConstant(poolId, data);
+        console2.log("invariant", invariant);
         return
             computeNextLiquidity(rx, ry, invariant, L, fetchPoolParams(poolId));
     }
