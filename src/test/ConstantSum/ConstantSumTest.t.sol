@@ -6,7 +6,6 @@ import "solmate/test/utils/mocks/MockERC20.sol";
 import "src/DFMM.sol";
 import "src/ConstantSum/ConstantSum.sol";
 import "src/ConstantSum/ConstantSumSolver.sol";
-import "src/test/helpers/Lex.sol";
 
 contract ConstantSumTest is Test {
     using stdStorage for StdStorage;
@@ -16,7 +15,6 @@ contract ConstantSumTest is Test {
     ConstantSumSolver solver;
     MockERC20 tokenX;
     MockERC20 tokenY;
-    Lex lex;
 
     uint256 public constant TEST_ZERO_FEE = 0;
     uint256 public constant TEST_SWAP_FEE = 0.003 ether;
@@ -27,7 +25,6 @@ contract ConstantSumTest is Test {
         tokenX.mint(address(this), 100_000_000 ether);
         tokenY.mint(address(this), 100_000_000 ether);
 
-        lex = new Lex(address(tokenX), address(tokenY), ONE);
         dfmm = new DFMM(address(0));
         constantSum = new ConstantSum(address(dfmm));
         solver = new ConstantSumSolver(address(constantSum));
