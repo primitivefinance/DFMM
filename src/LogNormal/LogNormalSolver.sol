@@ -199,6 +199,33 @@ contract LogNormalSolver {
       deltaL = amountIn.mulWadUp(swapFee).mulWadUp(L).divWadUp(reserve).mulWadUp(HALF);
     }
 
+    function computeDeltaLXIn(
+      uint256 poolId,
+      uint256 amountIn,
+      uint256 rx,
+      uint256 ry,
+      uint256 L,
+      LogNormal.LogNormalParams memory params
+    ) public view returns (uint256 deltaL) {
+      uint256 fees = params.swapFee.mulWadUp(amountIn);
+      uint256 px = getPriceGivenXL(poolId, rx, L);
+      deltaL = fees.divWadDown(px.mulWadDown(rx) + ry);
+    }
+
+    function computeDeltaLYIn(
+      uint256 poolId,
+      uint256 amountIn,
+      uint256 rx,
+      uint256 ry,
+      uint256 L,
+      LogNormal.LogNormalParams memory params
+    ) public view returns (uint256 deltaL) {
+      uint256 fees = params.swapFee.mulWadUp(amountIn);
+      uint256 py = getPriceGivenYL(poolId, ry, L);
+      deltaL = fees.divWadDown(py.mulWadDown(rx) + ry);
+    }
+
+
     /// @dev Estimates a swap's reserves and adjustments and returns its validity.
     function simulateSwap(
         uint256 poolId,
@@ -224,7 +251,7 @@ contract LogNormalSolver {
 
             if (swapXIn) {
                 endReserves.rx = startReserves.rx + amountIn;
-                endReserves.L = startComputedL + computeDeltaL(amountIn, poolParams.swapFee, startReserves.L, startReserves.rx);
+                endReserves.L = startComputedL + computeDeltaLXIn(poolId, amountIn, startReserves.rx, startReserves.ry, startReserves.L, poolParams);
                 endReserves.approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
 
@@ -241,7 +268,7 @@ contract LogNormalSolver {
                 amountOut = startReserves.ry - endReserves.ry;
             } else {
                 endReserves.ry = startReserves.ry + amountIn;
-                endReserves.L = startComputedL + computeDeltaL(amountIn, poolParams.swapFee, startReserves.L, startReserves.ry);
+                endReserves.L = startComputedL + computeDeltaLYIn(poolId, amountIn, startReserves.rx, startReserves.ry, startReserves.L, poolParams);
                 console2.log("end ry", endReserves.ry);
                 console2.log("end L", endReserves.L);
                 endReserves.approxPrice =
