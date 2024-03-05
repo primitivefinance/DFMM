@@ -11,6 +11,7 @@ import "../helpers/Lex.sol";
 
 contract LogNormalTest is Test {
     using stdStorage for StdStorage;
+    using FixedPointMathLib for uint256;
 
     DFMM dfmm;
     LogNormal logNormal;
@@ -93,6 +94,34 @@ contract LogNormalTest is Test {
 
         _;
     }
+
+    modifier next_L() {
+        vm.warp(0);
+
+        LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
+            strike: ONE,
+            sigma: 0.0001 ether,
+            tau: ONE,
+            swapFee: 0.0001 ether,
+            controller: address(0)
+        });
+        uint256 init_p = ONE;
+        uint256 init_x = ONE;
+        bytes memory initData =
+            solver.getInitialPoolData(init_x, init_p, params);
+
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+            strategy: address(logNormal),
+            tokenX: tokenX,
+            tokenY: tokenY,
+            data: initData
+        });
+
+        dfmm.init(initParams);
+
+        _;
+    }
+
 
     modifier deep_liq() {
         vm.warp(0);
@@ -349,7 +378,18 @@ contract LogNormalTest is Test {
        console2.log(res);
     }
 
-    function test_solver_tf() public basic {
+    function test_solver_tf() public next_L {
+      uint256 rx = 58724093250934788978;
+      uint256 ry = 141290607496809311119;
+      //uint256 L = 200021587103761615868;
+
+      LogNormal.LogNormalParams memory params = solver.fetchPoolParams(0);
+
+      uint256 L = rx > ry.divWadDown(params.strike) ? rx + 1000 : ry.divWadDown(params.strike) + 1000;
+
+      solver.solverTradingFunction(rx, ry, L, params);
+
+
       
     }
 

@@ -376,13 +376,16 @@ contract LogNormalSolver {
             AAAAA = int256(2 ** 255 - 1);
         } else {
             AAAAA = Gaussian.ppf(int256(FixedPointMathLib.divWadDown(rx, L)));
+            console2.log("a", AAAAA);
         }
         if (
             FixedPointMathLib.divWadDown(
                 ry, FixedPointMathLib.mulWadDown(params.strike, L)
             ) >= ONE
         ) {
+            console2.log("in max int branch");
             BBBBB = int256(2 ** 255 - 1);
+            console2.log("b", BBBBB);
         } else {
             BBBBB = Gaussian.ppf(
                 int256(
@@ -394,6 +397,10 @@ contract LogNormalSolver {
         }
 
         int256 CCCCC = int256(computeSigmaSqrtTau(params.sigma, params.tau));
+        console2.log("c", CCCCC);
+
+        console2.log("a + c", AAAAA + CCCCC);
+        console2.log("a + b + c", AAAAA + BBBBB + CCCCC);
 
         return AAAAA + BBBBB + CCCCC;
     }
