@@ -14,21 +14,17 @@ contract LogNormalSwapTest is LogNormalSetUp {
         uint256 amountIn = 0.1 ether;
         bool swapXForY = true;
 
-        (bool valid,,, bytes memory payload) =
+        (bool valid, uint256 amountOut,, bytes memory payload) =
             solver.simulateSwap(POOL_ID, swapXForY, amountIn);
         assertEq(valid, true);
-        (uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, payload);
 
-        assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
-        assertEq(
-            tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - outputAmount
-        );
+        console.log("amountOut:", amountOut);
 
-        assertEq(tokenX.balanceOf(address(this)), preUserBalanceX - inputAmount);
-        assertEq(
-            tokenY.balanceOf(address(this)), preUserBalanceY + outputAmount
-        );
+        (uint256 deltaX, uint256 deltaY) = dfmm.swap(POOL_ID, payload);
+        assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + deltaX);
+        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - deltaY);
+        assertEq(tokenX.balanceOf(address(this)), preUserBalanceX - deltaX);
+        assertEq(tokenY.balanceOf(address(this)), preUserBalanceY + deltaY);
     }
 
     function test_LogNormal_swap_SwapsYforX() public init {
