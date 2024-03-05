@@ -249,6 +249,8 @@ contract LogNormalSolver {
                     poolId, endReserves.ry, endReserves.L, endReserves.approxPrice
                 );
               console2.log("computed next X");
+              console2.log("next x:", endReserves.rx);
+              console2.log("start x:", startReserves.rx);
 
                 require(
                     endReserves.rx < startReserves.rx,
