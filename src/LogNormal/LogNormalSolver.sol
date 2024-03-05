@@ -211,9 +211,9 @@ contract LogNormalSolver {
 
         uint256 amountOut;
         {
-            console2.log("computing next L");
             console2.log("start rx", startReserves.rx);
             console2.log("start L", startReserves.L);
+            console2.log("computing next L");
             uint256 startComputedL = getNextLiquidity(
                 poolId, startReserves.rx, startReserves.ry, startReserves.L
             );
