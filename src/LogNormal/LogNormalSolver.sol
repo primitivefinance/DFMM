@@ -208,9 +208,11 @@ contract LogNormalSolver {
 
         uint256 amountOut;
         {
+            console2.log("computing next L");
             uint256 startComputedL = getNextLiquidity(
                 poolId, startReserves.rx, startReserves.ry, startReserves.L
             );
+            console2.log("computed next L");
 
             if (swapXIn) {
                 endReserves.rx = startReserves.rx + amountIn;
@@ -218,9 +220,11 @@ contract LogNormalSolver {
                 endReserves.approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
 
+            console2.log("computing next Y");
                 endReserves.ry = getNextReserveY(
                     poolId, endReserves.rx, endReserves.L, endReserves.approxPrice
                 );
+            console2.log("computed next Y");
 
                 require(
                     endReserves.ry < startReserves.ry,
@@ -233,9 +237,11 @@ contract LogNormalSolver {
                 endReserves.approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
 
+              console2.log("computing next X");
                 endReserves.rx = getNextReserveX(
                     poolId, endReserves.ry, endReserves.L, endReserves.approxPrice
                 );
+              console2.log("computed next X");
 
                 require(
                     endReserves.rx < startReserves.rx,
