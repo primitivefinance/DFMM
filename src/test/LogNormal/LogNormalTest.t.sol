@@ -25,8 +25,8 @@ contract LogNormalTest is Test {
     function setUp() public {
         tokenX = address(new MockERC20("tokenX", "X", 18));
         tokenY = address(new MockERC20("tokenY", "Y", 18));
-        MockERC20(tokenX).mint(address(this), 100_000_000 ether);
-        MockERC20(tokenY).mint(address(this), 100_000_000 ether);
+        MockERC20(tokenX).mint(address(this), 100_000_000_000 ether);
+        MockERC20(tokenY).mint(address(this), 100_000_000_000 ether);
 
         lex = new Lex(tokenX, tokenY, ONE);
         dfmm = new DFMM(address(0));
@@ -93,6 +93,34 @@ contract LogNormalTest is Test {
 
         _;
     }
+
+    modifier deep_liq() {
+        vm.warp(0);
+
+        LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
+            strike: ONE,
+            sigma: 0.1 ether,
+            tau: ONE,
+            swapFee: TEST_SWAP_FEE,
+            controller: address(0)
+        });
+        uint256 init_p = 1.1 ether;
+        uint256 init_x = ONE * 100_000_000;
+        bytes memory initData =
+            solver.getInitialPoolData(init_x, init_p, params);
+
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+            strategy: address(logNormal),
+            tokenX: tokenX,
+            tokenY: tokenY,
+            data: initData
+        });
+
+        dfmm.init(initParams);
+
+        _;
+    }
+
 
     modifier oob_scenario() {
         vm.warp(0);
@@ -247,4 +275,29 @@ contract LogNormalTest is Test {
 
       console2.log(dx);
     }
+
+    function test_deep_liq_x_in() public deep_liq {
+      bool xIn = true;
+      uint256 amountIn = 1 ether;
+      uint256 poolId = dfmm.nonce() - 1;
+      (,,, bytes memory swapData) = solver.simulateSwap(poolId, xIn, amountIn);
+
+      (uint256 input, uint256 output) = dfmm.swap(poolId, swapData);
+
+      console2.log(input);
+      console2.log(output);
+    }
+
+    function test_deep_liq_y_in() public deep_liq {
+      bool xIn = false;
+      uint256 amountIn = 1 ether;
+      uint256 poolId = dfmm.nonce() - 1;
+      (,,, bytes memory swapData) = solver.simulateSwap(poolId, xIn, amountIn);
+
+      (uint256 input, uint256 output) = dfmm.swap(poolId, swapData);
+
+      console2.log(input);
+      console2.log(output);
+    }
+
 }

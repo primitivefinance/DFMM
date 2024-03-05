@@ -172,12 +172,12 @@ contract LogNormal is IStrategy {
         if (nextRx > startRx) {
             amountIn = nextRx - startRx;
             fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRx);
+            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRx).mulWadUp(0.5 ether);
         } else if (nextRy > startRy) {
             // δl = δx * L / X, where δx = delta x * fee
             amountIn = nextRy - startRy;
             fees = amountIn.mulWadUp(params.swapFee);
-            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRy);
+            minLiquidityDelta += fees.mulWadUp(startL).divWadUp(startRy).mulWadUp(0.5 ether);
         } else {
             // should never get here!
             revert("invalid swap: inputs x and y have the same sign!");

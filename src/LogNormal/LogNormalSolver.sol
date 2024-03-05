@@ -17,6 +17,7 @@ contract LogNormalSolver {
         uint256 rx;
         uint256 ry;
         uint256 L;
+        uint256 approxPrice;
     }
 
     uint256 public constant BISECTION_EPSILON = 0;
@@ -203,17 +204,16 @@ contract LogNormalSolver {
             );
 
             if (swapXIn) {
-                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee);
+                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee).mulWadUp(startReserves.L).divWadUp(startReserves.rx).mulWadUp(0.5 ether);
 
                 endReserves.rx = startReserves.rx + amountIn;
                 endReserves.L = startComputedL + deltaL;
-                uint256 approxPrice =
+                endReserves.approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
 
                 endReserves.ry = getNextReserveY(
-                    poolId, endReserves.rx, endReserves.L, approxPrice
+                    poolId, endReserves.rx, endReserves.L, endReserves.approxPrice
                 );
-                endReserves.ry += 1;
 
                 require(
                     endReserves.ry < startReserves.ry,
@@ -221,19 +221,16 @@ contract LogNormalSolver {
                 );
                 amountOut = startReserves.ry - endReserves.ry;
             } else {
-                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee).divWadUp(
-                    poolParams.strike
-                );
+                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee).mulWadUp(startReserves.L).divWadUp(startReserves.ry).mulWadUp(0.5 ether);
 
                 endReserves.ry = startReserves.ry + amountIn;
                 endReserves.L = startComputedL + deltaL;
-                uint256 approxPrice =
+                endReserves.approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
 
                 endReserves.rx = getNextReserveX(
-                    poolId, endReserves.ry, endReserves.L, approxPrice
+                    poolId, endReserves.ry, endReserves.L, endReserves.approxPrice
                 );
-                endReserves.rx += 1;
 
                 require(
                     endReserves.rx < startReserves.rx,
