@@ -7,11 +7,9 @@ import { DFMM } from "src/DFMM.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { LPToken } from "src/LPToken.sol";
-import { Lex } from "src/test/helpers/Lex.sol";
 
 contract SetUp is Test {
     DFMM dfmm;
-    Lex lex;
     MockERC20 tokenX;
     MockERC20 tokenY;
     WETH weth;
@@ -24,7 +22,6 @@ contract SetUp is Test {
         tokenX.mint(address(this), 100e18);
         tokenY.mint(address(this), 100e18);
 
-        lex = new Lex(address(tokenX), address(tokenY), 1 ether);
         weth = new WETH();
         dfmm = new DFMM(address(weth));
 
