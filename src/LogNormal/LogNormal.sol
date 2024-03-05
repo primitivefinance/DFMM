@@ -6,7 +6,7 @@ import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/lib/DynamicParamLib.sol";
 import "src/lib/StrategyLib.sol";
-import "forge-std/console2.sol"
+import "forge-std/console2.sol";
 
 /// @notice Log Normal has three variable parameters:
 /// K - strike price
