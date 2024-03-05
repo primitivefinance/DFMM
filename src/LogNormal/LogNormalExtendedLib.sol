@@ -177,6 +177,7 @@ function computeNextLiquidity(
             });
         }
     }
+    console2.log("computedInvariant", computedInvariant);
     L = bisection(
         abi.encode(rx, ry, computedInvariant, params),
         lower,
