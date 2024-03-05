@@ -157,7 +157,7 @@ function computeNextLiquidity(
     int256 computedInvariant = invariant;
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
-            lower = lower.mulDivDown(999, 1000);
+            lower = rx + 1;
             computedInvariant = LogNormalLib.tradingFunction({
                 rx: rx,
                 ry: ry,
