@@ -8,7 +8,6 @@ import "solmate/test/utils/mocks/MockERC20.sol";
 import "src/GeometricMean/GeometricMean.sol";
 import "src/GeometricMean/GeometricMeanSolver.sol";
 import "src/DFMM.sol";
-import "../helpers/Lex.sol";
 
 contract G3MTest is Test {
     using stdStorage for StdStorage;
@@ -19,7 +18,6 @@ contract G3MTest is Test {
     GeometricMeanSolver solver;
     address tokenX;
     address tokenY;
-    Lex lex;
 
     uint256 public constant TEST_SWAP_FEE = 0.003 ether;
 
@@ -29,7 +27,6 @@ contract G3MTest is Test {
         MockERC20(tokenX).mint(address(this), 100_000_000e18);
         MockERC20(tokenY).mint(address(this), 100_000_000e18);
 
-        lex = new Lex(tokenX, tokenY, ONE);
         dfmm = new DFMM(address(0));
         g3m = new GeometricMean(address(dfmm));
         solver = new GeometricMeanSolver(address(g3m));
