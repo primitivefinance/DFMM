@@ -213,6 +213,7 @@ contract LogNormalSolver {
         uint256 amountOut;
         {
             console2.log("start rx", startReserves.rx);
+            console2.log("start ry", startReserves.ry);
             console2.log("start L", startReserves.L);
             console2.log("computing next L");
             uint256 startComputedL = getNextLiquidity(
@@ -360,4 +361,41 @@ contract LogNormalSolver {
     function callIerfc(int256 x) public view returns (int256) {
       return testIerfc(x);
     }
+    
+    function solverTradingFunction(
+        uint256 rx,
+        uint256 ry,
+        uint256 L,
+        LogNormal.LogNormalParams memory params
+    ) public view returns (int256) {
+        require(rx < L, "tradingFunction: invalid x");
+
+        int256 AAAAA;
+        int256 BBBBB;
+        if (FixedPointMathLib.divWadDown(rx, L) >= ONE) {
+            AAAAA = int256(2 ** 255 - 1);
+        } else {
+            AAAAA = Gaussian.ppf(int256(FixedPointMathLib.divWadDown(rx, L)));
+        }
+        if (
+            FixedPointMathLib.divWadDown(
+                ry, FixedPointMathLib.mulWadDown(params.strike, L)
+            ) >= ONE
+        ) {
+            BBBBB = int256(2 ** 255 - 1);
+        } else {
+            BBBBB = Gaussian.ppf(
+                int256(
+                    FixedPointMathLib.divWadDown(
+                        ry, FixedPointMathLib.mulWadDown(params.strike, L)
+                    )
+                )
+            );
+        }
+
+        int256 CCCCC = int256(computeSigmaSqrtTau(params.sigma, params.tau));
+
+        return AAAAA + BBBBB + CCCCC;
+    }
+
 }
