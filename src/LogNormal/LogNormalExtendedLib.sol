@@ -197,10 +197,14 @@ function computeNextRx(
 ) view returns (uint256 rx) {
     uint256 upper = approximatedRx;
     uint256 lower = approximatedRx;
+    console2.log("approximatedRx", approximatedRx);
     int256 computedInvariant = invariant;
+    console2.log("computedInvariant", computedInvariant);
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             upper = upper.mulDivUp(1001, 1000);
+            console2.log("rx upper", upper);
+            upper = upper > L ? L : upper;
             computedInvariant = LogNormalLib.tradingFunction({
                 rx: upper,
                 ry: ry,
