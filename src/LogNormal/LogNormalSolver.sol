@@ -168,6 +168,7 @@ contract LogNormalSolver {
         uint256 S
     ) public view returns (uint256) {
         uint256 approximatedRx = computeXGivenL(L, S, fetchPoolParams(poolId));
+        console2.log("approximated rx given price", approximatedRx);
         bytes memory data = abi.encode(approximatedRx, ry, L);
         int256 invariant = IStrategy(strategy).computeSwapConstant(poolId, data);
         return computeNextRx(

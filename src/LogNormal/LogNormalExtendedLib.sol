@@ -215,6 +215,8 @@ function computeNextRx(
     } else {
         while (computedInvariant > 0) {
             lower = lower.mulDivDown(999, 1000);
+            console2.log("rx lower", lower);
+            lower = lower > L ? L : lower;
             computedInvariant = LogNormalLib.tradingFunction({
                 rx: lower,
                 ry: ry,
