@@ -531,8 +531,9 @@ function computeDy(int256 S, int256 rY, int256 L, LogNormal.LogNormalParams memo
   int256 cdfA = Gaussian.cdf(a);
 
   int256 delta = L.wadMul(strike).wadMul(cdfA);
+  dy = delta - rY;
 
-  dy = (delta - rY).wadDiv((gamma - I_ONE).wadMul(cdfA).wadDiv(rY.wadDiv(strike.wadMul(L))) + I_ONE);
+  //dy = (delta - rY).wadDiv((gamma - I_ONE).wadMul(cdfA).wadDiv(rY.wadDiv(strike.wadMul(L))) + I_ONE);
 }
 
 function computeDx(int256 S, int256 rX, int256 L, LogNormal.LogNormalParams memory params) view returns (int256 dx) {
@@ -544,8 +545,9 @@ function computeDx(int256 S, int256 rX, int256 L, LogNormal.LogNormalParams memo
   int256 a = Gaussian.cdf(lnSDivK.wadDiv(sigma) + sigma.wadDiv(I_TWO));
   // L * (1 - cdf)
   int256 delta = L.wadMul(I_ONE - a);
+  dx = delta - rX;
 
-  dx = (delta - rX).wadDiv((gamma - I_ONE).wadMul(I_ONE - a).wadDiv(rX.wadDiv(L)) + I_ONE);
+  //dx = (delta - rX).wadDiv((gamma - I_ONE).wadMul(I_ONE - a).wadDiv(rX.wadDiv(L)) + I_ONE);
 }
 
 
