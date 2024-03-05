@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "src/ConstantSum/ConstantSum.sol";
 import "src/ConstantSum/ConstantSumSolver.sol";
-import "src/test/helpers/SetUp.sol";
+import "test/utils/SetUp.sol";
 
 contract ConstantSumSetUp is SetUp {
     ConstantSum constantSum;

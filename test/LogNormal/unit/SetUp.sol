@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
-import "src/test/helpers/SetUp.sol";
+import "test/utils/SetUp.sol";
 
 contract LogNormalSetUp is SetUp {
     LogNormal logNormal;

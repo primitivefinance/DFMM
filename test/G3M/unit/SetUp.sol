@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "src/GeometricMean/GeometricMean.sol";
 import "src/GeometricMean/GeometricMeanSolver.sol";
-import "src/test/helpers/SetUp.sol";
+import "test/utils/SetUp.sol";
 
 contract G3MSetUp is SetUp {
     GeometricMean g3m;
