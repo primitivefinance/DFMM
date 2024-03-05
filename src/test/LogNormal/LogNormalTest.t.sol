@@ -121,6 +121,33 @@ contract LogNormalTest is Test {
         _;
     }
 
+    modifier infinity_case() {
+        vm.warp(0);
+
+        LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
+            strike: ONE,
+            sigma: 100000000000000,
+            tau: ONE,
+            swapFee: 100000000000000,
+            controller: address(0)
+        });
+        uint256 init_p = ONE;
+        uint256 init_x = ONE * 100;
+        bytes memory initData =
+            solver.getInitialPoolData(init_x, init_p, params);
+
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+            strategy: address(logNormal),
+            tokenX: tokenX,
+            tokenY: tokenY,
+            data: initData
+        });
+
+        dfmm.init(initParams);
+
+        _;
+    }
+
 
     modifier oob_scenario() {
         vm.warp(0);
@@ -298,6 +325,23 @@ contract LogNormalTest is Test {
 
       console2.log(input);
       console2.log(output);
+    }
+
+    function test_inf_scenario() public infinity_case {
+      uint256 poolId = dfmm.nonce() - 1;
+      bool xIn = true;
+      uint256 amountIn = 93184003566910952224;
+      (,,, bytes memory swapData) = solver.simulateSwap(poolId, xIn, amountIn);
+      dfmm.swap(poolId, swapData);
+
+      (uint256 rx, uint256 ry, uint256 L) = solver.getReservesAndLiquidity(poolId);
+      console2.log(rx);
+      console2.log(ry);
+      console2.log(L);
+
+      int256 raise = solver.calculateDiffRaise(poolId, 1000284890278334600, 193204839774776442304);
+
+      console2.log(raise);
     }
 
 }

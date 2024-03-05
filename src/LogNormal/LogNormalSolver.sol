@@ -185,6 +185,15 @@ contract LogNormalSolver {
         );
     }
 
+    function computeDeltaL(
+      uint256 amountIn,
+      uint256 swapFee,
+      uint256 L,
+      uint256 reserve
+    ) public view returns (uint256 deltaL) {
+      deltaL = amountIn.mulWadUp(swapFee).mulWadUp(L).divWadUp(reserve).mulWadUp(HALF);
+    }
+
     /// @dev Estimates a swap's reserves and adjustments and returns its validity.
     function simulateSwap(
         uint256 poolId,
@@ -204,10 +213,8 @@ contract LogNormalSolver {
             );
 
             if (swapXIn) {
-                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee).mulWadUp(startReserves.L).divWadUp(startReserves.rx).mulWadUp(0.5 ether);
-
                 endReserves.rx = startReserves.rx + amountIn;
-                endReserves.L = startComputedL + deltaL;
+                endReserves.L = startComputedL + computeDeltaL(amountIn, poolParams.swapFee, startReserves.L, startReserves.rx);
                 endReserves.approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
 
@@ -221,10 +228,8 @@ contract LogNormalSolver {
                 );
                 amountOut = startReserves.ry - endReserves.ry;
             } else {
-                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee).mulWadUp(startReserves.L).divWadUp(startReserves.ry).mulWadUp(0.5 ether);
-
                 endReserves.ry = startReserves.ry + amountIn;
-                endReserves.L = startComputedL + deltaL;
+                endReserves.L = startComputedL + computeDeltaL(amountIn, poolParams.swapFee, startReserves.L, startReserves.ry);
                 endReserves.approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
 

@@ -400,7 +400,10 @@ function createDiffRaiseStruct(
 ) view returns (DiffRaiseStruct memory) {
     int256 a = I_TWO.wadMul(v + ry);
     int256 b = int256(params.strike).wadMul(L) + v - v.wadMul(gamma);
+    int256 intermediate = a.wadDiv(b);
+    console2.log("intermediate", intermediate);
     int256 ierfcRes = Gaussian.ierfc(a.wadDiv(b));
+    console2.log("ierfc res", ierfcRes);
 
     int256 sqrtTwo = int256(FixedPointMathLib.sqrt(TWO) * 1e9);
     int256 sqrtTau = int256(FixedPointMathLib.sqrt(params.tau) * 1e9);
