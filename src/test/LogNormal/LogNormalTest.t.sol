@@ -6,7 +6,6 @@ import "solmate/test/utils/mocks/MockERC20.sol";
 import "src/DFMM.sol";
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
-import "../helpers/Lex.sol";
 
 contract LogNormalTest is Test {
     using stdStorage for StdStorage;
@@ -16,7 +15,6 @@ contract LogNormalTest is Test {
     LogNormalSolver solver;
     address tokenX;
     address tokenY;
-    Lex lex;
 
     uint256 public constant TEST_SWAP_FEE = 0.003 ether;
 
@@ -26,7 +24,6 @@ contract LogNormalTest is Test {
         MockERC20(tokenX).mint(address(this), 100_000_000 ether);
         MockERC20(tokenY).mint(address(this), 100_000_000 ether);
 
-        lex = new Lex(tokenX, tokenY, ONE);
         dfmm = new DFMM(address(0));
         logNormal = new LogNormal(address(dfmm));
         solver = new LogNormalSolver(address(logNormal));
