@@ -50,7 +50,9 @@ contract ConstantSumSolver {
             IStrategy(strategy).getPoolParams(poolId),
             (ConstantSum.ConstantSumParams)
         );
+
         uint256 amountOut;
+
         if (swapXIn) {
             uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee);
 
@@ -81,12 +83,19 @@ contract ConstantSumSolver {
             endReserves.rx = startReserves.rx - amountOut;
         }
 
+        bytes memory swapData;
+
+        if (swapXIn) {
+            swapData = abi.encode(amountIn, amountOut, true);
+        } else {
+            swapData = abi.encode(amountOut, amountIn, false);
+        }
+
         IDFMM.Pool memory pool;
         pool.reserveX = startReserves.rx;
         pool.reserveY = startReserves.rx;
         pool.totalLiquidity = startReserves.L;
 
-        bytes memory swapData = abi.encode(endReserves);
         (bool valid,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
@@ -151,7 +160,8 @@ contract ConstantSumSolver {
         pool.reserveY = startReserves.ry;
         pool.totalLiquidity = startReserves.L;
 
-        bytes memory deallocateData = abi.encode(endReserves);
+        bytes memory deallocateData =
+            abi.encode(amountX, amountY, startReserves.L - endReserves.L);
         (bool valid,,,,) = IStrategy(strategy).validateDeallocate(
             address(this), poolId, pool, deallocateData
         );
