@@ -5,7 +5,7 @@ import "src/ConstantSum/ConstantSum.sol";
 import "src/ConstantSum/ConstantSumSolver.sol";
 import "src/test/helpers/SetUp.sol";
 
-contract ConstantSumSetup is SetUp {
+contract ConstantSumSetUp is SetUp {
     ConstantSum constantSum;
     ConstantSumSolver solver;
 
