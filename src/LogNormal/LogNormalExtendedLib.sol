@@ -158,6 +158,7 @@ function computeNextLiquidity(
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             lower = rx + 1000;
+            console2.log("rx div L", rx.divWadDown(L));
             computedInvariant = LogNormalLib.tradingFunction({
                 rx: rx,
                 ry: ry,
