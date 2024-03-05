@@ -344,4 +344,8 @@ contract LogNormalSolver {
         (uint256 rx,, uint256 L) = getReservesAndLiquidity(poolId);
         return computeDx(int256(S), int256(rx), int256(L), params);
     }
+
+    function callIerfc(int256 x) public view returns (int256) {
+      return testIerfc(x);
+    }
 }

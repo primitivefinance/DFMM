@@ -425,6 +425,10 @@ function createDiffRaiseStruct(
     return ints;
 }
 
+function testIerfc(int256 x) view returns (int256) {
+  return Gaussian.ierfc(x);
+}
+
 function computeRaiseA(DiffRaiseStruct memory params) view returns (int256) {
     int256 firstExp =
         -(params.sigma.wadMul(params.sigma).wadMul(params.tau).wadDiv(I_TWO));

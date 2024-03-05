@@ -6,6 +6,7 @@ import "src/interfaces/IDFMM.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/lib/DynamicParamLib.sol";
 import "src/lib/StrategyLib.sol";
+import "forge-std/console2.sol"
 
 /// @notice Log Normal has three variable parameters:
 /// K - strike price
@@ -184,7 +185,9 @@ contract LogNormal is IStrategy {
         }
 
         liquidityDelta = int256(nextL) - int256(startL);
-
+        console2.log("nextRx", nextRx);
+        console2.log("nextL", nextL);
+        console2.log("x gt L", nextRx > nextL);
         invariant = LogNormalLib.tradingFunction(nextRx, nextRy, nextL, params);
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }

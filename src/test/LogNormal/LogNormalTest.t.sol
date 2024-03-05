@@ -344,4 +344,9 @@ contract LogNormalTest is Test {
       console2.log(raise);
     }
 
+    function test_ierfc_input() public basic {
+       int256 res = solver.callIerfc(1999999999999999999);
+       console2.log(res);
+    }
+
 }
