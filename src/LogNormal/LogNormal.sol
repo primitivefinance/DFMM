@@ -220,8 +220,7 @@ contract LogNormal is IStrategy {
 
         if (isSwapXForY) {
             uint256 fees = deltaX.mulWadUp(params.swapFee);
-            deltaLiquidity =
-                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveX);
+            deltaLiquidity = fees;
             invariant = LogNormalLib.tradingFunction(
                 pool.reserveX + deltaX,
                 pool.reserveY - deltaY,
@@ -230,8 +229,7 @@ contract LogNormal is IStrategy {
             );
         } else {
             uint256 fees = deltaY.mulWadUp(params.swapFee);
-            deltaLiquidity =
-                fees.mulWadUp(pool.totalLiquidity).divWadUp(pool.reserveY);
+            deltaLiquidity = fees.divWadUp(params.strike);
             invariant = LogNormalLib.tradingFunction(
                 pool.reserveX - deltaX,
                 pool.reserveY + deltaY,
