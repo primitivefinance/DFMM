@@ -43,7 +43,8 @@ function computeYGivenL(
     int256 cdf = Gaussian.cdf(d2);
     uint256 unsignedCdf = LogNormalLib.toUint(cdf);
 
-    ry = params.strike.mulWadUp(L).mulWadUp(unsignedCdf);
+    // TODO: Double check this formula
+    ry = L.mulWadUp(unsignedCdf);
 }
 
 /// @dev Computes reserves x given L(y, S).
@@ -59,24 +60,25 @@ function computeXGivenL(
     rx = L.mulWadUp(ONE - unsignedCdf);
 }
 
-/// @dev Computes the d1 parameter for the Black-Scholes formula.
-/// @param S The price of X in Y, in WAD units.
-/// @param params LogNormParameters of the Log Normal distribution.
-/// @return d1 = (ln(S/K) + tau * sigma^2 / 2) / (sigma * sqrt(tau))
+/**
+ * @dev Computes the d1 parameter for the Black-Scholes formula.
+ *
+ * $$d_1(S;\mu,\sigma) = \frac{\ln\frac{S}{\mu}+\frac{1}{2}\sigma^2 }{\sigma}$$
+ *
+ * @param S The price of X in Y, in WAD units.
+ * @param params LogNormParameters of the Log Normal distribution.
+ */
 function computeD1(
     uint256 S,
     LogNormal.LogNormalParams memory params
 ) pure returns (int256 d1) {
-    (uint256 K, uint256 sigma, uint256 tau) =
-        (params.strike, params.sigma, params.tau);
-    uint256 sigmaSqrtTau = computeSigmaSqrtTau(sigma, tau);
-    int256 lnSDivK = computeLnSDivK(S, K);
-    uint256 halfSigmaPowTwoTau = computeHalfSigmaTauSquared(sigma, tau);
-
-    d1 = (lnSDivK + int256(halfSigmaPowTwoTau)) * 1e18 / int256(sigmaSqrtTau);
+    int256 lnSDivK = computeLnSDivK(S, params.mean);
+    uint256 halfSigmaPowTwoTau = computeHalfSigmaSquared(params.width);
+    d1 = (lnSDivK + int256(halfSigmaPowTwoTau)).wadDiv(int256(params.width));
 }
 
 /// @dev Computes the d2 parameter for the Black-Scholes formula.
+/// $$d_2(S;\mu,\sigma) = \frac{\ln\frac{S}{K}-\frac{1}{2}\sigma^2 }{\sigma}$$
 /// @param S The price of X in Y, in WAD units.
 /// @param params LogNormParameters of the Log Normal distribution.
 /// @return d2 = d1 - sigma * sqrt(tau), alternatively d2 = (ln(S/K) - tau * sigma^2 / 2) / (sigma * sqrt(tau))
@@ -84,13 +86,9 @@ function computeD2(
     uint256 S,
     LogNormal.LogNormalParams memory params
 ) pure returns (int256 d2) {
-    (uint256 K, uint256 sigma, uint256 tau) =
-        (params.strike, params.sigma, params.tau);
-    uint256 sigmaSqrtTau = computeSigmaSqrtTau(sigma, tau);
-    int256 lnSDivK = computeLnSDivK(S, K);
-    uint256 halfSigmaPowTwoTau = computeHalfSigmaTauSquared(sigma, tau);
-
-    d2 = (lnSDivK - int256(halfSigmaPowTwoTau)) * 1e18 / int256(sigmaSqrtTau);
+    int256 lnSDivK = computeLnSDivK(S, params.mean);
+    uint256 halfSigmaPowTwo = computeHalfSigmaSquared(params.width);
+    d2 = (lnSDivK - int256(halfSigmaPowTwo)).wadDiv(int256(params.width));
 }
 
 /// @dev This is a pure anonymous function defined at the file level, which allows
@@ -99,8 +97,7 @@ function computeD2(
 function findRootY(bytes memory data, uint256 ry) pure returns (int256) {
     (uint256 rx, uint256 L,, LogNormal.LogNormalParams memory params) =
         abi.decode(data, (uint256, uint256, int256, LogNormal.LogNormalParams));
-    return
-        LogNormalLib.tradingFunction({ rx: rx, ry: ry, L: L, params: params });
+    return LogNormalLib.tradingFunction(rx, ry, L, params);
 }
 
 /// @dev This is a pure anonymous function defined at the file level, which allows
@@ -109,8 +106,7 @@ function findRootY(bytes memory data, uint256 ry) pure returns (int256) {
 function findRootX(bytes memory data, uint256 rx) pure returns (int256) {
     (uint256 ry, uint256 L,, LogNormal.LogNormalParams memory params) =
         abi.decode(data, (uint256, uint256, int256, LogNormal.LogNormalParams));
-    return
-        LogNormalLib.tradingFunction({ rx: rx, ry: ry, L: L, params: params });
+    return LogNormalLib.tradingFunction(rx, ry, L, params);
 }
 
 /// @dev This is a pure anonymous function defined at the file level, which allows
@@ -122,8 +118,7 @@ function findRootLiquidity(
 ) pure returns (int256) {
     (uint256 rx, uint256 ry,, LogNormal.LogNormalParams memory params) =
         abi.decode(data, (uint256, uint256, int256, LogNormal.LogNormalParams));
-    return
-        LogNormalLib.tradingFunction({ rx: rx, ry: ry, L: L, params: params });
+    return LogNormalLib.tradingFunction(rx, ry, L, params);
 }
 
 /// @dev Computes the trading function given an amountX and an initialPrice.
@@ -134,12 +129,7 @@ function computeInitialPoolData(
 ) pure returns (bytes memory) {
     uint256 L = computeLGivenX(amountX, initialPrice, params);
     uint256 ry = computeYGivenL(L, initialPrice, params);
-    int256 invariant = LogNormalLib.tradingFunction({
-        rx: amountX,
-        ry: ry,
-        L: L,
-        params: params
-    });
+    int256 invariant = LogNormalLib.tradingFunction(amountX, ry, L, params);
     L = computeNextLiquidity(amountX, ry, invariant, L, params);
     return abi.encode(amountX, ry, L, params);
 }
@@ -157,22 +147,14 @@ function computeNextLiquidity(
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             lower = lower.mulDivDown(999, 1000);
-            computedInvariant = LogNormalLib.tradingFunction({
-                rx: rx,
-                ry: ry,
-                L: lower,
-                params: params
-            });
+            computedInvariant =
+                LogNormalLib.tradingFunction(rx, ry, lower, params);
         }
     } else {
         while (computedInvariant > 0) {
             upper = upper.mulDivUp(1001, 1000);
-            computedInvariant = LogNormalLib.tradingFunction({
-                rx: rx,
-                ry: ry,
-                L: upper,
-                params: params
-            });
+            computedInvariant =
+                LogNormalLib.tradingFunction(rx, ry, upper, params);
         }
     }
     L = bisection(
@@ -198,22 +180,14 @@ function computeNextRx(
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             upper = upper.mulDivUp(1001, 1000);
-            computedInvariant = LogNormalLib.tradingFunction({
-                rx: upper,
-                ry: ry,
-                L: L,
-                params: params
-            });
+            computedInvariant =
+                LogNormalLib.tradingFunction(upper, ry, L, params);
         }
     } else {
         while (computedInvariant > 0) {
             lower = lower.mulDivDown(999, 1000);
-            computedInvariant = LogNormalLib.tradingFunction({
-                rx: lower,
-                ry: ry,
-                L: L,
-                params: params
-            });
+            computedInvariant =
+                LogNormalLib.tradingFunction(lower, ry, L, params);
         }
     }
     rx = bisection(
@@ -239,22 +213,14 @@ function computeNextRy(
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             upper = upper.mulDivUp(1001, 1000);
-            computedInvariant = LogNormalLib.tradingFunction({
-                rx: rx,
-                ry: upper,
-                L: L,
-                params: params
-            });
+            computedInvariant =
+                LogNormalLib.tradingFunction(rx, upper, L, params);
         }
     } else {
         while (computedInvariant > 0) {
             lower = lower.mulDivDown(999, 1000);
-            computedInvariant = LogNormalLib.tradingFunction({
-                rx: rx,
-                ry: lower,
-                L: L,
-                params: params
-            });
+            computedInvariant =
+                LogNormalLib.tradingFunction(rx, lower, L, params);
         }
     }
     ry = bisection(
