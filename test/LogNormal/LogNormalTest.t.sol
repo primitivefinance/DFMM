@@ -35,9 +35,8 @@ contract LogNormalTest is Test {
         vm.warp(0);
 
         LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
-            strike: ONE * 2300,
-            sigma: ONE,
-            tau: ONE,
+            mean: ONE,
+            width: ONE,
             swapFee: TEST_SWAP_FEE,
             controller: address(0)
         });
@@ -63,9 +62,8 @@ contract LogNormalTest is Test {
         vm.warp(0);
 
         LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
-            strike: TWO,
-            sigma: 0.25 ether,
-            tau: ONE,
+            mean: ONE,
+            width: ONE,
             swapFee: TEST_SWAP_FEE,
             controller: address(0)
         });
@@ -90,9 +88,8 @@ contract LogNormalTest is Test {
         vm.warp(0);
 
         LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
-            strike: 0.67323818941934077 ether,
-            sigma: ONE,
-            tau: ONE,
+            mean: 0.67323818941934077 ether,
+            width: ONE,
             swapFee: TEST_SWAP_FEE,
             controller: address(0)
         });
