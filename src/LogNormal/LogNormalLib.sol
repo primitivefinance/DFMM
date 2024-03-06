@@ -11,9 +11,8 @@ library LogNormalLib {
     enum LogNormalUpdateCode {
         Invalid,
         SwapFee,
-        Strike,
-        Sigma,
-        Tau,
+        Width,
+        Mean,
         Controller
     }
 
@@ -34,54 +33,36 @@ library LogNormalLib {
         return swapFee;
     }
 
-    function encodeStrikeUpdate(
-        uint256 targetStrike,
+    function encodeMeanUpdate(
+        uint256 targetMean,
         uint256 targetTimestamp
     ) internal pure returns (bytes memory) {
-        return abi.encode(
-            LogNormalUpdateCode.Strike, targetStrike, targetTimestamp
-        );
+        return abi.encode(LogNormalUpdateCode.Mean, targetMean, targetTimestamp);
     }
 
-    function decodeStrikeUpdate(bytes memory data)
+    function decodeMeanUpdate(bytes memory data)
         internal
         pure
-        returns (uint256 targetStrike, uint256 targetTimestamp)
+        returns (uint256 targetMean, uint256 targetTimestamp)
     {
-        (, targetStrike, targetTimestamp) =
+        (, targetMean, targetTimestamp) =
             abi.decode(data, (LogNormalUpdateCode, uint256, uint256));
     }
 
-    function encodeSigmaUpdate(
-        uint256 targetSigma,
+    function encodeWidthUpdate(
+        uint256 targetWidth,
         uint256 targetTimestamp
     ) internal pure returns (bytes memory) {
         return
-            abi.encode(LogNormalUpdateCode.Sigma, targetSigma, targetTimestamp);
+            abi.encode(LogNormalUpdateCode.Width, targetWidth, targetTimestamp);
     }
 
-    function decodeSigmaUpdate(bytes memory data)
+    function decodeWidthUpdate(bytes memory data)
         internal
         pure
-        returns (uint256 targetSigma, uint256 targetTimestamp)
+        returns (uint256 targetWidth, uint256 targetTimestamp)
     {
-        (, targetSigma, targetTimestamp) =
-            abi.decode(data, (LogNormalUpdateCode, uint256, uint256));
-    }
-
-    function encodeTauUpdate(
-        uint256 targetTau,
-        uint256 targetTimestamp
-    ) internal pure returns (bytes memory) {
-        return abi.encode(LogNormalUpdateCode.Tau, targetTau, targetTimestamp);
-    }
-
-    function decodeTauUpdate(bytes memory data)
-        internal
-        pure
-        returns (uint256 targetTau, uint256 targetTimestamp)
-    {
-        (, targetTau, targetTimestamp) =
+        (, targetWidth, targetTimestamp) =
             abi.decode(data, (LogNormalUpdateCode, uint256, uint256));
     }
 
@@ -102,39 +83,15 @@ library LogNormalLib {
     }
 
     function tradingFunction(
-        uint256 rx,
-        uint256 ry,
+        uint256 rX,
+        uint256 rY,
         uint256 L,
         LogNormal.LogNormalParams memory params
     ) internal pure returns (int256) {
-        require(rx < L, "tradingFunction: invalid x");
-
-        int256 AAAAA;
-        int256 BBBBB;
-        if (FixedPointMathLib.divWadDown(rx, L) >= ONE) {
-            AAAAA = int256(2 ** 255 - 1);
-        } else {
-            AAAAA = Gaussian.ppf(int256(FixedPointMathLib.divWadDown(rx, L)));
-        }
-        if (
-            FixedPointMathLib.divWadDown(
-                ry, FixedPointMathLib.mulWadDown(params.strike, L)
-            ) >= ONE
-        ) {
-            BBBBB = int256(2 ** 255 - 1);
-        } else {
-            BBBBB = Gaussian.ppf(
-                int256(
-                    FixedPointMathLib.divWadDown(
-                        ry, FixedPointMathLib.mulWadDown(params.strike, L)
-                    )
-                )
-            );
-        }
-
-        int256 CCCCC = int256(computeSigmaSqrtTau(params.sigma, params.tau));
-
-        return AAAAA + BBBBB + CCCCC;
+        int256 a = Gaussian.ppf(int256(rX.divWadDown(L)));
+        int256 b =
+            Gaussian.ppf(int256(rY.divWadDown(L.mulWadDown(params.mean))));
+        return a + b + int256(params.width);
     }
 
     function computeHalfSigmaSquared(uint256 sigma)
