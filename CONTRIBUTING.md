@@ -8,11 +8,11 @@ A few rules:
 
 ## Style Guide
 
-
 ### Imports
 
 1. Use named imports as much as possible.
 2. Import external dependencies first (libs, etc).
+3. Import from root `src/DFMM.sol` instead of `../DFMM.sol`.
 
 ### Tests
 
