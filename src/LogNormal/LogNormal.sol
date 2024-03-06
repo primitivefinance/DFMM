@@ -213,9 +213,6 @@ contract LogNormal is IStrategy {
             abi.decode(data, (uint256, uint256, bool));
 
         if (isSwapXForY) {
-            uint256 fees = deltaX.mulWadUp(params.swapFee);
-
-            deltaLiquidity = fees;
             invariant = LogNormalLib.tradingFunction(
                 pool.reserveX + deltaX,
                 pool.reserveY - deltaY,
@@ -223,8 +220,6 @@ contract LogNormal is IStrategy {
                 params
             );
         } else {
-            uint256 fees = deltaY.mulWadUp(params.swapFee);
-            deltaLiquidity = fees.divWadUp(params.strike);
             invariant = LogNormalLib.tradingFunction(
                 pool.reserveX - deltaX,
                 pool.reserveY + deltaY,
@@ -249,18 +244,14 @@ contract LogNormal is IStrategy {
 
         if (updateCode == LogNormalLib.LogNormalUpdateCode.SwapFee) {
             internalParams[poolId].swapFee = LogNormalLib.decodeFeeUpdate(data);
-        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Sigma) {
-            (uint256 targetSigma, uint256 targetTimestamp) =
-                LogNormalLib.decodeSigmaUpdate(data);
-            internalParams[poolId].sigma.set(targetSigma, targetTimestamp);
-        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Tau) {
-            (uint256 targetTau, uint256 targetTimestamp) =
-                LogNormalLib.decodeTauUpdate(data);
-            internalParams[poolId].tau.set(targetTau, targetTimestamp);
-        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Strike) {
-            (uint256 targetStrike, uint256 targetTimestamp) =
-                LogNormalLib.decodeStrikeUpdate(data);
-            internalParams[poolId].strike.set(targetStrike, targetTimestamp);
+        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Width) {
+            (uint256 targetWidth, uint256 targetTimestamp) =
+                LogNormalLib.decodeWidthUpdate(data);
+            internalParams[poolId].width.set(targetWidth, targetTimestamp);
+        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Mean) {
+            (uint256 targetMean, uint256 targetTimestamp) =
+                LogNormalLib.decodeMeanUpdate(data);
+            internalParams[poolId].mean.set(targetMean, targetTimestamp);
         } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Controller) {
             internalParams[poolId].controller =
                 LogNormalLib.decodeControllerUpdate(data);
@@ -273,9 +264,8 @@ contract LogNormal is IStrategy {
     function getPoolParams(uint256 poolId) public view returns (bytes memory) {
         LogNormalParams memory params;
 
-        params.sigma = internalParams[poolId].sigma.actualized();
-        params.strike = internalParams[poolId].strike.actualized();
-        params.tau = internalParams[poolId].tau.actualized();
+        params.width = internalParams[poolId].width.actualized();
+        params.mean = internalParams[poolId].mean.actualized();
         params.swapFee = internalParams[poolId].swapFee;
 
         return abi.encode(params);
