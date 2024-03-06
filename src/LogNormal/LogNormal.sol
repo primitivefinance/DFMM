@@ -6,31 +6,26 @@ import "src/interfaces/IStrategy.sol";
 import "src/lib/DynamicParamLib.sol";
 import "./LogNormalLib.sol";
 
-/// @notice Log Normal has three variable parameters:
-/// K - strike price
-/// sigma - volatility
-/// tau - time to expiry
-///
-/// Swaps are validated by the trading function:
-/// Gaussian.ppf(x / L) + Gaussian.ppf(y / KL) = -sigma * sqrt(tau)
+/**
+ * @title LogNormal Strategy
+ * @author Primitive
+ */
 contract LogNormal is IStrategy {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
 
     struct InternalParams {
-        DynamicParam sigma;
-        DynamicParam tau;
-        DynamicParam strike;
+        DynamicParam mean;
+        DynamicParam width;
         uint256 swapFee;
         address controller;
     }
 
     /// @dev Parameterization of the Log Normal curve.
     struct LogNormalParams {
-        uint256 strike;
-        uint256 sigma;
-        uint256 tau;
+        uint256 mean;
+        uint256 width;
         uint256 swapFee;
         address controller;
     }
@@ -94,9 +89,8 @@ contract LogNormal is IStrategy {
         (reserveX, reserveY, totalLiquidity, params) =
             abi.decode(data, (uint256, uint256, uint256, LogNormalParams));
 
-        internalParams[poolId].sigma.lastComputedValue = params.sigma;
-        internalParams[poolId].tau.lastComputedValue = params.tau;
-        internalParams[poolId].strike.lastComputedValue = params.strike;
+        internalParams[poolId].mean.lastComputedValue = params.mean;
+        internalParams[poolId].mean.lastComputedValue = params.width;
         internalParams[poolId].swapFee = params.swapFee;
         internalParams[poolId].controller = params.controller;
 
@@ -220,6 +214,7 @@ contract LogNormal is IStrategy {
 
         if (isSwapXForY) {
             uint256 fees = deltaX.mulWadUp(params.swapFee);
+
             deltaLiquidity = fees;
             invariant = LogNormalLib.tradingFunction(
                 pool.reserveX + deltaX,
