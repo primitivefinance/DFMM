@@ -28,17 +28,3 @@ function computeHalfSigmaTauSquared(
 
     halfSigmaPower2Tau = HALF.mulWadDown(innerTerm);
 }
-
-/// @notice Mul div signed integers.
-/// @dev From Solmate, but not in assembly.
-function mulidiv(
-    int256 x,
-    int256 y,
-    int256 denominator
-) pure returns (int256 z) {
-    unchecked {
-        z = x * y;
-        require(denominator != 0 && (x == 0 || z / x == y), "mulidiv invalid");
-        z = z / denominator;
-    }
-}
