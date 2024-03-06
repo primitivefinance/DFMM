@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "./SetUp.sol";
+import { stdError } from "forge-std/StdError.sol";
+import { DFMMSetUp, DFMM } from "./SetUp.sol";
 
 contract DFMMAllocateTest is DFMMSetUp {
     function test_DFMM_allocate_RevertsWhenPoolNotInitialized() public {

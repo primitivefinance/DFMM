@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "test/utils/SetUp.sol";
-import "test/utils/MockStrategy.sol";
+import { SetUp, IDFMM, DFMM } from "test/utils/SetUp.sol";
+import { MockStrategy } from "test/utils/MockStrategy.sol";
 
 contract DFMMSetUp is SetUp {
     MockStrategy strategy;

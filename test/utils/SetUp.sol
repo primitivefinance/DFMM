@@ -3,9 +3,8 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
-import { DFMM } from "src/DFMM.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
-import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { DFMM, IDFMM } from "src/DFMM.sol";
 
 contract SetUp is Test {
     DFMM dfmm;

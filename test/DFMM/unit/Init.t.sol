@@ -2,9 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { LPToken } from "src/LPToken.sol";
-import { DFMMSetUp } from "./SetUp.sol";
+import { DFMMSetUp, IDFMM } from "./SetUp.sol";
 
 contract DFMMInit is DFMMSetUp, Script {
     bool valid = true;
