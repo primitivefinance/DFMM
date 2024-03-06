@@ -19,12 +19,12 @@ function computeSigmaSqrtTau(
     sigmaSqrtTau = sigma.mulWadDown(sqrtTau);
 }
 
-function computeHalfSigmaTauSquared(
-    uint256 sigma,
-    uint256 tau
-) pure returns (uint256 halfSigmaPower2Tau) {
-    uint256 innerTerm =
-        uint256(int256(sigma).powWad(int256(TWO))).mulWadDown(tau);
-
-    halfSigmaPower2Tau = HALF.mulWadDown(innerTerm);
+/**
+ * @dev Computes the half of the square of sigma.
+ *
+ * $$\frac{1}{2}\sigma^2$$
+ *
+ */
+function computeHalfSigmaSquared(uint256 sigma) pure returns (uint256) {
+    return HALF.mulWadDown(uint256(int256(sigma).powWad(int256(TWO))));
 }
