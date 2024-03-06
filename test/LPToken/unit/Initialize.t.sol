@@ -1,16 +1,9 @@
-// SPDX-License-Identifier: UNLICENSED
+/// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
-import "src/LPToken.sol";
+import { LPTokenSetUp, LPToken } from "./SetUp.sol";
 
-contract LPTokenTest is Test {
-    LPToken lpToken;
-
-    function setUp() public {
-        lpToken = new LPToken();
-    }
-
+contract LPTokenInitializeTest is LPTokenSetUp {
     function test_LPToken_initialize_InitializesTheContract() public {
         string memory name = "LPToken";
         string memory symbol = "LPT";
