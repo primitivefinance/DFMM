@@ -47,25 +47,18 @@ contract LogNormalSolver {
         return LogNormalLib.encodeFeeUpdate(swapFee);
     }
 
-    function prepareStrikeUpdate(
-        uint256 targetStrike,
+    function prepareMeanUpdate(
+        uint256 targetMean,
         uint256 targetTimestamp
     ) external pure returns (bytes memory) {
-        return LogNormalLib.encodeStrikeUpdate(targetStrike, targetTimestamp);
+        return LogNormalLib.encodeMeanUpdate(targetMean, targetTimestamp);
     }
 
-    function prepareSigmaUpdate(
-        uint256 targetSigma,
+    function prepareWidthUpdate(
+        uint256 targetWidth,
         uint256 targetTimestamp
     ) external pure returns (bytes memory) {
-        return LogNormalLib.encodeSigmaUpdate(targetSigma, targetTimestamp);
-    }
-
-    function prepareTauUpdate(
-        uint256 targetTau,
-        uint256 targetTimestamp
-    ) external pure returns (bytes memory) {
-        return LogNormalLib.encodeTauUpdate(targetTau, targetTimestamp);
+        return LogNormalLib.encodeWidthUpdate(targetWidth, targetTimestamp);
     }
 
     function prepareControllerUpdate(address controller)
@@ -256,7 +249,7 @@ contract LogNormalSolver {
                 amountOut = startReserves.ry - endReserves.ry;
             } else {
                 uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee).divWadUp(
-                    poolParams.strike
+                    poolParams.mean
                 );
 
                 endReserves.ry = startReserves.ry + amountIn;
@@ -297,11 +290,9 @@ contract LogNormalSolver {
         return (
             valid,
             amountOut,
-            LogNormalLib.computePriceGivenX({
-                rx: endReserves.rx,
-                L: endReserves.L,
-                params: poolParams
-            }),
+            LogNormalLib.computePriceGivenX(
+                endReserves.rx, endReserves.L, poolParams
+                ),
             swapData
         );
     }
