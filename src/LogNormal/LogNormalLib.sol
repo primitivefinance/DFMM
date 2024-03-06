@@ -3,9 +3,11 @@ pragma solidity ^0.8.13;
 
 import "./LogNormalMath.sol";
 import "./LogNormal.sol";
+import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
+using SignedWadMathLib for int256;
 
 library LogNormalLib {
     enum LogNormalUpdateCode {
@@ -94,79 +96,50 @@ library LogNormalLib {
         return a + b + int256(params.width);
     }
 
-    function computeHalfSigmaSquared(uint256 sigma)
-        internal
-        pure
-        returns (uint256)
-    {
-        int256 sigmaSquaredWad = int256(sigma).powWad(int256(TWO));
-        return HALF.mulWadDown(uint256(sigmaSquaredWad));
-    }
-
-    /// @dev Computes the approximated spot price given current reserves and liquidity.
+    /**
+     * @dev Computes the price using the reserve of token X.
+     *
+     * $$P_X(x, L; \mu, \sigma) = \mu \exp (\Phi^{-1}  (1 - \frac{x}{L} ) \sigma  - \frac{1}{2} \sigma^2  )$$
+     *
+     */
     function computePriceGivenX(
-        uint256 rx,
+        uint256 rX,
         uint256 L,
         LogNormal.LogNormalParams memory params
-    ) internal pure returns (uint256 price) {
-        uint256 sigmaSqrtTau = computeSigmaSqrtTau(params.sigma, params.tau);
-        uint256 halfSigmaSquared =
-            computeHalfSigmaTauSquared(params.sigma, params.tau);
-        uint256 halfSigmaSquaredTau = halfSigmaSquared.mulWadDown(params.tau);
+    ) internal pure returns (uint256) {
+        // $$\frac{1}{2} \sigma^2$$
+        uint256 a = HALF.mulWadDown(
+            uint256(int256(params.width).powWad(int256(2 ether)))
+        );
+        // $$\Phi^{-1} (1 - \frac{x}{L})$$
+        int256 b = Gaussian.ppf(int256(ONE - rX.divWadDown(L)));
 
-        // Gaussian.ppf has a range of [-inf, inf], so we need to make sure the input is in [0, 1].
-        int256 reserveXDivLiquidity = int256(rx.divWadDown(L));
-        // As x -> 1, price -> 0.
-        if (reserveXDivLiquidity >= int256(ONE)) {
-            return 0;
-        }
-        // As x -> 0, price -> infinity.
-        if (reserveXDivLiquidity <= int256(ZERO)) {
-            // todo: can returning an infinity price be worse than returning zero or reverting?
-            return INFINITY_IS_NOT_REAL;
-        }
-        // The output can be negative so we have to be careful not to lose that information by casting.
-        int256 inverse_cdf_result =
-            Gaussian.ppf(int256(ONE) - reserveXDivLiquidity);
-        int256 exponent = inverse_cdf_result * int256(sigmaSqrtTau)
-            / int256(ONE) - int256(halfSigmaSquaredTau);
+        // $$\exp(\Phi^{-1}  (1 - \frac{x}{L} ) \sigma  - \frac{1}{2} \sigma^2  )$$
+        int256 exp = (b.wadMul(int256(params.width)) - int256(a)).expWad();
 
-        // This result cannot be negative!
-        int256 exp_result = exponent.expWad();
-        uint256 exp_result_uint = toUint(exp_result);
-        price = params.strike.mulWadUp(exp_result_uint);
+        // $$\mu \exp (\Phi^{-1}  (1 - \frac{x}{L} ) \sigma  - \frac{1}{2} \sigma^2  )$$
+        return params.mean.mulWadUp(a.mulWadUp(uint256(exp)));
     }
 
     function computePriceGivenY(
-        uint256 ry,
+        uint256 rY,
         uint256 L,
         LogNormal.LogNormalParams memory params
-    ) internal pure returns (uint256 price) {
-        uint256 sigmaSqrtTau = computeSigmaSqrtTau(params.sigma, params.tau);
-        uint256 halfSigmaSquared =
-            computeHalfSigmaTauSquared(params.sigma, params.tau);
-        uint256 halfSigmaSquaredTau = halfSigmaSquared.mulWadDown(params.tau);
+    ) internal pure returns (uint256) {
+        // $$\frac{1}{2} \sigma^2$$
+        uint256 a = HALF.mulWadDown(
+            uint256(int256(params.width).powWad(int256(2 ether)))
+        );
 
-        // Gaussian.ppf has a range of [-inf, inf], so we need to make sure the input is in [0, 1].
-        int256 yOverKL = int256(ry.divWadDown(params.strike.mulWadDown(L)));
-        // As x -> 1, price -> 0.
-        if (yOverKL >= int256(ONE)) {
-            return 0;
-        }
-        // As x -> 0, price -> infinity.
-        if (yOverKL <= int256(ZERO)) {
-            // todo: can returning an infinity price be worse than returning zero or reverting?
-            return INFINITY_IS_NOT_REAL;
-        }
-        // The output can be negative so we have to be careful not to lose that information by casting.
-        int256 inverse_cdf_result = Gaussian.ppf(yOverKL);
-        int256 exponent = inverse_cdf_result * int256(sigmaSqrtTau)
-            / int256(ONE) + int256(halfSigmaSquaredTau);
+        // $$\Phi^{-1} (\frac{y}{\mu L})$$
+        int256 b =
+            Gaussian.ppf(int256(rY.divWadDown(params.mean.mulWadDown(L))));
 
-        // This result cannot be negative!
-        int256 exp_result = exponent.expWad();
-        uint256 exp_result_uint = toUint(exp_result);
-        price = params.strike.mulWadUp(exp_result_uint);
+        // $$\exp (\Phi^{-1} (\frac{y}{\mu L}) \sigma  + \frac{1}{2} \sigma^2  )$$
+        int256 exp = (b.wadMul(int256(params.width)) + int256(a)).expWad();
+
+        // $$\mu \exp (\Phi^{-1} (\frac{y}{\mu L}) \sigma  + \frac{1}{2} \sigma^2  )$$
+        return params.mean.mulWadUp(a.mulWadUp(uint256(exp)));
     }
 
     /// @dev Casts a positived signed integer to an unsigned integer, reverting if `x` is negative.
