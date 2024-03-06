@@ -90,7 +90,7 @@ contract LogNormal is IStrategy {
             abi.decode(data, (uint256, uint256, uint256, LogNormalParams));
 
         internalParams[poolId].mean.lastComputedValue = params.mean;
-        internalParams[poolId].mean.lastComputedValue = params.width;
+        internalParams[poolId].width.lastComputedValue = params.width;
         internalParams[poolId].swapFee = params.swapFee;
         internalParams[poolId].controller = params.controller;
 
