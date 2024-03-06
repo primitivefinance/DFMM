@@ -12,9 +12,8 @@ contract LogNormalSetUp is SetUp {
     uint256 public POOL_ID;
 
     LogNormal.LogNormalParams defaultParams = LogNormal.LogNormalParams({
-        strike: ONE,
-        sigma: ONE,
-        tau: ONE,
+        mean: 0,
+        width: 0,
         swapFee: TEST_SWAP_FEE,
         controller: address(this)
     });
@@ -49,9 +48,8 @@ contract LogNormalSetUp is SetUp {
         vm.warp(0);
 
         LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
-            strike: 2500 ether,
-            sigma: ONE,
-            tau: ONE,
+            mean: 0,
+            width: 0,
             swapFee: TEST_SWAP_FEE,
             controller: address(this)
         });
