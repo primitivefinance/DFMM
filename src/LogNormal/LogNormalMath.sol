@@ -29,19 +29,6 @@ function computeHalfSigmaTauSquared(
     halfSigmaPower2Tau = HALF.mulWadDown(innerTerm);
 }
 
-/// @dev Signed mul div, rounding up if the modulo quotient is non-zero.
-function mulidivUp(
-    int256 x,
-    int256 y,
-    int256 denominator
-) pure returns (int256 z) {
-    z = mulidiv(x, y, denominator);
-    if ((x * y) % denominator != 0) {
-        require(z < type(int256).max, "mulidivUp overflow");
-        z += 1;
-    }
-}
-
 /// @notice Mul div signed integers.
 /// @dev From Solmate, but not in assembly.
 function mulidiv(
