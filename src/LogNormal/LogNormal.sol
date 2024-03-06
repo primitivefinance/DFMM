@@ -7,7 +7,7 @@ import "src/lib/DynamicParamLib.sol";
 import "./LogNormalLib.sol";
 
 /**
- * @title LogNormal Strategy
+ * @title LogNormal Strategy for DFMM.
  * @author Primitive
  */
 contract LogNormal is IStrategy {
