@@ -259,16 +259,13 @@ function findRootRaise(bytes memory data, uint256 v) pure returns (int256) {
 
 struct DiffLowerStruct {
     int256 ierfcResult;
-    int256 strike;
-    int256 sigma;
-    int256 tau;
+    int256 width;
+    int256 mean;
     int256 gamma;
     int256 rX;
     int256 L;
     int256 v;
     int256 S;
-    int256 sqrtTau;
-    int256 sqrtTwo;
 }
 
 function createDiffLowerStruct(
@@ -283,27 +280,22 @@ function createDiffLowerStruct(
     int256 b = L + v - v.wadMul(gamma);
     int256 ierfcRes = Gaussian.ierfc(a.wadDiv(b));
 
-    int256 sqrtTwo = int256(FixedPointMathLib.sqrt(TWO) * 1e9);
-    int256 sqrtTau = int256(FixedPointMathLib.sqrt(params.tau) * 1e9);
-
     DiffLowerStruct memory ints = DiffLowerStruct({
         ierfcResult: ierfcRes,
-        strike: int256(params.strike),
-        sigma: int256(params.sigma),
-        tau: int256(params.tau),
+        width: int256(params.width),
+        mean: int256(params.mean),
         gamma: gamma,
         rX: rx,
         L: L,
         v: v,
-        S: S,
-        sqrtTwo: sqrtTwo,
-        sqrtTau: sqrtTau
+        S: S
     });
 
     return ints;
 }
 
 function computeLowerA(DiffLowerStruct memory params) pure returns (int256) {
+    /*
     int256 firstExp =
         -(params.sigma.wadMul(params.sigma).wadMul(params.tau).wadDiv(I_TWO));
     int256 secondExp = params.sqrtTwo.wadMul(params.sigma).wadMul(
@@ -317,12 +309,15 @@ function computeLowerA(DiffLowerStruct memory params) pure returns (int256) {
     int256 firstNum = first.wadMul(second);
     int256 firstDen = params.L + params.v - params.v.wadMul(params.gamma);
     return firstNum.wadDiv(firstDen);
+    */
 }
 
 function computeLowerB(DiffLowerStruct memory params) pure returns (int256) {
+    /*
     int256 a = I_HALF.wadMul(params.strike).wadMul(-I_ONE + params.gamma);
     int256 b = params.sigma.wadMul(params.sqrtTau).wadDiv(params.sqrtTwo);
     return a.wadMul(Gaussian.erfc(b - params.ierfcResult));
+    */
 }
 
 function diffLower(
@@ -363,6 +358,7 @@ function createDiffRaiseStruct(
     int256 v,
     LogNormal.LogNormalParams memory params
 ) pure returns (DiffRaiseStruct memory) {
+    /*
     int256 a = I_TWO.wadMul(v + ry);
     int256 b = int256(params.strike).wadMul(L) + v - v.wadMul(gamma);
     int256 ierfcRes = Gaussian.ierfc(a.wadDiv(b));
@@ -385,6 +381,7 @@ function createDiffRaiseStruct(
     });
 
     return ints;
+    */
 }
 
 function computeRaiseA(DiffRaiseStruct memory params) pure returns (int256) {
