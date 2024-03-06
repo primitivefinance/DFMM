@@ -209,8 +209,8 @@ contract LogNormal is IStrategy {
         LogNormalParams memory params =
             abi.decode(getPoolParams(poolId), (LogNormalParams));
 
-        (deltaX, deltaY, isSwapXForY) =
-            abi.decode(data, (uint256, uint256, bool));
+        (deltaX, deltaY, deltaLiquidity, isSwapXForY) =
+            abi.decode(data, (uint256, uint256, uint256, bool));
 
         if (isSwapXForY) {
             invariant = LogNormalLib.tradingFunction(
