@@ -69,7 +69,7 @@ contract DFMMInit is DFMMSetUp, Script {
         emit IDFMM.Init(
             address(this),
             address(strategy),
-            address(0x746326d3E4e54BA617F8aB39A21b7420aE8bF97d),
+            computeCreateAddress(address(dfmm), vm.getNonce(address(dfmm))),
             address(tokenX),
             address(tokenY),
             0,
