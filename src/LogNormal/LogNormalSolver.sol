@@ -178,7 +178,8 @@ contract LogNormalSolver {
         uint256 L
     ) public view returns (uint256) {
         bytes memory data = abi.encode(rx, ry, L);
-        int256 invariant = IStrategy(strategy).computeSwapConstant(poolId, data);
+        // int256 invariant = IStrategy(strategy).computeSwapConstant(poolId, data);
+        int256 invariant = 0;
         return
             computeNextLiquidity(rx, ry, invariant, L, fetchPoolParams(poolId));
     }
@@ -191,7 +192,8 @@ contract LogNormalSolver {
     ) public view returns (uint256) {
         uint256 approximatedRx = computeXGivenL(L, S, fetchPoolParams(poolId));
         bytes memory data = abi.encode(approximatedRx, ry, L);
-        int256 invariant = IStrategy(strategy).computeSwapConstant(poolId, data);
+        // int256 invariant = IStrategy(strategy).computeSwapConstant(poolId, data);
+        int256 invariant = 0;
         return computeNextRx(
             ry, L, invariant, approximatedRx, fetchPoolParams(poolId)
         );
@@ -205,7 +207,8 @@ contract LogNormalSolver {
     ) public view returns (uint256) {
         uint256 approximatedRy = computeYGivenL(L, S, fetchPoolParams(poolId));
         bytes memory data = abi.encode(rx, approximatedRy, L);
-        int256 invariant = IStrategy(strategy).computeSwapConstant(poolId, data);
+        // int256 invariant = IStrategy(strategy).computeSwapConstant(poolId, data);
+        int256 invariant = 0;
         return computeNextRy(
             rx, L, invariant, approximatedRy, fetchPoolParams(poolId)
         );
