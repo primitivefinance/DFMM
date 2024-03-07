@@ -37,6 +37,11 @@ contract ConstantSumSolver {
         return abi.encode(rx, ry, L, params);
     }
 
+    struct SimulateSwapState {
+        uint256 amountOut;
+        uint256 deltaLiquidity;
+    }
+
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
@@ -51,44 +56,48 @@ contract ConstantSumSolver {
             (ConstantSum.ConstantSumParams)
         );
 
-        uint256 amountOut;
+        SimulateSwapState memory state;
 
         if (swapXIn) {
-            uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee);
+            state.deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee);
 
-            amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
+            state.amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
                 ONE - poolParams.swapFee
             );
 
             endReserves.rx = startReserves.rx + amountIn;
-            endReserves.L = startReserves.L + deltaL;
+            endReserves.L = startReserves.L + state.deltaLiquidity;
 
-            if (startReserves.ry < amountOut) {
+            if (startReserves.ry < state.amountOut) {
                 revert NotEnoughLiquidity();
             }
-            endReserves.ry = startReserves.ry - amountOut;
+            endReserves.ry = startReserves.ry - state.amountOut;
         } else {
-            uint256 deltaL =
+            state.deltaLiquidity =
                 amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.price);
 
-            amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
+            state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
             endReserves.ry = startReserves.ry + amountIn;
-            endReserves.L = startReserves.L + deltaL;
+            endReserves.L = startReserves.L + state.deltaLiquidity;
 
-            if (startReserves.rx < amountOut) {
+            if (startReserves.rx < state.amountOut) {
                 revert NotEnoughLiquidity();
             }
-            endReserves.rx = startReserves.rx - amountOut;
+            endReserves.rx = startReserves.rx - state.amountOut;
         }
 
         bytes memory swapData;
 
         if (swapXIn) {
-            swapData = abi.encode(amountIn, amountOut, true);
+            swapData = abi.encode(
+                amountIn, state.amountOut, state.deltaLiquidity, true
+            );
         } else {
-            swapData = abi.encode(amountOut, amountIn, false);
+            swapData = abi.encode(
+                state.amountOut, amountIn, state.deltaLiquidity, false
+            );
         }
 
         IDFMM.Pool memory pool;
@@ -99,7 +108,7 @@ contract ConstantSumSolver {
         (bool valid,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
-        return (valid, amountOut, swapData);
+        return (valid, state.amountOut, swapData);
     }
 
     function simulateAllocate(
