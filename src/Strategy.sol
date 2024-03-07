@@ -13,6 +13,10 @@ abstract contract Strategy is IStrategy {
 
     int256 public constant EPSILON = 20;
 
+    constructor(address dfmm_) {
+        dfmm = dfmm_;
+    }
+
     /// @dev Restricts the caller to the DFMM contract.
     modifier onlyDFMM() {
         if (msg.sender != address(dfmm)) revert NotDFMM();
