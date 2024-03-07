@@ -43,7 +43,7 @@ contract GeometricMean is Strategy {
     function init(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         external
@@ -102,7 +102,7 @@ contract GeometricMean is Strategy {
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        IDFMM.Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
