@@ -214,6 +214,12 @@ contract LogNormalSolver {
         );
     }
 
+    struct SimulateSwapState {
+        uint256 amountOut;
+        uint256 deltaLiquidity;
+        uint256 fees;
+    }
+
     /// @dev Estimates a swap's reserves and adjustments and returns its validity.
     function simulateSwap(
         uint256 poolId,
@@ -226,17 +232,18 @@ contract LogNormalSolver {
             getReservesAndLiquidity(poolId);
         LogNormal.LogNormalParams memory poolParams = fetchPoolParams(poolId);
 
-        uint256 amountOut;
+        SimulateSwapState memory state;
+
         {
             uint256 startComputedL = getNextLiquidity(
                 poolId, startReserves.rx, startReserves.ry, startReserves.L
             );
 
             if (swapXIn) {
-                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee);
+                state.deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee);
 
                 endReserves.rx = startReserves.rx + amountIn;
-                endReserves.L = startComputedL + deltaL;
+                endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
 
@@ -249,14 +256,13 @@ contract LogNormalSolver {
                     endReserves.ry < startReserves.ry,
                     "invalid swap: y reserve increased!"
                 );
-                amountOut = startReserves.ry - endReserves.ry;
+                state.amountOut = startReserves.ry - endReserves.ry;
             } else {
-                uint256 deltaL = amountIn.mulWadUp(poolParams.swapFee).divWadUp(
-                    poolParams.mean
-                );
+                state.deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee)
+                    .divWadUp(poolParams.mean);
 
                 endReserves.ry = startReserves.ry + amountIn;
-                endReserves.L = startComputedL + deltaL;
+                endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
 
@@ -269,7 +275,7 @@ contract LogNormalSolver {
                     endReserves.rx < startReserves.rx,
                     "invalid swap: x reserve increased!"
                 );
-                amountOut = startReserves.rx - endReserves.rx;
+                state.amountOut = startReserves.rx - endReserves.rx;
             }
         }
 
@@ -281,9 +287,13 @@ contract LogNormalSolver {
         bytes memory swapData;
 
         if (swapXIn) {
-            swapData = abi.encode(amountIn, amountOut, true);
+            swapData = abi.encode(
+                amountIn, state.amountOut, state.deltaLiquidity, true
+            );
         } else {
-            swapData = abi.encode(amountOut, amountIn, false);
+            swapData = abi.encode(
+                state.amountOut, amountIn, state.deltaLiquidity, false
+            );
         }
 
         uint256 poolId = poolId;
@@ -292,7 +302,7 @@ contract LogNormalSolver {
         );
         return (
             valid,
-            amountOut,
+            state.amountOut,
             LogNormalLib.computePriceGivenX(
                 endReserves.rx, endReserves.L, poolParams
                 ),
