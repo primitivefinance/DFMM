@@ -12,8 +12,8 @@ contract LogNormalSetUp is SetUp {
     uint256 public POOL_ID;
 
     LogNormal.LogNormalParams defaultParams = LogNormal.LogNormalParams({
-        mean: 0,
-        width: 0,
+        mean: ONE,
+        width: ONE,
         swapFee: TEST_SWAP_FEE,
         controller: address(this)
     });
