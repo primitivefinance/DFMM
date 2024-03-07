@@ -116,8 +116,10 @@ interface IStrategy {
     ) external;
 
     function tradingFunction(
-        uint256 poolId,
-        bytes memory data
+        uint256 reserveX,
+        uint256 reserveY,
+        uint256 totalLiquidity,
+        bytes memory params
     ) external view returns (int256);
 
     function dfmm() external view returns (address);
