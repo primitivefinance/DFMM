@@ -2,16 +2,12 @@
 pragma solidity ^0.8.13;
 
 import { IDFMM } from "src/interfaces/IDFMM.sol";
-import { IStrategy } from "src/interfaces/IStrategy.sol";
+import { Strategy } from "src/Strategy.sol";
 
-contract MockStrategy is IStrategy {
-    address public immutable dfmm;
-
+contract MockStrategy is Strategy {
     string public constant name = "MockStrategy";
 
-    constructor(address dfmm_) {
-        dfmm = dfmm_;
-    }
+    constructor(address dfmm_) Strategy(dfmm_) { }
 
     function equals(
         string memory a,
@@ -49,6 +45,7 @@ contract MockStrategy is IStrategy {
     )
         external
         view
+        override
         returns (
             bool valid,
             int256 invariant,
@@ -69,6 +66,7 @@ contract MockStrategy is IStrategy {
     )
         external
         view
+        override
         returns (
             bool valid,
             int256 invariant,
@@ -89,6 +87,7 @@ contract MockStrategy is IStrategy {
     )
         external
         view
+        override
         returns (
             bool valid,
             int256 invariant,
@@ -115,8 +114,34 @@ contract MockStrategy is IStrategy {
     ) external view returns (int256) { }
 
     function getPoolParams(uint256 poolId)
-        external
+        public
         view
+        override
         returns (bytes memory params)
     { }
+
+    function tradingFunction(
+        uint256 reserveX,
+        uint256 reserveY,
+        uint256 totalLiquidity,
+        bytes memory params
+    ) public view override returns (int256) {
+        return int256(0);
+    }
+
+    function _computeDeltaXGivenDeltaL(
+        uint256 deltaLiquidity,
+        IDFMM.Pool calldata pool,
+        bytes memory data
+    ) internal view override returns (uint256) {
+        return 0;
+    }
+
+    function _computeDeltaYGivenDeltaL(
+        uint256 deltaLiquidity,
+        IDFMM.Pool calldata pool,
+        bytes memory data
+    ) internal view override returns (uint256) {
+        return 0;
+    }
 }
