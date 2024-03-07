@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "src/interfaces/IDFMM.sol";
-import "src/interfaces/IStrategy.sol";
-import "src/lib/DynamicParamLib.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { IStrategy } from "src/interfaces/IStrategy.sol";
+import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
 import "./LogNormalLib.sol";
 
 /**
