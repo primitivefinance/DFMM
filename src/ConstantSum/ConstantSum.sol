@@ -60,6 +60,37 @@ contract ConstantSum is Strategy {
         return (valid, invariant, reserveX, reserveY, totalLiquidity);
     }
 
+    /// @inheritdoc IStrategy
+    function validateAllocate(
+        address,
+        uint256 poolId,
+        IDFMM.Pool calldata pool,
+        bytes calldata data
+    )
+        external
+        view
+        override
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256 deltaX,
+            uint256 deltaY,
+            uint256 deltaLiquidity
+        )
+    {
+        (deltaX, deltaY, deltaLiquidity) =
+            abi.decode(data, (uint256, uint256, uint256));
+
+        invariant = tradingFunction(
+            pool.reserveX + deltaX,
+            pool.reserveY + deltaY,
+            pool.totalLiquidity + deltaLiquidity,
+            getPoolParams(poolId)
+        );
+
+        valid = -(EPSILON) < invariant && invariant < EPSILON;
+    }
+
     function update(
         address sender,
         uint256 poolId,
