@@ -104,8 +104,6 @@ contract LogNormal is IStrategy {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
-    error DeltaError(uint256 expected, uint256 actual);
-
     /// @inheritdoc IStrategy
     function validateAllocate(
         address,
