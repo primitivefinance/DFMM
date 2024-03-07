@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import { NTokenGeometricMean } from "./NTokenGeometricMean/NTokenGeometricMean.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 import { LibString } from "solmate/utils/LibString.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
 import { abs } from "solstat/Units.sol";
-import { IDFMM } from "./interfaces/IDFMM.sol";
 import { IStrategy2 } from "./interfaces/IStrategy2.sol";
 import {
     computeScalingFactor,
@@ -14,6 +14,7 @@ import {
     downscaleUp
 } from "./lib/ScalingLib.sol";
 import { LPToken } from "./LPToken.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title DFMM
@@ -96,7 +97,7 @@ contract DFMM2 {
             int256 invariant,
             uint256[] memory reserves,
             uint256 totalLiquidity
-        ) = IStrategy2(params.strategy).init(
+        ) = NTokenGeometricMean(params.strategy).init(
             msg.sender, pools.length, pool, params.data
         );
 
@@ -109,6 +110,7 @@ contract DFMM2 {
         liquidityToken.initialize("", "");
         liquidityToken.mint(msg.sender, totalLiquidity - BURNT_LIQUIDITY);
         liquidityToken.mint(address(0), BURNT_LIQUIDITY);
+        console2.log("issued tokens", totalLiquidity - BURNT_LIQUIDITY);
 
         pool.reserves = reserves;
         pool.totalLiquidity = totalLiquidity;
@@ -235,7 +237,7 @@ contract DFMM2 {
         // emit Deallocate(msg.sender, poolId, deltaX, deltaY, deltaLiquidity);
         return deltas;
     }
-
+    /*
     function swap(
         uint256 poolId,
         bytes calldata data
@@ -273,8 +275,8 @@ contract DFMM2 {
 
         return (deltaX, deltaY);
     }
+    */
 
-    /// @inheritdoc IDFMM
     function update(uint256 poolId, bytes calldata data) external lock {
         IStrategy2(pools[poolId].strategy).update(
             msg.sender, poolId, pools[poolId], data
@@ -348,6 +350,9 @@ contract DFMM2 {
         LPToken liquidityToken = LPToken(pools[poolId].liquidityToken);
         uint256 totalSupply = liquidityToken.totalSupply();
         uint256 totalLiquidity = pools[poolId].totalLiquidity;
+        console2.log("total tokens", totalSupply);
+        console2.log("total liquidity", totalLiquidity);
+        console2.log("muldiv", deltaL.mulWadUp(totalSupply.divWadUp(totalLiquidity)));
 
         if (isAllocate) {
             uint256 amount =
@@ -410,11 +415,10 @@ contract DFMM2 {
     function getReservesAndLiquidity(uint256 poolId)
         external
         view
-        returns (uint256, uint256, uint256)
+        returns (uint256[] memory, uint256)
     {
         return (
-            pools[poolId].reserveX,
-            pools[poolId].reserveY,
+            pools[poolId].reserves,
             pools[poolId].totalLiquidity
         );
     }
