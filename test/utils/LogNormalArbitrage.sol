@@ -2,6 +2,9 @@
 pragma solidity ^0.8.13;
 
 import "../../src/LogNormal/LogNormalExtendedLib.sol";
+import "src/lib/StrategyLib.sol";
+
+using SignedWadMathLib for int256;
 
 interface SolverLike {
     function simulateSwap(
@@ -146,15 +149,13 @@ contract LogNormalArbitrage {
 
     struct DiffLowerStruct {
         int256 ierfcResult;
-        int256 strike;
-        int256 sigma;
-        int256 tau;
+        int256 mean;
+        int256 width;
         int256 gamma;
         int256 rX;
         int256 L;
         int256 v;
         int256 S;
-        int256 sqrtTau;
         int256 sqrtTwo;
     }
 
@@ -171,20 +172,17 @@ contract LogNormalArbitrage {
         int256 ierfcRes = Gaussian.ierfc(a.wadDiv(b));
 
         int256 sqrtTwo = int256(FixedPointMathLib.sqrt(TWO) * 1e9);
-        int256 sqrtTau = int256(FixedPointMathLib.sqrt(params.tau) * 1e9);
 
         DiffLowerStruct memory ints = DiffLowerStruct({
             ierfcResult: ierfcRes,
-            strike: int256(params.strike),
-            sigma: int256(params.sigma),
-            tau: int256(params.tau),
+            mean: int256(params.mean),
+            width: int256(params.width),
             gamma: gamma,
             rX: rx,
             L: L,
             v: v,
             S: S,
-            sqrtTwo: sqrtTwo,
-            sqrtTau: sqrtTau
+            sqrtTwo: sqrtTwo
         });
 
         return ints;
@@ -195,13 +193,12 @@ contract LogNormalArbitrage {
         pure
         returns (int256)
     {
-        int256 firstExp = -(params.sigma.wadMul(params.sigma).wadMul(params.tau).wadDiv(I_TWO));
-        int256 secondExp = params.sqrtTwo.wadMul(params.sigma).wadMul(
-            params.sqrtTau
-        ).wadMul(params.ierfcResult);
+        int256 firstExp = -(params.width.wadMul(params.width).wadDiv(I_TWO));
+        int256 secondExp =
+            params.sqrtTwo.wadMul(params.width).wadMul(params.ierfcResult);
 
         int256 first = FixedPointMathLib.expWad(firstExp + secondExp);
-        int256 second = params.strike.wadMul(
+        int256 second = params.mean.wadMul(
             params.L + params.rX.wadMul(-I_ONE + params.gamma)
         );
 
@@ -215,8 +212,8 @@ contract LogNormalArbitrage {
         pure
         returns (int256)
     {
-        int256 a = I_HALF.wadMul(params.strike).wadMul(-I_ONE + params.gamma);
-        int256 b = params.sigma.wadMul(params.sqrtTau).wadDiv(params.sqrtTwo);
+        int256 a = I_HALF.wadMul(params.mean).wadMul(-I_ONE + params.gamma);
+        int256 b = params.width.wadDiv(params.sqrtTwo);
         return a.wadMul(Gaussian.erfc(b - params.ierfcResult));
     }
 
@@ -238,16 +235,14 @@ contract LogNormalArbitrage {
 
     struct DiffRaiseStruct {
         int256 ierfcResult;
-        int256 strike;
-        int256 sigma;
-        int256 tau;
+        int256 mean;
+        int256 width;
         int256 gamma;
         int256 rY;
         int256 L;
         int256 v;
         int256 S;
         int256 sqrtTwo;
-        int256 sqrtTau;
     }
 
     function createDiffRaiseStruct(
@@ -259,24 +254,21 @@ contract LogNormalArbitrage {
         LogNormal.LogNormalParams memory params
     ) internal pure returns (DiffRaiseStruct memory) {
         int256 a = I_TWO.wadMul(v + ry);
-        int256 b = int256(params.strike).wadMul(L) + v - v.wadMul(gamma);
+        int256 b = int256(params.mean).wadMul(L) + v - v.wadMul(gamma);
         int256 ierfcRes = Gaussian.ierfc(a.wadDiv(b));
 
         int256 sqrtTwo = int256(FixedPointMathLib.sqrt(TWO) * 1e9);
-        int256 sqrtTau = int256(FixedPointMathLib.sqrt(params.tau) * 1e9);
 
         DiffRaiseStruct memory ints = DiffRaiseStruct({
             ierfcResult: ierfcRes,
-            strike: int256(params.strike),
-            sigma: int256(params.sigma),
-            tau: int256(params.tau),
+            mean: int256(params.mean),
+            width: int256(params.width),
             gamma: gamma,
             rY: ry,
             L: L,
             S: S,
             v: v,
-            sqrtTwo: sqrtTwo,
-            sqrtTau: sqrtTau
+            sqrtTwo: sqrtTwo
         });
 
         return ints;
@@ -287,19 +279,18 @@ contract LogNormalArbitrage {
         pure
         returns (int256)
     {
-        int256 firstExp = -(params.sigma.wadMul(params.sigma).wadMul(params.tau).wadDiv(I_TWO));
-        int256 secondExp = params.sqrtTwo.wadMul(params.sigma).wadMul(
-            params.sqrtTau
-        ).wadMul(params.ierfcResult);
+        int256 firstExp = -(params.width.wadMul(params.width).wadDiv(I_TWO));
+        int256 secondExp =
+            params.sqrtTwo.wadMul(params.width).wadMul(params.ierfcResult);
         int256 first = FixedPointMathLib.expWad(firstExp + secondExp);
         int256 second = params.S.wadMul(
-            params.strike.wadMul(params.L)
+            params.mean.wadMul(params.L)
                 + params.rY.wadMul(-I_ONE + params.gamma)
         );
 
         int256 num = first.wadMul(second);
-        int256 den = params.strike.wadMul(
-            params.strike.wadMul(params.L) + params.v
+        int256 den = params.mean.wadMul(
+            params.mean.wadMul(params.L) + params.v
                 - params.v.wadMul(params.gamma)
         );
         return num.wadDiv(den);
@@ -311,10 +302,9 @@ contract LogNormalArbitrage {
         returns (int256)
     {
         int256 first = params.S.wadMul(-I_ONE + params.gamma);
-        int256 erfcFirst =
-            params.sigma.wadMul(params.sqrtTau).wadDiv(params.sqrtTwo);
+        int256 erfcFirst = params.width.wadDiv(params.sqrtTwo);
         int256 num = first.wadMul(Gaussian.erfc(erfcFirst - params.ierfcResult));
-        int256 den = I_TWO.wadMul(params.strike);
+        int256 den = I_TWO.wadMul(params.mean);
         return num.wadDiv(den);
     }
 
@@ -341,14 +331,14 @@ contract LogNormalArbitrage {
         LogNormal.LogNormalParams memory params
     ) internal pure returns (int256 dy) {
         int256 gamma = I_ONE - int256(params.swapFee);
-        int256 strike = int256(params.strike);
-        int256 sigma = int256(params.sigma);
+        int256 mean = int256(params.mean);
+        int256 width = int256(params.width);
 
-        int256 lnSDivK = computeLnSDivK(uint256(S), params.strike);
-        int256 a = lnSDivK.wadDiv(sigma) - sigma.wadDiv(I_TWO);
+        int256 lnSDivK = computeLnSDivK(uint256(S), params.mean);
+        int256 a = lnSDivK.wadDiv(width) - width.wadDiv(I_TWO);
         int256 cdfA = Gaussian.cdf(a);
 
-        int256 delta = L.wadMul(strike).wadMul(cdfA);
+        int256 delta = L.wadMul(mean).wadMul(cdfA);
         dy = delta - rY;
     }
 
@@ -359,10 +349,10 @@ contract LogNormalArbitrage {
         LogNormal.LogNormalParams memory params
     ) internal pure returns (int256 dx) {
         int256 gamma = I_ONE - int256(params.swapFee);
-        int256 sigma = int256(params.sigma);
+        int256 width = int256(params.width);
 
-        int256 lnSDivK = computeLnSDivK(uint256(S), params.strike);
-        int256 a = Gaussian.cdf(lnSDivK.wadDiv(sigma) + sigma.wadDiv(I_TWO));
+        int256 lnSDivK = computeLnSDivK(uint256(S), params.mean);
+        int256 a = Gaussian.cdf(lnSDivK.wadDiv(width) + width.wadDiv(I_TWO));
 
         int256 delta = L.wadMul(I_ONE - a);
         dx = delta - rX;
