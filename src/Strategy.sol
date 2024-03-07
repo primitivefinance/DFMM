@@ -46,11 +46,12 @@ abstract contract Strategy is IStrategy {
         // TODO: This is a small trick because `deltaLiquidity` cannot be used
         // directly, let's fix this later.
         deltaLiquidity = deltaL;
-
         deltaX = _computeDeltaXGivenDeltaL(
-            deltaL, pool.totalLiquidity, pool.reserveX
+            deltaLiquidity, pool, getPoolParams(poolId)
         );
-        deltaY = _computeDeltaYGivenDeltaX(deltaX, pool.reserveX, pool.reserveY);
+        deltaY = _computeDeltaYGivenDeltaL(
+            deltaLiquidity, pool, getPoolParams(poolId)
+        );
 
         if (deltaX > maxDeltaX) {
             revert DeltaError(maxDeltaX, deltaX);
@@ -91,12 +92,14 @@ abstract contract Strategy is IStrategy {
     {
         (uint256 minDeltaX, uint256 minDeltaY, uint256 deltaL) =
             abi.decode(data, (uint256, uint256, uint256));
-        deltaLiquidity = deltaL;
 
+        deltaLiquidity = deltaL;
         deltaX = _computeDeltaXGivenDeltaL(
-            deltaL, pool.totalLiquidity, pool.reserveX
+            deltaLiquidity, pool, getPoolParams(poolId)
         );
-        deltaY = _computeDeltaYGivenDeltaX(deltaX, pool.reserveX, pool.reserveY);
+        deltaY = _computeDeltaYGivenDeltaL(
+            deltaLiquidity, pool, getPoolParams(poolId)
+        );
 
         if (minDeltaX > deltaX) {
             revert DeltaError(minDeltaX, deltaX);
@@ -174,14 +177,14 @@ abstract contract Strategy is IStrategy {
     ) public view virtual returns (int256);
 
     function _computeDeltaXGivenDeltaL(
-        uint256 deltaL,
-        uint256 totalLiquidity,
-        uint256 reserveX
+        uint256 deltaLiquidity,
+        IDFMM.Pool calldata pool,
+        bytes memory data
     ) internal view virtual returns (uint256);
 
-    function _computeDeltaYGivenDeltaX(
-        uint256 deltaX,
-        uint256 reserveX,
-        uint256 reserveY
+    function _computeDeltaYGivenDeltaL(
+        uint256 deltaLiquidity,
+        IDFMM.Pool calldata pool,
+        bytes memory data
     ) internal view virtual returns (uint256);
 }
