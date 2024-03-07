@@ -113,7 +113,7 @@ interface IStrategy {
         bytes calldata data
     ) external;
 
-    function computeSwapConstant(
+    function tradingFunction(
         uint256 poolId,
         bytes memory data
     ) external view returns (int256);
