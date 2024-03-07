@@ -160,14 +160,22 @@ contract GeometricMean is Strategy {
     }
 
     function _computeDeltaXGivenDeltaL(
-        uint256 deltaL,
-        uint256 totalLiquidity,
-        uint256 reserveX
-    ) internal view virtual override returns (uint256) { }
+        uint256 deltaLiquidity,
+        IDFMM.Pool calldata pool,
+        bytes memory
+    ) internal pure override returns (uint256) {
+        return pool.reserveX.mulWadDown(
+            deltaLiquidity.divWadDown(pool.totalLiquidity)
+        );
+    }
 
-    function _computeDeltaYGivenDeltaX(
-        uint256 deltaX,
-        uint256 reserveX,
-        uint256 reserveY
-    ) internal view virtual override returns (uint256) { }
+    function _computeDeltaYGivenDeltaL(
+        uint256 deltaLiquidity,
+        IDFMM.Pool calldata pool,
+        bytes memory
+    ) internal pure override returns (uint256) {
+        return pool.reserveY.mulWadDown(
+            deltaLiquidity.divWadDown(pool.totalLiquidity)
+        );
+    }
 }
