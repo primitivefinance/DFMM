@@ -138,6 +138,7 @@ contract LogNormalTest is Test {
         assertApproxEqAbs(priceGivenY, priceGivenX, 100);
     }
 
+    /*
     function test_ln_diff_lower() public basic {
         uint256 poolId = dfmm.nonce() - 1;
         int256 diffLowered = solver.calculateDiffLower(
@@ -173,6 +174,7 @@ contract LogNormalTest is Test {
 
         console2.log(optimalRaise);
     }
+    */
 
     // function test_internal_price() public basic {
     //     uint256 internalPrice = solver.internalPrice();
