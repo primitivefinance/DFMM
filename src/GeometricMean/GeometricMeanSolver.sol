@@ -189,6 +189,13 @@ contract GeometricMeanSolver {
         return computeNextRy(rx, L, fetchPoolParams(poolId));
     }
 
+    struct SimulateSwapState {
+        uint256 amountIn;
+        uint256 amountOut;
+        uint256 deltaLiquidity;
+        uint256 fees;
+    }
+
     /// @dev Estimates a swap's reserves and adjustments and returns its validity.
     function simulateSwap(
         uint256 poolId,
@@ -199,13 +206,14 @@ contract GeometricMeanSolver {
         IDFMM.Pool memory pool =
             IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
 
-        uint256 fees = amountIn.mulWadUp(params.swapFee);
-        uint256 amountOut;
+        SimulateSwapState memory state;
+
+        state.fees = amountIn.mulWadUp(params.swapFee);
 
         if (swapXIn) {
-            uint256 deltaLiquidity = pool.totalLiquidity.divWadUp(pool.reserveX)
-                .mulWadUp(fees).mulWadUp(params.wX);
-            uint256 n = (pool.totalLiquidity + deltaLiquidity);
+            state.deltaLiquidity = pool.totalLiquidity.divWadUp(pool.reserveX)
+                .mulWadUp(state.fees).mulWadUp(params.wX);
+            uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 d = uint256(
                 int256((pool.reserveX + amountIn)).powWad(int256(params.wX))
             );
@@ -214,11 +222,11 @@ contract GeometricMeanSolver {
                     int256(FixedPointMathLib.WAD.divWadUp(params.wY))
                 )
             );
-            amountOut = pool.reserveY - a;
+            state.amountOut = pool.reserveY - a;
         } else {
-            uint256 deltaLiquidity = pool.totalLiquidity.divWadUp(pool.reserveY)
-                .mulWadUp(fees).mulWadUp(params.wY);
-            uint256 n = (pool.totalLiquidity + deltaLiquidity);
+            state.deltaLiquidity = pool.totalLiquidity.divWadUp(pool.reserveY)
+                .mulWadUp(state.fees).mulWadUp(params.wY);
+            uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 d = uint256(
                 int256((pool.reserveY + amountIn)).powWad(int256(params.wY))
             );
@@ -227,15 +235,19 @@ contract GeometricMeanSolver {
                     int256(FixedPointMathLib.WAD.divWadUp(params.wX))
                 )
             );
-            amountOut = pool.reserveX - a;
+            state.amountOut = pool.reserveX - a;
         }
 
         bytes memory swapData;
 
         if (swapXIn) {
-            swapData = abi.encode(amountIn, amountOut, true);
+            swapData = abi.encode(
+                amountIn, state.amountOut, state.deltaLiquidity, true
+            );
         } else {
-            swapData = abi.encode(amountOut, amountIn, false);
+            swapData = abi.encode(
+                state.amountOut, amountIn, state.deltaLiquidity, false
+            );
         }
 
         (bool valid,,,,,) = IStrategy(strategy).validateSwap(
@@ -244,7 +256,7 @@ contract GeometricMeanSolver {
 
         return (
             valid,
-            amountOut,
+            state.amountOut,
             computePrice(pool.reserveX, pool.reserveY, params),
             swapData
         );
