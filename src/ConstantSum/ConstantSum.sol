@@ -30,7 +30,7 @@ contract ConstantSum is Strategy {
     function init(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         public
@@ -63,7 +63,7 @@ contract ConstantSum is Strategy {
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        IDFMM.Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
@@ -116,8 +116,8 @@ contract ConstantSum is Strategy {
 
     function _computeDeltaXGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool calldata pool,
-        bytes memory data
+        IDFMM.Pool calldata,
+        bytes memory
     ) internal view virtual override returns (uint256) {
         // TODO: Implement this.
         return deltaLiquidity;
@@ -125,8 +125,8 @@ contract ConstantSum is Strategy {
 
     function _computeDeltaYGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool calldata pool,
-        bytes memory data
+        IDFMM.Pool calldata,
+        bytes memory
     ) internal view virtual override returns (uint256) {
         // TODO: Implement this.
         return deltaLiquidity;
