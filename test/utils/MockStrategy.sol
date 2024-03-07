@@ -20,11 +20,12 @@ contract MockStrategy is Strategy {
 
     function init(
         address,
-        uint256 poolId,
-        IDFMM.Pool calldata pool,
+        uint256,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         external
+        pure
         returns (
             bool valid,
             int256 invariant,
@@ -39,12 +40,12 @@ contract MockStrategy is Strategy {
 
     function validateAllocate(
         address,
-        uint256 poolId,
-        IDFMM.Pool calldata pool,
+        uint256,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         external
-        view
+        pure
         override
         returns (
             bool valid,
@@ -59,13 +60,13 @@ contract MockStrategy is Strategy {
     }
 
     function validateDeallocate(
-        address sender,
-        uint256 poolId,
-        IDFMM.Pool calldata pool,
+        address,
+        uint256,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         external
-        view
+        pure
         override
         returns (
             bool valid,
@@ -81,12 +82,12 @@ contract MockStrategy is Strategy {
 
     function validateSwap(
         address,
-        uint256 poolId,
-        IDFMM.Pool calldata pool,
+        uint256,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         external
-        view
+        pure
         override
         returns (
             bool valid,
@@ -121,27 +122,27 @@ contract MockStrategy is Strategy {
     { }
 
     function tradingFunction(
-        uint256 reserveX,
-        uint256 reserveY,
-        uint256 totalLiquidity,
-        bytes memory params
-    ) public view override returns (int256) {
+        uint256,
+        uint256,
+        uint256,
+        bytes memory
+    ) public pure override returns (int256) {
         return int256(0);
     }
 
     function _computeDeltaXGivenDeltaL(
-        uint256 deltaLiquidity,
-        IDFMM.Pool calldata pool,
-        bytes memory data
-    ) internal view override returns (uint256) {
+        uint256,
+        IDFMM.Pool calldata,
+        bytes memory
+    ) internal pure override returns (uint256) {
         return 0;
     }
 
     function _computeDeltaYGivenDeltaL(
-        uint256 deltaLiquidity,
-        IDFMM.Pool calldata pool,
-        bytes memory data
-    ) internal view override returns (uint256) {
+        uint256,
+        IDFMM.Pool calldata,
+        bytes memory
+    ) internal pure override returns (uint256) {
         return 0;
     }
 }
