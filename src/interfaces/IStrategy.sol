@@ -20,6 +20,8 @@ interface IStrategy {
     /// @dev Thrown when the sender is authorized.
     error InvalidSender();
 
+    error DeltaError(uint256 expected, uint256 actual);
+
     // Setters
 
     /**
