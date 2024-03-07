@@ -36,7 +36,7 @@ contract LogNormal is Strategy {
     mapping(uint256 => InternalParams) public internalParams;
 
     /// @param dfmm_ Address of the DFMM contract.
-    constructor(address dfmm_) Strategy(dfmm) { }
+    constructor(address dfmm_) Strategy(dfmm_) { }
 
     /// @inheritdoc IStrategy
     function init(
