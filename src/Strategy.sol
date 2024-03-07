@@ -32,6 +32,7 @@ abstract contract Strategy is IStrategy {
     )
         external
         view
+        virtual
         returns (
             bool valid,
             int256 invariant,
@@ -82,6 +83,7 @@ abstract contract Strategy is IStrategy {
     )
         external
         view
+        virtual
         returns (
             bool valid,
             int256 invariant,
