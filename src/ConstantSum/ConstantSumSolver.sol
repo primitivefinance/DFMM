@@ -113,29 +113,19 @@ contract ConstantSumSolver {
 
     function simulateAllocate(
         uint256 poolId,
-        uint256 amountX,
-        uint256 amountY
+        uint256 deltaX,
+        uint256 deltaY
     ) public view returns (bool, bytes memory) {
-        Reserves memory startReserves;
-        Reserves memory endReserves;
-        (startReserves.rx, startReserves.ry, startReserves.L) =
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
-        ConstantSum.ConstantSumParams memory poolParams = abi.decode(
+        IDFMM.Pool memory pool =
+            IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
+        ConstantSum.ConstantSumParams memory params = abi.decode(
             IStrategy(strategy).getPoolParams(poolId),
             (ConstantSum.ConstantSumParams)
         );
 
-        endReserves.rx = startReserves.rx + amountX;
-        endReserves.ry = startReserves.ry + amountY;
-        endReserves.L =
-            endReserves.rx + endReserves.ry.divWadUp(poolParams.price);
+        uint256 deltaLiquidity = deltaX + deltaY.divWadDown(params.price);
 
-        IDFMM.Pool memory pool;
-        pool.reserveX = startReserves.rx;
-        pool.reserveY = startReserves.ry;
-        pool.totalLiquidity = startReserves.L;
-
-        bytes memory allocateData = abi.encode(endReserves);
+        bytes memory allocateData = abi.encode(deltaX, deltaY, deltaLiquidity);
         (bool valid,,,,) = IStrategy(strategy).validateAllocate(
             address(this), poolId, pool, allocateData
         );
