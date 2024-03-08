@@ -24,7 +24,6 @@ interface IDFMM2 {
 
     // Errors
 
-
     error OnlyWETH();
 
     error InvalidTransfer();
@@ -55,63 +54,53 @@ interface IDFMM2 {
     /**
      * @notice Emitted when the pool is initialized.
      * @param account Address initializing the pool.
-     * @param reserveX Initial reserve of token X in the pool.
-     * @param reserveY Initial reserve of token Y in the pool.
      * @param totalLiquidity Initial liquidity in the pool.
      */
     event Init(
         address indexed account,
         address strategy,
         address lpToken,
-        address indexed tokenX,
-        address indexed tokenY,
         uint256 poolId,
-        uint256 reserveX,
-        uint256 reserveY,
+        address[] indexed tokens,
+        uint256[] reserves,
         uint256 totalLiquidity
     );
 
     /**
      * @notice Emitted when liquidity is allocated into the pool.
      * @param account Address allocating liquidity.
-     * @param deltaX Amount of token X being allocated.
-     * @param deltaY Amount of token Y being allocated.
      * @param deltaL Amount of liquidity received by the allocator.
      */
     event Allocate(
         address indexed account,
         uint256 poolId,
-        uint256 deltaX,
-        uint256 deltaY,
+        uint256[] deltas,
         uint256 deltaL
     );
 
     /**
      * @notice Emitted when liquidity is deallocated from the pool.
      * @param account Address deallocating liquidity.
-     * @param deltaX Amount of token X being deallocated.
-     * @param deltaY Amount of token Y being deallocated.
      * @param deltaL Amount of liquidity being deallocated.
      */
     event Deallocate(
         address indexed account,
         uint256 poolId,
-        uint256 deltaX,
-        uint256 deltaY,
+        uint256[] indexed deltas,
         uint256 deltaL
     );
 
     /**
      * @notice Emitted when a swap is made.
      * @param account Address making the swap.
-     * @param isSwapXForY True if token X are being swapped for token Y.
      * @param inputAmount Amount of token sent by the swapper.
      * @param outputAmount Amount of token received by the swapper.
      */
     event Swap(
         address indexed account,
         uint256 indexed poolId,
-        bool isSwapXForY,
+        address tokenIn,
+        address tokenOut,
         uint256 inputAmount,
         uint256 outputAmount
     );
@@ -138,37 +127,38 @@ interface IDFMM2 {
      * @notice Allocates liquidity into the pool `poolId`.
      * @param poolId Id of the pool to allocate liquidity into.
      * @param data An array of bytes used by the strategy contract.
-     * @return deltaX Amount of token X allocated into the pool.
-     * @return deltaY Amount of token Y allocated into the pool.
      */
     function allocate(
         uint256 poolId,
         bytes calldata data
-    ) external payable returns (uint256 deltaX, uint256 deltaY);
+    ) external payable returns (uint256[] memory deltas);
 
     /**
      * @notice Deallocates liquidity from the pool `poolId`.
      * @param poolId Id of the pool to deallocate liquidity from.
      * @param data An array of bytes used by the strategy contract.
-     * @return deltaX Amount of token X deallocated from the pool.
-     * @return deltaY Amount of token Y deallocated from the pool.
      */
     function deallocate(
         uint256 poolId,
         bytes calldata data
-    ) external returns (uint256 deltaX, uint256 deltaY);
+    ) external returns (uint256[] memory deltas);
 
     /**
      * @notice Swaps tokens into pool `poolId`.
      * @param poolId Id of the pool to swap tokens into.
      * @param data An array of bytes used by the strategy contract.
-     * @return deltaX Amount of X.
-     * @return deltaY Amount of Y tokens.
      */
     function swap(
         uint256 poolId,
         bytes calldata data
-    ) external returns (uint256 deltaX, uint256 deltaY);
+    )
+        external
+        returns (
+            address tokenIn,
+            address tokenOut,
+            uint256 amountIn,
+            uint256 amountOut
+        );
 
     /**
      * @notice Updates pool `poolId` by calling the associated strategy.
@@ -188,11 +178,7 @@ interface IDFMM2 {
     function getReservesAndLiquidity(uint256 poolId)
         external
         view
-        returns (
-            uint256 reserveXWad,
-            uint256 reserveYWad,
-            uint256 totalLiquidity
-        );
+        returns (uint256[] memory reserves, uint256 totalLiquidity);
 
     function getPool(uint256 poolId) external view returns (Pool memory pool);
 }
