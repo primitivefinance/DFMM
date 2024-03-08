@@ -58,8 +58,6 @@ abstract contract PairStrategy is IStrategy2 {
             revert DeltaError(maxDeltaY, deltas[1]);
         }
 
-        uint256 poolId = poolId;
-
         pool.reserves[0] += deltas[0];
         pool.reserves[1] += deltas[1];
 
@@ -104,8 +102,6 @@ abstract contract PairStrategy is IStrategy2 {
         if (minDeltaY > deltas[1]) {
             revert DeltaError(minDeltaY, deltas[1]);
         }
-
-        uint256 poolId = poolId;
 
         pool.reserves[0] += deltas[0];
         pool.reserves[1] += deltas[1];
