@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
-import { LibString } from "solmate/utils/LibString.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
 import { abs } from "solstat/Units.sol";
 import { IStrategy2 } from "./interfaces/IStrategy2.sol";
