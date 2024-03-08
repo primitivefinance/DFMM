@@ -116,20 +116,15 @@ contract DFMM2 is IDFMM2 {
     function emitInit(uint256 poolId, address lpToken) private {
         Pool memory pool = pools[poolId];
 
-        /*
         emit Init(
             msg.sender,
             pool.strategy,
             lpToken,
-            pool.tokenX,
-            pool.tokenY,
             poolId,
-            pool.reserveX,
-            pool.reserveY,
+            pool.tokens,
+            pool.reserves,
             pool.totalLiquidity
         );
-
-        */
     }
 
     function _prepareTokenMetadata(
