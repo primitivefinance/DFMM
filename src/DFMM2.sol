@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import { NTokenGeometricMean } from "./NTokenGeometricMean/NTokenGeometricMean.sol";
+import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import { NTokenGeometricMean } from
+    "./NTokenGeometricMean/NTokenGeometricMean.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 import { LibString } from "solmate/utils/LibString.sol";
@@ -21,16 +23,8 @@ import "forge-std/console2.sol";
  * @author Primitive
  * @notice Dynamic Function Market Maker
  */
-contract DFMM2 {
+contract DFMM2 is IDFMM2 {
     using FixedPointMathLib for uint256;
-
-    struct Pool {
-        address strategy;
-        address[] tokens;
-        uint256[] reserves;
-        uint256 totalLiquidity;
-        address liquidityToken;
-    }
 
     Pool[] public pools;
 
@@ -43,11 +37,6 @@ contract DFMM2 {
 
     /// @dev Amount of liquidity that is burnt on initialization.
     uint256 private constant BURNT_LIQUIDITY = 1000;
-
-    error Locked();
-    error OnlyWETH();
-    error InvalidTokens();
-    error Invalid(bool, uint256);
 
     /// @dev Prevents reentrancy.
     modifier lock() {
@@ -70,12 +59,6 @@ contract DFMM2 {
         weth = weth_;
         lpTokenImplementation = address(new LPToken());
         LPToken(lpTokenImplementation).initialize("", "");
-    }
-
-    struct InitParams {
-        address strategy;
-        address[] tokens;
-        bytes data;
     }
 
     function init(InitParams calldata params)
@@ -198,7 +181,7 @@ contract DFMM2 {
             }
         }
 
-        // emit Allocate(msg.sender, poolId, deltaX, deltaY, deltaLiquidity);
+        emit Allocate(msg.sender, poolId, deltas, deltaLiquidity);
         return deltas;
     }
 
@@ -234,21 +217,22 @@ contract DFMM2 {
             }
         }
 
-        // emit Deallocate(msg.sender, poolId, deltaX, deltaY, deltaLiquidity);
+        emit Deallocate(msg.sender, poolId, deltas, deltaLiquidity);
         return deltas;
     }
-    /*
+
     function swap(
         uint256 poolId,
         bytes calldata data
-    ) external lock returns (uint256, uint256) {
+    ) external lock returns (address, address, uint256, uint256) {
         (
             bool valid,
             int256 invariant,
-            uint256[] memory deltas,
-            uint256 deltaY,
-            uint256 deltaLiquidity,
-            bool isSwapXForY
+            uint256 tokenInIndex,
+            uint256 tokenOutIndex,
+            uint256 amountIn,
+            uint256 amountOut,
+            uint256 deltaLiquidity
         ) = IStrategy2(pools[poolId].strategy).validateSwap(
             msg.sender, poolId, pools[poolId], data
         );
@@ -259,23 +243,19 @@ contract DFMM2 {
 
         pools[poolId].totalLiquidity += deltaLiquidity;
 
-        if (isSwapXForY) {
-            pools[poolId].reserveX += deltaX;
-            pools[poolId].reserveY -= deltaY;
-            _transferFrom(pools[poolId].tokenX, deltaX);
-            _transfer(pools[poolId].tokenY, msg.sender, deltaY);
-        } else {
-            pools[poolId].reserveX -= deltaX;
-            pools[poolId].reserveY += deltaY;
-            _transferFrom(pools[poolId].tokenY, deltaY);
-            _transfer(pools[poolId].tokenX, msg.sender, deltaX);
-        }
+        pools[poolId].reserves[tokenInIndex] += amountIn;
+        pools[poolId].reserves[tokenOutIndex] -= amountOut;
 
-        // emit Swap(msg.sender, poolId, isSwapXForY, deltaX, deltaX);
+        address tokenIn = pools[poolId].tokens[tokenInIndex];
+        address tokenOut = pools[poolId].tokens[tokenOutIndex];
 
-        return (deltaX, deltaY);
+        _transferFrom(tokenIn, amountIn);
+        _transfer(tokenOut, msg.sender, amountOut);
+
+        emit Swap(msg.sender, poolId, tokenIn, tokenOut, amountIn, amountOut);
+
+        return (tokenIn, tokenOut, amountIn, amountOut);
     }
-    */
 
     function update(uint256 poolId, bytes calldata data) external lock {
         IStrategy2(pools[poolId].strategy).update(
@@ -284,8 +264,6 @@ contract DFMM2 {
     }
 
     // Internals
-
-    error InvalidTransfer();
 
     /**
      * @dev Transfers `amount` of `token` from the sender to the contract.
@@ -352,7 +330,9 @@ contract DFMM2 {
         uint256 totalLiquidity = pools[poolId].totalLiquidity;
         console2.log("total tokens", totalSupply);
         console2.log("total liquidity", totalLiquidity);
-        console2.log("muldiv", deltaL.mulWadUp(totalSupply.divWadUp(totalLiquidity)));
+        console2.log(
+            "muldiv", deltaL.mulWadUp(totalSupply.divWadUp(totalLiquidity))
+        );
 
         if (isAllocate) {
             uint256 amount =
@@ -397,8 +377,6 @@ contract DFMM2 {
         }
     }
 
-    error ERC1167FailedCreateClone();
-
     // Lens
 
     /// @notice Returns the amount of initialized pools.
@@ -417,10 +395,7 @@ contract DFMM2 {
         view
         returns (uint256[] memory, uint256)
     {
-        return (
-            pools[poolId].reserves,
-            pools[poolId].totalLiquidity
-        );
+        return (pools[poolId].reserves, pools[poolId].totalLiquidity);
     }
 
     /**
