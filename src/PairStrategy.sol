@@ -58,7 +58,6 @@ abstract contract PairStrategy is IStrategy2 {
             revert DeltaError(maxDeltaY, deltas[1]);
         }
 
-        pool.reserves = new uint256[](2);
         pool.reserves[0] += deltas[0];
         pool.reserves[1] += deltas[1];
 
