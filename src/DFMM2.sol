@@ -172,7 +172,6 @@ contract DFMM2 is IDFMM2 {
         _manageTokens(poolId, false, deltaLiquidity);
         pools[poolId].totalLiquidity -= deltaLiquidity;
 
-
         for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
             if (pools[poolId].tokens[i] != address(0)) {
                 _transfer(pools[poolId].tokens[i], msg.sender, deltas[i]);

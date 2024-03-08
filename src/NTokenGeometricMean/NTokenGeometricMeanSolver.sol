@@ -28,21 +28,26 @@ contract NTokenGeometricMeanSolver {
         uint256[] memory prices,
         NTokenGeometricMeanParams memory params
     ) public view returns (bytes memory) {
-
         uint256[] memory reserves = new uint256[](prices.length);
         uint256 numerairePrice = prices[prices.length - 1];
         uint256 numeraireWeight = params.weights[params.weights.length - 1];
         for (uint256 i = 0; i < prices.length - 1; i++) {
-          // compute the amount of reserves for token T given numeraireAmount and weights wT and wNumeraire
-          uint256 amountT = computeReserveFromNumeraire(numeraireAmount, numerairePrice, params.weights[i], numeraireWeight);
-          reserves[i] = amountT;
+            // compute the amount of reserves for token T given numeraireAmount and weights wT and wNumeraire
+            uint256 amountT = computeReserveFromNumeraire(
+                numeraireAmount,
+                numerairePrice,
+                params.weights[i],
+                numeraireWeight
+            );
+            reserves[i] = amountT;
         }
         reserves[prices.length - 1] = ONE;
 
         uint256 L = computeNextLiquidity(reserves, params);
 
-        return
-            abi.encode(reserves, L, params.weights, params.swapFee, params.controller);
+        return abi.encode(
+            reserves, L, params.weights, params.swapFee, params.controller
+        );
     }
 
     function fetchPoolParams(uint256 poolId)
@@ -51,7 +56,8 @@ contract NTokenGeometricMeanSolver {
         returns (NTokenGeometricMeanParams memory)
     {
         return abi.decode(
-            IStrategy2(strategy).getPoolParams(poolId), (NTokenGeometricMeanParams)
+            IStrategy2(strategy).getPoolParams(poolId),
+            (NTokenGeometricMeanParams)
         );
     }
 
@@ -65,7 +71,6 @@ contract NTokenGeometricMeanSolver {
         uint256 deltaLiquidity;
         uint256 fees;
     }
-
 
     function simulateSwap(
         uint256 poolId,
@@ -85,18 +90,25 @@ contract NTokenGeometricMeanSolver {
         state.outWeight = params.weights[tokenOutIndex];
 
         state.fees = amountIn.mulWadUp(params.swapFee);
-        state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve).mulWadUp(state.fees).mulWadUp(state.inWeight);
+        state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve)
+            .mulWadUp(state.fees).mulWadUp(state.inWeight);
         {
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 accumulator = ONE;
             for (uint256 i = 0; i < pool.reserves.length; i++) {
-              if (i != tokenOutIndex && i != tokenInIndex) {
-                uint256 di = uint256(int256(pool.reserves[i]).powWad(int256(params.weights[i])));
-                accumulator = accumulator.mulWadUp(di);
-              }
+                if (i != tokenOutIndex && i != tokenInIndex) {
+                    uint256 di = uint256(
+                        int256(pool.reserves[i]).powWad(
+                            int256(params.weights[i])
+                        )
+                    );
+                    accumulator = accumulator.mulWadUp(di);
+                }
             }
             uint256 d = uint256(
-                int256((state.inReserve + amountIn)).powWad(int256(state.inWeight))
+                int256((state.inReserve + amountIn)).powWad(
+                    int256(state.inWeight)
+                )
             );
             uint256 a = uint256(
                 int256(n.divWadUp(d.mulWadUp(accumulator))).powWad(
@@ -107,19 +119,20 @@ contract NTokenGeometricMeanSolver {
             state.amountOut = state.outReserve - a;
         }
 
-        bytes memory swapData = abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut, state.deltaLiquidity);
+        bytes memory swapData = abi.encode(
+            tokenInIndex,
+            tokenOutIndex,
+            amountIn,
+            state.amountOut,
+            state.deltaLiquidity
+        );
 
         (bool valid,,,,,,) = IStrategy2(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
 
-        return (
-            valid,
-            state.amountOut,
-            swapData
-        );
+        return (valid, state.amountOut, swapData);
     }
-
 
     /*
     function getReservesAndLiquidity(uint256 poolId)
@@ -130,7 +143,6 @@ contract NTokenGeometricMeanSolver {
         return DFMM2(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
     }
     */
-
 
     /*
 

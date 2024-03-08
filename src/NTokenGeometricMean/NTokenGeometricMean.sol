@@ -61,24 +61,21 @@ contract NTokenGeometricMean is IStrategy2 {
         uint256 poolId,
         IDFMM2.Pool calldata,
         bytes calldata data
-    )
-        external 
-        returns (
-            bool,
-            int256,
-            uint256[] memory,
-            uint256 
-        )
-    {
+    ) external returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
 
-
-        (state.reserves, state.totalLiquidity, state.weights, state.swapFee, state.controller) =
-            abi.decode(data, (uint256[], uint256, uint256[], uint256, address));
-
+        (
+            state.reserves,
+            state.totalLiquidity,
+            state.weights,
+            state.swapFee,
+            state.controller
+        ) = abi.decode(data, (uint256[], uint256, uint256[], uint256, address));
 
         if (state.reserves.length != state.weights.length) {
-            revert InvalidConfiguration(state.reserves.length, state.weights.length);
+            revert InvalidConfiguration(
+                state.reserves.length, state.weights.length
+            );
         }
 
         uint256 weightAccumulator;
@@ -127,28 +124,30 @@ contract NTokenGeometricMean is IStrategy2 {
         ) {
             internalParams[poolId].swapFee =
                 NTokenGeometricMeanLib.decodeFeeUpdate(data);
-        }
-        else if (
+        } else if (
             updateCode == NTokenGeometricMeanLib.GeometricMeanUpdateCode.Weights
         ) {
             (uint256[] memory targetWeights, uint256 targetTimestamp) =
                 NTokenGeometricMeanLib.decodeWeightsUpdate(data);
             if (targetWeights.length != internalParams[poolId].weights.length) {
-              revert InvalidWeightUpdateLength(targetWeights.length, internalParams[poolId].weights.length);
+                revert InvalidWeightUpdateLength(
+                    targetWeights.length, internalParams[poolId].weights.length
+                );
             }
             uint256 totalWeight;
-            for (uint i = 0; i < targetWeights.length; i++) {
-              totalWeight += targetWeights[i];
+            for (uint256 i = 0; i < targetWeights.length; i++) {
+                totalWeight += targetWeights[i];
             }
             if (totalWeight != ONE) {
-              revert InvalidWeights(totalWeight);
+                revert InvalidWeights(totalWeight);
             }
 
-            for (uint i = 0; i < targetWeights.length; i++) {
-              internalParams[poolId].weights[i].set(targetWeights[i], targetTimestamp);
+            for (uint256 i = 0; i < targetWeights.length; i++) {
+                internalParams[poolId].weights[i].set(
+                    targetWeights[i], targetTimestamp
+                );
             }
-        } 
-        else if (
+        } else if (
             updateCode
                 == NTokenGeometricMeanLib.GeometricMeanUpdateCode.Controller
         ) {
@@ -162,8 +161,7 @@ contract NTokenGeometricMean is IStrategy2 {
     function getPoolParams(uint256 poolId) public view returns (bytes memory) {
         NTokenGeometricMeanParams memory params;
 
-        params.weights =
-            new uint256[](internalParams[poolId].weights.length);
+        params.weights = new uint256[](internalParams[poolId].weights.length);
 
         for (uint256 i = 0; i < params.weights.length; i++) {
             params.weights[i] = internalParams[poolId].weights[i].actualized();
@@ -324,7 +322,6 @@ contract NTokenGeometricMean is IStrategy2 {
 
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
-
 
     function _computeDeltaTokenGivenDeltaL(
         uint256 deltaLiquidity,

@@ -60,9 +60,9 @@ contract NTokenGeometricMeanTest is Test {
         address[] memory tokens = new address[](4);
 
         for (uint256 i = 0; i < 4; i++) {
-          weights[i] = w;
-          prices[i] = price;
-          tokens[i] = sTokens[i];
+            weights[i] = w;
+            prices[i] = price;
+            tokens[i] = sTokens[i];
         }
 
         NTokenGeometricMeanParams memory params = NTokenGeometricMeanParams({
@@ -95,9 +95,9 @@ contract NTokenGeometricMeanTest is Test {
         address[] memory tokens = new address[](4);
 
         for (uint256 i = 0; i < 4; i++) {
-          weights[i] = w;
-          prices[i] = price;
-          tokens[i] = sTokens[i];
+            weights[i] = w;
+            prices[i] = price;
+            tokens[i] = sTokens[i];
         }
 
         NTokenGeometricMeanParams memory params = NTokenGeometricMeanParams({
@@ -116,7 +116,6 @@ contract NTokenGeometricMeanTest is Test {
             data: initData
         });
 
-
         dfmm.init(initParams);
         _;
     }
@@ -124,19 +123,22 @@ contract NTokenGeometricMeanTest is Test {
     function getTokens() public view returns (address[] memory) {
         address[] memory tokens = new address[](sTokens.length);
         for (uint256 i = 0; i < sTokens.length; i++) {
-          tokens[i] = sTokens[i];
+            tokens[i] = sTokens[i];
         }
         return tokens;
     }
 
-    function createTokenDeltas(uint256 delta) public view returns (uint256[] memory) {
+    function createTokenDeltas(uint256 delta)
+        public
+        view
+        returns (uint256[] memory)
+    {
         uint256[] memory deltas = new uint256[](sTokens.length);
         for (uint256 i = 0; i < sTokens.length; i++) {
-          deltas[i] = delta;
+            deltas[i] = delta;
         }
         return deltas;
     }
-
 
     function test_4_token_allocate_basic() public basic {
         uint256 poolId = dfmm.nonce() - 1;
@@ -146,16 +148,17 @@ contract NTokenGeometricMeanTest is Test {
 
         bytes memory data = abi.encode(maxDeltas, deltaL);
 
-        (uint256[] memory preReserves, uint256 preL) = dfmm.getReservesAndLiquidity(poolId);
+        (uint256[] memory preReserves, uint256 preL) =
+            dfmm.getReservesAndLiquidity(poolId);
         console2.log(preReserves[0]);
         console2.log(preL);
 
         dfmm.allocate(poolId, data);
 
-        (uint256[] memory postReserves, uint256 postL) = dfmm.getReservesAndLiquidity(poolId);
+        (uint256[] memory postReserves, uint256 postL) =
+            dfmm.getReservesAndLiquidity(poolId);
         console2.log(postReserves[0]);
         console2.log(postL);
-
     }
 
     function test_4_token_deallocate_basic() public basic {
@@ -166,16 +169,17 @@ contract NTokenGeometricMeanTest is Test {
 
         bytes memory data = abi.encode(minDeltas, deltaL);
 
-        (uint256[] memory preReserves, uint256 preL) = dfmm.getReservesAndLiquidity(poolId);
+        (uint256[] memory preReserves, uint256 preL) =
+            dfmm.getReservesAndLiquidity(poolId);
         console2.log(preReserves[0]);
         console2.log(preL);
 
         dfmm.deallocate(poolId, data);
 
-        (uint256[] memory postReserves, uint256 postL) = dfmm.getReservesAndLiquidity(poolId);
+        (uint256[] memory postReserves, uint256 postL) =
+            dfmm.getReservesAndLiquidity(poolId);
         console2.log(postReserves[0]);
         console2.log(postL);
-
     }
 
     function test_4_token_simulate_swap() public basic {
@@ -184,12 +188,12 @@ contract NTokenGeometricMeanTest is Test {
         uint256 tokenInIndex = 0;
         uint256 tokenOutIndex = 1;
 
-        (bool valid, uint256 amountOut, bytes memory data) = solver.simulateSwap(poolId, tokenInIndex, tokenOutIndex, amountIn);
+        (bool valid, uint256 amountOut, bytes memory data) =
+            solver.simulateSwap(poolId, tokenInIndex, tokenOutIndex, amountIn);
         console2.log("amountOut", amountOut);
         console2.log("valid", valid);
         dfmm.swap(poolId, data);
     }
-
 
     /*
     function test_diff_lower() public basic {
