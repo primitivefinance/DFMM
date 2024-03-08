@@ -106,23 +106,17 @@ contract DFMM2 is IDFMM2 {
             }
         }
 
-        emitInit(poolId, address(liquidityToken));
-
-        return (poolId, reserves, totalLiquidity - BURNT_LIQUIDITY);
-    }
-
-    function emitInit(uint256 poolId, address lpToken) private {
-        Pool memory pool = pools[poolId];
-
         emit Init(
             msg.sender,
             pool.strategy,
-            lpToken,
+            address(liquidityToken),
             poolId,
             pool.tokens,
             pool.reserves,
             pool.totalLiquidity
         );
+
+        return (poolId, reserves, totalLiquidity - BURNT_LIQUIDITY);
     }
 
     function allocate(
