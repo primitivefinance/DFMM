@@ -3,9 +3,9 @@ pragma solidity ^0.8.13;
 
 import "./NTokenGeometricMeanExtendedLib.sol";
 import "solmate/tokens/ERC20.sol";
-import "src/interfaces/IStrategy.sol";
+import "src/interfaces/IStrategy2.sol";
 import "forge-std/console2.sol";
-import { DFMM2 } from "../DFMM2.sol";
+import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
 
 contract NTokenGeometricMeanSolver {
     using FixedPointMathLib for uint256;
@@ -44,6 +44,82 @@ contract NTokenGeometricMeanSolver {
         return
             abi.encode(reserves, L, params.weights, params.swapFee, params.controller);
     }
+
+    function fetchPoolParams(uint256 poolId)
+        public
+        view
+        returns (NTokenGeometricMeanParams memory)
+    {
+        return abi.decode(
+            IStrategy2(strategy).getPoolParams(poolId), (NTokenGeometricMeanParams)
+        );
+    }
+
+    struct SimulateSwapState {
+        uint256 amountIn;
+        uint256 amountOut;
+        uint256 inReserve;
+        uint256 outReserve;
+        uint256 inWeight;
+        uint256 outWeight;
+        uint256 deltaLiquidity;
+        uint256 fees;
+    }
+
+
+    function simulateSwap(
+        uint256 poolId,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex,
+        uint256 amountIn
+    ) public view returns (bool, uint256, bytes memory) {
+        NTokenGeometricMeanParams memory params = fetchPoolParams(poolId);
+        IDFMM2.Pool memory pool =
+            IDFMM2(IStrategy2(strategy).dfmm()).getPool(poolId);
+
+        SimulateSwapState memory state;
+
+        state.inReserve = pool.reserves[tokenInIndex];
+        state.outReserve = pool.reserves[tokenOutIndex];
+        state.inWeight = params.weights[tokenInIndex];
+        state.outWeight = params.weights[tokenOutIndex];
+
+        state.fees = amountIn.mulWadUp(params.swapFee);
+        state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve).mulWadUp(state.fees).mulWadUp(state.inWeight);
+        {
+            uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
+            uint256 accumulator = ONE;
+            for (uint256 i = 0; i < pool.reserves.length; i++) {
+              if (i != tokenOutIndex && i != tokenInIndex) {
+                uint256 di = uint256(int256(pool.reserves[i]).powWad(int256(params.weights[i])));
+                accumulator = accumulator.mulWadUp(di);
+              }
+            }
+            uint256 d = uint256(
+                int256((state.inReserve + amountIn)).powWad(int256(state.inWeight))
+            );
+            uint256 a = uint256(
+                int256(n.divWadUp(d.mulWadUp(accumulator))).powWad(
+                    int256(ONE.divWadUp(state.outWeight))
+                )
+            );
+
+            state.amountOut = state.outReserve - a;
+        }
+
+        bytes memory swapData = abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut, state.deltaLiquidity);
+
+        (bool valid,,,,,,) = IStrategy2(strategy).validateSwap(
+            address(this), poolId, pool, swapData
+        );
+
+        return (
+            valid,
+            state.amountOut,
+            swapData
+        );
+    }
+
 
     /*
     function getReservesAndLiquidity(uint256 poolId)

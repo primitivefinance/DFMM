@@ -8,6 +8,7 @@ import "solmate/test/utils/mocks/MockERC20.sol";
 import "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 import "src/NTokenGeometricMean/NTokenGeometricMeanSolver.sol";
 import "src/interfaces/IDFMM2.sol";
+import "src/DFMM2.sol";
 
 contract NTokenGeometricMeanTest is Test {
     using stdStorage for StdStorage;
@@ -175,6 +176,18 @@ contract NTokenGeometricMeanTest is Test {
         console2.log(postReserves[0]);
         console2.log(postL);
 
+    }
+
+    function test_4_token_simulate_swap() public basic {
+        uint256 poolId = dfmm.nonce() - 1;
+        uint256 amountIn = 0.1 ether;
+        uint256 tokenInIndex = 0;
+        uint256 tokenOutIndex = 1;
+
+        (bool valid, uint256 amountOut, bytes memory data) = solver.simulateSwap(poolId, tokenInIndex, tokenOutIndex, amountIn);
+        console2.log("amountOut", amountOut);
+        console2.log("valid", valid);
+        dfmm.swap(poolId, data);
     }
 
 

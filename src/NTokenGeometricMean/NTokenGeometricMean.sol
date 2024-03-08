@@ -56,52 +56,49 @@ contract NTokenGeometricMean {
     error InvalidWeights(uint256 totalWeight);
     error InvalidConfiguration(uint256 reservesLength, uint256 weightsLength);
 
+    struct InitState {
+        bool valid;
+        int256 invariant;
+        address controller;
+        uint256 swapFee;
+        uint256 wX;
+        uint256 totalLiquidity;
+        uint256[] reserves;
+        uint256[] weights;
+    }
+
     function init(
         address,
         uint256 poolId,
         IDFMM2.Pool calldata,
         bytes calldata data
     )
-        external
+        external 
         returns (
-            bool valid,
-            int256 invariant,
-            uint256[] memory reserves,
-            uint256 totalLiquidity
+            bool,
+            int256,
+            uint256[] memory,
+            uint256 
         )
     {
-        (valid, invariant, reserves, totalLiquidity,,,) =
-            _decodeInit(poolId, data);
-    }
+        InitState memory state;
 
-    function _decodeInit(
-        uint256 poolId,
-        bytes calldata data
-    )
-        private
-        returns (
-            bool valid,
-            int256 invariant,
-            uint256[] memory reserves,
-            uint256 totalLiquidity,
-            uint256[] memory weights,
-            uint256 swapFee,
-            address controller
-        )
-    {
-        (reserves, totalLiquidity, weights, swapFee, controller) =
+
+        (state.reserves, state.totalLiquidity, state.weights, state.swapFee, state.controller) =
             abi.decode(data, (uint256[], uint256, uint256[], uint256, address));
 
-        if (reserves.length != weights.length) {
-            revert InvalidConfiguration(reserves.length, weights.length);
+
+        if (state.reserves.length != state.weights.length) {
+            revert InvalidConfiguration(state.reserves.length, state.weights.length);
         }
 
         uint256 weightAccumulator;
-        for (uint256 i = 0; i < weights.length; i++) {
-            weightAccumulator += weights[i];
+        for (uint256 i = 0; i < state.weights.length; i++) {
+            weightAccumulator += state.weights[i];
+            console2.log("init weight", state.weights[i]);
             internalParams[poolId].weights.push(
                 DynamicParam({
-                    lastComputedValue: weights[i],
+                    lastComputedValue: state.weights[i],
                     updateEnd: 0,
                     updatePerSecond: 0,
                     lastUpdateAt: 0
@@ -113,17 +110,18 @@ contract NTokenGeometricMean {
             revert InvalidWeights(weightAccumulator);
         }
 
-        internalParams[poolId].swapFee = swapFee;
-        internalParams[poolId].controller = controller;
+        internalParams[poolId].swapFee = state.swapFee;
+        internalParams[poolId].controller = state.controller;
 
-        invariant = NTokenGeometricMeanLib.tradingFunction(
-            reserves,
-            totalLiquidity,
+        int256 invariant = NTokenGeometricMeanLib.tradingFunction(
+            state.reserves,
+            state.totalLiquidity,
             abi.decode(getPoolParams(poolId), (NTokenGeometricMeanParams))
         );
 
-        // todo: should the be EXACTLY 0? just positive? within an epsilon?
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
+        bool valid = -(EPSILON) < invariant && invariant < EPSILON;
+
+        return (valid, invariant, state.reserves, state.totalLiquidity);
     }
 
     function update(
@@ -165,14 +163,13 @@ contract NTokenGeometricMean {
     function getPoolParams(uint256 poolId) public view returns (bytes memory) {
         NTokenGeometricMeanParams memory params;
 
-        uint256[] memory weights =
+        params.weights =
             new uint256[](internalParams[poolId].weights.length);
 
         for (uint256 i = 0; i < params.weights.length; i++) {
-            weights[i] = internalParams[poolId].weights[i].actualized();
+            params.weights[i] = internalParams[poolId].weights[i].actualized();
         }
 
-        params.weights = weights;
         params.swapFee = internalParams[poolId].swapFee;
         params.controller = internalParams[poolId].controller;
 
@@ -247,7 +244,6 @@ contract NTokenGeometricMean {
             pool.totalLiquidity + deltaLiquidity,
             getPoolParams(poolId)
         );
-        console2.log("invariant", invariant);
 
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
@@ -293,12 +289,43 @@ contract NTokenGeometricMean {
             getPoolParams(poolId)
         );
 
-        console2.log("invariant", invariant);
-        console2.log("deltaL", deltaLiquidity);
-        console2.log("nextL", pool.totalLiquidity - deltaLiquidity);
+        valid = -(EPSILON) < invariant && invariant < EPSILON;
+    }
+
+    function validateSwap(
+        address,
+        uint256 poolId,
+        IDFMM2.Pool memory pool,
+        bytes memory data
+    )
+        external
+        view
+        virtual
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256 tokenInIndex,
+            uint256 tokenOutIndex,
+            uint256 amountIn,
+            uint256 amountOut,
+            uint256 deltaLiquidity
+        )
+    {
+        bytes memory params = getPoolParams(poolId);
+
+        (tokenInIndex, tokenOutIndex, amountIn, amountOut, deltaLiquidity) =
+            abi.decode(data, (uint256, uint256, uint256, uint256, uint256));
+
+        pool.reserves[tokenInIndex] += amountIn;
+        pool.reserves[tokenOutIndex] -= amountOut;
+
+        invariant = tradingFunction(
+            pool.reserves, pool.totalLiquidity + deltaLiquidity, params
+        );
 
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
+
 
     function _computeDeltaTokenGivenDeltaL(
         uint256 deltaLiquidity,
@@ -309,16 +336,4 @@ contract NTokenGeometricMean {
         return
             reserve.mulWadDown(deltaLiquidity.divWadDown(pool.totalLiquidity));
     }
-    /*
-
-    function _computeDeltaYGivenDeltaL(
-        uint256 deltaLiquidity,
-        DFMM2.Pool calldata pool,
-        bytes memory
-    ) internal pure returns (uint256) {
-        return pool.reserveY.mulWadDown(
-            deltaLiquidity.divWadDown(pool.totalLiquidity)
-        );
-    }
-    */
 }

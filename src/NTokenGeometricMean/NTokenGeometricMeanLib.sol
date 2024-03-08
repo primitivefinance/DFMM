@@ -73,14 +73,10 @@ library NTokenGeometricMeanLib {
         uint256 L,
         NTokenGeometricMeanParams memory params
     ) internal pure returns (int256) {
-        uint256 accumulator;
+        uint256 accumulator = ONE;
         for (uint256 i = 0; i < reserves.length; i++) {
           uint256 a = uint256(int256(reserves[i].divWadDown(L)).powWad(int256(params.weights[i])));
-          if (accumulator != 0) {
-            accumulator.mulWadUp(a);
-          } else {
-            accumulator = a;
-          }
+          accumulator.mulWadUp(a);
         }
 
         return int256(accumulator) - int256(ONE);
