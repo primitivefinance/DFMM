@@ -121,6 +121,47 @@ contract NTokenGeometricMeanTest is Test {
         _;
     }
 
+    /// @dev Initializes a basic pool in dfmm.
+    modifier basic_70_10_10_10() {
+        vm.warp(0);
+        uint256 reserveNumeraire = 1 ether;
+        uint256 price = ONE;
+        uint256 w = 0.25 ether;
+        uint256[] memory weights = new uint256[](4);
+        uint256[] memory prices = new uint256[](4);
+        address[] memory tokens = new address[](4);
+
+        for (uint256 i = 0; i < 4; i++) {
+          prices[i] = price;
+          tokens[i] = sTokens[i];
+        }
+        weights[0] = .7 ether;
+        weights[1] = .1 ether;
+        weights[2] = .1 ether;
+        weights[3] = .1 ether;
+
+        NTokenGeometricMeanParams memory params = NTokenGeometricMeanParams({
+            weights: weights,
+            swapFee: 0,
+            controller: address(this)
+        });
+
+        bytes memory initData =
+            solver.computeInitialPoolData(reserveNumeraire, prices, params);
+        DFMM2.InitParams memory initParams = IDFMM2.InitParams({
+            name: "4-token-LP",
+            symbol: "4T",
+            strategy: address(g3m),
+            tokens: tokens,
+            data: initData
+        });
+
+
+        dfmm.init(initParams);
+        _;
+    }
+
+
     function getTokens() public view returns (address[] memory) {
         address[] memory tokens = new address[](sTokens.length);
         for (uint256 i = 0; i < sTokens.length; i++) {
@@ -218,125 +259,82 @@ contract NTokenGeometricMeanTest is Test {
         uint256 price = solver.computePriceOfToken(reserves[tIndex], reserves[reserves.length - 1], params.weights[tIndex], params.weights[reserves.length - 1]);
     }
 
-
-    /*
-    function test_diff_lower() public basic {
+    function test_4_token_allocate_basic_non_uniform() public basic_70_10_10_10 {
         uint256 poolId = dfmm.nonce() - 1;
-        int256 diffLowered =
-            solver.calculateDiffLower(poolId, 0.8 ether, 0.114674 ether);
+        uint256 maxTokenDelta = 100e18;
+        uint256[] memory maxDeltas = createTokenDeltas(maxTokenDelta);
+        uint256 deltaL = ONE;
 
-        console2.log(diffLowered);
+        bytes memory data = abi.encode(maxDeltas, deltaL);
+
+        (uint256[] memory preReserves, uint256 preL) = dfmm.getReservesAndLiquidity(poolId);
+        console2.log(preReserves[0]);
+        console2.log(preL);
+
+        dfmm.allocate(poolId, data);
+
+        (uint256[] memory postReserves, uint256 postL) = dfmm.getReservesAndLiquidity(poolId);
+        console2.log(postReserves[0]);
+        console2.log(postL);
     }
 
-    function test_diff_raise() public basic {
+    function test_4_token_allocate_given_delta_t_non_uniform() public basic_70_10_10_10 {
         uint256 poolId = dfmm.nonce() - 1;
-        int256 diffRaised =
-            solver.calculateDiffRaise(poolId, 1.2 ether, 0.0921529 ether);
+        (uint256[] memory dReserves, uint256 dLiquidity) = solver.computeReserveAndLiquidityDeltasGivenDeltaT(poolId, 1, ONE);
 
-        console2.log(diffRaised);
+        bytes memory data = abi.encode(dReserves, dLiquidity);
+
+        dfmm.allocate(poolId, data);
     }
 
-    function test_optimal_raise() public basic {
+    function test_4_token_deallocate_given_delta_t_non_uniform() public basic_70_10_10_10 {
         uint256 poolId = dfmm.nonce() - 1;
-        int256 diff_min = solver.calculateDiffRaise(poolId, 1.2 ether, 1000);
-        int256 diff_max =
-            solver.calculateDiffRaise(poolId, 1.2 ether, 0.0954451 ether);
-        console2.log("min", diff_min);
-        console2.log("max", diff_max);
-        uint256 optimalRaise = solver.computeOptimalArbRaisePrice(
-            poolId, 1.2 ether, 0.0954451 ether
-        );
+        (uint256[] memory dReserves, uint256 dLiquidity) = solver.computeReserveAndLiquidityDeltasGivenDeltaT(poolId, 1, 0.2 ether);
 
-        (bool valid, uint256 amountOut, uint256 price, bytes memory swapData) =
-            solver.simulateSwap(poolId, true, optimalRaise);
+        bytes memory data = abi.encode(dReserves, dLiquidity);
 
-        console2.log(valid);
-        dfmm.swap(poolId, swapData);
+        dfmm.deallocate(poolId, data);
     }
 
-    function test_optimal_lower() public basic {
-        uint256 poolId = dfmm.nonce() - 1;
-        uint256 optimalLower = solver.computeOptimalArbLowerPrice(
-            poolId, 0.8 ether, 0.134674 ether
-        );
 
-        console2.log(optimalLower);
+    function test_4_token_deallocate_basic_non_uniform() public basic_70_10_10_10 {
+        uint256 poolId = dfmm.nonce() - 1;
+        uint256 minTokenDelta = 0.1 ether;
+        uint256[] memory minDeltas = createTokenDeltas(minTokenDelta);
+        uint256 deltaL = 0.4 ether;
+
+        bytes memory data = abi.encode(minDeltas, deltaL);
+
+        (uint256[] memory preReserves, uint256 preL) = dfmm.getReservesAndLiquidity(poolId);
+        console2.log(preReserves[0]);
+        console2.log(preL);
+
+        dfmm.deallocate(poolId, data);
+
+        (uint256[] memory postReserves, uint256 postL) = dfmm.getReservesAndLiquidity(poolId);
+        console2.log(postReserves[0]);
+        console2.log(postL);
+
     }
 
-    function test_optimal_lower_profit() public basic {
+    function test_4_token_simulate_swap_non_uniform() public basic_70_10_10_10 {
         uint256 poolId = dfmm.nonce() - 1;
-        uint256 optimalLower = solver.computeOptimalArbLowerPrice(
-            poolId, 0.98 ether, 0.234674 ether
-        );
+        uint256 amountIn = 0.1 ether;
+        uint256 tokenInIndex = 0;
+        uint256 tokenOutIndex = 1;
 
-        (, uint256 amountOut,,) =
-            solver.simulateSwap(poolId, true, optimalLower);
+        (bool valid, uint256 amountOut, bytes memory data) = solver.simulateSwap(poolId, tokenInIndex, tokenOutIndex, amountIn);
 
-        uint256 valueIn = optimalLower.mulWadDown(0.98 ether);
-        uint256 valueOut = amountOut;
-        uint256 profit = valueOut - valueIn;
-
-        uint256 marginalIncrease = optimalLower + 100_000_000;
-        uint256 marginalDecrease = optimalLower - 100_000_000;
-
-        (, uint256 outIncrease,,) =
-            solver.simulateSwap(poolId, true, marginalIncrease);
-
-        uint256 valueInIncrease = marginalIncrease.mulWadDown(0.98 ether);
-        uint256 valueOutIncrease = outIncrease;
-        uint256 profitIncrease = valueOutIncrease - valueInIncrease;
-
-        (, uint256 outDecrease,,) =
-            solver.simulateSwap(poolId, true, marginalDecrease);
-
-        uint256 valueInDecrease = marginalDecrease.mulWadDown(0.98 ether);
-        uint256 valueOutDecrease = outDecrease;
-        uint256 profitDecrease = valueOutDecrease - valueInDecrease;
-
-        console2.log(profitIncrease);
-        console2.log(profit);
-        console2.log(profitDecrease);
-
-        assertGt(profit, profitIncrease);
-        assertGt(profit, profitDecrease);
+        dfmm.swap(poolId, data);
     }
 
-    function test_optimal_raise_profit() public basic {
+    function test_4_token_compute_price_non_uniform() public basic_70_10_10_10 {
         uint256 poolId = dfmm.nonce() - 1;
-        uint256 optimalRaise = solver.computeOptimalArbRaisePrice(
-            poolId, 1.2 ether, 0.0954451 ether
-        );
+        uint256 tIndex = 0;
 
-        (, uint256 amountOut,,) =
-            solver.simulateSwap(poolId, false, optimalRaise);
+        (uint256[] memory reserves,) = solver.getReservesAndLiquidity(poolId);
+        NTokenGeometricMeanParams memory params = solver.getPoolParams(poolId);
 
-        uint256 valueIn = optimalRaise;
-        uint256 valueOut = amountOut.mulWadDown(1.2 ether);
-        uint256 profit = valueOut - valueIn;
-
-        uint256 marginalIncrease = optimalRaise + 1_000_000_000;
-        uint256 marginalDecrease = optimalRaise - 1_000_000_000;
-
-        (, uint256 outIncrease,,) =
-            solver.simulateSwap(poolId, false, marginalIncrease);
-
-        uint256 valueInIncrease = marginalIncrease;
-        uint256 valueOutIncrease = outIncrease.mulWadDown(1.2 ether);
-        uint256 profitIncrease = valueOutIncrease - valueInIncrease;
-
-        (, uint256 outDecrease,,) =
-            solver.simulateSwap(poolId, false, marginalDecrease);
-
-        uint256 valueInDecrease = marginalDecrease;
-        uint256 valueOutDecrease = outDecrease.mulWadDown(1.2 ether);
-        uint256 profitDecrease = valueOutDecrease - valueInDecrease;
-
-        console2.log(profitIncrease);
-        console2.log(profit);
-        console2.log(profitDecrease);
-
-        assertGt(profit, profitIncrease);
-        assertGt(profit, profitDecrease);
+        uint256 price = solver.computePriceOfToken(reserves[tIndex], reserves[reserves.length - 1], params.weights[tIndex], params.weights[reserves.length - 1]);
     }
-    */
 }

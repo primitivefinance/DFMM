@@ -102,10 +102,5 @@ library NTokenGeometricMeanLib {
             }
         }
         return accumulator;
-        /*
-        return uint256(int256(rX).powWad(int256(params.wX))).mulWadUp(
-            uint256(int256(rY).powWad(int256(params.wY)))
-        );
-        */
     }
 }
