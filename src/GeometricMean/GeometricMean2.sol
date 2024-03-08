@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import { Strategy2, IStrategy2 } from "src/Strategy2.sol";
+import { PairStrategy, IStrategy2 } from "src/PairStrategy.sol";
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
 import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
 import { GeometricMeanLib, FixedPointMathLib } from "./GeometricMeanLib.sol";
@@ -12,7 +12,7 @@ import { GeometricMeanParams } from "./GeometricMean.sol";
 /**
  * @notice Geometric Mean Market Maker.
  */
-contract GeometricMean2 is Strategy2 {
+contract GeometricMean2 is PairStrategy {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
@@ -29,7 +29,7 @@ contract GeometricMean2 is Strategy2 {
     mapping(uint256 => InternalParams) public internalParams;
 
     /// @param dfmm_ Address of the DFMM contract.
-    constructor(address dfmm_) Strategy2(dfmm_) { }
+    constructor(address dfmm_) PairStrategy(dfmm_) { }
 
     error InvalidWeightX();
 

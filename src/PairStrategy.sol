@@ -7,7 +7,7 @@ import { IStrategy2, IDFMM2 } from "src/interfaces/IStrategy2.sol";
  * @title Strategy base contract for DFMM.
  * @author Primitive
  */
-abstract contract Strategy2 is IStrategy2 {
+abstract contract PairStrategy is IStrategy2 {
     /// @inheritdoc IStrategy2
     address public immutable dfmm;
 
