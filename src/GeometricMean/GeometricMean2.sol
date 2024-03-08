@@ -54,6 +54,8 @@ contract GeometricMean2 is PairStrategy {
     ) external onlyDFMM returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
 
+        state.reserves = new uint256[](2);
+
         (
             state.reserveX,
             state.reserveY,
