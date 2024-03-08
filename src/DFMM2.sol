@@ -125,23 +125,6 @@ contract DFMM2 is IDFMM2 {
         );
     }
 
-    function _prepareTokenMetadata(
-        address strategy,
-        address tokenX,
-        address tokenY
-    ) internal view returns (string memory) {
-        return string.concat(
-            "DFMM-",
-            IStrategy2(strategy).name(),
-            "-",
-            ERC20(tokenX).symbol(),
-            "-",
-            ERC20(tokenY).symbol(),
-            "-",
-            LibString.toString(pools.length)
-        );
-    }
-
     function allocate(
         uint256 poolId,
         bytes calldata data
