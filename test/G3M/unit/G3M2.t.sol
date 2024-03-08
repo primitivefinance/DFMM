@@ -10,7 +10,12 @@ import {
     GeometricMeanSolver,
     GeometricMeanParams
 } from "src/GeometricMean/GeometricMeanSolver.sol";
-import { computeInitialPoolData } from "src/GeometricMean/G3MExtendedLib.sol";
+import {
+    computeInitialPoolData,
+    computePrice,
+    computeY,
+    computeLGivenX
+} from "src/GeometricMean/G3MExtendedLib.sol";
 
 contract SetUp is Test {
     DFMM2 dfmm;
@@ -21,6 +26,8 @@ contract SetUp is Test {
     GeometricMeanSolver solver;
 
     uint256 public constant TEST_SWAP_FEE = 0.003 ether;
+
+    uint256 POOL_ID;
 
     function setUp() public virtual {
         tokenX = new MockERC20("Test Token X", "TSTX", 18);
@@ -60,7 +67,53 @@ contract SetUp is Test {
             data: defaultInitialPoolData
         });
 
-        dfmm.init(initParams);
+        (POOL_ID,,) = dfmm.init(initParams);
+    }
+
+    function test_G3M2_allocate() public {
+        test_G3M2_init();
+
+        IDFMM2.Pool memory pool = dfmm.getPool(POOL_ID);
+
+        console.log(pool.reserves[0]);
+        console.log(pool.reserves[1]);
+
+        uint256 maxDeltaX = 0.1 ether;
+
+        GeometricMeanParams memory params = solver.getPoolParams(POOL_ID);
+
+        uint256 S = computePrice(pool.reserves[0], pool.reserves[1], params);
+        uint256 deltaLiquidity = computeLGivenX(maxDeltaX, S, params);
+        uint256 maxDeltaY = computeY(maxDeltaX, S, params);
+
+        console.log("Max deltaY", maxDeltaY);
+        console.log("Delta liquidity", deltaLiquidity);
+
+        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
+        (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
+    }
+
+    function test_G3M2_deallocate() public {
+        test_G3M2_allocate();
+
+        IDFMM2.Pool memory pool = dfmm.getPool(POOL_ID);
+
+        console.log(pool.reserves[0]);
+        console.log(pool.reserves[1]);
+
+        uint256 maxDeltaX = 0.1 ether;
+
+        GeometricMeanParams memory params = solver.getPoolParams(POOL_ID);
+
+        uint256 S = computePrice(pool.reserves[0], pool.reserves[1], params);
+        uint256 deltaLiquidity = computeLGivenX(maxDeltaX, S, params);
+        uint256 maxDeltaY = computeY(maxDeltaX, S, params);
+
+        console.log("Max deltaY", maxDeltaY);
+        console.log("Delta liquidity", deltaLiquidity);
+
+        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
+        (uint256[] memory deltas) = dfmm.deallocate(POOL_ID, data);
     }
 
     function getPoolLiquidityToken(uint256 poolId)
