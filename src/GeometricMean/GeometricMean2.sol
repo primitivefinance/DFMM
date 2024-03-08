@@ -157,6 +157,7 @@ contract GeometricMean2 is PairStrategy {
         IDFMM2.Pool memory pool,
         bytes memory
     ) internal pure override returns (uint256[] memory deltas) {
+        deltas = new uint256[](2);
         deltas[0] = pool.reserves[0].mulWadDown(
             deltaLiquidity.divWadDown(pool.totalLiquidity)
         );
