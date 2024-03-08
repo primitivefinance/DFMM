@@ -57,8 +57,8 @@ contract GeometricMean2 is PairStrategy {
         state.reserves = new uint256[](2);
 
         (
-            state.reserveX,
-            state.reserveY,
+            state.reserves[0],
+            state.reserves[1],
             state.totalLiquidity,
             state.wX,
             state.swapFee,
@@ -66,9 +66,6 @@ contract GeometricMean2 is PairStrategy {
         ) = abi.decode(
             data, (uint256, uint256, uint256, uint256, uint256, address)
         );
-
-        state.reserves[0] = state.reserveX;
-        state.reserves[1] = state.reserveY;
 
         if (state.wX >= ONE) {
             revert InvalidWeightX();
