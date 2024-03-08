@@ -12,7 +12,7 @@ library NTokenGeometricMeanLib {
     enum GeometricMeanUpdateCode {
         Invalid,
         SwapFee,
-        WeightX,
+        Weights,
         Controller
     }
 
@@ -34,22 +34,22 @@ library NTokenGeometricMeanLib {
         return swapFee;
     }
 
-    function encodeWeightXUpdate(
-        uint256 targetWeightX,
+    function encodeWeightsUpdate(
+        uint256[] calldata targetWeights,
         uint256 targetTimestamp
     ) internal pure returns (bytes memory data) {
         return abi.encode(
-            GeometricMeanUpdateCode.WeightX, targetWeightX, targetTimestamp
+            GeometricMeanUpdateCode.Weights, targetWeights, targetTimestamp
         );
     }
 
-    function decodeWeightXUpdate(bytes memory data)
+    function decodeWeightsUpdate(bytes memory data)
         internal
         pure
-        returns (uint256 targetWeightX, uint256 targetTimestamp)
+        returns (uint256[] memory targetWeights, uint256 targetTimestamp)
     {
-        (, targetWeightX, targetTimestamp) =
-            abi.decode(data, (GeometricMeanUpdateCode, uint256, uint256));
+        (, targetWeights, targetTimestamp) =
+            abi.decode(data, (GeometricMeanUpdateCode, uint256[], uint256));
     }
 
     function encodeControllerUpdate(address controller)

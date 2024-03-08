@@ -2,13 +2,12 @@
 pragma solidity ^0.8.13;
 
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
-import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
 import {
     NTokenGeometricMeanLib,
     FixedPointMathLib
 } from "./NTokenGeometricMeanLib.sol";
 import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
-import "forge-std/console2.sol";
+import { IStrategy2, IDFMM2 } from "src/interfaces/IStrategy2.sol";
 
 /// @dev Parameterization of the GeometricMean curve.
 struct NTokenGeometricMeanParams {
@@ -20,21 +19,10 @@ struct NTokenGeometricMeanParams {
 /**
  * @notice Geometric Mean Market Maker.
  */
-contract NTokenGeometricMean {
+contract NTokenGeometricMean is IStrategy2 {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
-
-    /// @dev Thrown when the update code is invalid.
-    error InvalidUpdateCode();
-
-    /// @dev Thrown when the sender is not the DFMM contract.
-    error NotDFMM();
-
-    /// @dev Thrown when the sender is authorized.
-    error InvalidSender();
-
-    error DeltaError(uint256 expected, uint256 actual);
 
     struct InternalParams {
         DynamicParam[] weights;
@@ -55,6 +43,7 @@ contract NTokenGeometricMean {
 
     error InvalidWeights(uint256 totalWeight);
     error InvalidConfiguration(uint256 reservesLength, uint256 weightsLength);
+    error InvalidWeightUpdateLength(uint256 updateLength, uint256 weightsLength);
 
     struct InitState {
         bool valid;
@@ -95,7 +84,6 @@ contract NTokenGeometricMean {
         uint256 weightAccumulator;
         for (uint256 i = 0; i < state.weights.length; i++) {
             weightAccumulator += state.weights[i];
-            console2.log("init weight", state.weights[i]);
             internalParams[poolId].weights.push(
                 DynamicParam({
                     lastComputedValue: state.weights[i],
@@ -140,15 +128,26 @@ contract NTokenGeometricMean {
             internalParams[poolId].swapFee =
                 NTokenGeometricMeanLib.decodeFeeUpdate(data);
         }
-        /*
         else if (
-            updateCode == NTokenGeometricMeanLib.GeometricMeanUpdateCode.WeightX
+            updateCode == NTokenGeometricMeanLib.GeometricMeanUpdateCode.Weights
         ) {
-            (uint256 targetWeightX, uint256 targetTimestamp) =
-                NTokenGeometricMeanLib.decodeWeightXUpdate(data);
-            internalParams[poolId].wX.set(targetWeightX, targetTimestamp);
+            (uint256[] memory targetWeights, uint256 targetTimestamp) =
+                NTokenGeometricMeanLib.decodeWeightsUpdate(data);
+            if (targetWeights.length != internalParams[poolId].weights.length) {
+              revert InvalidWeightUpdateLength(targetWeights.length, internalParams[poolId].weights.length);
+            }
+            uint256 totalWeight;
+            for (uint i = 0; i < targetWeights.length; i++) {
+              totalWeight += targetWeights[i];
+            }
+            if (totalWeight != ONE) {
+              revert InvalidWeights(totalWeight);
+            }
+
+            for (uint i = 0; i < targetWeights.length; i++) {
+              internalParams[poolId].weights[i].set(targetWeights[i], targetTimestamp);
+            }
         } 
-        */
         else if (
             updateCode
                 == NTokenGeometricMeanLib.GeometricMeanUpdateCode.Controller
