@@ -17,6 +17,8 @@ interface IDFMM2 {
     }
 
     struct InitParams {
+        string name;
+        string symbol;
         address strategy;
         address[] tokens;
         bytes data;
