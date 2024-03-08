@@ -2,8 +2,11 @@
 pragma solidity ^0.8.13;
 
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
-import { DFMM2 } from "src/DFMM2.sol";
-import { NTokenGeometricMeanLib, FixedPointMathLib } from "./NTokenGeometricMeanLib.sol";
+import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import {
+    NTokenGeometricMeanLib,
+    FixedPointMathLib
+} from "./NTokenGeometricMeanLib.sol";
 import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
 import "forge-std/console2.sol";
 
@@ -33,7 +36,6 @@ contract NTokenGeometricMean {
 
     error DeltaError(uint256 expected, uint256 actual);
 
-
     struct InternalParams {
         DynamicParam[] weights;
         uint256 swapFee;
@@ -57,7 +59,7 @@ contract NTokenGeometricMean {
     function init(
         address,
         uint256 poolId,
-        DFMM2.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     )
         external
@@ -87,28 +89,28 @@ contract NTokenGeometricMean {
             address controller
         )
     {
-        (reserves, totalLiquidity, weights, swapFee, controller) = abi
-            .decode(data, (uint256[], uint256, uint256[], uint256, address));
+        (reserves, totalLiquidity, weights, swapFee, controller) =
+            abi.decode(data, (uint256[], uint256, uint256[], uint256, address));
 
         if (reserves.length != weights.length) {
-          revert InvalidConfiguration(reserves.length, weights.length);
+            revert InvalidConfiguration(reserves.length, weights.length);
         }
-        
+
         uint256 weightAccumulator;
         for (uint256 i = 0; i < weights.length; i++) {
-          weightAccumulator += weights[i];
-          internalParams[poolId].weights.push(
-            DynamicParam({
-                lastComputedValue: weights[i],
-                updateEnd: 0,
-                updatePerSecond: 0,
-                lastUpdateAt: 0
-            })
-          );
+            weightAccumulator += weights[i];
+            internalParams[poolId].weights.push(
+                DynamicParam({
+                    lastComputedValue: weights[i],
+                    updateEnd: 0,
+                    updatePerSecond: 0,
+                    lastUpdateAt: 0
+                })
+            );
         }
 
         if (weightAccumulator != ONE) {
-          revert InvalidWeights(weightAccumulator);
+            revert InvalidWeights(weightAccumulator);
         }
 
         internalParams[poolId].swapFee = swapFee;
@@ -127,17 +129,19 @@ contract NTokenGeometricMean {
     function update(
         address sender,
         uint256 poolId,
-        DFMM2.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     ) external {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
         NTokenGeometricMeanLib.GeometricMeanUpdateCode updateCode =
             abi.decode(data, (NTokenGeometricMeanLib.GeometricMeanUpdateCode));
 
-        if (updateCode == NTokenGeometricMeanLib.GeometricMeanUpdateCode.SwapFee) {
+        if (
+            updateCode == NTokenGeometricMeanLib.GeometricMeanUpdateCode.SwapFee
+        ) {
             internalParams[poolId].swapFee =
                 NTokenGeometricMeanLib.decodeFeeUpdate(data);
-        } 
+        }
         /*
         else if (
             updateCode == NTokenGeometricMeanLib.GeometricMeanUpdateCode.WeightX
@@ -148,7 +152,8 @@ contract NTokenGeometricMean {
         } 
         */
         else if (
-            updateCode == NTokenGeometricMeanLib.GeometricMeanUpdateCode.Controller
+            updateCode
+                == NTokenGeometricMeanLib.GeometricMeanUpdateCode.Controller
         ) {
             internalParams[poolId].controller =
                 NTokenGeometricMeanLib.decodeControllerUpdate(data);
@@ -157,17 +162,14 @@ contract NTokenGeometricMean {
         }
     }
 
-    function getPoolParams(uint256 poolId)
-        public
-        view
-        returns (bytes memory)
-    {
+    function getPoolParams(uint256 poolId) public view returns (bytes memory) {
         NTokenGeometricMeanParams memory params;
 
-        uint256[] memory weights = new uint256[](internalParams[poolId].weights.length);
+        uint256[] memory weights =
+            new uint256[](internalParams[poolId].weights.length);
 
         for (uint256 i = 0; i < params.weights.length; i++) {
-          weights[i] = internalParams[poolId].weights[i].actualized();
+            weights[i] = internalParams[poolId].weights[i].actualized();
         }
 
         params.weights = weights;
@@ -198,14 +200,15 @@ contract NTokenGeometricMean {
         uint256 rNumeraire = reserves[reserves.length - 1];
         uint256 liquidityPerRNumeraire = L.divWadUp(rNumeraire);
         uint256 deltaL = amountNumeraire.mulWadUp(liquidityPerRNumeraire);
-        nextRNumeraire = add ? rNumeraire + amountNumeraire : rNumeraire - amountNumeraire;
+        nextRNumeraire =
+            add ? rNumeraire + amountNumeraire : rNumeraire - amountNumeraire;
         nextL = add ? L + deltaL : L - deltaL;
     }
 
     function validateAllocate(
         address,
         uint256 poolId,
-        DFMM2.Pool calldata pool,
+        IDFMM2.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -227,11 +230,11 @@ contract NTokenGeometricMean {
         tokenDeltas = new uint256[](pool.reserves.length);
         deltaLiquidity = deltaL;
         for (uint256 i = 0; i < pool.reserves.length; i++) {
-            uint256 deltaT =  pool.reserves[i].mulWadDown(
-              deltaLiquidity.divWadDown(pool.totalLiquidity)
+            uint256 deltaT = pool.reserves[i].mulWadDown(
+                deltaLiquidity.divWadDown(pool.totalLiquidity)
             );
             if (deltaT > maxTokenDeltas[i]) {
-              revert DeltaError(maxTokenDeltas[i], deltaT);
+                revert DeltaError(maxTokenDeltas[i], deltaT);
             }
             nextReserves[i] = pool.reserves[i] + deltaT;
             tokenDeltas[i] = deltaT;
@@ -249,11 +252,10 @@ contract NTokenGeometricMean {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
-
     function validateDeallocate(
         address,
         uint256 poolId,
-        DFMM2.Pool calldata pool,
+        IDFMM2.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -273,11 +275,11 @@ contract NTokenGeometricMean {
         tokenDeltas = new uint256[](pool.reserves.length);
         deltaLiquidity = deltaL;
         for (uint256 i = 0; i < pool.reserves.length; i++) {
-            uint256 deltaT =  pool.reserves[i].mulWadDown(
-              deltaLiquidity.divWadDown(pool.totalLiquidity)
+            uint256 deltaT = pool.reserves[i].mulWadDown(
+                deltaLiquidity.divWadDown(pool.totalLiquidity)
             );
             if (deltaT < minTokenDeltas[i]) {
-              revert DeltaError(minTokenDeltas[i], deltaT);
+                revert DeltaError(minTokenDeltas[i], deltaT);
             }
             nextReserves[i] = pool.reserves[i] - deltaT;
             tokenDeltas[i] = deltaT;
@@ -298,16 +300,14 @@ contract NTokenGeometricMean {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
-
     function _computeDeltaTokenGivenDeltaL(
         uint256 deltaLiquidity,
         uint256 reserve,
-        DFMM2.Pool calldata pool,
+        IDFMM2.Pool calldata pool,
         bytes memory
     ) internal pure returns (uint256) {
-        return reserve.mulWadDown(
-            deltaLiquidity.divWadDown(pool.totalLiquidity)
-        );
+        return
+            reserve.mulWadDown(deltaLiquidity.divWadDown(pool.totalLiquidity));
     }
     /*
 
@@ -321,6 +321,4 @@ contract NTokenGeometricMean {
         );
     }
     */
-
-
 }
