@@ -5,7 +5,6 @@ import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
-import { abs } from "solstat/Units.sol";
 import { IStrategy2 } from "./interfaces/IStrategy2.sol";
 import {
     computeScalingFactor,
@@ -81,9 +80,7 @@ contract DFMM2 is IDFMM2 {
             msg.sender, pools.length, pool, params.data
         );
 
-        if (!valid) {
-            revert Invalid(invariant < 0, abs(invariant));
-        }
+        if (!valid) revert InvalidInvariant(invariant);
 
         LPToken liquidityToken = LPToken(clone(lpTokenImplementation));
 
@@ -131,9 +128,7 @@ contract DFMM2 is IDFMM2 {
             msg.sender, poolId, pools[poolId], data
         );
 
-        if (!valid) {
-            revert Invalid(invariant < 0, abs(invariant));
-        }
+        if (!valid) revert InvalidInvariant(invariant);
 
         for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
             if (pools[poolId].tokens[i] != address(0)) {
@@ -167,9 +162,7 @@ contract DFMM2 is IDFMM2 {
             msg.sender, poolId, pools[poolId], data
         );
 
-        if (!valid) {
-            revert Invalid(invariant < 0, abs(invariant));
-        }
+        if (!valid) revert InvalidInvariant(invariant);
 
         for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
             if (pools[poolId].tokens[i] != address(0)) {
@@ -218,9 +211,7 @@ contract DFMM2 is IDFMM2 {
             msg.sender, poolId, pools[poolId], data
         );
 
-        if (!state.valid) {
-            revert Invalid(state.invariant < 0, abs(state.invariant));
-        }
+        if (!state.valid) revert InvalidInvariant(state.invariant);
 
         pools[poolId].totalLiquidity += state.deltaLiquidity;
 

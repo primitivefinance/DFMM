@@ -31,7 +31,7 @@ interface IDFMM2 {
     error InvalidTransfer();
 
     /// @dev Thrown when the invariant is invalid.
-    error Invalid(bool negative, uint256 swapConstantGrowth);
+    error InvalidInvariant(int256 invariant);
 
     /// @dev Thrown when pool tokens are identical.
     error InvalidTokens();
