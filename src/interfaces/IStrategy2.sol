@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "src/DFMM2.sol";
+import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
 
 /**
  * @title Strategy Interface.
@@ -37,7 +37,7 @@ interface IStrategy2 {
     function init(
         address sender,
         uint256 poolId,
-        DFMM2.Pool calldata pool,
+        IDFMM2.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -60,7 +60,7 @@ interface IStrategy2 {
     function validateAllocate(
         address sender,
         uint256 poolId,
-        DFMM2.Pool calldata pool,
+        IDFMM2.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -75,7 +75,7 @@ interface IStrategy2 {
     function validateDeallocate(
         address sender,
         uint256 poolId,
-        DFMM2.Pool calldata pool,
+        IDFMM2.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -90,7 +90,7 @@ interface IStrategy2 {
     function validateSwap(
         address sender,
         uint256 poolId,
-        DFMM2.Pool calldata pool,
+        IDFMM2.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -98,20 +98,23 @@ interface IStrategy2 {
         returns (
             bool valid,
             int256 invariant,
-            uint256[] memory deltas,
-            uint256 deltaLiquidity,
-            bool isSwapXForY
+            uint256 tokenInIndex,
+            uint256 tokenOutIndex,
+            uint256 amountIn,
+            uint256 amountOut,
+            uint256 deltaLiquidity
         );
 
     function update(
         address sender,
         uint256 poolId,
-        DFMM2.Pool calldata pool,
+        IDFMM2.Pool calldata pool,
         bytes calldata data
     ) external;
 
     function tradingFunction(
-        bytes memory pool,
+        uint256[] memory reserves,
+        uint256 totalLiquidity,
         bytes memory params
     ) external view returns (int256);
 
