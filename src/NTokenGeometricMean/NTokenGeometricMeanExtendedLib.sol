@@ -9,47 +9,29 @@ import "forge-std/console2.sol";
 import "src/lib/StrategyLib.sol";
 import "./NTokenGeometricMeanLib.sol";
 
-// import { wadMul, wadDiv } from "../../lib/SignedWadMath.sol";
-
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
 using SignedWadMathLib for int256;
 
-/*
-function computeLGivenX(
-    uint256 x,
-    uint256 S,
-    NTokenGeometricMeanParams memory params
-) pure returns (uint256) {
-    int256 a = int256(params.wY.divWadUp(params.wX).mulWadUp(S));
-    int256 b = a.powWad(int256(params.wY));
-    return x.mulWadUp(uint256(b));
-}
+function computeAllocateDeltasGivenDeltaT(
+    uint256 deltaT,
+    uint256 indexT,
+    uint256[] memory reserves,
+    uint256 totalLiquidity
+) pure returns (uint256[] memory, uint256) {
+    uint256 a = deltaT.divWadDown(reserves[indexT]);
+    uint256[] memory reserveDeltas = new uint256[](reserves.length);
+    reserveDeltas[indexT] = deltaT;
+    for (uint256 i = 0; i < reserves.length; i++) {
+      if (i != indexT) {
+        reserveDeltas[i] = a.mulWadDown(reserves[i]);
+      }
+    }
 
-function computeLGivenY(
-    uint256 y,
-    uint256 S,
-    NTokenGeometricMeanParams memory params
-) pure returns (uint256) {
-    return y.mulWadUp(params.wX).divWadUp(params.wY.mulWadUp(S));
-}
+    uint256 deltaL = a.mulWadDown(totalLiquidity);
 
-function computeXGivenL(
-    uint256 L,
-    uint256 S,
-    NTokenGeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wX.mulWadUp(L).divWadUp(params.wY.mulWadUp(S));
+    return (reserveDeltas, deltaL);
 }
-
-function computeYGivenL(
-    uint256 L,
-    uint256 S,
-    NTokenGeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wY.mulWadUp(L).divWadUp(params.wX.mulWadUp(S));
-}
-*/
 
 function computeY(
     uint256 amountA,

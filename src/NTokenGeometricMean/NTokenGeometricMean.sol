@@ -17,7 +17,7 @@ struct NTokenGeometricMeanParams {
 }
 
 /**
- * @notice Geometric Mean Market Maker.
+ * @notice N-Token Geometric Mean Market Maker.
  */
 contract NTokenGeometricMean is IStrategy2 {
     using FixedPointMathLib for uint256;

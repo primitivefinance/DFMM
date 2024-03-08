@@ -27,7 +27,7 @@ contract NTokenGeometricMeanSolver {
         uint256 numeraireAmount,
         uint256[] memory prices,
         NTokenGeometricMeanParams memory params
-    ) public view returns (bytes memory) {
+    ) public pure returns (bytes memory) {
         uint256[] memory reserves = new uint256[](prices.length);
         uint256 numerairePrice = prices[prices.length - 1];
         uint256 numeraireWeight = params.weights[params.weights.length - 1];
@@ -50,7 +50,7 @@ contract NTokenGeometricMeanSolver {
         );
     }
 
-    function fetchPoolParams(uint256 poolId)
+    function getPoolParams(uint256 poolId)
         public
         view
         returns (NTokenGeometricMeanParams memory)
@@ -78,7 +78,7 @@ contract NTokenGeometricMeanSolver {
         uint256 tokenOutIndex,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
-        NTokenGeometricMeanParams memory params = fetchPoolParams(poolId);
+        NTokenGeometricMeanParams memory params = getPoolParams(poolId);
         IDFMM2.Pool memory pool =
             IDFMM2(IStrategy2(strategy).dfmm()).getPool(poolId);
 
@@ -134,17 +134,6 @@ contract NTokenGeometricMeanSolver {
         return (valid, state.amountOut, swapData);
     }
 
-    /*
-    function getReservesAndLiquidity(uint256 poolId)
-        public
-        view
-        returns (uint256[] memory, uint256)
-    {
-        return DFMM2(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
-    }
-    */
-
-    /*
 
     function prepareFeeUpdate(uint256 swapFee)
         public
@@ -154,12 +143,12 @@ contract NTokenGeometricMeanSolver {
         return NTokenGeometricMeanLib.encodeFeeUpdate(swapFee);
     }
 
-    function prepareWeightXUpdate(
-        uint256 targetWeightX,
+    function prepareWeightsUpdate(
+        uint256[] calldata targetWeights,
         uint256 targetTimestamp
     ) public pure returns (bytes memory) {
         return
-            NTokenGeometricMeanLib.encodeWeightXUpdate(targetWeightX, targetTimestamp);
+            NTokenGeometricMeanLib.encodeWeightsUpdate(targetWeights, targetTimestamp);
     }
 
     function prepareControllerUpdate(address controller)
@@ -170,32 +159,38 @@ contract NTokenGeometricMeanSolver {
         return NTokenGeometricMeanLib.encodeControllerUpdate(controller);
     }
 
-    function fetchPoolParams(uint256 poolId)
-        public
-        view
-        returns (NTokenGeometricMeanParams memory)
-    {
-        return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (NTokenGeometricMeanParams)
-        );
-    }
-
     function getReservesAndLiquidity(uint256 poolId)
         public
         view
-        returns (uint256, uint256, uint256)
+        returns (uint256[] memory, uint256)
     {
-        return IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        return IDFMM2(IStrategy2(strategy).dfmm()).getReservesAndLiquidity(poolId);
     }
 
-    function getInitialPoolData(
-        uint256 numeraireAmount,
-        uint256[] calldata prices,
-        NTokenGeometricMeanParams memory params
-    ) public pure returns (bytes memory) {
-        return computeInitialPoolDataFromPrices(numeraireAmount, prices, params);
+    function computePriceOfToken(
+        uint256 rT,
+        uint256 rNumeraire,
+        uint256 wT,
+        uint256 wNumeraire
+    ) public pure returns (uint256 price) {
+        
+        uint256 a = wT.divWadDown(wNumeraire);
+        uint256 b = rNumeraire.divWadDown(rT);
+        price = a.mulWadDown(b);
     }
 
+    function computeReserveAndLiquidityDeltasGivenDeltaT(
+        uint256 poolId,
+        uint256 indexT,
+        uint256 deltaT
+    ) public view returns (uint256[] memory, uint256) {
+        (uint256[] memory reserves, uint256 totalLiquidity) = getReservesAndLiquidity(poolId);
+        return computeAllocateDeltasGivenDeltaT(deltaT, indexT, reserves, totalLiquidity);
+    }
+
+
+
+    /*
     function allocateGivenX(
         uint256 poolId,
         uint256 amountX
