@@ -214,40 +214,59 @@ contract DFMM2 is IDFMM2 {
         return deltas;
     }
 
+    struct SwapState {
+        bool valid;
+        int256 invariant;
+        uint256 tokenInIndex;
+        uint256 tokenOutIndex;
+        uint256 amountIn;
+        uint256 amountOut;
+        uint256 deltaLiquidity;
+    }
+
     function swap(
         uint256 poolId,
         bytes calldata data
     ) external lock returns (address, address, uint256, uint256) {
+        SwapState memory state;
+
         (
-            bool valid,
-            int256 invariant,
-            uint256 tokenInIndex,
-            uint256 tokenOutIndex,
-            uint256 amountIn,
-            uint256 amountOut,
-            uint256 deltaLiquidity
+            state.valid,
+            state.invariant,
+            state.tokenInIndex,
+            state.tokenOutIndex,
+            state.amountIn,
+            state.amountOut,
+            state.deltaLiquidity
         ) = IStrategy2(pools[poolId].strategy).validateSwap(
             msg.sender, poolId, pools[poolId], data
         );
 
-        if (!valid) {
-            revert Invalid(invariant < 0, abs(invariant));
+        if (!state.valid) {
+            revert Invalid(state.invariant < 0, abs(state.invariant));
         }
 
-        pools[poolId].totalLiquidity += deltaLiquidity;
+        pools[poolId].totalLiquidity += state.deltaLiquidity;
 
-        pools[poolId].reserves[tokenInIndex] += amountIn;
-        pools[poolId].reserves[tokenOutIndex] -= amountOut;
+        pools[poolId].reserves[state.tokenInIndex] += state.amountIn;
+        pools[poolId].reserves[state.tokenOutIndex] -= state.amountOut;
 
-        address tokenIn = pools[poolId].tokens[tokenInIndex];
-        address tokenOut = pools[poolId].tokens[tokenOutIndex];
+        address tokenIn = pools[poolId].tokens[state.tokenInIndex];
+        address tokenOut = pools[poolId].tokens[state.tokenOutIndex];
 
-        _transferFrom(tokenIn, amountIn);
-        _transfer(tokenOut, msg.sender, amountOut);
+        _transferFrom(tokenIn, state.amountIn);
+        _transfer(tokenOut, msg.sender, state.amountOut);
 
-        emit Swap(msg.sender, poolId, tokenIn, tokenOut, amountIn, amountOut);
+        emit Swap(
+            msg.sender,
+            poolId,
+            tokenIn,
+            tokenOut,
+            state.amountIn,
+            state.amountOut
+        );
 
-        return (tokenIn, tokenOut, amountIn, amountOut);
+        return (tokenIn, tokenOut, state.amountIn, state.amountOut);
     }
 
     function update(uint256 poolId, bytes calldata data) external lock {
