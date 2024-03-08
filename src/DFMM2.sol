@@ -2,8 +2,6 @@
 pragma solidity ^0.8.13;
 
 import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
-import { NTokenGeometricMean } from
-    "./NTokenGeometricMean/NTokenGeometricMean.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 import { LibString } from "solmate/utils/LibString.sol";
@@ -80,7 +78,7 @@ contract DFMM2 is IDFMM2 {
             int256 invariant,
             uint256[] memory reserves,
             uint256 totalLiquidity
-        ) = NTokenGeometricMean(params.strategy).init(
+        ) = IStrategy2(params.strategy).init(
             msg.sender, pools.length, pool, params.data
         );
 
