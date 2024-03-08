@@ -88,7 +88,7 @@ contract DFMM2 is IDFMM2 {
 
         LPToken liquidityToken = LPToken(clone(lpTokenImplementation));
 
-        liquidityToken.initialize("", "");
+        liquidityToken.initialize(params.name, params.symbol);
         liquidityToken.mint(msg.sender, totalLiquidity - BURNT_LIQUIDITY);
         liquidityToken.mint(address(0), BURNT_LIQUIDITY);
         console2.log("issued tokens", totalLiquidity - BURNT_LIQUIDITY);
