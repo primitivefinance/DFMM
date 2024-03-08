@@ -7,7 +7,7 @@ import "solmate/test/utils/mocks/MockERC20.sol";
 
 import "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 import "src/NTokenGeometricMean/NTokenGeometricMeanSolver.sol";
-import "src/DFMM2.sol";
+import "src/interfaces/IDFMM2.sol";
 
 contract NTokenGeometricMeanTest is Test {
     using stdStorage for StdStorage;
@@ -52,7 +52,6 @@ contract NTokenGeometricMeanTest is Test {
     }
 
     function test_4_token_init() public {
-        uint256 reserveX = 1 ether;
         uint256 price = ONE;
         uint256 w = 0.25 ether;
         uint256[] memory weights = new uint256[](4);
@@ -74,7 +73,9 @@ contract NTokenGeometricMeanTest is Test {
         console2.log("addr of strategy", address(g3m));
 
         dfmm.init(
-            DFMM2.InitParams({
+            IDFMM2.InitParams({
+                name: "4-token-LP",
+                symbol: "4T",
                 strategy: address(g3m),
                 tokens: tokens,
                 data: solver.computeInitialPoolData(ONE, prices, params)
@@ -106,7 +107,9 @@ contract NTokenGeometricMeanTest is Test {
 
         bytes memory initData =
             solver.computeInitialPoolData(reserveNumeraire, prices, params);
-        DFMM2.InitParams memory initParams = DFMM2.InitParams({
+        DFMM2.InitParams memory initParams = IDFMM2.InitParams({
+            name: "4-token-LP",
+            symbol: "4T",
             strategy: address(g3m),
             tokens: tokens,
             data: initData

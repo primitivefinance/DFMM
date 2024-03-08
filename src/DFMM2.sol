@@ -87,7 +87,6 @@ contract DFMM2 is IDFMM2 {
         liquidityToken.initialize(params.name, params.symbol);
         liquidityToken.mint(msg.sender, totalLiquidity - BURNT_LIQUIDITY);
         liquidityToken.mint(address(0), BURNT_LIQUIDITY);
-        console2.log("issued tokens", totalLiquidity - BURNT_LIQUIDITY);
 
         pool.reserves = reserves;
         pool.totalLiquidity = totalLiquidity;
@@ -169,9 +168,10 @@ contract DFMM2 is IDFMM2 {
                 pools[poolId].reserves[i] -= deltas[i];
             }
         }
-        pools[poolId].totalLiquidity -= deltaLiquidity;
 
         _manageTokens(poolId, false, deltaLiquidity);
+        pools[poolId].totalLiquidity -= deltaLiquidity;
+
 
         for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
             if (pools[poolId].tokens[i] != address(0)) {
@@ -307,11 +307,6 @@ contract DFMM2 is IDFMM2 {
         LPToken liquidityToken = LPToken(pools[poolId].liquidityToken);
         uint256 totalSupply = liquidityToken.totalSupply();
         uint256 totalLiquidity = pools[poolId].totalLiquidity;
-        console2.log("total tokens", totalSupply);
-        console2.log("total liquidity", totalLiquidity);
-        console2.log(
-            "muldiv", deltaL.mulWadUp(totalSupply.divWadUp(totalLiquidity))
-        );
 
         if (isAllocate) {
             uint256 amount =

@@ -109,10 +109,6 @@ function computeInitialPoolDataFromPrices(
         abi.encode(reserves, L, params.weights, params.swapFee, params.controller);
 }
 
-function computeAllocationGivenNumeraire(
-  uint256 numeraireAmount,
-  NTokenGeometricMeanParams memory params
-) pure returns 
 /*
 /// @dev Finds the root of the swapConstant given the independent variable rX.
 function computeNextRy(
