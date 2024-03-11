@@ -6,6 +6,15 @@ import "solmate/tokens/ERC20.sol";
 import "src/interfaces/IStrategy2.sol";
 import "forge-std/console2.sol";
 import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import {
+  encodeFeeUpdate,
+  encodeWeightsUpdate,
+  encodeControllerUpdate,
+  computeInitialPoolData
+} from "src/NTokenGeometricMean/NTokenGeometricMeanUtils.sol";
+import {
+  computeAllocationDeltasGivenDeltaT
+} from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 
 contract NTokenGeometricMeanSolver {
     using FixedPointMathLib for uint256;
@@ -113,7 +122,7 @@ contract NTokenGeometricMeanSolver {
         pure
         returns (bytes memory data)
     {
-        return NTokenGeometricMeanLib.encodeFeeUpdate(swapFee);
+        return encodeFeeUpdate(swapFee);
     }
 
     function prepareWeightsUpdate(
@@ -121,7 +130,7 @@ contract NTokenGeometricMeanSolver {
         uint256 targetTimestamp
     ) public pure returns (bytes memory) {
         return
-            NTokenGeometricMeanLib.encodeWeightsUpdate(targetWeights, targetTimestamp);
+            encodeWeightsUpdate(targetWeights, targetTimestamp);
     }
 
     function prepareControllerUpdate(address controller)
@@ -129,7 +138,7 @@ contract NTokenGeometricMeanSolver {
         pure
         returns (bytes memory)
     {
-        return NTokenGeometricMeanLib.encodeControllerUpdate(controller);
+        return encodeControllerUpdate(controller);
     }
 
     function getReservesAndLiquidity(uint256 poolId)
@@ -152,13 +161,21 @@ contract NTokenGeometricMeanSolver {
         price = a.mulWadDown(b);
     }
 
-    function computeReserveAndLiquidityDeltasGivenDeltaT(
+    function getInitialPoolData(
+        uint256 numeraireAmount,
+        uint256[] memory prices,
+        NTokenGeometricMeanParams memory params
+    ) public pure returns (bytes memory) {
+      return computeInitialPoolData(numeraireAmount, prices, params);
+    }
+
+    function getAllocationDeltasGivenDeltaT(
         uint256 poolId,
         uint256 indexT,
         uint256 deltaT
     ) public view returns (uint256[] memory, uint256) {
         (uint256[] memory reserves, uint256 totalLiquidity) = getReservesAndLiquidity(poolId);
-        return computeAllocateDeltasGivenDeltaT(deltaT, indexT, reserves, totalLiquidity);
+        return computeAllocationDeltasGivenDeltaT(deltaT, indexT, reserves, totalLiquidity);
     }
 
     function getNextLiquidity(

@@ -6,6 +6,14 @@ import {
     NTokenGeometricMeanLib,
     FixedPointMathLib
 } from "./NTokenGeometricMeanLib.sol";
+import {
+  decodeFeeUpdate,
+  decodeWeightsUpdate,
+  decodeControllerUpdate
+} from "src/NTokenGeometricMean/NTokenGeometricMeanUtils.sol";
+import {
+  computeTradingFunction
+} from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
 import { IStrategy2, IDFMM2 } from "src/interfaces/IStrategy2.sol";
 
@@ -14,6 +22,13 @@ struct NTokenGeometricMeanParams {
     uint256[] weights;
     uint256 swapFee;
     address controller;
+}
+
+enum UpdateCode {
+    Invalid,
+    SwapFee,
+    Weights,
+    Controller
 }
 
 /**
@@ -98,10 +113,10 @@ contract NTokenGeometricMean is IStrategy2 {
         internalParams[poolId].swapFee = state.swapFee;
         internalParams[poolId].controller = state.controller;
 
-        int256 invariant = NTokenGeometricMeanLib.tradingFunction(
+        int256 invariant = tradingFunction(
             state.reserves,
             state.totalLiquidity,
-            abi.decode(getPoolParams(poolId), (NTokenGeometricMeanParams))
+            getPoolParams(poolId)
         );
 
         bool valid = -(EPSILON) < invariant && invariant < EPSILON;
@@ -116,19 +131,19 @@ contract NTokenGeometricMean is IStrategy2 {
         bytes calldata data
     ) external {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
-        NTokenGeometricMeanLib.GeometricMeanUpdateCode updateCode =
-            abi.decode(data, (NTokenGeometricMeanLib.GeometricMeanUpdateCode));
+        UpdateCode updateCode =
+            abi.decode(data, (UpdateCode));
 
         if (
-            updateCode == NTokenGeometricMeanLib.GeometricMeanUpdateCode.SwapFee
+            updateCode == UpdateCode.SwapFee
         ) {
             internalParams[poolId].swapFee =
-                NTokenGeometricMeanLib.decodeFeeUpdate(data);
+                decodeFeeUpdate(data);
         } else if (
-            updateCode == NTokenGeometricMeanLib.GeometricMeanUpdateCode.Weights
+            updateCode == UpdateCode.Weights
         ) {
             (uint256[] memory targetWeights, uint256 targetTimestamp) =
-                NTokenGeometricMeanLib.decodeWeightsUpdate(data);
+                decodeWeightsUpdate(data);
             if (targetWeights.length != internalParams[poolId].weights.length) {
                 revert InvalidWeightUpdateLength(
                     targetWeights.length, internalParams[poolId].weights.length
@@ -149,10 +164,10 @@ contract NTokenGeometricMean is IStrategy2 {
             }
         } else if (
             updateCode
-                == NTokenGeometricMeanLib.GeometricMeanUpdateCode.Controller
+                == UpdateCode.Controller
         ) {
             internalParams[poolId].controller =
-                NTokenGeometricMeanLib.decodeControllerUpdate(data);
+                decodeControllerUpdate(data);
         } else {
             revert InvalidUpdateCode();
         }
@@ -178,7 +193,7 @@ contract NTokenGeometricMean is IStrategy2 {
         uint256 totalLiquidity,
         bytes memory params
     ) public pure returns (int256) {
-        return NTokenGeometricMeanLib.tradingFunction(
+        return computeTradingFunction(
             reserves,
             totalLiquidity,
             abi.decode(params, (NTokenGeometricMeanParams))
