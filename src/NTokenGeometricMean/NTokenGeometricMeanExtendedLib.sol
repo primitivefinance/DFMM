@@ -33,15 +33,6 @@ function computeAllocateDeltasGivenDeltaT(
     return (reserveDeltas, deltaL);
 }
 
-function computeY(
-    uint256 amountA,
-    uint256 S,
-    uint256 wA,
-    uint256 wB
-) pure returns (uint256) {
-    return wB.divWadDown(wA).mulWadDown(S).mulWadDown(amountA);
-}
-
 function computeReserveFromNumeraire(
     uint256 amountNumeraire,
     uint256 S,

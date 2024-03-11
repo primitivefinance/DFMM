@@ -23,33 +23,6 @@ contract NTokenGeometricMeanSolver {
         strategy = _strategy;
     }
 
-    function computeInitialPoolData(
-        uint256 numeraireAmount,
-        uint256[] memory prices,
-        NTokenGeometricMeanParams memory params
-    ) public pure returns (bytes memory) {
-        uint256[] memory reserves = new uint256[](prices.length);
-        uint256 numerairePrice = prices[prices.length - 1];
-        uint256 numeraireWeight = params.weights[params.weights.length - 1];
-        for (uint256 i = 0; i < prices.length - 1; i++) {
-            // compute the amount of reserves for token T given numeraireAmount and weights wT and wNumeraire
-            uint256 amountT = computeReserveFromNumeraire(
-                numeraireAmount,
-                numerairePrice,
-                params.weights[i],
-                numeraireWeight
-            );
-            reserves[i] = amountT;
-        }
-        reserves[prices.length - 1] = ONE;
-
-        uint256 L = computeNextLiquidity(reserves, params);
-
-        return abi.encode(
-            reserves, L, params.weights, params.swapFee, params.controller
-        );
-    }
-
     function getPoolParams(uint256 poolId)
         public
         view
