@@ -2,8 +2,10 @@
 pragma solidity ^0.8.13;
 
 import "./SetUp.sol";
+import "solmate/utils/FixedPointMathLib.sol";
 
 contract G3MAllocateTest is G3MSetUp {
+    using FixedPointMathLib for uint256;
     function test_G3M_allocate_GivenX() public init {
         uint256 maxDeltaX = 0.1 ether;
 
@@ -38,7 +40,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256 maxDeltaY, uint256 deltaLiquidity) =
             solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
 
-        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
+        bytes memory data = abi.encode(maxDeltaX.mulDivUp(101, 100), maxDeltaY.mulDivUp(101, 100), deltaLiquidity);
         dfmm.allocate(POOL_ID, data);
         dfmm.allocate(POOL_ID, data);
     }

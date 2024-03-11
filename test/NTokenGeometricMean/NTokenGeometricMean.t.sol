@@ -268,19 +268,20 @@ contract NTokenGeometricMeanTest is Test {
         bytes memory data = abi.encode(maxDeltas, deltaL);
 
         (uint256[] memory preReserves, uint256 preL) = dfmm.getReservesAndLiquidity(poolId);
-        console2.log(preReserves[0]);
-        console2.log(preL);
 
         dfmm.allocate(poolId, data);
 
         (uint256[] memory postReserves, uint256 postL) = dfmm.getReservesAndLiquidity(poolId);
-        console2.log(postReserves[0]);
-        console2.log(postL);
     }
 
     function test_4_token_allocate_given_delta_t_non_uniform() public basic_70_10_10_10 {
         uint256 poolId = dfmm.nonce() - 1;
         (uint256[] memory dReserves, uint256 dLiquidity) = solver.getAllocationDeltasGivenDeltaT(poolId, 1, ONE);
+
+        console2.log(dReserves[0]);
+        console2.log(dReserves[1]);
+        console2.log(dReserves[2]);
+        console2.log(dReserves[3]);
 
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
