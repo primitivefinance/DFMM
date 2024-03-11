@@ -7,7 +7,13 @@ import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
 import { GeometricMeanLib, FixedPointMathLib } from "./GeometricMeanLib.sol";
 import { ONE } from "src/lib/StrategyLib.sol";
 
-import { GeometricMeanParams } from "./GeometricMean.sol";
+/// @dev Parameterization of the GeometricMean curve.
+struct GeometricMeanParams {
+    uint256 wX;
+    uint256 wY;
+    uint256 swapFee;
+    address controller;
+}
 
 /**
  * @notice Geometric Mean Market Maker.
@@ -149,7 +155,22 @@ contract GeometricMean2 is PairStrategy {
         );
     }
 
-    function _computeDeltasGivenDeltaL(
+    function _computeAllocateDeltasGivenDeltaL(
+        uint256 deltaLiquidity,
+        IDFMM2.Pool memory pool,
+        bytes memory
+    ) internal pure override returns (uint256[] memory deltas) {
+        deltas = new uint256[](2);
+        deltas[0] = pool.reserves[0].mulWadUp(
+            deltaLiquidity.divWadUp(pool.totalLiquidity)
+        );
+
+        deltas[1] = pool.reserves[1].mulWadUp(
+            deltaLiquidity.divWadUp(pool.totalLiquidity)
+        );
+    }
+
+    function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         IDFMM2.Pool memory pool,
         bytes memory
