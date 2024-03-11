@@ -6,114 +6,97 @@ The `GeometricMean` DFMM gives the LP a portfolio that consists of a value-weigh
 If we pick the weight of the $X$-token to be $0.80$ and $0.20$ for the $Y$-token, then the LP will have a portfolio that is 80% in $X$ and 20% $Y$ by value.
 
 ## Core
-We mark reserves as:
-- $x \equiv \mathtt{rX}$
-- $y \equiv \mathtt{rY}$
+We mark the vector reserves as:
+- $\boldsymbol{r} \in \R^n_+ \equiv \mathtt{reserves}$
 
-`GeometricMean` has two variable parameters:
-- $w_X \equiv \mathtt{wX}$ 
-- $w_Y \equiv \mathtt{wY}$ 
+`GeometricMean` also assigns weights to each of the reserves:
+- $\boldsymbol{w} \in [0,1]^n \equiv \mathtt{weights}$ 
 - These parameters must satisfy 
 $$
-w_x, w_y \geq 0 \\
-w_x+w_y=1 
+\sum_{i=0}^{n-1} w_i = 1
 $$
 
 The **trading function** is:
 $$
-\boxed{\varphi(x,y;w_X,w_Y) = \left(\frac{x}{L}\right)^{w_X} \left(\frac{y}{L}\right)^{w_Y} -1}
+\boxed{\varphi(\mathbf{r}, L;\mathbf{w}) = \prod_{i=0}^{n-1}\left(\frac{r_i}{L}\right)^{w_i} -1}
 $$
 where $L$ is the **liquidity** of the pool. 
 
 ## Price
-The reported price of the pool given the reseres is:
+The reported price of Token $i$ with respect to Token $j$is:
 $$
 \begin{equation}
-\boxed{P = \frac{w_X}{w_Y}\frac{y}{x}}
+\boxed{P_{ij} = \frac{w_i}{w_j}\frac{r_j}{r_i}}
+\end{equation}
+$$
+Note $P_{ij} \neq P_{ji}$ in general. 
+Furthermore, assuming that token $n-1$ is the numeraire, then we can just write the price of Token $i$ as:
+$$
+\begin{equation}
+P_i = \frac{w_i}{w_{n-1}}\frac{r_{n-1}}{r_i}
 \end{equation}
 $$
 
+
 ## Pool initialization
-We need to initalize a pool from a given price $S_0$ and an amount of a token $x_0$ or $y_0$. 
+To initalize a pool, we must first specify the initial reserves and the weights.
+Equivalently, and often more conveniently, we can specify the initial prices, the weights, and an amount of the numeraire token (Token $n-1$).
 
-
-### Given $x$ and price
-Using the price formula above in Eq. (1), we can solve for $y_0$: 
+### Given Reserves and Weights
+If we are given the reserves and the weights, then we can solve for the liquidity by:
 $$
-\boxed{y_0 = \frac{w_Y}{w_X}S_0 x_0}
-$$
-From here, we get:
-$$
-\boxed{L_0 = x_0^{w_X}y_0^{w_Y}}
+L = \prod_{i=0}^{n-1} r_i^{w_i}.
 $$
 
-### Given $y$ and price
-Again, using Eq. (1), we get:
+### Given Prices and Weights
+If we have $P_i$ for all $i$ (noting that $P_{n-1} = 1$ by definition), then we can solve for the amount of reserve $r_i$ by:
 $$
-\boxed{x_0 = \frac{w_X}{w_Y}\frac{1}{S_0}y_0}
+r_i = \frac{w_i}{w_{n-1}}\frac{r_{n-1}}{P_i},
 $$
-And again:
-$$
-\boxed{L_0 = x_0^{w_X}y_0^{w_Y}}
-$$
+since the user will also have to specify the amount of the numeraire token.
+We then compute $L$ as before.
 
 ## Swap 
 We require that the trading function remain invariant when a swap is applied, that is:
 $$
-\left(\frac{x+\Delta_X}{L + \Delta_L}\right)^{w_X} \left(\frac{y+\Delta_Y}{L + \Delta_L}\right)^{w_Y}-1 = 0
+\boxed{\varphi(\mathbf{r} + \mathbf{\Delta_r}, L + \Delta_L;\mathbf{w}) = \prod_{i=0}^{n-1}\left(\frac{r_i + \Delta_{r_i}}{L + \Delta_L}\right)^{w_i} -1}.
 $$
-where either $\Delta_X$ or $\Delta_Y$ is given by user input and the $\Delta_L$ comes from fees.
+In our case, we will deal with only single token input and single token output swaps.
+Also, the $\Delta_L \geq 0$ and, in particular, is greater than zero when there is a nonzero swap fee.
 
-In general, with a fee parameter $\gamma$, we have:
+In general, with a fee parameter $\gamma$, we have a change in $L$ when tendering $r_i$ given by:
 $$
-\Delta_L = \frac{1}{2}(1-\gamma) L \frac{\Delta_R}{R}
+\Delta_L = w_i(1-\gamma) L \frac{\Delta_{r_i}}{r_i}.
 $$
-where $R$ represents either token $X$ or $Y$.
 
-### Trade in $\Delta_X$ for $\Delta_Y$
+
+### Trade in $\Delta_{r_i}$ for $\Delta_{r_j}$
 If we want to trade in $\Delta_X$ for $\Delta_Y$, 
 we use our invariant equation and solve for $\Delta_Y$ in terms of $\Delta_X$ to get:
 $$
-\boxed{\Delta_Y = \left(\frac{L + \Delta_L}{(x+\Delta_X)^{w_X}} \right)^{\frac{1}{w_Y}} - y}
+\boxed{\Delta_{r_j} = \left(\frac{L + \Delta_L}{\displaystyle{\prod_{k \in \{0,\dots, n-1\} \setminus j}^{n-1} r_k^{w_k}}} \right)^{\frac{1}{w_X}} - r_j}
 $$
-
-### Trade in $\Delta_Y$ for $\Delta_X$
-If we want to trade in $\Delta_X$ for $\Delta_Y$, 
-we use our invariant equation and solve for $\Delta_Y$ in terms of $\Delta_X$ to get:
-$$
-\boxed{\Delta_X = \left(\frac{L + \Delta_L}{(y+\Delta_Y)^{w_Y}} \right)^{\frac{1}{w_X}} - y}
-$$
+This amount will be negative and the equation should be negated if you want a positive amount out.
 
 
 ## Allocations and Deallocations
-**Input $\delta_X$:** If a user wants to allocate a specific amount of $\delta_X$, then it must be that:
+**Input $\Delta_{r_i}$:** If a user wants to allocate a specific amount of Token $r_i$, then it must be that:
 $$
-\frac{x}{L} = \frac{x+\Delta_X}{L+\Delta_L}
+\frac{r_i}{L} = \frac{r_i+\Delta_{r_i}}{L+\Delta_L}
 $$
 which yields:
 $$
 \Delta_L = L \frac{\Delta_X}{x}
 $$
-Then it must be that since the ratio of reserves cannot change.
+Then it must be that since the ratio of reserves cannot change, so the amount that the other reserves change by is:
 $$
-\Delta_Y = y\frac{\Delta_X}{x} 
+\Delta_{r_j} = r_j\frac{\Delta_{r_i}}{r_i} 
 $$
 
-**Input $\Delta_Y$:** To allocate a specific amount of $\Delta_Y$, then it must be that:
-$$
-\frac{y}{\mu L} = \frac{y+\Delta_Y}{\mu(L+\Delta_L)}
-$$
-which yields:
-$$
-\Delta_L = L \frac{\Delta_Y}{y}
-$$
-and we likewise get
-$$
-\Delta_X = x\frac{\Delta_Y}{y}
-$$
 
 
 ## Value Function via $L$ and $S$
+To look at a value function, we will consider a pool with just a token $X$ and a numeraire $Y$.
 Given that we treat $Y$ as the numeraire, we know that the portfolio value of a pool when $X$ is at price $S$ is:
 $$
 V = Sx(S) + y(S)
@@ -129,3 +112,4 @@ $$
 \boxed{V(L,S)=LS^{w_X}\left(\left( \frac{w_X}{w_Y}\right)^{w_Y}+\left( \frac{w_Y}{w_X}\right)^{w_X}\right)}
 $$
 
+For pools with $n$-tokens, the value function for any pair $r_i$ and the numeraire $r_{n-1}$ is given as above.
