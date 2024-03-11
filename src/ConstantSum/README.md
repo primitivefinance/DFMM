@@ -15,7 +15,7 @@ We mark reserves as:
 
 The **trading function** is:
 $$
-\boxed{\varphi(x,y,L;P) = \frac{x}{L} + \frac{y}{LP} -1}
+\boxed{\varphi(x,y,L;P) =P \frac{x}{L} + \frac{y}{L} -1}
 $$
 where $L$ is the **liquidity** of the pool. 
 
@@ -26,13 +26,13 @@ The reported price of the pool given the reseres is $P$.
 The `ConstantSum` pool can be initialized with any given price and any given value of reserves. 
 A user may supply $(x_0,y_0,P)$, then we find that:
 $$
-L_0 = x_0 + \frac{y_0}{P}
+L_0 = Px_0 + y_0
 $$
 
 ## Swap 
 We require that the trading function remain invariant when a swap is applied, that is:
 $$
-\frac{x+\Delta_X}{L + \Delta_L} + \frac{y+\Delta_Y}{P(L + \Delta_L)}-1 = 0
+P\frac{x+\Delta_X}{L + \Delta_L} + \frac{y+\Delta_Y}{L + \Delta_L}-1 = 0
 $$
 where either $\Delta_X$ or $\Delta_Y$ is given by user input and the $\Delta_L$ comes from fees.
 
@@ -63,7 +63,7 @@ Allocations and deallocations should not change the price of a pool and since th
 We need only compute the new $L$.
 Specifically:
 $$
-\Delta_L = \Delta_X + \frac{\Delta_Y}{P}
+\Delta_L = P\Delta_X + \Delta_Y
 $$
 
 
