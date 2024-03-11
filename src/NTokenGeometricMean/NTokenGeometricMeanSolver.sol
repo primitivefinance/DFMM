@@ -4,17 +4,18 @@ pragma solidity ^0.8.13;
 import "solmate/tokens/ERC20.sol";
 import "src/interfaces/IStrategy2.sol";
 import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
-import { NTokenGeometricMeanParams } from "src/NTokenGeometricMean/NTokenGeometricMean.sol";
+import { NTokenGeometricMeanParams } from
+    "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 import {
-  encodeFeeUpdate,
-  encodeWeightsUpdate,
-  encodeControllerUpdate,
-  computeInitialPoolData
+    encodeFeeUpdate,
+    encodeWeightsUpdate,
+    encodeControllerUpdate,
+    computeInitialPoolData
 } from "src/NTokenGeometricMean/NTokenGeometricMeanUtils.sol";
 import {
-  computeAllocationDeltasGivenDeltaT,
-  computeDeallocationDeltasGivenDeltaT,
-  computeNextLiquidity
+    computeAllocationDeltasGivenDeltaT,
+    computeDeallocationDeltasGivenDeltaT,
+    computeNextLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
@@ -50,9 +51,9 @@ contract NTokenGeometricMeanSolver {
         view
         returns (uint256[] memory, uint256)
     {
-        return IDFMM2(IStrategy2(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        return
+            IDFMM2(IStrategy2(strategy).dfmm()).getReservesAndLiquidity(poolId);
     }
-
 
     struct SimulateSwapState {
         uint256 amountIn;
@@ -127,7 +128,6 @@ contract NTokenGeometricMeanSolver {
         return (valid, state.amountOut, swapData);
     }
 
-
     function prepareFeeUpdate(uint256 swapFee)
         public
         pure
@@ -140,8 +140,7 @@ contract NTokenGeometricMeanSolver {
         uint256[] calldata targetWeights,
         uint256 targetTimestamp
     ) public pure returns (bytes memory) {
-        return
-            encodeWeightsUpdate(targetWeights, targetTimestamp);
+        return encodeWeightsUpdate(targetWeights, targetTimestamp);
     }
 
     function prepareControllerUpdate(address controller)
@@ -158,7 +157,6 @@ contract NTokenGeometricMeanSolver {
         uint256 wT,
         uint256 wNumeraire
     ) public pure returns (uint256 price) {
-        
         uint256 a = wT.divWadDown(wNumeraire);
         uint256 b = rNumeraire.divWadDown(rT);
         price = a.mulWadDown(b);
@@ -169,7 +167,7 @@ contract NTokenGeometricMeanSolver {
         uint256[] memory prices,
         NTokenGeometricMeanParams memory params
     ) public pure returns (bytes memory) {
-      return computeInitialPoolData(numeraireAmount, prices, params);
+        return computeInitialPoolData(numeraireAmount, prices, params);
     }
 
     function getAllocationDeltasGivenDeltaT(
@@ -177,8 +175,11 @@ contract NTokenGeometricMeanSolver {
         uint256 indexT,
         uint256 deltaT
     ) public view returns (uint256[] memory, uint256) {
-        (uint256[] memory reserves, uint256 totalLiquidity) = getReservesAndLiquidity(poolId);
-        return computeAllocationDeltasGivenDeltaT(deltaT, indexT, reserves, totalLiquidity);
+        (uint256[] memory reserves, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        return computeAllocationDeltasGivenDeltaT(
+            deltaT, indexT, reserves, totalLiquidity
+        );
     }
 
     function getDeallocationDeltasGivenDeltaT(
@@ -186,17 +187,15 @@ contract NTokenGeometricMeanSolver {
         uint256 indexT,
         uint256 deltaT
     ) public view returns (uint256[] memory, uint256) {
-        (uint256[] memory reserves, uint256 totalLiquidity) = getReservesAndLiquidity(poolId);
-        return computeDeallocationDeltasGivenDeltaT(deltaT, indexT, reserves, totalLiquidity);
+        (uint256[] memory reserves, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        return computeDeallocationDeltasGivenDeltaT(
+            deltaT, indexT, reserves, totalLiquidity
+        );
     }
 
-
-    function getNextLiquidity(
-        uint256 poolId
-    ) public view returns (uint256) {
+    function getNextLiquidity(uint256 poolId) public view returns (uint256) {
         (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
-        return computeNextLiquidity(
-            reserves, getPoolParams(poolId)
-        );
+        return computeNextLiquidity(reserves, getPoolParams(poolId));
     }
 }

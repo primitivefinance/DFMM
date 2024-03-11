@@ -44,7 +44,10 @@ abstract contract NTokenStrategy is IStrategy2 {
             abi.decode(data, (uint256[], uint256));
 
         deltaLiquidity = deltaL;
-        (uint256[] memory deltas, uint256[] memory nextReserves) = _computeAllocateDeltasAndReservesGivenDeltaL(deltaLiquidity, maxTokenDeltas, pool);
+        (uint256[] memory deltas, uint256[] memory nextReserves) =
+        _computeAllocateDeltasAndReservesGivenDeltaL(
+            deltaLiquidity, maxTokenDeltas, pool
+        );
         tokenDeltas = deltas;
 
         invariant = tradingFunction(
@@ -77,7 +80,10 @@ abstract contract NTokenStrategy is IStrategy2 {
             abi.decode(data, (uint256[], uint256));
 
         deltaLiquidity = deltaL;
-        (uint256[] memory deltas, uint256[] memory nextReserves) = _computeDeallocateDeltasAndReservesGivenDeltaL(deltaLiquidity, minTokenDeltas, pool);
+        (uint256[] memory deltas, uint256[] memory nextReserves) =
+        _computeDeallocateDeltasAndReservesGivenDeltaL(
+            deltaLiquidity, minTokenDeltas, pool
+        );
         tokenDeltas = deltas;
 
         invariant = tradingFunction(
@@ -88,7 +94,6 @@ abstract contract NTokenStrategy is IStrategy2 {
 
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
-
 
     function validateSwap(
         address,
@@ -116,7 +121,9 @@ abstract contract NTokenStrategy is IStrategy2 {
         pool.reserves[tokenOutIndex] -= amountOut;
 
         invariant = tradingFunction(
-            pool.reserves, pool.totalLiquidity + deltaLiquidity, getPoolParams(poolId)
+            pool.reserves,
+            pool.totalLiquidity + deltaLiquidity,
+            getPoolParams(poolId)
         );
 
         valid = -(EPSILON) < invariant && invariant < EPSILON;
@@ -135,14 +142,22 @@ abstract contract NTokenStrategy is IStrategy2 {
     ) public view virtual returns (int256);
 
     function _computeAllocateDeltasAndReservesGivenDeltaL(
-      uint256 deltaLiquidity,
-      uint256[] memory maxDeltas,
-      IDFMM2.Pool memory pool
-    ) internal view virtual returns (uint256[] memory deltas, uint256[] memory nextReserves) ;
+        uint256 deltaLiquidity,
+        uint256[] memory maxDeltas,
+        IDFMM2.Pool memory pool
+    )
+        internal
+        view
+        virtual
+        returns (uint256[] memory deltas, uint256[] memory nextReserves);
 
     function _computeDeallocateDeltasAndReservesGivenDeltaL(
-      uint256 deltaLiquidity,
-      uint256[] memory minDeltas,
-      IDFMM2.Pool memory pool
-    ) internal view virtual returns (uint256[] memory deltas, uint256[] memory nextReserves);
+        uint256 deltaLiquidity,
+        uint256[] memory minDeltas,
+        IDFMM2.Pool memory pool
+    )
+        internal
+        view
+        virtual
+        returns (uint256[] memory deltas, uint256[] memory nextReserves);
 }

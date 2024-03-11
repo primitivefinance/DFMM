@@ -105,8 +105,10 @@ contract GeometricMeanSolver {
         uint256 poolId,
         uint256 deltaX
     ) public view returns (uint256, uint256) {
-        (uint256 rX, uint256 rY, uint256 totalLiquidity) = getReservesAndLiquidity(poolId);
-        (uint256 deltaY, uint256 deltaLiquidity) = computeAllocationGivenDeltaX(deltaX, rX, rY, totalLiquidity);
+        (uint256 rX, uint256 rY, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        (uint256 deltaY, uint256 deltaLiquidity) =
+            computeAllocationGivenDeltaX(deltaX, rX, rY, totalLiquidity);
         return (deltaY, deltaLiquidity);
     }
 
@@ -114,26 +116,32 @@ contract GeometricMeanSolver {
         uint256 poolId,
         uint256 deltaY
     ) public view returns (uint256, uint256) {
-        (uint256 rX, uint256 rY, uint256 totalLiquidity) = getReservesAndLiquidity(poolId);
-        (uint256 deltaX, uint256 deltaLiquidity) = computeAllocationGivenDeltaY(deltaY, rX, rY, totalLiquidity);
+        (uint256 rX, uint256 rY, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        (uint256 deltaX, uint256 deltaLiquidity) =
+            computeAllocationGivenDeltaY(deltaY, rX, rY, totalLiquidity);
         return (deltaX, deltaLiquidity);
     }
 
     function deallocateGivenDeltaX(
         uint256 poolId,
-        uint256 deltaX 
+        uint256 deltaX
     ) public view returns (uint256, uint256) {
-        (uint256 rX, uint256 rY, uint256 totalLiquidity) = getReservesAndLiquidity(poolId);
-        (uint256 deltaY, uint256 deltaLiquidity) = computeDeallocationGivenDeltaX(deltaX, rX, rY, totalLiquidity);
+        (uint256 rX, uint256 rY, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        (uint256 deltaY, uint256 deltaLiquidity) =
+            computeDeallocationGivenDeltaX(deltaX, rX, rY, totalLiquidity);
         return (deltaY, deltaLiquidity);
     }
 
     function deallocateGivenDeltaY(
         uint256 poolId,
-        uint256 deltaY 
+        uint256 deltaY
     ) public view returns (uint256, uint256) {
-        (uint256 rX, uint256 rY, uint256 totalLiquidity) = getReservesAndLiquidity(poolId);
-        (uint256 deltaX, uint256 deltaLiquidity) = computeDeallocationGivenDeltaY(deltaY, rX, rY, totalLiquidity);
+        (uint256 rX, uint256 rY, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        (uint256 deltaX, uint256 deltaLiquidity) =
+            computeDeallocationGivenDeltaY(deltaY, rX, rY, totalLiquidity);
         return (deltaX, deltaLiquidity);
     }
 
@@ -160,7 +168,6 @@ contract GeometricMeanSolver {
     ) public view returns (uint256) {
         return computeNextRy(rx, L, getPoolParams(poolId));
     }
-
 
     struct SimulateSwapState {
         uint256 amountIn;
@@ -189,11 +196,11 @@ contract GeometricMeanSolver {
         state.inReserve = pool.reserves[tokenInIndex];
         state.outReserve = pool.reserves[tokenOutIndex];
         if (tokenInIndex == 0) {
-          state.inWeight = params.wX;
-          state.outWeight = params.wY;
+            state.inWeight = params.wX;
+            state.outWeight = params.wY;
         } else {
-          state.inWeight = params.wY;
-          state.outWeight = params.wX;
+            state.inWeight = params.wY;
+            state.outWeight = params.wX;
         }
 
         state.fees = amountIn.mulWadUp(params.swapFee);

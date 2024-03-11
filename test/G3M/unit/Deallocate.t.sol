@@ -7,9 +7,10 @@ import "forge-std/console2.sol";
 
 contract G3MDeallocateTest is G3MSetUp {
     using FixedPointMathLib for uint256;
+
     function test_G3M_deallocate_GivenX_DecreasesTotalLiquidity() public init {
         uint256 minDeltaX = 0.1 ether;
-        (uint256 deltaY,uint256 deltaLiquidity) =
+        (uint256 deltaY, uint256 deltaLiquidity) =
             solver.deallocateGivenDeltaX(POOL_ID, minDeltaX);
         console2.log(deltaY);
         console2.log(deltaLiquidity);

@@ -2,7 +2,8 @@
 pragma solidity ^0.8.13;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
-import { NTokenGeometricMeanParams } from "src/NTokenGeometricMean/NTokenGeometricMean.sol";
+import { NTokenGeometricMeanParams } from
+    "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 
 uint256 constant ONE = 1 ether;
 
@@ -17,9 +18,7 @@ function computeTradingFunction(
     uint256 accumulator = ONE;
     for (uint256 i = 0; i < reserves.length; i++) {
         uint256 a = uint256(
-            int256(reserves[i].divWadDown(L)).powWad(
-                int256(params.weights[i])
-            )
+            int256(reserves[i].divWadDown(L)).powWad(int256(params.weights[i]))
         );
         accumulator.mulWadUp(a);
     }
@@ -81,9 +80,9 @@ function computeAllocationDeltasGivenDeltaT(
     uint256[] memory reserveDeltas = new uint256[](reserves.length);
     reserveDeltas[indexT] = deltaT;
     for (uint256 i = 0; i < reserves.length; i++) {
-      if (i != indexT) {
-        reserveDeltas[i] = a.mulWadUp(reserves[i]);
-      }
+        if (i != indexT) {
+            reserveDeltas[i] = a.mulWadUp(reserves[i]);
+        }
     }
 
     uint256 deltaL = a.mulWadUp(totalLiquidity);
@@ -101,16 +100,15 @@ function computeDeallocationDeltasGivenDeltaT(
     uint256[] memory reserveDeltas = new uint256[](reserves.length);
     reserveDeltas[indexT] = deltaT;
     for (uint256 i = 0; i < reserves.length; i++) {
-      if (i != indexT) {
-        reserveDeltas[i] = a.mulWadDown(reserves[i]);
-      }
+        if (i != indexT) {
+            reserveDeltas[i] = a.mulWadDown(reserves[i]);
+        }
     }
 
     uint256 deltaL = a.mulWadDown(totalLiquidity);
 
     return (reserveDeltas, deltaL);
 }
-
 
 /// @dev Finds the root of the swapConstant given the independent variable liquidity.
 function computeNextLiquidity(
@@ -129,4 +127,3 @@ function computeNextLiquidity(
     }
     return accumulator;
 }
-

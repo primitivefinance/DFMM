@@ -4,14 +4,14 @@ pragma solidity ^0.8.13;
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
 import { NTokenStrategy, IStrategy2, IDFMM2 } from "src/NTokenStrategy.sol";
 import {
-  decodeFeeUpdate,
-  decodeWeightsUpdate,
-  decodeControllerUpdate
+    decodeFeeUpdate,
+    decodeWeightsUpdate,
+    decodeControllerUpdate
 } from "src/NTokenGeometricMean/NTokenGeometricMeanUtils.sol";
 import {
-  computeTradingFunction,
-  computeDeltaGivenDeltaLRoundUp,
-  computeDeltaGivenDeltaLRoundDown
+    computeTradingFunction,
+    computeDeltaGivenDeltaLRoundUp,
+    computeDeltaGivenDeltaLRoundDown
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
 
@@ -107,9 +107,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         internalParams[poolId].controller = state.controller;
 
         int256 invariant = tradingFunction(
-            state.reserves,
-            state.totalLiquidity,
-            getPoolParams(poolId)
+            state.reserves, state.totalLiquidity, getPoolParams(poolId)
         );
 
         bool valid = -(EPSILON) < invariant && invariant < EPSILON;
@@ -124,17 +122,11 @@ contract NTokenGeometricMean is NTokenStrategy {
         bytes calldata data
     ) external {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
-        UpdateCode updateCode =
-            abi.decode(data, (UpdateCode));
+        UpdateCode updateCode = abi.decode(data, (UpdateCode));
 
-        if (
-            updateCode == UpdateCode.SwapFee
-        ) {
-            internalParams[poolId].swapFee =
-                decodeFeeUpdate(data);
-        } else if (
-            updateCode == UpdateCode.Weights
-        ) {
+        if (updateCode == UpdateCode.SwapFee) {
+            internalParams[poolId].swapFee = decodeFeeUpdate(data);
+        } else if (updateCode == UpdateCode.Weights) {
             (uint256[] memory targetWeights, uint256 targetTimestamp) =
                 decodeWeightsUpdate(data);
             if (targetWeights.length != internalParams[poolId].weights.length) {
@@ -155,18 +147,19 @@ contract NTokenGeometricMean is NTokenStrategy {
                     targetWeights[i], targetTimestamp
                 );
             }
-        } else if (
-            updateCode
-                == UpdateCode.Controller
-        ) {
-            internalParams[poolId].controller =
-                decodeControllerUpdate(data);
+        } else if (updateCode == UpdateCode.Controller) {
+            internalParams[poolId].controller = decodeControllerUpdate(data);
         } else {
             revert InvalidUpdateCode();
         }
     }
 
-    function getPoolParams(uint256 poolId) public view override returns (bytes memory) {
+    function getPoolParams(uint256 poolId)
+        public
+        view
+        override
+        returns (bytes memory)
+    {
         NTokenGeometricMeanParams memory params;
 
         params.weights = new uint256[](internalParams[poolId].weights.length);
@@ -194,40 +187,50 @@ contract NTokenGeometricMean is NTokenStrategy {
     }
 
     function _computeAllocateDeltasAndReservesGivenDeltaL(
-      uint256 deltaLiquidity,
-      uint256[] memory maxDeltas,
-      IDFMM2.Pool memory pool
-    ) internal pure override returns (uint256[] memory deltas, uint256[] memory nextReserves) {
-      deltas = new uint256[](pool.reserves.length);
-      nextReserves = new uint256[](pool.reserves.length);
-      for (uint256 i = 0; i < pool.reserves.length; i++) {
-        uint256 reserveT = pool.reserves[i];
-        deltas[i] = computeDeltaGivenDeltaLRoundUp(
-          pool.reserves[i], deltaLiquidity, pool.totalLiquidity
-        );
-        if (deltas[i] > maxDeltas[i]) {
-          revert DeltaError(maxDeltas[i], deltas[i]);
+        uint256 deltaLiquidity,
+        uint256[] memory maxDeltas,
+        IDFMM2.Pool memory pool
+    )
+        internal
+        pure
+        override
+        returns (uint256[] memory deltas, uint256[] memory nextReserves)
+    {
+        deltas = new uint256[](pool.reserves.length);
+        nextReserves = new uint256[](pool.reserves.length);
+        for (uint256 i = 0; i < pool.reserves.length; i++) {
+            uint256 reserveT = pool.reserves[i];
+            deltas[i] = computeDeltaGivenDeltaLRoundUp(
+                pool.reserves[i], deltaLiquidity, pool.totalLiquidity
+            );
+            if (deltas[i] > maxDeltas[i]) {
+                revert DeltaError(maxDeltas[i], deltas[i]);
+            }
+            nextReserves[i] = reserveT + deltas[i];
         }
-        nextReserves[i] = reserveT + deltas[i];
-      }
     }
 
     function _computeDeallocateDeltasAndReservesGivenDeltaL(
-      uint256 deltaLiquidity,
-      uint256[] memory minDeltas,
-      IDFMM2.Pool memory pool
-    ) internal pure override returns (uint256[] memory deltas, uint256[] memory nextReserves) {
-      deltas = new uint256[](pool.reserves.length);
-      nextReserves = new uint256[](pool.reserves.length);
-      for (uint256 i = 0; i < pool.reserves.length; i++) {
-        uint256 reserveT = pool.reserves[i];
-        deltas[i] = computeDeltaGivenDeltaLRoundDown(
-          reserveT, deltaLiquidity, pool.totalLiquidity
-        );
-        if (minDeltas[i] > deltas[i]) {
-          revert DeltaError(minDeltas[i], deltas[i]);
+        uint256 deltaLiquidity,
+        uint256[] memory minDeltas,
+        IDFMM2.Pool memory pool
+    )
+        internal
+        pure
+        override
+        returns (uint256[] memory deltas, uint256[] memory nextReserves)
+    {
+        deltas = new uint256[](pool.reserves.length);
+        nextReserves = new uint256[](pool.reserves.length);
+        for (uint256 i = 0; i < pool.reserves.length; i++) {
+            uint256 reserveT = pool.reserves[i];
+            deltas[i] = computeDeltaGivenDeltaLRoundDown(
+                reserveT, deltaLiquidity, pool.totalLiquidity
+            );
+            if (minDeltas[i] > deltas[i]) {
+                revert DeltaError(minDeltas[i], deltas[i]);
+            }
+            nextReserves[i] = reserveT - deltas[i];
         }
-        nextReserves[i] = reserveT - deltas[i];
-      }
     }
 }

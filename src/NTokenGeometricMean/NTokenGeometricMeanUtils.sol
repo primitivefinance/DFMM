@@ -12,21 +12,12 @@ import {
     computeNextLiquidity
 } from "./NTokenGeometricMeanMath.sol";
 
-
-
-function encodeFeeUpdate(uint256 swapFee)
-    pure
-    returns (bytes memory)
-{
+function encodeFeeUpdate(uint256 swapFee) pure returns (bytes memory) {
     return abi.encode(UpdateCode.SwapFee, uint256(swapFee));
 }
 
-function decodeFeeUpdate(bytes memory data)
-    pure
-    returns (uint256)
-{
-    (, uint256 swapFee) =
-        abi.decode(data, (UpdateCode, uint256));
+function decodeFeeUpdate(bytes memory data) pure returns (uint256) {
+    (, uint256 swapFee) = abi.decode(data, (UpdateCode, uint256));
     return swapFee;
 }
 
@@ -34,9 +25,7 @@ function encodeWeightsUpdate(
     uint256[] calldata targetWeights,
     uint256 targetTimestamp
 ) pure returns (bytes memory data) {
-    return abi.encode(
-        UpdateCode.Weights, targetWeights, targetTimestamp
-    );
+    return abi.encode(UpdateCode.Weights, targetWeights, targetTimestamp);
 }
 
 function decodeWeightsUpdate(bytes memory data)
@@ -72,10 +61,7 @@ function computeInitialPoolData(
     for (uint256 i = 0; i < prices.length - 1; i++) {
         // compute the amount of reserves for token T given numeraireAmount and weights wT and wNumeraire
         uint256 amountT = computeReserveFromNumeraire(
-            numeraireAmount,
-            numerairePrice,
-            params.weights[i],
-            numeraireWeight
+            numeraireAmount, numerairePrice, params.weights[i], numeraireWeight
         );
         reserves[i] = amountT;
     }
@@ -87,5 +73,3 @@ function computeInitialPoolData(
         reserves, L, params.weights, params.swapFee, params.controller
     );
 }
-
-
