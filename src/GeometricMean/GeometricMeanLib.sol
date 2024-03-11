@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "./GeometricMean.sol";
-import "../lib/StrategyLib.sol";
-import "solmate/utils/FixedPointMathLib.sol";
+import "./GeometricMean2.sol";
 
 library GeometricMeanLib {
     using FixedPointMathLib for uint256;
