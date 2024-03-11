@@ -77,6 +77,26 @@ function computeAllocationDeltasGivenDeltaT(
     uint256[] memory reserves,
     uint256 totalLiquidity
 ) pure returns (uint256[] memory, uint256) {
+    uint256 a = deltaT.divWadUp(reserves[indexT]);
+    uint256[] memory reserveDeltas = new uint256[](reserves.length);
+    reserveDeltas[indexT] = deltaT;
+    for (uint256 i = 0; i < reserves.length; i++) {
+      if (i != indexT) {
+        reserveDeltas[i] = a.mulWadUp(reserves[i]);
+      }
+    }
+
+    uint256 deltaL = a.mulWadUp(totalLiquidity);
+
+    return (reserveDeltas, deltaL);
+}
+
+function computeDeallocationDeltasGivenDeltaT(
+    uint256 deltaT,
+    uint256 indexT,
+    uint256[] memory reserves,
+    uint256 totalLiquidity
+) pure returns (uint256[] memory, uint256) {
     uint256 a = deltaT.divWadDown(reserves[indexT]);
     uint256[] memory reserveDeltas = new uint256[](reserves.length);
     reserveDeltas[indexT] = deltaT;
@@ -109,5 +129,4 @@ function computeNextLiquidity(
     }
     return accumulator;
 }
-
 

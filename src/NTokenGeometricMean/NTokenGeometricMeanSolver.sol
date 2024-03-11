@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "./NTokenGeometricMeanExtendedLib.sol";
 import "solmate/tokens/ERC20.sol";
 import "src/interfaces/IStrategy2.sol";
-import "forge-std/console2.sol";
 import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import { NTokenGeometricMeanParams } from "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 import {
   encodeFeeUpdate,
   encodeWeightsUpdate,
@@ -13,8 +12,10 @@ import {
   computeInitialPoolData
 } from "src/NTokenGeometricMean/NTokenGeometricMeanUtils.sol";
 import {
-  computeAllocationDeltasGivenDeltaT
+  computeAllocationDeltasGivenDeltaT,
+  computeNextLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 contract NTokenGeometricMeanSolver {
     using FixedPointMathLib for uint256;
@@ -76,7 +77,7 @@ contract NTokenGeometricMeanSolver {
             .mulWadUp(state.fees).mulWadUp(state.inWeight);
         {
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
-            uint256 accumulator = ONE;
+            uint256 accumulator = FixedPointMathLib.WAD;
             for (uint256 i = 0; i < pool.reserves.length; i++) {
                 if (i != tokenOutIndex && i != tokenInIndex) {
                     uint256 di = uint256(
@@ -94,7 +95,7 @@ contract NTokenGeometricMeanSolver {
             );
             uint256 a = uint256(
                 int256(n.divWadUp(d.mulWadUp(accumulator))).powWad(
-                    int256(ONE.divWadUp(state.outWeight))
+                    int256(FixedPointMathLib.WAD.divWadUp(state.outWeight))
                 )
             );
 
@@ -182,7 +183,7 @@ contract NTokenGeometricMeanSolver {
         uint256 poolId
     ) public view returns (uint256) {
         (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
-        return NTokenGeometricMeanLib.computeNextLiquidity(
+        return computeNextLiquidity(
             reserves, getPoolParams(poolId)
         );
     }

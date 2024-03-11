@@ -3,16 +3,14 @@ pragma solidity ^0.8.13;
 
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
 import {
-    NTokenGeometricMeanLib,
-    FixedPointMathLib
-} from "./NTokenGeometricMeanLib.sol";
-import {
   decodeFeeUpdate,
   decodeWeightsUpdate,
   decodeControllerUpdate
 } from "src/NTokenGeometricMean/NTokenGeometricMeanUtils.sol";
 import {
-  computeTradingFunction
+  computeTradingFunction,
+  computeDeltaGivenDeltaLRoundUp,
+  computeDeltaGivenDeltaLRoundDown
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
 import { IStrategy2, IDFMM2 } from "src/interfaces/IStrategy2.sol";
@@ -35,8 +33,6 @@ enum UpdateCode {
  * @notice N-Token Geometric Mean Market Maker.
  */
 contract NTokenGeometricMean is IStrategy2 {
-    using FixedPointMathLib for uint256;
-    using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
 
     struct InternalParams {
@@ -200,19 +196,6 @@ contract NTokenGeometricMean is IStrategy2 {
         );
     }
 
-    function computeAllocationGivenNumeraire(
-        bool add,
-        uint256 amountNumeraire,
-        uint256[] calldata reserves,
-        uint256 L
-    ) public pure returns (uint256 nextRNumeraire, uint256 nextL) {
-        uint256 rNumeraire = reserves[reserves.length - 1];
-        uint256 liquidityPerRNumeraire = L.divWadUp(rNumeraire);
-        uint256 deltaL = amountNumeraire.mulWadUp(liquidityPerRNumeraire);
-        nextRNumeraire =
-            add ? rNumeraire + amountNumeraire : rNumeraire - amountNumeraire;
-        nextL = add ? L + deltaL : L - deltaL;
-    }
 
     function validateAllocate(
         address,
@@ -233,23 +216,9 @@ contract NTokenGeometricMean is IStrategy2 {
         (uint256[] memory maxTokenDeltas, uint256 deltaL) =
             abi.decode(data, (uint256[], uint256));
 
-        // TODO: This is a small trick because `deltaLiquidity` cannot be used
-        // directly, let's fix this later.
-        uint256[] memory nextReserves = new uint256[](pool.reserves.length);
-        tokenDeltas = new uint256[](pool.reserves.length);
         deltaLiquidity = deltaL;
-        for (uint256 i = 0; i < pool.reserves.length; i++) {
-            uint256 deltaT = pool.reserves[i].mulWadDown(
-                deltaLiquidity.divWadDown(pool.totalLiquidity)
-            );
-            if (deltaT > maxTokenDeltas[i]) {
-                revert DeltaError(maxTokenDeltas[i], deltaT);
-            }
-            nextReserves[i] = pool.reserves[i] + deltaT;
-            tokenDeltas[i] = deltaT;
-        }
-
-        uint256 poolId = poolId;
+        (uint256[] memory deltas, uint256[] memory nextReserves) = _computeAllocateDeltasAndReservesGivenDeltaL(deltaLiquidity, maxTokenDeltas, pool);
+        tokenDeltas = deltas;
 
         invariant = tradingFunction(
             nextReserves,
@@ -279,21 +248,9 @@ contract NTokenGeometricMean is IStrategy2 {
         (uint256[] memory minTokenDeltas, uint256 deltaL) =
             abi.decode(data, (uint256[], uint256));
 
-        uint256[] memory nextReserves = new uint256[](pool.reserves.length);
-        tokenDeltas = new uint256[](pool.reserves.length);
         deltaLiquidity = deltaL;
-        for (uint256 i = 0; i < pool.reserves.length; i++) {
-            uint256 deltaT = pool.reserves[i].mulWadDown(
-                deltaLiquidity.divWadDown(pool.totalLiquidity)
-            );
-            if (deltaT < minTokenDeltas[i]) {
-                revert DeltaError(minTokenDeltas[i], deltaT);
-            }
-            nextReserves[i] = pool.reserves[i] - deltaT;
-            tokenDeltas[i] = deltaT;
-        }
-
-        uint256 poolId = poolId;
+        (uint256[] memory deltas, uint256[] memory nextReserves) = _computeDeallocateDeltasAndReservesGivenDeltaL(deltaLiquidity, minTokenDeltas, pool);
+        tokenDeltas = deltas;
 
         invariant = tradingFunction(
             nextReserves,
@@ -338,13 +295,41 @@ contract NTokenGeometricMean is IStrategy2 {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
-    function _computeDeltaTokenGivenDeltaL(
-        uint256 deltaLiquidity,
-        uint256 reserve,
-        IDFMM2.Pool calldata pool,
-        bytes memory
-    ) internal pure returns (uint256) {
-        return
-            reserve.mulWadDown(deltaLiquidity.divWadDown(pool.totalLiquidity));
+    function _computeAllocateDeltasAndReservesGivenDeltaL(
+      uint256 deltaLiquidity,
+      uint256[] memory maxDeltas,
+      IDFMM2.Pool memory pool
+    ) internal pure returns (uint256[] memory deltas, uint256[] memory nextReserves) {
+      deltas = new uint256[](pool.reserves.length);
+      nextReserves = new uint256[](pool.reserves.length);
+      for (uint256 i = 0; i < pool.reserves.length; i++) {
+        uint256 reserveT = pool.reserves[i];
+        deltas[i] = computeDeltaGivenDeltaLRoundUp(
+          pool.reserves[i], deltaLiquidity, pool.totalLiquidity
+        );
+        if (deltas[i] > maxDeltas[i]) {
+          revert DeltaError(maxDeltas[i], deltas[i]);
+        }
+        nextReserves[i] = reserveT + deltas[i];
+      }
+    }
+
+    function _computeDeallocateDeltasAndReservesGivenDeltaL(
+      uint256 deltaLiquidity,
+      uint256[] memory minDeltas,
+      IDFMM2.Pool memory pool
+    ) internal pure returns (uint256[] memory deltas, uint256[] memory nextReserves) {
+      deltas = new uint256[](pool.reserves.length);
+      nextReserves = new uint256[](pool.reserves.length);
+      for (uint256 i = 0; i < pool.reserves.length; i++) {
+        uint256 reserveT = pool.reserves[i];
+        deltas[i] = computeDeltaGivenDeltaLRoundDown(
+          reserveT, deltaLiquidity, pool.totalLiquidity
+        );
+        if (minDeltas[i] > deltas[i]) {
+          revert DeltaError(minDeltas[i], deltas[i]);
+        }
+        nextReserves[i] = reserveT - deltas[i];
+      }
     }
 }
