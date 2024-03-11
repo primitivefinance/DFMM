@@ -5,6 +5,7 @@ import { console } from "forge-std/console.sol";
 import { ConstantSumSetUp } from "./SetUp.sol";
 
 contract ConstantSumAllocateTest is ConstantSumSetUp {
+  /*
     function test_ConstantSum_allocate_Works() public defaultPool {
         uint256 deltaX = 0.1 ether;
         uint256 deltaY = 0.1 ether;
@@ -12,4 +13,5 @@ contract ConstantSumAllocateTest is ConstantSumSetUp {
             solver.simulateAllocate(POOL_ID, deltaX, deltaY);
         console.log("valid", valid);
     }
+    */
 }

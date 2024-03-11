@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "./ConstantSumLib.sol";
+import "./ConstantSumMath.sol";
+import "./ConstantSumUtils.sol";
 import "src/interfaces/IDFMM.sol";
 import { Strategy, IStrategy } from "src/Strategy.sol";
 import { PairStrategy, IDFMM2, IStrategy2 } from "src/PairStrategy.sol";
@@ -28,8 +29,7 @@ enum UpdateCode {
 contract ConstantSum is PairStrategy {
     using FixedPointMathLib for uint256;
 
-
-    /// @inheritdoc IStrategy
+    /// @inheritdoc IStrategy2
     string public constant name = "ConstantSum";
 
     mapping(uint256 => InternalParams) public internalParams;
@@ -39,7 +39,7 @@ contract ConstantSum is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     )
         public
@@ -47,80 +47,49 @@ contract ConstantSum is PairStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
+            uint256[] memory reserves,
             uint256 totalLiquidity
         )
     {
         ConstantSumParams memory params;
-        (reserveX, reserveY, totalLiquidity, params) =
-            abi.decode(data, (uint256, uint256, uint256, ConstantSumParams));
+        (reserves, totalLiquidity, params) =
+            abi.decode(data, (uint256[], uint256, ConstantSumParams));
 
         internalParams[poolId].price = params.price;
         internalParams[poolId].swapFee = params.swapFee;
 
         // Get the trading function and check this is valid
-        invariant = ConstantSumLib.tradingFunction(
-            reserveX, reserveY, totalLiquidity, params.price
+        invariant = tradingFunction(
+            reserves, totalLiquidity, abi.encode(params) 
         );
 
         valid = -EPSILON < invariant && invariant < EPSILON;
 
-        return (valid, invariant, reserveX, reserveY, totalLiquidity);
+        return (valid, invariant, reserves, totalLiquidity);
     }
 
-    /// @inheritdoc IStrategy
-    function validateAllocate(
-        address,
-        uint256 poolId,
-        IDFMM.Pool calldata pool,
-        bytes calldata data
-    )
-        external
-        view
-        override
-        returns (
-            bool valid,
-            int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
-            uint256 deltaLiquidity
-        )
-    {
-        (deltaX, deltaY, deltaLiquidity) =
-            abi.decode(data, (uint256, uint256, uint256));
-
-        invariant = tradingFunction(
-            pool.reserveX + deltaX,
-            pool.reserveY + deltaY,
-            pool.totalLiquidity + deltaLiquidity,
-            getPoolParams(poolId)
-        );
-
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
-    }
-
+    /// @inheritdoc IStrategy2
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
-        ConstantSumLib.ConstantSumUpdateCode updateCode =
-            abi.decode(data, (ConstantSumLib.ConstantSumUpdateCode));
+        UpdateCode updateCode =
+            abi.decode(data, (UpdateCode));
 
-        if (updateCode == ConstantSumLib.ConstantSumUpdateCode.Price) {
-            internalParams[poolId].price =
-                ConstantSumLib.decodePriceUpdate(data);
-        } else if (updateCode == ConstantSumLib.ConstantSumUpdateCode.SwapFee) {
+        if (updateCode == UpdateCode.Price) {
+            (internalParams[poolId].price,) =
+                decodePriceUpdate(data);
+        } else if (updateCode == UpdateCode.SwapFee) {
             internalParams[poolId].swapFee =
-                ConstantSumLib.decodeFeeUpdate(data);
+                decodeFeeUpdate(data);
         } else if (
-            updateCode == ConstantSumLib.ConstantSumUpdateCode.Controller
+            updateCode == UpdateCode.Controller
         ) {
             internalParams[poolId].controller =
-                ConstantSumLib.decodeControllerUpdate(data);
+                decodeControllerUpdate(data);
         } else {
             revert InvalidUpdateCode();
         }
@@ -141,33 +110,30 @@ contract ConstantSum is PairStrategy {
     }
 
     function tradingFunction(
-        uint256[] reserves,
+        uint256[] memory reserves, 
         uint256 totalLiquidity,
         bytes memory params
     ) public pure override returns (int256) {
-        return ConstantSumLib.tradingFunction(
-            reserveX,
-            reserveY,
+        return computeTradingFunction(
+            reserves,
             totalLiquidity,
             abi.decode(params, (ConstantSumParams)).price
         );
     }
 
-    function _computeDeltaXGivenDeltaL(
+    function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool calldata,
-        bytes memory
-    ) internal view virtual override returns (uint256) {
-        // TODO: Implement this.
-        return deltaLiquidity;
+        IDFMM2.Pool memory pool,
+        bytes memory data
+    ) internal view override returns (uint256[] memory) {
+      return new uint256[](0);
     }
 
-    function _computeDeltaYGivenDeltaL(
+    function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool calldata,
-        bytes memory
-    ) internal view virtual override returns (uint256) {
-        // TODO: Implement this.
-        return deltaLiquidity;
+        IDFMM2.Pool memory pool,
+        bytes memory data
+    ) internal view override returns (uint256[] memory) {
+      return new uint256[](0);
     }
 }

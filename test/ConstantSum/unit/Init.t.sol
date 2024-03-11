@@ -2,15 +2,15 @@
 pragma solidity ^0.8.13;
 
 import { ConstantSumSetUp } from "./SetUp.sol";
-import { ConstantSum } from "src/ConstantSum/ConstantSum.sol";
+import { ConstantSum, ConstantSumParams } from "src/ConstantSum/ConstantSum.sol";
 import { DFMM2, IDFMM2 } from "src/DFMM2.sol";
 
 contract ConstantSumInitTest is ConstantSumSetUp {
     function test_ConstantSum_init_InitializesPool() public {
         uint256 price = 1 ether;
 
-        ConstantSum.ConstantSumParams memory params = ConstantSum
-            .ConstantSumParams({
+        ConstantSumParams memory params = 
+            ConstantSumParams({
             price: price,
             swapFee: TEST_SWAP_FEE,
             controller: address(this)

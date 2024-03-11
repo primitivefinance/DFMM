@@ -11,13 +11,13 @@ contract ConstantSumSetUp is SetUp {
 
     uint256 public POOL_ID;
 
-    ConstantSum.ConstantSumParams defaultParams = ConstantSum.ConstantSumParams({
+    ConstantSumParams defaultParams = ConstantSumParams({
         price: 2 ether,
         swapFee: TEST_SWAP_FEE,
         controller: address(0)
     });
 
-    ConstantSum.ConstantSumParams zeroFeeParams = ConstantSum.ConstantSumParams({
+    ConstantSumParams zeroFeeParams = ConstantSumParams({
         price: 2 ether,
         swapFee: 0,
         controller: address(0)

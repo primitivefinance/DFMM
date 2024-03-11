@@ -2,10 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "./ConstantSum.sol";
-import "./ConstantSumLib.sol";
 import "src/interfaces/IStrategy.sol";
 import "src/interfaces/IDFMM.sol";
-import "src/lib/StrategyLib.sol";
 import "solmate/tokens/ERC20.sol";
 
 contract ConstantSumSolver {
@@ -29,12 +27,9 @@ contract ConstantSumSolver {
     function getInitialPoolData(
         uint256 rx,
         uint256 ry,
-        ConstantSum.ConstantSumParams memory params
+        ConstantSumParams memory params
     ) public pure returns (bytes memory) {
-        // The pool can be initialized with any non-negative amount of rx, and ry.
-        // so we have to allow a user to pass an amount of both even if one is zero.
-        uint256 L = rx + ry.divWadUp(params.price);
-        return abi.encode(rx, ry, L, params);
+      return computeInitialPoolData(rx, ry, params);
     }
 
     struct SimulateSwapState {
@@ -51,9 +46,9 @@ contract ConstantSumSolver {
         Reserves memory endReserves;
         (startReserves.rx, startReserves.ry, startReserves.L) =
             IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
-        ConstantSum.ConstantSumParams memory poolParams = abi.decode(
+        ConstantSumParams memory poolParams = abi.decode(
             IStrategy(strategy).getPoolParams(poolId),
-            (ConstantSum.ConstantSumParams)
+            (ConstantSumParams)
         );
 
         SimulateSwapState memory state;
@@ -111,67 +106,11 @@ contract ConstantSumSolver {
         return (valid, state.amountOut, swapData);
     }
 
-    function simulateAllocate(
-        uint256 poolId,
-        uint256 deltaX,
-        uint256 deltaY
-    ) public view returns (bool, bytes memory) {
-        IDFMM.Pool memory pool =
-            IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
-        ConstantSum.ConstantSumParams memory params = abi.decode(
-            IStrategy(strategy).getPoolParams(poolId),
-            (ConstantSum.ConstantSumParams)
-        );
-
-        uint256 deltaLiquidity = deltaX + deltaY.divWadDown(params.price);
-
-        bytes memory allocateData = abi.encode(deltaX, deltaY, deltaLiquidity);
-        (bool valid,,,,) = IStrategy(strategy).validateAllocate(
-            address(this), poolId, pool, allocateData
-        );
-        return (valid, allocateData);
-    }
-
-    function simulateDeallocate(
-        uint256 poolId,
-        uint256 amountX,
-        uint256 amountY
-    ) public view returns (bool, bytes memory) {
-        Reserves memory startReserves;
-        Reserves memory endReserves;
-        (startReserves.rx, startReserves.ry, startReserves.L) =
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
-        ConstantSum.ConstantSumParams memory poolParams = abi.decode(
-            IStrategy(strategy).getPoolParams(poolId),
-            (ConstantSum.ConstantSumParams)
-        );
-
-        if (startReserves.rx < amountX || startReserves.ry < amountY) {
-            revert NotEnoughLiquidity();
-        }
-        endReserves.rx = startReserves.rx - amountX;
-        endReserves.ry = startReserves.ry - amountY;
-        endReserves.L =
-            endReserves.rx + endReserves.ry.divWadUp(poolParams.price);
-
-        IDFMM.Pool memory pool;
-        pool.reserveX = startReserves.rx;
-        pool.reserveY = startReserves.ry;
-        pool.totalLiquidity = startReserves.L;
-
-        bytes memory deallocateData =
-            abi.encode(amountX, amountY, startReserves.L - endReserves.L);
-        (bool valid,,,,) = IStrategy(strategy).validateDeallocate(
-            address(this), poolId, pool, deallocateData
-        );
-        return (valid, deallocateData);
-    }
-
     function preparePriceUpdate(uint256 newPrice)
         public
         pure
         returns (bytes memory)
     {
-        return ConstantSumLib.encodePriceUpdate(newPrice);
+        return encodePriceUpdate(newPrice, 0);
     }
 }
