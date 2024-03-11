@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
+import { NTokenStrategy, IStrategy2, IDFMM2 } from "src/NTokenStrategy.sol";
 import {
   decodeFeeUpdate,
   decodeWeightsUpdate,
@@ -13,7 +14,6 @@ import {
   computeDeltaGivenDeltaLRoundDown
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
-import { IStrategy2, IDFMM2 } from "src/interfaces/IStrategy2.sol";
 
 /// @dev Parameterization of the GeometricMean curve.
 struct NTokenGeometricMeanParams {
@@ -32,7 +32,7 @@ enum UpdateCode {
 /**
  * @notice N-Token Geometric Mean Market Maker.
  */
-contract NTokenGeometricMean is IStrategy2 {
+contract NTokenGeometricMean is NTokenStrategy {
     using DynamicParamLib for DynamicParam;
 
     struct InternalParams {
@@ -41,16 +41,13 @@ contract NTokenGeometricMean is IStrategy2 {
         address controller;
     }
 
+    /// @inheritdoc IStrategy2
     string public constant name = "NTokenGeometricMean";
-
-    address public immutable dfmm;
 
     mapping(uint256 => InternalParams) public internalParams;
 
     /// @param dfmm_ Address of the DFMM contract.
-    constructor(address dfmm_) {
-        dfmm = dfmm_;
-    }
+    constructor(address dfmm_) NTokenStrategy(dfmm_) { }
 
     error InvalidWeights(uint256 totalWeight);
     error InvalidConfiguration(uint256 reservesLength, uint256 weightsLength);
@@ -169,7 +166,7 @@ contract NTokenGeometricMean is IStrategy2 {
         }
     }
 
-    function getPoolParams(uint256 poolId) public view returns (bytes memory) {
+    function getPoolParams(uint256 poolId) public view override returns (bytes memory) {
         NTokenGeometricMeanParams memory params;
 
         params.weights = new uint256[](internalParams[poolId].weights.length);
@@ -188,7 +185,7 @@ contract NTokenGeometricMean is IStrategy2 {
         uint256[] memory reserves,
         uint256 totalLiquidity,
         bytes memory params
-    ) public pure returns (int256) {
+    ) public pure override returns (int256) {
         return computeTradingFunction(
             reserves,
             totalLiquidity,
@@ -196,110 +193,11 @@ contract NTokenGeometricMean is IStrategy2 {
         );
     }
 
-
-    function validateAllocate(
-        address,
-        uint256 poolId,
-        IDFMM2.Pool calldata pool,
-        bytes calldata data
-    )
-        external
-        view
-        virtual
-        returns (
-            bool valid,
-            int256 invariant,
-            uint256[] memory tokenDeltas,
-            uint256 deltaLiquidity
-        )
-    {
-        (uint256[] memory maxTokenDeltas, uint256 deltaL) =
-            abi.decode(data, (uint256[], uint256));
-
-        deltaLiquidity = deltaL;
-        (uint256[] memory deltas, uint256[] memory nextReserves) = _computeAllocateDeltasAndReservesGivenDeltaL(deltaLiquidity, maxTokenDeltas, pool);
-        tokenDeltas = deltas;
-
-        invariant = tradingFunction(
-            nextReserves,
-            pool.totalLiquidity + deltaLiquidity,
-            getPoolParams(poolId)
-        );
-
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
-    }
-
-    function validateDeallocate(
-        address,
-        uint256 poolId,
-        IDFMM2.Pool calldata pool,
-        bytes calldata data
-    )
-        external
-        view
-        virtual
-        returns (
-            bool valid,
-            int256 invariant,
-            uint256[] memory tokenDeltas,
-            uint256 deltaLiquidity
-        )
-    {
-        (uint256[] memory minTokenDeltas, uint256 deltaL) =
-            abi.decode(data, (uint256[], uint256));
-
-        deltaLiquidity = deltaL;
-        (uint256[] memory deltas, uint256[] memory nextReserves) = _computeDeallocateDeltasAndReservesGivenDeltaL(deltaLiquidity, minTokenDeltas, pool);
-        tokenDeltas = deltas;
-
-        invariant = tradingFunction(
-            nextReserves,
-            pool.totalLiquidity - deltaLiquidity,
-            getPoolParams(poolId)
-        );
-
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
-    }
-
-    function validateSwap(
-        address,
-        uint256 poolId,
-        IDFMM2.Pool memory pool,
-        bytes memory data
-    )
-        external
-        view
-        virtual
-        returns (
-            bool valid,
-            int256 invariant,
-            uint256 tokenInIndex,
-            uint256 tokenOutIndex,
-            uint256 amountIn,
-            uint256 amountOut,
-            uint256 deltaLiquidity
-        )
-    {
-        bytes memory params = getPoolParams(poolId);
-
-        (tokenInIndex, tokenOutIndex, amountIn, amountOut, deltaLiquidity) =
-            abi.decode(data, (uint256, uint256, uint256, uint256, uint256));
-
-        pool.reserves[tokenInIndex] += amountIn;
-        pool.reserves[tokenOutIndex] -= amountOut;
-
-        invariant = tradingFunction(
-            pool.reserves, pool.totalLiquidity + deltaLiquidity, params
-        );
-
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
-    }
-
     function _computeAllocateDeltasAndReservesGivenDeltaL(
       uint256 deltaLiquidity,
       uint256[] memory maxDeltas,
       IDFMM2.Pool memory pool
-    ) internal pure returns (uint256[] memory deltas, uint256[] memory nextReserves) {
+    ) internal pure override returns (uint256[] memory deltas, uint256[] memory nextReserves) {
       deltas = new uint256[](pool.reserves.length);
       nextReserves = new uint256[](pool.reserves.length);
       for (uint256 i = 0; i < pool.reserves.length; i++) {
@@ -318,7 +216,7 @@ contract NTokenGeometricMean is IStrategy2 {
       uint256 deltaLiquidity,
       uint256[] memory minDeltas,
       IDFMM2.Pool memory pool
-    ) internal pure returns (uint256[] memory deltas, uint256[] memory nextReserves) {
+    ) internal pure override returns (uint256[] memory deltas, uint256[] memory nextReserves) {
       deltas = new uint256[](pool.reserves.length);
       nextReserves = new uint256[](pool.reserves.length);
       for (uint256 i = 0; i < pool.reserves.length; i++) {
