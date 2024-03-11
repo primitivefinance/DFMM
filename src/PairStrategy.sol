@@ -46,7 +46,7 @@ abstract contract PairStrategy is IStrategy2 {
         // TODO: This is a small trick because `deltaLiquidity` cannot be used
         // directly, let's fix this later.
         deltaLiquidity = deltaL;
-        deltas = _computeDeltasGivenDeltaL(
+        deltas = _computeAllocateDeltasGivenDeltaL(
             deltaLiquidity, pool, getPoolParams(poolId)
         );
 
@@ -91,7 +91,7 @@ abstract contract PairStrategy is IStrategy2 {
             abi.decode(data, (uint256, uint256, uint256));
 
         deltaLiquidity = deltaL;
-        deltas = _computeDeltasGivenDeltaL(
+        deltas = _computeDeallocateDeltasGivenDeltaL(
             deltaLiquidity, pool, getPoolParams(poolId)
         );
 
@@ -161,7 +161,13 @@ abstract contract PairStrategy is IStrategy2 {
         bytes memory params
     ) public view virtual returns (int256);
 
-    function _computeDeltasGivenDeltaL(
+    function _computeAllocateDeltasGivenDeltaL(
+        uint256 deltaLiquidity,
+        IDFMM2.Pool memory pool,
+        bytes memory data
+    ) internal view virtual returns (uint256[] memory);
+
+    function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         IDFMM2.Pool memory pool,
         bytes memory data
