@@ -8,6 +8,9 @@ import {
 import { GeometricMeanSolver } from "src/GeometricMean/GeometricMeanSolver.sol";
 import "test/utils/SetUp.sol";
 import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
+import "solmate/utils/FixedPointMathLib.sol";
+
+using FixedPointMathLib for uint256;
 
 contract G3MSetUp is SetUp {
     GeometricMean2 g3m;

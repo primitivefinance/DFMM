@@ -71,6 +71,52 @@ function computeYGivenL(
     return params.wY.mulWadUp(L).divWadUp(params.wX.mulWadUp(S));
 }
 
+function computeAllocationGivenDeltaX(
+  uint256 deltaX,
+  uint256 rX,
+  uint256 rY,
+  uint256 totalLiquidity
+) pure returns (uint256 deltaY, uint256 deltaL) {
+  uint256 a = deltaX.divWadUp(rX);
+  deltaY = a.mulWadUp(rY);
+  deltaL = a.mulWadUp(totalLiquidity);
+}
+
+function computeAllocationGivenDeltaY(
+  uint256 deltaY,
+  uint256 rX,
+  uint256 rY,
+  uint256 totalLiquidity
+) pure returns (uint256 deltaX, uint256 deltaL) {
+  uint256 a = deltaY.divWadUp(rY);
+  deltaX = a.mulWadUp(rX);
+  deltaL = a.mulWadUp(totalLiquidity);
+}
+
+function computeDeallocationGivenDeltaX(
+  uint256 deltaX,
+  uint256 rX,
+  uint256 rY,
+  uint256 totalLiquidity
+) pure returns (uint256 deltaY, uint256 deltaL) {
+  uint256 a = deltaX.divWadDown(rX);
+  deltaY = a.mulWadDown(rY);
+  deltaL = a.mulWadDown(totalLiquidity);
+}
+
+function computeDeallocationGivenDeltaY(
+  uint256 deltaY,
+  uint256 rX,
+  uint256 rY,
+  uint256 totalLiquidity
+) pure returns (uint256 deltaX, uint256 deltaL) {
+  uint256 a = deltaY.divWadDown(rY);
+  deltaX = a.mulWadDown(rX);
+  deltaL = a.mulWadDown(totalLiquidity);
+}
+
+
+
 function computeY(
     uint256 x,
     uint256 S,

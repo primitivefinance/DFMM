@@ -103,8 +103,8 @@ abstract contract PairStrategy is IStrategy2 {
             revert DeltaError(minDeltaY, deltas[1]);
         }
 
-        pool.reserves[0] += deltas[0];
-        pool.reserves[1] += deltas[1];
+        pool.reserves[0] -= deltas[0];
+        pool.reserves[1] -= deltas[1];
 
         invariant = tradingFunction(
             pool.reserves,
