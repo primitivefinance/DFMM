@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { PairStrategy, IStrategy2 } from "src/PairStrategy.sol";
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
 import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
-import { GeometricMeanLib, FixedPointMathLib } from "./GeometricMeanLib.sol";
+import {
+    computeTradingFunction,
+    computeDeltaGivenDeltaLRoundUp,
+    computeDeltaGivenDeltaLRoundDown
+} from "./G3MMath.sol";
 import { ONE } from "src/lib/StrategyLib.sol";
 
 /// @dev Parameterization of the GeometricMean curve.
@@ -13,6 +18,13 @@ struct GeometricMeanParams {
     uint256 wY;
     uint256 swapFee;
     address controller;
+}
+
+enum UpdateCode {
+    Invalid,
+    SwapFee,
+    WeightX,
+    Controller
 }
 
 /**
@@ -81,7 +93,7 @@ contract GeometricMean2 is PairStrategy {
         internalParams[poolId].swapFee = state.swapFee;
         internalParams[poolId].controller = state.controller;
 
-        state.invariant = GeometricMeanLib.tradingFunction(
+        state.invariant = computeTradingFunction(
             state.reserves[0],
             state.reserves[1],
             state.totalLiquidity,
@@ -103,23 +115,18 @@ contract GeometricMean2 is PairStrategy {
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
-        GeometricMeanLib.GeometricMeanUpdateCode updateCode =
-            abi.decode(data, (GeometricMeanLib.GeometricMeanUpdateCode));
+        UpdateCode updateCode = abi.decode(data, (UpdateCode));
 
-        if (updateCode == GeometricMeanLib.GeometricMeanUpdateCode.SwapFee) {
-            internalParams[poolId].swapFee =
-                GeometricMeanLib.decodeFeeUpdate(data);
-        } else if (
-            updateCode == GeometricMeanLib.GeometricMeanUpdateCode.WeightX
-        ) {
-            (uint256 targetWeightX, uint256 targetTimestamp) =
-                GeometricMeanLib.decodeWeightXUpdate(data);
+        if (updateCode == UpdateCode.SwapFee) {
+            (, internalParams[poolId].swapFee) =
+                abi.decode(data, (UpdateCode, uint256));
+        } else if (updateCode == UpdateCode.WeightX) {
+            (, uint256 targetWeightX, uint256 targetTimestamp) =
+                abi.decode(data, (UpdateCode, uint256, uint256));
             internalParams[poolId].wX.set(targetWeightX, targetTimestamp);
-        } else if (
-            updateCode == GeometricMeanLib.GeometricMeanUpdateCode.Controller
-        ) {
-            internalParams[poolId].controller =
-                GeometricMeanLib.decodeControllerUpdate(data);
+        } else if (updateCode == UpdateCode.Controller) {
+            (, internalParams[poolId].controller) =
+                abi.decode(data, (UpdateCode, address));
         } else {
             revert InvalidUpdateCode();
         }
@@ -147,7 +154,7 @@ contract GeometricMean2 is PairStrategy {
         uint256 totalLiquidity,
         bytes memory params
     ) public pure override returns (int256) {
-        return GeometricMeanLib.tradingFunction(
+        return computeTradingFunction(
             reserves[0],
             reserves[1],
             totalLiquidity,
@@ -161,12 +168,12 @@ contract GeometricMean2 is PairStrategy {
         bytes memory
     ) internal pure override returns (uint256[] memory deltas) {
         deltas = new uint256[](2);
-        deltas[0] = pool.reserves[0].mulWadUp(
-            deltaLiquidity.divWadUp(pool.totalLiquidity)
+        deltas[0] = computeDeltaGivenDeltaLRoundUp(
+            pool.reserves[0], deltaLiquidity, pool.totalLiquidity
         );
 
-        deltas[1] = pool.reserves[1].mulWadUp(
-            deltaLiquidity.divWadUp(pool.totalLiquidity)
+        deltas[1] = computeDeltaGivenDeltaLRoundUp(
+            pool.reserves[1], deltaLiquidity, pool.totalLiquidity
         );
     }
 
@@ -176,12 +183,12 @@ contract GeometricMean2 is PairStrategy {
         bytes memory
     ) internal pure override returns (uint256[] memory deltas) {
         deltas = new uint256[](2);
-        deltas[0] = pool.reserves[0].mulWadDown(
-            deltaLiquidity.divWadDown(pool.totalLiquidity)
+        deltas[0] = computeDeltaGivenDeltaLRoundDown(
+            pool.reserves[0], deltaLiquidity, pool.totalLiquidity
         );
 
-        deltas[1] = pool.reserves[1].mulWadDown(
-            deltaLiquidity.divWadDown(pool.totalLiquidity)
+        deltas[1] = computeDeltaGivenDeltaLRoundDown(
+            pool.reserves[1], deltaLiquidity, pool.totalLiquidity
         );
     }
 }

@@ -1,9 +1,41 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { GeometricMeanParams } from "src/GeometricMean/GeometricMean2.sol";
 
+uint256 constant ONE = 1 ether;
+
 using FixedPointMathLib for uint256;
+using FixedPointMathLib for int256;
+
+function computeTradingFunction(
+    uint256 rX,
+    uint256 rY,
+    uint256 L,
+    GeometricMeanParams memory params
+) pure returns (int256) {
+    uint256 a = uint256(int256(rX.divWadDown(L)).powWad(int256(params.wX)));
+    uint256 b = uint256(int256(rY.divWadDown(L)).powWad(int256(params.wY)));
+
+    return int256(a.mulWadUp(b)) - int256(1 ether);
+}
+
+function computeDeltaGivenDeltaLRoundUp(
+    uint256 reserve,
+    uint256 deltaLiquidity,
+    uint256 totalLiquidity
+) pure returns (uint256) {
+    return reserve.mulWadUp(deltaLiquidity.divWadUp(totalLiquidity));
+}
+
+function computeDeltaGivenDeltaLRoundDown(
+    uint256 reserve,
+    uint256 deltaLiquidity,
+    uint256 totalLiquidity
+) pure returns (uint256) {
+    return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
+}
 
 function computeLGivenX(
     uint256 x,
@@ -66,27 +98,6 @@ function computeL(
     return a.mulWadUp(b);
 }
 
-function computeInitialPoolData(
-    uint256 amountX,
-    uint256 initialPrice,
-    GeometricMeanParams memory params
-) pure returns (bytes memory) {
-    uint256 rY = computeY(amountX, initialPrice, params);
-    uint256 L = computeL(amountX, rY, params);
-
-    int256 invariant = GeometricMeanLib.tradingFunction({
-        rX: amountX,
-        rY: rY,
-        L: L,
-        params: params
-    });
-
-    L = computeNextLiquidity(amountX, rY, invariant, L, params);
-
-    return
-        abi.encode(amountX, rY, L, params.wX, params.swapFee, params.controller);
-}
-
 /// @dev Finds the root of the swapConstant given the independent variable rX.
 function computeNextRy(
     uint256 rX,
@@ -122,4 +133,15 @@ function computePrice(
     uint256 n = rY.divWadDown(params.wY);
     uint256 d = rX.divWadDown(params.wX);
     price = n.divWadDown(d);
+}
+
+/// @dev Finds the root of the swapConstant given the independent variable liquidity.
+function computeNextLiquidity(
+    uint256 rX,
+    uint256 rY,
+    GeometricMeanParams memory params
+) pure returns (uint256 L) {
+    return uint256(int256(rX).powWad(int256(params.wX))).mulWadUp(
+        uint256(int256(rY).powWad(int256(params.wY)))
+    );
 }

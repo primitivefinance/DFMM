@@ -1,26 +1,38 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "./G3MExtendedLib.sol";
-import "solmate/tokens/ERC20.sol";
-import "src/interfaces/IStrategy.sol";
-import "src/interfaces/IDFMM.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
+import { IStrategy2 } from "src/interfaces/IStrategy2.sol";
+import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import { computeAllocationGivenX } from "src/lib/StrategyLib.sol";
+import { GeometricMeanParams } from "./GeometricMean2.sol";
+import {
+    encodeFeeUpdate,
+    encodeWeightXUpdate,
+    encodeControllerUpdate,
+    computeInitialPoolData
+} from "./G3MUtils.sol";
+import {
+    computeL,
+    computePrice,
+    computeLGivenX,
+    computeY,
+    computeX,
+    computeLGivenY,
+    computeNextLiquidity,
+    computeNextRx,
+    computeNextRy,
+    computeTradingFunction
+} from "./G3MMath.sol";
 
 contract GeometricMeanSolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
-    /// @dev Structure to hold reserve information
-    struct Reserves {
-        uint256 rx;
-        uint256 ry;
-        uint256 L;
-    }
+    IStrategy2 public strategy;
 
-    address public strategy;
-
-    constructor(address _strategy) {
-        strategy = _strategy;
+    constructor(address strategy_) {
+        strategy = IStrategy2(strategy_);
     }
 
     function prepareFeeUpdate(uint256 swapFee)
@@ -28,15 +40,14 @@ contract GeometricMeanSolver {
         pure
         returns (bytes memory data)
     {
-        return GeometricMeanLib.encodeFeeUpdate(swapFee);
+        return encodeFeeUpdate(swapFee);
     }
 
     function prepareWeightXUpdate(
         uint256 targetWeightX,
         uint256 targetTimestamp
     ) public pure returns (bytes memory) {
-        return
-            GeometricMeanLib.encodeWeightXUpdate(targetWeightX, targetTimestamp);
+        return encodeWeightXUpdate(targetWeightX, targetTimestamp);
     }
 
     function prepareControllerUpdate(address controller)
@@ -44,7 +55,7 @@ contract GeometricMeanSolver {
         pure
         returns (bytes memory)
     {
-        return GeometricMeanLib.encodeControllerUpdate(controller);
+        return encodeControllerUpdate(controller);
     }
 
     function fetchPoolParams(uint256 poolId)
@@ -53,7 +64,7 @@ contract GeometricMeanSolver {
         returns (GeometricMeanParams memory)
     {
         return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (GeometricMeanParams)
+            IStrategy2(strategy).getPoolParams(poolId), (GeometricMeanParams)
         );
     }
 
@@ -62,7 +73,8 @@ contract GeometricMeanSolver {
         view
         returns (uint256, uint256, uint256)
     {
-        return IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        (uint256[] memory reserves, uint256 totalLiquidity) =
+            IDFMM2(IStrategy2(strategy).dfmm()).getReservesAndLiquidity(poolId);
     }
 
     function getInitialPoolData(
@@ -168,9 +180,7 @@ contract GeometricMeanSolver {
         uint256 rx,
         uint256 ry
     ) public view returns (uint256) {
-        return GeometricMeanLib.computeNextLiquidity(
-            rx, ry, fetchPoolParams(poolId)
-        );
+        return computeNextLiquidity(rx, ry, fetchPoolParams(poolId));
     }
 
     function getNextReserveX(
@@ -203,39 +213,41 @@ contract GeometricMeanSolver {
         uint256 amountIn
     ) public view returns (bool, uint256, uint256, bytes memory) {
         GeometricMeanParams memory params = fetchPoolParams(poolId);
-        IDFMM.Pool memory pool =
-            IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
+        IDFMM2.Pool memory pool =
+            IDFMM2(IStrategy2(strategy).dfmm()).getPool(poolId);
 
         SimulateSwapState memory state;
 
         state.fees = amountIn.mulWadUp(params.swapFee);
 
         if (swapXIn) {
-            state.deltaLiquidity = pool.totalLiquidity.divWadUp(pool.reserveX)
-                .mulWadUp(state.fees).mulWadUp(params.wX);
+            state.deltaLiquidity = pool.totalLiquidity.divWadUp(
+                pool.reserves[0]
+            ).mulWadUp(state.fees).mulWadUp(params.wX);
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 d = uint256(
-                int256((pool.reserveX + amountIn)).powWad(int256(params.wX))
+                int256((pool.reserves[0] + amountIn)).powWad(int256(params.wX))
             );
             uint256 a = uint256(
                 int256(n.divWadUp(d)).powWad(
                     int256(FixedPointMathLib.WAD.divWadUp(params.wY))
                 )
             );
-            state.amountOut = pool.reserveY - a;
+            state.amountOut = pool.reserves[1] - a;
         } else {
-            state.deltaLiquidity = pool.totalLiquidity.divWadUp(pool.reserveY)
-                .mulWadUp(state.fees).mulWadUp(params.wY);
+            state.deltaLiquidity = pool.totalLiquidity.divWadUp(
+                pool.reserves[1]
+            ).mulWadUp(state.fees).mulWadUp(params.wY);
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 d = uint256(
-                int256((pool.reserveY + amountIn)).powWad(int256(params.wY))
+                int256((pool.reserves[1] + amountIn)).powWad(int256(params.wY))
             );
             uint256 a = uint256(
                 int256(n.divWadUp(d)).powWad(
                     int256(FixedPointMathLib.WAD.divWadUp(params.wX))
                 )
             );
-            state.amountOut = pool.reserveX - a;
+            state.amountOut = pool.reserves[1] - a;
         }
 
         bytes memory swapData;
@@ -250,18 +262,19 @@ contract GeometricMeanSolver {
             );
         }
 
-        (bool valid,,,,,) = IStrategy(strategy).validateSwap(
+        (bool valid,,,,,,) = IStrategy2(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
 
         return (
             valid,
             state.amountOut,
-            computePrice(pool.reserveX, pool.reserveY, params),
+            computePrice(pool.reserves[0], pool.reserves[1], params),
             swapData
         );
     }
 
+    /*
     function computeOptimalArbLowerPrice(
         uint256 poolId,
         uint256 S,
@@ -301,6 +314,7 @@ contract GeometricMeanSolver {
         (uint256 rx, uint256 ry, uint256 L) = getReservesAndLiquidity(poolId);
         return diffRaise(S, rx, ry, L, v, params);
     }
+    */
 
     /// @dev Computes the internal price using this strategie's slot parameters.
     function internalPrice(uint256 poolId)
@@ -320,7 +334,7 @@ contract GeometricMeanSolver {
         (uint256 rx, uint256 ry, uint256 L) =
             abi.decode(data, (uint256, uint256, uint256));
         GeometricMeanParams memory params = fetchPoolParams(poolId);
-        return GeometricMeanLib.tradingFunction(rx, ry, L, params);
+        return computeTradingFunction(rx, ry, L, params);
     }
 
     function getPoolParams(uint256 poolId)
@@ -329,7 +343,7 @@ contract GeometricMeanSolver {
         returns (GeometricMeanParams memory params)
     {
         return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (GeometricMeanParams)
+            IStrategy2(strategy).getPoolParams(poolId), (GeometricMeanParams)
         );
     }
 }
