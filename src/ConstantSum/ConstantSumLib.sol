@@ -7,12 +7,6 @@ using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
 
 library ConstantSumLib {
-    enum ConstantSumUpdateCode {
-        Invalid,
-        SwapFee,
-        Price,
-        Controller
-    }
 
     function encodeFeeUpdate(uint256 swapFee)
         internal
@@ -65,14 +59,4 @@ library ConstantSumLib {
         return controller;
     }
 
-    function tradingFunction(
-        uint256 reserveX,
-        uint256 reserveY,
-        uint256 totalLiquidity,
-        uint256 price
-    ) internal pure returns (int256) {
-        return int256(reserveX.divWadUp(totalLiquidity))
-            + int256(reserveY.divWadUp(totalLiquidity.mulWadUp(price)))
-            - int256(ONE);
-    }
 }

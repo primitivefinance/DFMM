@@ -5,8 +5,6 @@ import { console } from "forge-std/console.sol";
 import { ConstantSumSetUp } from "./SetUp.sol";
 
 contract ConstantSumAllocateTest is ConstantSumSetUp {
-    // TODO: This is the perfect example of a bad test, please
-    // improve this.
     function test_ConstantSum_allocate_Works() public defaultPool {
         uint256 deltaX = 0.1 ether;
         uint256 deltaY = 0.1 ether;

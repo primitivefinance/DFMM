@@ -4,28 +4,37 @@ pragma solidity ^0.8.13;
 import "./ConstantSumLib.sol";
 import "src/interfaces/IDFMM.sol";
 import { Strategy, IStrategy } from "src/Strategy.sol";
+import { PairStrategy, IDFMM2, IStrategy2 } from "src/PairStrategy.sol";
 
-contract ConstantSum is Strategy {
+struct InternalParams {
+    uint256 price;
+    uint256 swapFee;
+    address controller;
+}
+
+struct ConstantSumParams {
+    uint256 price;
+    uint256 swapFee;
+    address controller;
+}
+
+enum UpdateCode {
+    Invalid,
+    SwapFee,
+    Price,
+    Controller
+}
+
+contract ConstantSum is PairStrategy {
     using FixedPointMathLib for uint256;
 
-    struct InternalParams {
-        uint256 price;
-        uint256 swapFee;
-        address controller;
-    }
-
-    struct ConstantSumParams {
-        uint256 price;
-        uint256 swapFee;
-        address controller;
-    }
 
     /// @inheritdoc IStrategy
     string public constant name = "ConstantSum";
 
     mapping(uint256 => InternalParams) public internalParams;
 
-    constructor(address dfmm_) Strategy(dfmm_) { }
+    constructor(address dfmm_) PairStrategy(dfmm_) { }
 
     function init(
         address,
@@ -132,8 +141,7 @@ contract ConstantSum is Strategy {
     }
 
     function tradingFunction(
-        uint256 reserveX,
-        uint256 reserveY,
+        uint256[] reserves,
         uint256 totalLiquidity,
         bytes memory params
     ) public pure override returns (int256) {
