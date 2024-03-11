@@ -86,9 +86,6 @@ contract SetUp is Test {
         uint256 deltaLiquidity = computeLGivenX(maxDeltaX, S, params);
         uint256 maxDeltaY = computeY(maxDeltaX, S, params);
 
-        console.log("Max deltaY", maxDeltaY);
-        console.log("Delta liquidity", deltaLiquidity);
-
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
     }
@@ -101,18 +98,16 @@ contract SetUp is Test {
         console.log(pool.reserves[0]);
         console.log(pool.reserves[1]);
 
-        uint256 maxDeltaX = 0.1 ether;
+        uint256 minDeltaX = 0.1 ether;
 
         GeometricMeanParams memory params = solver.getPoolParams(POOL_ID);
 
         uint256 S = computePrice(pool.reserves[0], pool.reserves[1], params);
-        uint256 deltaLiquidity = computeLGivenX(maxDeltaX, S, params);
-        uint256 maxDeltaY = computeY(maxDeltaX, S, params);
+        uint256 deltaLiquidity = computeLGivenX(minDeltaX, S, params);
+        uint256 minDeltaY = computeY(minDeltaX, S, params);
 
-        console.log("Max deltaY", maxDeltaY);
-        console.log("Delta liquidity", deltaLiquidity);
-
-        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
+        bytes memory data =
+            abi.encode(minDeltaX - 1, minDeltaY - 1, deltaLiquidity);
         (uint256[] memory deltas) = dfmm.deallocate(POOL_ID, data);
     }
 
