@@ -15,10 +15,9 @@ contract G3MSwapTest is G3MSetUp {
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
         uint256 amountIn = 0.1 ether;
-        bool swapXForY = true;
 
-        (, uint256 amountOut,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (, uint256 amountOut, bytes memory payload) =
+            solver.simulateSwap(POOL_ID, 0, 1, amountIn);
         (,, uint256 deltaX, uint256 deltaY) = dfmm.swap(POOL_ID, payload);
         assertEq(amountIn, deltaX);
         assertEq(amountOut, deltaY);
@@ -36,10 +35,9 @@ contract G3MSwapTest is G3MSetUp {
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
         uint256 amountIn = 0.1 ether;
-        bool swapXForY = false;
 
-        (, uint256 amountOut,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (, uint256 amountOut, bytes memory payload) =
+            solver.simulateSwap(POOL_ID, 1, 0, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, payload);
 
