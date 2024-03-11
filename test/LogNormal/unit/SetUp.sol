@@ -32,14 +32,19 @@ contract LogNormalSetUp is SetUp {
     modifier init() {
         vm.warp(0);
 
-        IDFMM.InitParams memory defaultInitParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        IDFMM2.InitParams memory defaultInitParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(logNormal),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: defaultInitialPoolData
         });
 
-        (POOL_ID,,,) = dfmm.init(defaultInitParams);
+        (POOL_ID,,) = dfmm.init(defaultInitParams);
 
         _;
     }
@@ -54,14 +59,19 @@ contract LogNormalSetUp is SetUp {
             controller: address(this)
         });
 
-        IDFMM.InitParams memory defaultInitParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        IDFMM2.InitParams memory defaultInitParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(logNormal),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: computeInitialPoolData(1 ether, 2500 ether, params)
         });
 
-        (POOL_ID,,,) = dfmm.init(defaultInitParams);
+        (POOL_ID,,) = dfmm.init(defaultInitParams);
 
         _;
     }

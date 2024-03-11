@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { stdError } from "forge-std/StdError.sol";
-import { DFMMSetUp, DFMM, IDFMM } from "./SetUp.sol";
+import { DFMMSetUp, DFMM2, IDFMM2 } from "./SetUp.sol";
 
 contract DFMMDeallocateTest is DFMMSetUp {
     /*
@@ -55,14 +55,19 @@ contract DFMMDeallocateTest is DFMMSetUp {
     */
 
     function test_DFMM_deallocate_CannotDrainReserveX() public {
-        IDFMM.InitParams memory params = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        IDFMM2.InitParams memory params = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(strategy),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: abi.encode(true, int256(1 ether), 1 ether, 1 ether, 1 ether)
         });
 
-        (uint256 poolId,,,) = dfmm.init(params);
+        (uint256 poolId,,) = dfmm.init(params);
 
         tokenX.mint(address(dfmm), 1000 ether);
         tokenY.mint(address(dfmm), 1000 ether);
@@ -74,14 +79,19 @@ contract DFMMDeallocateTest is DFMMSetUp {
     }
 
     function test_DFMM_deallocate_CannotDrainReserveY() public {
-        IDFMM.InitParams memory params = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        IDFMM2.InitParams memory params = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(strategy),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: abi.encode(true, int256(1 ether), 1 ether, 1 ether, 1 ether)
         });
 
-        (uint256 poolId,,,) = dfmm.init(params);
+        (uint256 poolId,,) = dfmm.init(params);
 
         tokenX.mint(address(dfmm), 1000 ether);
         tokenY.mint(address(dfmm), 1000 ether);

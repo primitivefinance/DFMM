@@ -36,14 +36,19 @@ contract ConstantSumSetUp is SetUp {
         bytes memory initData =
             solver.getInitialPoolData(reserveX, reserveY, defaultParams);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(constantSum),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: initData
         });
 
-        (POOL_ID,,,) = dfmm.init(initParams);
+        (POOL_ID,,) = dfmm.init(initParams);
 
         _;
     }

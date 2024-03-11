@@ -3,9 +3,9 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import "src/DFMM.sol";
-import "src/GeometricMean/GeometricMean.sol";
-import "src/GeometricMean/G3MExtendedLib.sol";
+import { DFMM2 } from "src/DFMM2.sol";
+import "src/GeometricMean/GeometricMean2.sol";
+import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
 
 interface USDC {
     function masterMinter() external view returns (address);
@@ -17,11 +17,11 @@ interface USDC {
 }
 
 contract G3MTestFork is Test {
-    DFMM dfmm;
+    DFMM2 dfmm;
     ERC20 usdc;
     ERC20 weth;
     ERC20 dai;
-    GeometricMean g3m;
+    GeometricMean2 g3m;
 
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
@@ -42,8 +42,8 @@ contract G3MTestFork is Test {
         deal(address(weth), address(this), 1 ether);
         deal(address(dai), address(this), 2000 ether);
 
-        dfmm = new DFMM(address(0));
-        g3m = new GeometricMean(address(dfmm));
+        dfmm = new DFMM2(address(0));
+        g3m = new GeometricMean2(address(dfmm));
 
         usdc.approve(address(dfmm), type(uint256).max);
         weth.approve(address(dfmm), type(uint256).max);
@@ -66,11 +66,16 @@ contract G3MTestFork is Test {
         uint256 preBalanceXDFMM = weth.balanceOf(address(dfmm));
         uint256 preBalanceYDFMM = usdc.balanceOf(address(dfmm));
 
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(weth);
+        tokens[1] = address(usdc);
+
         dfmm.init(
-            IDFMM.InitParams({
+            IDFMM2.InitParams({
+                name: "",
+                symbol: "",
                 strategy: address(g3m),
-                tokenX: address(weth),
-                tokenY: address(usdc),
+                tokens: tokens,
                 data: computeInitialPoolData(reserveX, price, params)
             })
         );
@@ -99,11 +104,16 @@ contract G3MTestFork is Test {
         uint256 preBalanceXDFMM = weth.balanceOf(address(dfmm));
         uint256 preBalanceYDFMM = dai.balanceOf(address(dfmm));
 
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(weth);
+        tokens[1] = address(dai);
+
         dfmm.init(
-            IDFMM.InitParams({
+            IDFMM2.InitParams({
+                name: "",
+                symbol: "",
                 strategy: address(g3m),
-                tokenX: address(weth),
-                tokenY: address(dai),
+                tokens: tokens,
                 data: computeInitialPoolData(reserveX, price, params)
             })
         );

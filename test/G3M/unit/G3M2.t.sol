@@ -11,11 +11,11 @@ import {
     GeometricMeanParams
 } from "src/GeometricMean/GeometricMeanSolver.sol";
 import {
-    computeInitialPoolData,
     computePrice,
     computeY,
     computeLGivenX
-} from "src/GeometricMean/G3MExtendedLib.sol";
+} from "src/GeometricMean/G3MMath.sol";
+import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
 
 contract SetUp is Test {
     DFMM2 dfmm;

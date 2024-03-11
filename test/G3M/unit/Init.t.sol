@@ -2,6 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "./SetUp.sol";
+import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
+import { IStrategy2 } from "src/interfaces/IStrategy2.sol";
 
 contract G3MInitTest is G3MSetUp {
     using DynamicParamLib for DynamicParam;
@@ -26,21 +28,27 @@ contract G3MInitTest is G3MSetUp {
         bytes memory defaultInitialPoolData =
             computeInitialPoolData(defaultReserveX, defaultStrikePrice, params);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(g3m),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: defaultInitialPoolData
         });
 
-        vm.expectRevert(GeometricMean.InvalidWeightX.selector);
+        vm.expectRevert(GeometricMean2.InvalidWeightX.selector);
         dfmm.init(initParams);
     }
 
     function test_G3M_init_RevertsWhenSenderNotDFMM() public {
         bytes memory empty;
-        IDFMM.Pool memory pool;
-        vm.expectRevert(IStrategy.NotDFMM.selector);
-        g3m.init(address(this), 0, pool, empty);
+        IDFMM2.Pool memory pool;
+        vm.expectRevert(IStrategy2.NotDFMM.selector);
+        g3m.init(address(0), 0, pool, empty);
     }
 }

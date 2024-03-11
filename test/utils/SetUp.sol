@@ -4,10 +4,10 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
-import { DFMM, IDFMM } from "src/DFMM.sol";
+import { DFMM2, IDFMM2 } from "src/DFMM2.sol";
 
 contract SetUp is Test {
-    DFMM dfmm;
+    DFMM2 dfmm;
     MockERC20 tokenX;
     MockERC20 tokenY;
     WETH weth;
@@ -21,7 +21,7 @@ contract SetUp is Test {
         tokenY.mint(address(this), 100e18);
 
         weth = new WETH();
-        dfmm = new DFMM(address(weth));
+        dfmm = new DFMM2(address(weth));
 
         tokenX.approve(address(dfmm), type(uint256).max);
         tokenY.approve(address(dfmm), type(uint256).max);
@@ -32,7 +32,7 @@ contract SetUp is Test {
         view
         returns (address)
     {
-        IDFMM.Pool memory pool = dfmm.getPool(poolId);
+        IDFMM2.Pool memory pool = dfmm.getPool(poolId);
         return pool.liquidityToken;
     }
 

@@ -3,15 +3,16 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import "src/DFMM.sol";
-import "src/GeometricMean/GeometricMeanLib.sol";
-import "src/GeometricMean/G3MExtendedLib.sol";
+import "src/DFMM2.sol";
+import "src/GeometricMean/G3MMath.sol";
+import { GeometricMean2 } from "src/GeometricMean/GeometricMean2.sol";
+import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
 
 contract G3MAttackTest is Test {
-    DFMM dfmm;
+    DFMM2 dfmm;
     MockERC20 tokenX;
     MockERC20 tokenY;
-    GeometricMean g3m;
+    GeometricMean2 g3m;
 
     function setUp() public {
         tokenX = new MockERC20("Token X", "X", 18);
@@ -19,8 +20,8 @@ contract G3MAttackTest is Test {
         tokenX.mint(address(this), 100_000 ether);
         tokenY.mint(address(this), 100_000 ether);
 
-        dfmm = new DFMM(address(0));
-        g3m = new GeometricMean(address(dfmm));
+        dfmm = new DFMM2(address(0));
+        g3m = new GeometricMean2(address(dfmm));
 
         tokenX.approve(address(dfmm), type(uint256).max);
         tokenY.approve(address(dfmm), type(uint256).max);
@@ -46,9 +47,10 @@ contract G3MAttackTest is Test {
         bytes memory data = computeInitialPoolData(reserveX, price, params);
 
         IDFMM.InitParams memory initParams = IDFMM.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(g3m),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: data
         });
 

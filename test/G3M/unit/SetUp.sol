@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "src/GeometricMean/GeometricMean.sol";
-import "src/GeometricMean/GeometricMeanSolver.sol";
+import {
+    GeometricMean2,
+    GeometricMeanParams
+} from "src/GeometricMean/GeometricMean2.sol";
+import { GeometricMeanSolver } from "src/GeometricMean/GeometricMeanSolver.sol";
 import "test/utils/SetUp.sol";
+import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
 
 contract G3MSetUp is SetUp {
-    GeometricMean g3m;
+    GeometricMean2 g3m;
     GeometricMeanSolver solver;
 
     uint256 public POOL_ID;
@@ -25,21 +29,26 @@ contract G3MSetUp is SetUp {
 
     function setUp() public override {
         SetUp.setUp();
-        g3m = new GeometricMean(address(dfmm));
+        g3m = new GeometricMean2(address(dfmm));
         solver = new GeometricMeanSolver(address(g3m));
     }
 
     modifier init() {
         vm.warp(0);
 
-        IDFMM.InitParams memory defaultInitParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        IDFMM2.InitParams memory defaultInitParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(g3m),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: defaultInitialPoolData
         });
 
-        (POOL_ID,,,) = dfmm.init(defaultInitParams);
+        (POOL_ID,,) = dfmm.init(defaultInitParams);
 
         _;
     }

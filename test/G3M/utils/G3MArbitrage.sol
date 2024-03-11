@@ -1,8 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "src/GeometricMean/GeometricMeanLib.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
+import { bisection } from "src/lib/BisectionLib.sol";
+import { computeTradingFunction, ONE } from "src/GeometricMean/G3MMath.sol";
 import { GeometricMeanParams } from "src/GeometricMean/GeometricMean2.sol";
+import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
+
+using FixedPointMathLib for uint256;
+using FixedPointMathLib for int256;
+using SignedWadMathLib for int256;
+
+int256 constant I_ONE = int256(ONE);
 
 /// @dev This is a pure anonymous function defined at the file level, which allows
 /// it to be passed as an argument to another function. BisectionLib.sol takes this
@@ -13,12 +22,7 @@ function findRootLiquidity(
 ) pure returns (int256) {
     (uint256 rX, uint256 rY,, GeometricMeanParams memory params) =
         abi.decode(data, (uint256, uint256, int256, GeometricMeanParams));
-    return GeometricMeanLib.tradingFunction({
-        rX: rX,
-        rY: rY,
-        L: L,
-        params: params
-    });
+    return computeTradingFunction({ rX: rX, rY: rY, L: L, params: params });
 }
 
 function findRootLower(bytes memory data, uint256 v) pure returns (int256) {
@@ -280,7 +284,7 @@ function computeNextLiquidity(
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             lower = lower.mulDivDown(999, 1000);
-            computedInvariant = GeometricMeanLib.tradingFunction({
+            computedInvariant = computeTradingFunction({
                 rX: rX,
                 rY: rY,
                 L: lower,
@@ -290,7 +294,7 @@ function computeNextLiquidity(
     } else {
         while (computedInvariant > 0) {
             upper = upper.mulDivUp(1001, 1000);
-            computedInvariant = GeometricMeanLib.tradingFunction({
+            computedInvariant = computeTradingFunction({
                 rX: rX,
                 rY: rY,
                 L: upper,
