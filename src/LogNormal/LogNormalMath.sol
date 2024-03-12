@@ -260,7 +260,7 @@ function computeNextRx(
     int256 invariant,
     uint256 approximatedRx,
     LogNormalParams memory params
-) view returns (uint256 rX) {
+) pure returns (uint256 rX) {
     uint256 upper = approximatedRx;
     uint256 lower = approximatedRx;
     int256 computedInvariant = invariant;
