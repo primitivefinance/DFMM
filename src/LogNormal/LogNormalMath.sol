@@ -56,7 +56,7 @@ function computeLnSDivK(uint256 S, uint256 K) pure returns (int256 lnSDivK) {
  *
  */
 function computeHalfSigmaSquared(uint256 sigma) pure returns (uint256) {
-    return HALF.mulWadDown(uint256(int256(sigma).powWad(int256(TWO))));
+    return HALF.mulWadDown(sigma.mulWadUp(sigma));
 }
 
 /// @dev Computes reserves L given rx, S.
@@ -211,10 +211,9 @@ function findRootLiquidity(
     return computeTradingFunction(rx, ry, L, params);
 }
 
-
 function computeNextLiquidity(
-    uint256 rx,
-    uint256 ry,
+    uint256 rX,
+    uint256 rY,
     int256 invariant,
     uint256 approximatedL,
     LogNormalParams memory params
@@ -225,18 +224,28 @@ function computeNextLiquidity(
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             lower = lower.mulDivDown(999, 1000);
-            computedInvariant =
-                computeTradingFunction(rx, ry, lower, params);
+            uint256 min = rX > rY.divWadDown(params.mean) ? rX + 1000 : rY.divWadDown(params.mean) + 1000;
+            lower = lower < rX ? min : lower;
+            computedInvariant = computeTradingFunction({
+                rX: rX,
+                rY: rY,
+                L: lower,
+                params: params
+            });
         }
     } else {
         while (computedInvariant > 0) {
             upper = upper.mulDivUp(1001, 1000);
-            computedInvariant =
-                computeTradingFunction(rx, ry, upper, params);
+            computedInvariant = computeTradingFunction({
+                rX: rX,
+                rY: rY,
+                L: upper,
+                params: params
+            });
         }
     }
     L = bisection(
-        abi.encode(rx, ry, computedInvariant, params),
+        abi.encode(rX, rY, computedInvariant, params),
         lower,
         upper,
         0,
@@ -246,30 +255,40 @@ function computeNextLiquidity(
 }
 
 function computeNextRx(
-    uint256 ry,
+    uint256 rY,
     uint256 L,
     int256 invariant,
     uint256 approximatedRx,
     LogNormalParams memory params
-) pure returns (uint256 rx) {
+) view returns (uint256 rX) {
     uint256 upper = approximatedRx;
     uint256 lower = approximatedRx;
     int256 computedInvariant = invariant;
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             upper = upper.mulDivUp(1001, 1000);
-            computedInvariant =
-                computeTradingFunction(upper, ry, L, params);
+            upper = upper > L ? L : upper;
+            computedInvariant = computeTradingFunction({
+                rX: upper,
+                rY: rY,
+                L: L,
+                params: params
+            });
         }
     } else {
         while (computedInvariant > 0) {
             lower = lower.mulDivDown(999, 1000);
-            computedInvariant =
-                computeTradingFunction(lower, ry, L, params);
+            lower = lower > L ? L : lower;
+            computedInvariant = computeTradingFunction({
+                rX: lower,
+                rY: rY,
+                L: L,
+                params: params
+            });
         }
     }
-    rx = bisection(
-        abi.encode(ry, L, computedInvariant, params),
+    rX = bisection(
+        abi.encode(rY, L, computedInvariant, params),
         lower,
         upper,
         0,
@@ -279,30 +298,38 @@ function computeNextRx(
 }
 
 function computeNextRy(
-    uint256 rx,
+    uint256 rX,
     uint256 L,
     int256 invariant,
     uint256 approximatedRy,
     LogNormalParams memory params
-) pure returns (uint256 ry) {
+) pure returns (uint256 rY) {
     uint256 upper = approximatedRy;
     uint256 lower = approximatedRy;
     int256 computedInvariant = invariant;
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             upper = upper.mulDivUp(1001, 1000);
-            computedInvariant =
-                computeTradingFunction(rx, upper, L, params);
+            computedInvariant = computeTradingFunction({
+                rX: rX,
+                rY: upper,
+                L: L,
+                params: params
+            });
         }
     } else {
         while (computedInvariant > 0) {
             lower = lower.mulDivDown(999, 1000);
-            computedInvariant =
-                computeTradingFunction(rx, lower, L, params);
+            computedInvariant = computeTradingFunction({
+                rX: rX,
+                rY: lower,
+                L: L,
+                params: params
+            });
         }
     }
-    ry = bisection(
-        abi.encode(rx, L, computedInvariant, params),
+    rY = bisection(
+        abi.encode(rX, L, computedInvariant, params),
         lower,
         upper,
         0,
@@ -310,6 +337,3 @@ function computeNextRy(
         findRootY
     );
 }
-
-
-
