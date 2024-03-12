@@ -24,8 +24,8 @@ contract DFMMSetUp is SetUp {
         tokens[1] = address(tokenY);
 
         return IDFMM2.InitParams({
-            name: "",
-            symbol: "",
+            name: "Default Pool",
+            symbol: "POOL",
             strategy: address(strategy),
             tokens: tokens,
             data: data
