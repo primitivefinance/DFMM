@@ -6,6 +6,7 @@ import "solmate/test/utils/mocks/MockERC20.sol";
 import "src/DFMM2.sol";
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
+import { ONE, TWO } from "src/lib/StrategyLib.sol";
 
 contract LogNormalTest is Test {
     using stdStorage for StdStorage;
@@ -34,7 +35,7 @@ contract LogNormalTest is Test {
     modifier realisticEth() {
         vm.warp(0);
 
-        LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
+        LogNormalParams memory params = LogNormalParams({
             mean: ONE,
             width: ONE,
             swapFee: TEST_SWAP_FEE,
@@ -66,7 +67,7 @@ contract LogNormalTest is Test {
     modifier basic() {
         vm.warp(0);
 
-        LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
+        LogNormalParams memory params = LogNormalParams({
             mean: ONE,
             width: ONE,
             swapFee: TEST_SWAP_FEE,
@@ -97,7 +98,7 @@ contract LogNormalTest is Test {
     modifier revert_scenario() {
         vm.warp(0);
 
-        LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
+        LogNormalParams memory params = LogNormalParams({
             mean: 0.67323818941934077 ether,
             width: ONE,
             swapFee: TEST_SWAP_FEE,

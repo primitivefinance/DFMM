@@ -24,20 +24,26 @@ contract LogNormalAllocateTest is LogNormalSetUp {
             reserves[1], deltaLiquidity, totalLiquidity
         );
 
-        // uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
-        // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
+        (,uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
+        uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        console2.log(preTotalLiquidity);
+        console2.log(preLiquidityBalance);
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
-        uint256[] memory deltas = dfmm.allocate(POOL_ID, data);
+        dfmm.allocate(POOL_ID, data);
 
-        /*
-        (,, uint256 postTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
+        (,uint256 postTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
+        uint256 postLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        console2.log(postTotalLiquidity);
+        console2.log(postLiquidityBalance);
+
         uint256 deltaTotalLiquidity = postTotalLiquidity - preTotalLiquidity;
+        uint256 deltaLiquidityBalance = postLiquidityBalance - preLiquidityBalance;
+
         assertEq(
-            preLiquidityBalance + deltaTotalLiquidity,
-            dfmm.liquidityOf(address(this), POOL_ID)
+            deltaTotalLiquidity,
+            deltaLiquidityBalance
         );
-        */
     }
 
     function test_LogNormal_allocate_GivenX() public init {
@@ -46,14 +52,10 @@ contract LogNormalAllocateTest is LogNormalSetUp {
         (uint256[] memory reserves, uint256 liquidity) =
             dfmm.getReservesAndLiquidity(POOL_ID);
 
-        console2.log("r0", reserves[0]);
-        console2.log("r1", reserves[1]);
         uint256 deltaLiquidity =
             computeDeltaLGivenDeltaX(deltaX, liquidity, reserves[0]);
-        console2.log("dL", deltaLiquidity);
         uint256 deltaYMax =
             computeDeltaYGivenDeltaL(deltaLiquidity, liquidity, reserves[1]);
-        console2.log("dyMax", deltaYMax);
         // uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
         // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
@@ -78,11 +80,8 @@ contract LogNormalAllocateTest is LogNormalSetUp {
         (uint256[] memory reserves, uint256 liquidity) =
             dfmm.getReservesAndLiquidity(POOL_ID);
 
-        console2.log("r0", reserves[0]);
-        console2.log("r1", reserves[1]);
         uint256 deltaLiquidity =
             computeDeltaLGivenDeltaY(maxDeltaY, liquidity, reserves[1]);
-        console2.log("dL", deltaLiquidity);
         uint256 maxDeltaX =
             computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
         console2.log(maxDeltaX);
@@ -101,5 +100,46 @@ contract LogNormalAllocateTest is LogNormalSetUp {
             dfmm.liquidityOf(address(this), POOL_ID)
         );
         */
+    }
+
+    function test_LogNormal_allocate_x_maintains_price() public init {
+        uint256 startPrice = solver.internalPrice(POOL_ID);
+        uint256 deltaX = 0.77 ether;
+
+        (uint256[] memory reserves, uint256 liquidity) =
+            dfmm.getReservesAndLiquidity(POOL_ID);
+
+        uint256 deltaLiquidity =
+            computeDeltaLGivenDeltaX(deltaX, liquidity, reserves[0]);
+        uint256 deltaYMax =
+            computeDeltaYGivenDeltaL(deltaLiquidity, liquidity, reserves[1]);
+
+
+        bytes memory data = abi.encode(deltaX, deltaYMax, deltaLiquidity);
+        dfmm.allocate(POOL_ID, data);
+
+        uint256 endPrice = solver.internalPrice(POOL_ID);
+
+        assertEq(startPrice, endPrice);
+    }
+
+    function test_LogNormal_allocate_y_maintains_price() public init {
+        uint256 maxDeltaY = 0.77 ether;
+        uint256 startPrice = solver.internalPrice(POOL_ID);
+
+        (uint256[] memory reserves, uint256 liquidity) =
+            dfmm.getReservesAndLiquidity(POOL_ID);
+
+        uint256 deltaLiquidity =
+            computeDeltaLGivenDeltaY(maxDeltaY, liquidity, reserves[1]);
+        uint256 maxDeltaX =
+            computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
+
+
+        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
+        dfmm.allocate(POOL_ID, data);
+        uint256 endPrice = solver.internalPrice(POOL_ID);
+
+        assertEq(startPrice, endPrice);
     }
 }

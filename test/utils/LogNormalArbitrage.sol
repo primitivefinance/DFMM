@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "../../src/LogNormal/LogNormalExtendedLib.sol";
+import "src/LogNormal/LogNormalMath.sol";
+import { LogNormalParams } from "src/LogNormal/LogNormal.sol";
 import "src/lib/StrategyLib.sol";
+import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
 
 using SignedWadMathLib for int256;
 
@@ -29,7 +31,7 @@ interface SolverLike {
     function fetchPoolParams(uint256 poolId)
         external
         view
-        returns (LogNormal.LogNormalParams memory);
+        returns (LogNormalParams memory);
 }
 
 contract LogNormalArbitrage {
@@ -47,7 +49,7 @@ contract LogNormalArbitrage {
         uint256 S,
         uint256 v
     ) public view returns (int256) {
-        LogNormal.LogNormalParams memory params = solver.fetchPoolParams(poolId);
+        LogNormalParams memory params = solver.fetchPoolParams(poolId);
         (uint256 rx,, uint256 L) = solver.getReservesAndLiquidity(poolId);
         return diffLower(int256(S), int256(rx), int256(L), int256(v), params);
     }
@@ -57,7 +59,7 @@ contract LogNormalArbitrage {
         uint256 S,
         uint256 v
     ) public view returns (int256) {
-        LogNormal.LogNormalParams memory params = solver.fetchPoolParams(poolId);
+        LogNormalParams memory params = solver.fetchPoolParams(poolId);
         (, uint256 ry, uint256 L) = solver.getReservesAndLiquidity(poolId);
         return diffRaise(int256(S), int256(ry), int256(L), int256(v), params);
     }
@@ -67,7 +69,7 @@ contract LogNormalArbitrage {
         uint256 S,
         uint256 vUpper
     ) public view returns (uint256) {
-        LogNormal.LogNormalParams memory params = solver.fetchPoolParams(poolId);
+        LogNormalParams memory params = solver.fetchPoolParams(poolId);
         (uint256 rx,, uint256 L) = solver.getReservesAndLiquidity(poolId);
         return computeOptimalLower(
             int256(S), int256(rx), int256(L), vUpper, params
@@ -79,7 +81,7 @@ contract LogNormalArbitrage {
         uint256 S,
         uint256 vUpper
     ) public view returns (uint256) {
-        LogNormal.LogNormalParams memory params = solver.fetchPoolParams(poolId);
+        LogNormalParams memory params = solver.fetchPoolParams(poolId);
         (, uint256 ry, uint256 L) = solver.getReservesAndLiquidity(poolId);
         return computeOptimalRaise(
             int256(S), int256(ry), int256(L), vUpper, params
@@ -90,7 +92,7 @@ contract LogNormalArbitrage {
         uint256 poolId,
         uint256 S
     ) public view returns (int256) {
-        LogNormal.LogNormalParams memory params = solver.fetchPoolParams(poolId);
+        LogNormalParams memory params = solver.fetchPoolParams(poolId);
         (, uint256 ry, uint256 L) = solver.getReservesAndLiquidity(poolId);
         int256 dy = computeDy(int256(S), int256(ry), int256(L), params);
         return dy;
@@ -100,7 +102,7 @@ contract LogNormalArbitrage {
         uint256 poolId,
         uint256 S
     ) public view returns (int256) {
-        LogNormal.LogNormalParams memory params = solver.fetchPoolParams(poolId);
+        LogNormalParams memory params = solver.fetchPoolParams(poolId);
         (uint256 rx,, uint256 L) = solver.getReservesAndLiquidity(poolId);
         return computeDx(int256(S), int256(rx), int256(L), params);
     }
@@ -113,9 +115,9 @@ contract LogNormalArbitrage {
             uint256 S,
             uint256 rX,
             uint256 L,
-            LogNormal.LogNormalParams memory params
+            LogNormalParams memory params
         ) = abi.decode(
-            data, (uint256, uint256, uint256, LogNormal.LogNormalParams)
+            data, (uint256, uint256, uint256, LogNormalParams)
         );
         return diffLower({
             S: int256(S),
@@ -134,9 +136,9 @@ contract LogNormalArbitrage {
             uint256 S,
             uint256 rY,
             uint256 L,
-            LogNormal.LogNormalParams memory params
+            LogNormalParams memory params
         ) = abi.decode(
-            data, (uint256, uint256, uint256, LogNormal.LogNormalParams)
+            data, (uint256, uint256, uint256, LogNormalParams)
         );
         return diffRaise({
             S: int256(S),
@@ -165,7 +167,7 @@ contract LogNormalArbitrage {
         int256 L,
         int256 gamma,
         int256 v,
-        LogNormal.LogNormalParams memory params
+        LogNormalParams memory params
     ) internal pure returns (DiffLowerStruct memory) {
         int256 a = I_TWO.wadMul(v + rx);
         int256 b = L + v - v.wadMul(gamma);
@@ -222,7 +224,7 @@ contract LogNormalArbitrage {
         int256 rX,
         int256 L,
         int256 v,
-        LogNormal.LogNormalParams memory params
+        LogNormalParams memory params
     ) internal pure returns (int256) {
         int256 gamma = I_ONE - int256(params.swapFee);
         DiffLowerStruct memory ints =
@@ -251,7 +253,7 @@ contract LogNormalArbitrage {
         int256 L,
         int256 gamma,
         int256 v,
-        LogNormal.LogNormalParams memory params
+        LogNormalParams memory params
     ) internal pure returns (DiffRaiseStruct memory) {
         int256 a = I_TWO.wadMul(v + ry);
         int256 b = int256(params.mean).wadMul(L) + v - v.wadMul(gamma);
@@ -313,7 +315,7 @@ contract LogNormalArbitrage {
         int256 rY,
         int256 L,
         int256 v,
-        LogNormal.LogNormalParams memory params
+        LogNormalParams memory params
     ) internal pure returns (int256) {
         int256 gamma = I_ONE - int256(params.swapFee);
         DiffRaiseStruct memory ints =
@@ -328,7 +330,7 @@ contract LogNormalArbitrage {
         int256 S,
         int256 rY,
         int256 L,
-        LogNormal.LogNormalParams memory params
+        LogNormalParams memory params
     ) internal pure returns (int256 dy) {
         int256 gamma = I_ONE - int256(params.swapFee);
         int256 mean = int256(params.mean);
@@ -346,7 +348,7 @@ contract LogNormalArbitrage {
         int256 S,
         int256 rX,
         int256 L,
-        LogNormal.LogNormalParams memory params
+        LogNormalParams memory params
     ) internal pure returns (int256 dx) {
         int256 gamma = I_ONE - int256(params.swapFee);
         int256 width = int256(params.width);
@@ -363,7 +365,7 @@ contract LogNormalArbitrage {
         int256 rX,
         int256 L,
         uint256 vUpper,
-        LogNormal.LogNormalParams memory params
+        LogNormalParams memory params
     ) internal pure returns (uint256 v) {
         uint256 upper = vUpper;
         uint256 lower = 1;
@@ -386,7 +388,7 @@ contract LogNormalArbitrage {
         int256 rY,
         int256 L,
         uint256 vUpper,
-        LogNormal.LogNormalParams memory params
+        LogNormalParams memory params
     ) internal pure returns (uint256 v) {
         uint256 upper = vUpper;
         uint256 lower = 1;

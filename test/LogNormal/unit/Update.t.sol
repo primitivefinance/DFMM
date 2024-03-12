@@ -5,7 +5,7 @@ import "./SetUp.sol";
 
 contract LogNormalUpdateTest is LogNormalSetUp {
     function test_LogNormal_update_UpdatesSwapFee() public init {
-        LogNormal.LogNormalParams memory params =
+        LogNormalParams memory params =
             solver.fetchPoolParams(POOL_ID);
         assertEq(params.swapFee, TEST_SWAP_FEE);
 

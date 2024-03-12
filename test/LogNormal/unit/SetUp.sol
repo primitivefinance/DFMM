@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
 import "test/utils/SetUp.sol";
+import { ONE, TWO } from "src/lib/StrategyLib.sol";
 
 contract LogNormalSetUp is SetUp {
     LogNormal logNormal;
@@ -11,7 +12,7 @@ contract LogNormalSetUp is SetUp {
 
     uint256 public POOL_ID;
 
-    LogNormal.LogNormalParams defaultParams = LogNormal.LogNormalParams({
+    LogNormalParams defaultParams = LogNormalParams({
         mean: ONE,
         width: ONE,
         swapFee: TEST_SWAP_FEE,
@@ -52,7 +53,7 @@ contract LogNormalSetUp is SetUp {
     modifier initRealistic() {
         vm.warp(0);
 
-        LogNormal.LogNormalParams memory params = LogNormal.LogNormalParams({
+        LogNormalParams memory params = LogNormalParams({
             mean: 0,
             width: 0,
             swapFee: TEST_SWAP_FEE,

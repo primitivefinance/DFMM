@@ -4,31 +4,43 @@ pragma solidity ^0.8.13;
 import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
 import { PairStrategy, IStrategy2 } from "src/PairStrategy.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
-import "./LogNormalLib.sol";
+import { computeTradingFunction, computeDeltaGivenDeltaLRoundUp, computeDeltaGivenDeltaLRoundDown } from "src/LogNormal/LogNormalMath.sol";
+import {
+  decodeFeeUpdate,
+  decodeMeanUpdate,
+  decodeWidthUpdate,
+  decodeControllerUpdate
+} from "src/LogNormal/LogNormalUtils.sol";
+
+enum UpdateCode {
+    Invalid,
+    SwapFee,
+    Width,
+    Mean,
+    Controller
+}
+
+struct InternalParams {
+    DynamicParam mean;
+    DynamicParam width;
+    uint256 swapFee;
+    address controller;
+}
+
+/// @dev Parameterization of the Log Normal curve.
+struct LogNormalParams {
+    uint256 mean;
+    uint256 width;
+    uint256 swapFee;
+    address controller;
+}
 
 /**
  * @title LogNormal Strategy for DFMM.
  * @author Primitive
  */
 contract LogNormal is PairStrategy {
-    using FixedPointMathLib for uint256;
-    using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
-
-    struct InternalParams {
-        DynamicParam mean;
-        DynamicParam width;
-        uint256 swapFee;
-        address controller;
-    }
-
-    /// @dev Parameterization of the Log Normal curve.
-    struct LogNormalParams {
-        uint256 mean;
-        uint256 width;
-        uint256 swapFee;
-        address controller;
-    }
 
     /// @inheritdoc IStrategy2
     string public constant override name = "LogNormal";
@@ -63,11 +75,10 @@ contract LogNormal is PairStrategy {
         internalParams[poolId].swapFee = params.swapFee;
         internalParams[poolId].controller = params.controller;
 
-        invariant = LogNormalLib.tradingFunction(
-            reserves[0],
-            reserves[1],
+        invariant = tradingFunction(
+            reserves,
             totalLiquidity,
-            abi.decode(getPoolParams(poolId), (LogNormalParams))
+            getPoolParams(poolId)
         );
         // todo: should the be EXACTLY 0? just positive? within an epsilon?
         valid = -(EPSILON) < invariant && invariant < EPSILON;
@@ -81,22 +92,22 @@ contract LogNormal is PairStrategy {
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
-        LogNormalLib.LogNormalUpdateCode updateCode =
-            abi.decode(data, (LogNormalLib.LogNormalUpdateCode));
+        UpdateCode updateCode =
+            abi.decode(data, (UpdateCode));
 
-        if (updateCode == LogNormalLib.LogNormalUpdateCode.SwapFee) {
-            internalParams[poolId].swapFee = LogNormalLib.decodeFeeUpdate(data);
-        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Width) {
+        if (updateCode == UpdateCode.SwapFee) {
+            internalParams[poolId].swapFee = decodeFeeUpdate(data);
+        } else if (updateCode == UpdateCode.Width) {
             (uint256 targetWidth, uint256 targetTimestamp) =
-                LogNormalLib.decodeWidthUpdate(data);
+                decodeWidthUpdate(data);
             internalParams[poolId].width.set(targetWidth, targetTimestamp);
-        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Mean) {
+        } else if (updateCode == UpdateCode.Mean) {
             (uint256 targetMean, uint256 targetTimestamp) =
-                LogNormalLib.decodeMeanUpdate(data);
+                decodeMeanUpdate(data);
             internalParams[poolId].mean.set(targetMean, targetTimestamp);
-        } else if (updateCode == LogNormalLib.LogNormalUpdateCode.Controller) {
+        } else if (updateCode == UpdateCode.Controller) {
             internalParams[poolId].controller =
-                LogNormalLib.decodeControllerUpdate(data);
+                decodeControllerUpdate(data);
         } else {
             revert InvalidUpdateCode();
         }
@@ -124,7 +135,7 @@ contract LogNormal is PairStrategy {
         uint256 totalLiquidity,
         bytes memory params
     ) public pure override returns (int256) {
-        return LogNormalLib.tradingFunction(
+        return computeTradingFunction(
             reserves[0],
             reserves[1],
             totalLiquidity,

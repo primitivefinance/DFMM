@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "./LogNormalExtendedLib.sol";
 import "../lib/BisectionLib.sol";
 import "src/interfaces/IDFMM2.sol";
 import "src/interfaces/IStrategy2.sol";
@@ -11,6 +10,23 @@ import {
     computeAllocationGivenX,
     computeAllocationGivenY
 } from "src/lib/StrategyLib.sol";
+import {
+  encodeFeeUpdate,
+  encodeMeanUpdate,
+  encodeWidthUpdate,
+  encodeControllerUpdate,
+  computeInitialPoolData
+} from "src/LogNormal/LogNormalUtils.sol";
+import { LogNormalParams } from "src/LogNormal/LogNormal.sol";
+import {
+  computeNextLiquidity,
+  computeXGivenL,
+  computeNextRx,
+  computeYGivenL,
+  computeNextRy,
+  computePriceGivenX,
+  computePriceGivenY
+} from "src/LogNormal/LogNormalMath.sol";
 
 contract LogNormalSolver {
     using FixedPointMathLib for uint256;
@@ -35,11 +51,11 @@ contract LogNormalSolver {
     function fetchPoolParams(uint256 poolId)
         public
         view
-        returns (LogNormal.LogNormalParams memory)
+        returns (LogNormalParams memory)
     {
         return abi.decode(
             IStrategy2(strategy).getPoolParams(poolId),
-            (LogNormal.LogNormalParams)
+            (LogNormalParams)
         );
     }
 
@@ -48,21 +64,21 @@ contract LogNormalSolver {
         pure
         returns (bytes memory)
     {
-        return LogNormalLib.encodeFeeUpdate(swapFee);
+        return encodeFeeUpdate(swapFee);
     }
 
     function prepareMeanUpdate(
         uint256 targetMean,
         uint256 targetTimestamp
     ) external pure returns (bytes memory) {
-        return LogNormalLib.encodeMeanUpdate(targetMean, targetTimestamp);
+        return encodeMeanUpdate(targetMean, targetTimestamp);
     }
 
     function prepareWidthUpdate(
         uint256 targetWidth,
         uint256 targetTimestamp
     ) external pure returns (bytes memory) {
-        return LogNormalLib.encodeWidthUpdate(targetWidth, targetTimestamp);
+        return encodeWidthUpdate(targetWidth, targetTimestamp);
     }
 
     function prepareControllerUpdate(address controller)
@@ -70,7 +86,7 @@ contract LogNormalSolver {
         pure
         returns (bytes memory)
     {
-        return LogNormalLib.encodeControllerUpdate(controller);
+        return encodeControllerUpdate(controller);
     }
 
     function getReservesAndLiquidity(uint256 poolId)
@@ -85,7 +101,7 @@ contract LogNormalSolver {
     function getInitialPoolData(
         uint256 rx,
         uint256 S,
-        LogNormal.LogNormalParams memory params
+        LogNormalParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolData(rx, S, params);
     }
@@ -245,7 +261,7 @@ contract LogNormalSolver {
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
-        LogNormal.LogNormalParams memory poolParams = fetchPoolParams(poolId);
+        LogNormalParams memory poolParams = fetchPoolParams(poolId);
 
         SimulateSwapState memory state;
 
@@ -317,11 +333,27 @@ contract LogNormalSolver {
         return (
             valid,
             state.amountOut,
-            LogNormalLib.computePriceGivenX(
+            computePriceGivenX(
                 endReserves.rx, endReserves.L, poolParams
                 ),
             swapData
         );
+    }
+
+    function getPriceGivenYL(
+        uint256 poolId,
+        uint256 ry,
+        uint256 L
+    ) public view returns (uint256 price) {
+        price = computePriceGivenY(ry, L, fetchPoolParams(poolId));
+    }
+
+    function getPriceGivenXL(
+        uint256 poolId,
+        uint256 rx,
+        uint256 L
+    ) public view returns (uint256 price) {
+        price = computePriceGivenX(rx, L, fetchPoolParams(poolId));
     }
 
     /// @dev Computes the internal price using this strategie's slot parameters.
@@ -331,24 +363,9 @@ contract LogNormalSolver {
         returns (uint256 price)
     {
         (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        price = LogNormalLib.computePriceGivenX(
+        price = computePriceGivenX(
             reserves[0], L, fetchPoolParams(poolId)
         );
     }
 
-    function getPriceGivenYL(
-        uint256 poolId,
-        uint256 ry,
-        uint256 L
-    ) public view returns (uint256 price) {
-        price = LogNormalLib.computePriceGivenY(ry, L, fetchPoolParams(poolId));
-    }
-
-    function getPriceGivenXL(
-        uint256 poolId,
-        uint256 rx,
-        uint256 L
-    ) public view returns (uint256 price) {
-        price = LogNormalLib.computePriceGivenX(rx, L, fetchPoolParams(poolId));
-    }
 }
