@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "../interfaces/IDFMM.sol";
-import "../lib/BisectionLib.sol";
-import "../lib/SignedWadMath.sol";
-import "./LogNormalLib.sol";
-import "./LogNormal.sol";
 import "solmate/tokens/ERC20.sol";
 import "solstat/Gaussian.sol";
+import { bisection } from "../lib/BisectionLib.sol";
+import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
+import "./LogNormalLib.sol";
+import { LogNormal } from "./LogNormal.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;

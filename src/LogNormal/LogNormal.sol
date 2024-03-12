@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import { IDFMM } from "src/interfaces/IDFMM.sol";
-import { Strategy, IStrategy } from "src/Strategy.sol";
+import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import { PairStrategy, IStrategy2 } from "src/PairStrategy.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
 import "./LogNormalLib.sol";
 
@@ -10,7 +10,7 @@ import "./LogNormalLib.sol";
  * @title LogNormal Strategy for DFMM.
  * @author Primitive
  */
-contract LogNormal is Strategy {
+contract LogNormal is PairStrategy {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
@@ -30,19 +30,19 @@ contract LogNormal is Strategy {
         address controller;
     }
 
-    /// @inheritdoc IStrategy
+    /// @inheritdoc IStrategy2
     string public constant override name = "LogNormal";
 
     mapping(uint256 => InternalParams) public internalParams;
 
     /// @param dfmm_ Address of the DFMM contract.
-    constructor(address dfmm_) Strategy(dfmm_) { }
+    constructor(address dfmm_) PairStrategy(dfmm_) { }
 
-    /// @inheritdoc IStrategy
+    /// @inheritdoc IStrategy2
     function init(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     )
         public
@@ -50,12 +50,11 @@ contract LogNormal is Strategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
+            uint256[] memory reserves,
             uint256 totalLiquidity
         )
     {
-        (valid, invariant, reserveX, reserveY, totalLiquidity,) =
+        (valid, invariant, reserves, totalLiquidity,) =
             _decodeInit(poolId, data);
     }
 
@@ -70,14 +69,13 @@ contract LogNormal is Strategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
+            uint256[] memory reserves,
             uint256 totalLiquidity,
             LogNormalParams memory params
         )
     {
-        (reserveX, reserveY, totalLiquidity, params) =
-            abi.decode(data, (uint256, uint256, uint256, LogNormalParams));
+        (reserves, totalLiquidity, params) =
+            abi.decode(data, (uint256[], uint256, LogNormalParams));
 
         internalParams[poolId].mean.lastComputedValue = params.mean;
         internalParams[poolId].width.lastComputedValue = params.width;
@@ -85,8 +83,8 @@ contract LogNormal is Strategy {
         internalParams[poolId].controller = params.controller;
 
         invariant = LogNormalLib.tradingFunction(
-            reserveX,
-            reserveY,
+            reserves[0],
+            reserves[1],
             totalLiquidity,
             abi.decode(getPoolParams(poolId), (LogNormalParams))
         );
@@ -94,11 +92,11 @@ contract LogNormal is Strategy {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
-    /// @inheritdoc IStrategy
+    /// @inheritdoc IStrategy2
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
@@ -123,7 +121,7 @@ contract LogNormal is Strategy {
         }
     }
 
-    /// @inheritdoc IStrategy
+    /// @inheritdoc IStrategy2
     function getPoolParams(uint256 poolId)
         public
         view
@@ -139,38 +137,53 @@ contract LogNormal is Strategy {
         return abi.encode(params);
     }
 
-    /// @inheritdoc IStrategy
+    /// @inheritdoc IStrategy2
     function tradingFunction(
-        uint256 reserveX,
-        uint256 reserveY,
+        uint256[] memory reserves,
         uint256 totalLiquidity,
         bytes memory params
     ) public pure override returns (int256) {
         return LogNormalLib.tradingFunction(
-            reserveX,
-            reserveY,
+            reserves[0],
+            reserves[1],
             totalLiquidity,
             abi.decode(params, (LogNormalParams))
         );
     }
 
-    function _computeDeltaXGivenDeltaL(
+    function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool calldata pool,
+        IDFMM2.Pool memory pool,
         bytes memory
-    ) internal pure override returns (uint256) {
-        return pool.reserveX.mulWadDown(
-            deltaLiquidity.divWadDown(pool.totalLiquidity)
+    ) internal pure override returns (uint256[] memory) {
+        uint256[] memory deltas = new uint256[](2);
+
+        deltas[0] = pool.reserves[0].mulWadUp(
+            deltaLiquidity.divWadUp(pool.totalLiquidity)
         );
+
+        deltas[1] = pool.reserves[1].mulWadUp(
+            deltaLiquidity.divWadUp(pool.totalLiquidity)
+        );
+
+        return deltas;
     }
 
-    function _computeDeltaYGivenDeltaL(
+    function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool calldata pool,
+        IDFMM2.Pool memory pool,
         bytes memory
-    ) internal pure override returns (uint256) {
-        return pool.reserveY.mulWadDown(
+    ) internal pure override returns (uint256[] memory) {
+        uint256[] memory deltas = new uint256[](2);
+
+        deltas[0] = pool.reserves[0].mulWadDown(
             deltaLiquidity.divWadDown(pool.totalLiquidity)
         );
+
+        deltas[1] = pool.reserves[1].mulWadDown(
+            deltaLiquidity.divWadDown(pool.totalLiquidity)
+        );
+
+        return deltas;
     }
 }

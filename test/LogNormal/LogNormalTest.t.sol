@@ -3,14 +3,14 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import "src/DFMM.sol";
+import "src/DFMM2.sol";
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
 
 contract LogNormalTest is Test {
     using stdStorage for StdStorage;
 
-    DFMM dfmm;
+    DFMM2 dfmm;
     LogNormal logNormal;
     LogNormalSolver solver;
     address tokenX;
@@ -24,7 +24,7 @@ contract LogNormalTest is Test {
         MockERC20(tokenX).mint(address(this), 100_000_000 ether);
         MockERC20(tokenY).mint(address(this), 100_000_000 ether);
 
-        dfmm = new DFMM(address(0));
+        dfmm = new DFMM2(address(0));
         logNormal = new LogNormal(address(dfmm));
         solver = new LogNormalSolver(address(logNormal));
         MockERC20(tokenX).approve(address(dfmm), type(uint256).max);
@@ -45,10 +45,15 @@ contract LogNormalTest is Test {
         bytes memory initData =
             solver.getInitialPoolData(init_x, init_p, params);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = tokenX;
+        tokens[1] = tokenY;
+
+        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(logNormal),
-            tokenX: tokenX,
-            tokenY: tokenY,
+            tokens: tokens,
             data: initData
         });
 
@@ -72,10 +77,15 @@ contract LogNormalTest is Test {
         bytes memory initData =
             solver.getInitialPoolData(init_x, init_p, params);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = tokenX;
+        tokens[1] = tokenY;
+
+        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(logNormal),
-            tokenX: tokenX,
-            tokenY: tokenY,
+            tokens: tokens,
             data: initData
         });
 
@@ -98,10 +108,15 @@ contract LogNormalTest is Test {
         bytes memory initData =
             solver.getInitialPoolData(init_x, init_p, params);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = tokenX;
+        tokens[1] = tokenY;
+
+        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(logNormal),
-            tokenX: tokenX,
-            tokenY: tokenY,
+            tokens: tokens,
             data: initData
         });
 
@@ -131,10 +146,10 @@ contract LogNormalTest is Test {
     // todo: write assertApproxEq
     function test_price_formulas() public basic {
         uint256 poolId = dfmm.nonce() - 1;
-        (uint256 rx, uint256 ry, uint256 L) =
+        (uint256[] memory reserves, uint256 L) =
             solver.getReservesAndLiquidity(poolId);
-        uint256 priceGivenY = solver.getPriceGivenYL(poolId, ry, L);
-        uint256 priceGivenX = solver.getPriceGivenXL(poolId, rx, L);
+        uint256 priceGivenX = solver.getPriceGivenXL(poolId, reserves[0], L);
+        uint256 priceGivenY = solver.getPriceGivenYL(poolId, reserves[1], L);
         assertApproxEqAbs(priceGivenY, priceGivenX, 100);
     }
 
