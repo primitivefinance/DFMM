@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "./ConstantSum.sol";
-import "src/interfaces/IStrategy.sol";
-import "src/interfaces/IDFMM.sol";
+import "src/interfaces/IStrategy2.sol";
+import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
 import "solmate/tokens/ERC20.sol";
 
 contract ConstantSumSolver {
@@ -29,7 +29,7 @@ contract ConstantSumSolver {
         uint256 ry,
         ConstantSumParams memory params
     ) public pure returns (bytes memory) {
-      return computeInitialPoolData(rx, ry, params);
+        return computeInitialPoolData(rx, ry, params);
     }
 
     struct SimulateSwapState {
@@ -42,65 +42,51 @@ contract ConstantSumSolver {
         bool swapXIn,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
-        Reserves memory startReserves;
-        Reserves memory endReserves;
-        (startReserves.rx, startReserves.ry, startReserves.L) =
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        (uint256[] memory reserves, uint256 totalLiquidity) =
+            IDFMM2(IStrategy2(strategy).dfmm()).getReservesAndLiquidity(poolId);
         ConstantSumParams memory poolParams = abi.decode(
-            IStrategy(strategy).getPoolParams(poolId),
-            (ConstantSumParams)
+            IStrategy2(strategy).getPoolParams(poolId), (ConstantSumParams)
         );
 
         SimulateSwapState memory state;
 
         if (swapXIn) {
             state.deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee);
-
             state.amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
                 ONE - poolParams.swapFee
             );
 
-            endReserves.rx = startReserves.rx + amountIn;
-            endReserves.L = startReserves.L + state.deltaLiquidity;
-
-            if (startReserves.ry < state.amountOut) {
+            if (reserves[1] < state.amountOut) {
                 revert NotEnoughLiquidity();
             }
-            endReserves.ry = startReserves.ry - state.amountOut;
         } else {
             state.deltaLiquidity =
                 amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.price);
-
             state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
-            endReserves.ry = startReserves.ry + amountIn;
-            endReserves.L = startReserves.L + state.deltaLiquidity;
-
-            if (startReserves.rx < state.amountOut) {
+            if (reserves[0] < state.amountOut) {
                 revert NotEnoughLiquidity();
             }
-            endReserves.rx = startReserves.rx - state.amountOut;
         }
 
         bytes memory swapData;
 
         if (swapXIn) {
             swapData = abi.encode(
-                amountIn, state.amountOut, state.deltaLiquidity, true
+                0, 1, amountIn, state.amountOut, state.deltaLiquidity
             );
         } else {
             swapData = abi.encode(
-                state.amountOut, amountIn, state.deltaLiquidity, false
+                1, 0, amountIn, state.amountOut, state.deltaLiquidity
             );
         }
 
-        IDFMM.Pool memory pool;
-        pool.reserveX = startReserves.rx;
-        pool.reserveY = startReserves.rx;
-        pool.totalLiquidity = startReserves.L;
+        IDFMM2.Pool memory pool;
+        pool.reserves = reserves;
+        pool.totalLiquidity = totalLiquidity;
 
-        (bool valid,,,,,) = IStrategy(strategy).validateSwap(
+        (bool valid,,,,,,) = IStrategy2(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
         return (valid, state.amountOut, swapData);
