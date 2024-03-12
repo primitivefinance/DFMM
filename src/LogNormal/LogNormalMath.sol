@@ -11,14 +11,6 @@ function computeLnSDivK(uint256 S, uint256 K) pure returns (int256 lnSDivK) {
     lnSDivK = int256(S.divWadUp(K)).lnWad();
 }
 
-function computeSigmaSqrtTau(
-    uint256 sigma,
-    uint256 tau
-) pure returns (uint256 sigmaSqrtTau) {
-    uint256 sqrtTau = FixedPointMathLib.sqrt(tau) * 10 ** 9;
-    sigmaSqrtTau = sigma.mulWadDown(sqrtTau);
-}
-
 /**
  * @dev Computes the half of the square of sigma.
  *
