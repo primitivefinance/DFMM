@@ -59,12 +59,16 @@ contract DFMMDeallocateTest is DFMMSetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
+        uint256[] memory reserves = new uint256[](2);
+        reserves[0] = 1 ether;
+        reserves[1] = 1 ether;
+
         IDFMM2.InitParams memory params = IDFMM2.InitParams({
             name: "",
             symbol: "",
             strategy: address(strategy),
             tokens: tokens,
-            data: abi.encode(true, int256(1 ether), 1 ether, 1 ether, 1 ether)
+            data: abi.encode(true, int256(1 ether), reserves, 1 ether)
         });
 
         (uint256 poolId,,) = dfmm.init(params);
@@ -72,9 +76,11 @@ contract DFMMDeallocateTest is DFMMSetUp {
         tokenX.mint(address(dfmm), 1000 ether);
         tokenY.mint(address(dfmm), 1000 ether);
 
+        reserves[0] = 2 ether;
+
         vm.expectRevert(stdError.arithmeticError);
         dfmm.deallocate(
-            poolId, abi.encode(true, int256(1 ether), 2 ether, 1 ether, 1 ether)
+            poolId, abi.encode(true, int256(1 ether), reserves, 1 ether)
         );
     }
 
@@ -83,12 +89,16 @@ contract DFMMDeallocateTest is DFMMSetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
+        uint256[] memory reserves = new uint256[](2);
+        reserves[0] = 1 ether;
+        reserves[1] = 1 ether;
+
         IDFMM2.InitParams memory params = IDFMM2.InitParams({
             name: "",
             symbol: "",
             strategy: address(strategy),
             tokens: tokens,
-            data: abi.encode(true, int256(1 ether), 1 ether, 1 ether, 1 ether)
+            data: abi.encode(true, int256(1 ether), reserves, 1 ether)
         });
 
         (uint256 poolId,,) = dfmm.init(params);
@@ -96,9 +106,11 @@ contract DFMMDeallocateTest is DFMMSetUp {
         tokenX.mint(address(dfmm), 1000 ether);
         tokenY.mint(address(dfmm), 1000 ether);
 
+        reserves[1] = 2 ether;
+
         vm.expectRevert(stdError.arithmeticError);
         dfmm.deallocate(
-            poolId, abi.encode(true, int256(1 ether), 1 ether, 2 ether, 1 ether)
+            poolId, abi.encode(true, int256(1 ether), reserves, 1 ether)
         );
     }
 }
