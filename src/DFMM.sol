@@ -376,8 +376,6 @@ contract DFMM is IDFMM {
      * @dev This function should NOT be used in a non-view call, as the
      * values can be manipulated. In the future this function might be
      * removed.
-     *
-     * This function truncates the result, effectively rounding down by 1 wei.
      */
     function liquidityOf(
         address account,
