@@ -68,8 +68,6 @@ contract DFMMInit is DFMMSetUp, Script {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        uint256[] memory reserves = new uint256[](2);
-
         vm.expectEmit(true, true, true, true, address(dfmm));
         emit IDFMM2.Init(
             address(this),
@@ -77,7 +75,7 @@ contract DFMMInit is DFMMSetUp, Script {
             computeCreateAddress(address(dfmm), vm.getNonce(address(dfmm))),
             0,
             tokens,
-            reserves,
+            defaultReserves,
             initialLiquidity
         );
 
@@ -93,8 +91,8 @@ contract DFMMInit is DFMMSetUp, Script {
     function test_DFMM_init_SetsLPTokenMetadata() public initPool {
         IDFMM2.Pool memory pool = dfmm.getPool(POOL_ID);
         LPToken lpToken = LPToken(pool.liquidityToken);
-        assertEq(lpToken.name(), "DFMM-MockStrategy-TSTX-TSTY-0");
-        assertEq(lpToken.symbol(), "DFMM-MockStrategy-TSTX-TSTY-0");
+        assertEq(lpToken.name(), "Default Pool");
+        assertEq(lpToken.symbol(), "POOL");
     }
 
     function test_DFMM_init_MintsLPTokens() public initPool {
@@ -130,11 +128,7 @@ contract DFMMInit is DFMMSetUp, Script {
             strategy: address(strategy),
             tokens: tokens,
             data: abi.encode(
-                false,
-                initialInvariant,
-                initialReserveX,
-                initialReserveY,
-                initialLiquidity
+                false, initialInvariant, defaultReserves, initialLiquidity
                 )
         });
 
