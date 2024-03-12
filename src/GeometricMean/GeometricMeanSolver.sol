@@ -145,14 +145,6 @@ contract GeometricMeanSolver {
         return (deltaX, deltaLiquidity);
     }
 
-    function getNextLiquidity(
-        uint256 poolId,
-        uint256 rx,
-        uint256 ry
-    ) public view returns (uint256) {
-        return computeNextLiquidity(rx, ry, getPoolParams(poolId));
-    }
-
     function getNextReserveX(
         uint256 poolId,
         uint256 ry,

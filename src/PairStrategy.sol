@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { IStrategy2, IDFMM2 } from "src/interfaces/IStrategy2.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title Strategy base contract for DFMM.
@@ -51,10 +52,12 @@ abstract contract PairStrategy is IStrategy2 {
         );
 
         if (deltas[0] > maxDeltaX) {
+            console2.log("erring on dx");
             revert DeltaError(maxDeltaX, deltas[0]);
         }
 
         if (deltas[1] > maxDeltaY) {
+            console2.log("erring on dy");
             revert DeltaError(maxDeltaY, deltas[1]);
         }
 
