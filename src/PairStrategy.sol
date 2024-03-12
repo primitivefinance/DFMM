@@ -1,15 +1,15 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { IStrategy2, IDFMM2 } from "src/interfaces/IStrategy2.sol";
+import { IStrategy, IDFMM } from "src/interfaces/IStrategy.sol";
 import "forge-std/console2.sol";
 
 /**
  * @title Strategy base contract for DFMM.
  * @author Primitive
  */
-abstract contract PairStrategy is IStrategy2 {
-    /// @inheritdoc IStrategy2
+abstract contract PairStrategy is IStrategy {
+    /// @inheritdoc IStrategy
     address public immutable dfmm;
 
     int256 public constant EPSILON = 20;
@@ -24,11 +24,11 @@ abstract contract PairStrategy is IStrategy2 {
         _;
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function validateAllocate(
         address,
         uint256 poolId,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes calldata data
     )
         external
@@ -73,11 +73,11 @@ abstract contract PairStrategy is IStrategy2 {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function validateDeallocate(
         address,
         uint256 poolId,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes calldata data
     )
         external
@@ -121,7 +121,7 @@ abstract contract PairStrategy is IStrategy2 {
     function validateSwap(
         address,
         uint256 poolId,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes memory data
     )
         external
@@ -166,13 +166,13 @@ abstract contract PairStrategy is IStrategy2 {
 
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes memory data
     ) internal view virtual returns (uint256[] memory);
 
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes memory data
     ) internal view virtual returns (uint256[] memory);
 }

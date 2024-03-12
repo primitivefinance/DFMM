@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "solmate/tokens/ERC20.sol";
-import "src/interfaces/IStrategy2.sol";
-import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import "src/interfaces/IStrategy.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { NTokenGeometricMeanParams } from
     "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 import {
@@ -41,7 +41,7 @@ contract NTokenGeometricMeanSolver {
         returns (NTokenGeometricMeanParams memory)
     {
         return abi.decode(
-            IStrategy2(strategy).getPoolParams(poolId),
+            IStrategy(strategy).getPoolParams(poolId),
             (NTokenGeometricMeanParams)
         );
     }
@@ -52,7 +52,7 @@ contract NTokenGeometricMeanSolver {
         returns (uint256[] memory, uint256)
     {
         return
-            IDFMM2(IStrategy2(strategy).dfmm()).getReservesAndLiquidity(poolId);
+            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
     }
 
     struct SimulateSwapState {
@@ -73,8 +73,8 @@ contract NTokenGeometricMeanSolver {
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
         NTokenGeometricMeanParams memory params = getPoolParams(poolId);
-        IDFMM2.Pool memory pool =
-            IDFMM2(IStrategy2(strategy).dfmm()).getPool(poolId);
+        IDFMM.Pool memory pool =
+            IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
 
         SimulateSwapState memory state;
 
@@ -121,7 +121,7 @@ contract NTokenGeometricMeanSolver {
             state.deltaLiquidity
         );
 
-        (bool valid,,,,,,) = IStrategy2(strategy).validateSwap(
+        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
 

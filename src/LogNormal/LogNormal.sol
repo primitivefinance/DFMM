@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
-import { PairStrategy, IStrategy2 } from "src/PairStrategy.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
 import { computeTradingFunction, computeDeltaGivenDeltaLRoundUp, computeDeltaGivenDeltaLRoundDown } from "src/LogNormal/LogNormalMath.sol";
 import {
@@ -42,7 +42,7 @@ struct LogNormalParams {
 contract LogNormal is PairStrategy {
     using DynamicParamLib for DynamicParam;
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     string public constant override name = "LogNormal";
 
     mapping(uint256 => InternalParams) public internalParams;
@@ -50,11 +50,11 @@ contract LogNormal is PairStrategy {
     /// @param dfmm_ Address of the DFMM contract.
     constructor(address dfmm_) PairStrategy(dfmm_) { }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function init(
         address,
         uint256 poolId,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         public
@@ -84,11 +84,11 @@ contract LogNormal is PairStrategy {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function update(
         address sender,
         uint256 poolId,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
@@ -113,7 +113,7 @@ contract LogNormal is PairStrategy {
         }
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)
         public
         view
@@ -129,7 +129,7 @@ contract LogNormal is PairStrategy {
         return abi.encode(params);
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function tradingFunction(
         uint256[] memory reserves,
         uint256 totalLiquidity,
@@ -145,7 +145,7 @@ contract LogNormal is PairStrategy {
 
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
         uint256[] memory deltas = new uint256[](2);
@@ -163,7 +163,7 @@ contract LogNormal is PairStrategy {
 
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
         uint256[] memory deltas = new uint256[](2);

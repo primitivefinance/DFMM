@@ -40,7 +40,7 @@ contract ConstantSumSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(constantSum),

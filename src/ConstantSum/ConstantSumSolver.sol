@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "./ConstantSum.sol";
-import "src/interfaces/IStrategy2.sol";
-import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import "src/interfaces/IStrategy.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
 import "solmate/tokens/ERC20.sol";
 
 contract ConstantSumSolver {
@@ -43,9 +43,9 @@ contract ConstantSumSolver {
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
         (uint256[] memory reserves, uint256 totalLiquidity) =
-            IDFMM2(IStrategy2(strategy).dfmm()).getReservesAndLiquidity(poolId);
+            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
         ConstantSumParams memory poolParams = abi.decode(
-            IStrategy2(strategy).getPoolParams(poolId), (ConstantSumParams)
+            IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
         );
 
         SimulateSwapState memory state;
@@ -82,11 +82,11 @@ contract ConstantSumSolver {
             );
         }
 
-        IDFMM2.Pool memory pool;
+        IDFMM.Pool memory pool;
         pool.reserves = reserves;
         pool.totalLiquidity = totalLiquidity;
 
-        (bool valid,,,,,,) = IStrategy2(strategy).validateSwap(
+        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
         return (valid, state.amountOut, swapData);

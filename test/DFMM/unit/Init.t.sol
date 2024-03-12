@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 import { LPToken } from "src/LPToken.sol";
-import { DFMMSetUp, IDFMM2 } from "./SetUp.sol";
+import { DFMMSetUp, IDFMM } from "./SetUp.sol";
 
 contract DFMMInit is DFMMSetUp, Script {
     bool valid = true;
@@ -69,7 +69,7 @@ contract DFMMInit is DFMMSetUp, Script {
         tokens[1] = address(tokenY);
 
         vm.expectEmit(true, true, true, true, address(dfmm));
-        emit IDFMM2.Init(
+        emit IDFMM.Init(
             address(this),
             address(strategy),
             computeCreateAddress(address(dfmm), vm.getNonce(address(dfmm))),
@@ -83,20 +83,20 @@ contract DFMMInit is DFMMSetUp, Script {
     }
 
     function test_DFMM_init_DeploysLPTokenClone() public initPool {
-        IDFMM2.Pool memory pool = dfmm.getPool(POOL_ID);
+        IDFMM.Pool memory pool = dfmm.getPool(POOL_ID);
         assertTrue(pool.liquidityToken != address(0));
         assertTrue(pool.liquidityToken.code.length > 0);
     }
 
     function test_DFMM_init_SetsLPTokenMetadata() public initPool {
-        IDFMM2.Pool memory pool = dfmm.getPool(POOL_ID);
+        IDFMM.Pool memory pool = dfmm.getPool(POOL_ID);
         LPToken lpToken = LPToken(pool.liquidityToken);
         assertEq(lpToken.name(), "Default Pool");
         assertEq(lpToken.symbol(), "POOL");
     }
 
     function test_DFMM_init_MintsLPTokens() public initPool {
-        IDFMM2.Pool memory pool = dfmm.getPool(POOL_ID);
+        IDFMM.Pool memory pool = dfmm.getPool(POOL_ID);
         LPToken lpToken = LPToken(pool.liquidityToken);
         assertEq(lpToken.balanceOf(address(this)), initialLiquidity - 1000);
         assertEq(lpToken.balanceOf(address(0)), 1000);
@@ -105,14 +105,14 @@ contract DFMMInit is DFMMSetUp, Script {
     function test_DFMM_init_RevertsWhenSameTokens() public {
         skip();
         /*
-        IDFMM2.InitParams memory params = IDFMM2.InitParams({
+        IDFMM.InitParams memory params = IDFMM.InitParams({
             strategy: address(strategy),
             tokenX: address(tokenX),
             tokenY: address(tokenX),
             data: ""
         });
 
-        vm.expectRevert(IDFMM2.InvalidTokens.selector);
+        vm.expectRevert(IDFMM.InvalidTokens.selector);
         dfmm.init(params);
         */
     }
@@ -122,7 +122,7 @@ contract DFMMInit is DFMMSetUp, Script {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM2.InitParams memory params = IDFMM2.InitParams({
+        IDFMM.InitParams memory params = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(strategy),
@@ -134,7 +134,7 @@ contract DFMMInit is DFMMSetUp, Script {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IDFMM2.InvalidInvariant.selector, initialInvariant
+                IDFMM.InvalidInvariant.selector, initialInvariant
             )
         );
         dfmm.init(params);

@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "./ConstantSumMath.sol";
 import "./ConstantSumUtils.sol";
-import { PairStrategy, IDFMM2, IStrategy2 } from "src/PairStrategy.sol";
+import { PairStrategy, IDFMM, IStrategy } from "src/PairStrategy.sol";
 
 struct InternalParams {
     uint256 price;
@@ -27,7 +27,7 @@ enum UpdateCode {
 contract ConstantSum is PairStrategy {
     using FixedPointMathLib for uint256;
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     string public constant name = "ConstantSum";
 
     mapping(uint256 => InternalParams) public internalParams;
@@ -37,7 +37,7 @@ contract ConstantSum is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         public
@@ -65,11 +65,11 @@ contract ConstantSum is PairStrategy {
         return (valid, invariant, reserves, totalLiquidity);
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function update(
         address sender,
         uint256 poolId,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
@@ -114,7 +114,7 @@ contract ConstantSum is PairStrategy {
 
     function _computeAllocateDeltasGivenDeltaL(
         uint256,
-        IDFMM2.Pool memory,
+        IDFMM.Pool memory,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
         return new uint256[](0);
@@ -122,7 +122,7 @@ contract ConstantSum is PairStrategy {
 
     function _computeDeallocateDeltasGivenDeltaL(
         uint256,
-        IDFMM2.Pool memory,
+        IDFMM.Pool memory,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
         return new uint256[](0);

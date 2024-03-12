@@ -1,14 +1,14 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { IStrategy2, IDFMM2 } from "src/interfaces/IStrategy2.sol";
+import { IStrategy, IDFMM } from "src/interfaces/IStrategy.sol";
 
 /**
  * @title Strategy base contract for DFMM.
  * @author Primitive
  */
-abstract contract NTokenStrategy is IStrategy2 {
-    /// @inheritdoc IStrategy2
+abstract contract NTokenStrategy is IStrategy {
+    /// @inheritdoc IStrategy
     address public immutable dfmm;
 
     int256 public constant EPSILON = 20;
@@ -23,11 +23,11 @@ abstract contract NTokenStrategy is IStrategy2 {
         _;
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function validateAllocate(
         address,
         uint256 poolId,
-        IDFMM2.Pool calldata pool,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -59,11 +59,11 @@ abstract contract NTokenStrategy is IStrategy2 {
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function validateDeallocate(
         address,
         uint256 poolId,
-        IDFMM2.Pool calldata pool,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     )
         external
@@ -98,7 +98,7 @@ abstract contract NTokenStrategy is IStrategy2 {
     function validateSwap(
         address,
         uint256 poolId,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes memory data
     )
         external
@@ -144,7 +144,7 @@ abstract contract NTokenStrategy is IStrategy2 {
     function _computeAllocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory maxDeltas,
-        IDFMM2.Pool memory pool
+        IDFMM.Pool memory pool
     )
         internal
         view
@@ -154,7 +154,7 @@ abstract contract NTokenStrategy is IStrategy2 {
     function _computeDeallocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory minDeltas,
-        IDFMM2.Pool memory pool
+        IDFMM.Pool memory pool
     )
         internal
         view

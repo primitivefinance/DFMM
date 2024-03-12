@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
-import { IStrategy2 } from "src/interfaces/IStrategy2.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { IStrategy } from "src/interfaces/IStrategy.sol";
 
-contract MockStrategy is IStrategy2 {
+contract MockStrategy is IStrategy {
     string public constant name = "MockStrategy";
     address public immutable dfmm;
 
@@ -24,7 +24,7 @@ contract MockStrategy is IStrategy2 {
     function init(
         address,
         uint256,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         external
@@ -43,7 +43,7 @@ contract MockStrategy is IStrategy2 {
     function validateAllocate(
         address,
         uint256,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         external
@@ -63,7 +63,7 @@ contract MockStrategy is IStrategy2 {
     function validateDeallocate(
         address,
         uint256,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         external
@@ -83,7 +83,7 @@ contract MockStrategy is IStrategy2 {
     function validateSwap(
         address,
         uint256,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     )
         external
@@ -115,7 +115,7 @@ contract MockStrategy is IStrategy2 {
     function update(
         address sender,
         uint256 poolId,
-        IDFMM2.Pool calldata pool,
+        IDFMM.Pool calldata pool,
         bytes calldata data
     ) external { }
 

@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
-import { PairStrategy, IStrategy2 } from "src/PairStrategy.sol";
+import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
-import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
 import {
     computeTradingFunction,
     computeDeltaGivenDeltaLRoundUp,
@@ -30,7 +30,7 @@ enum UpdateCode {
 /**
  * @notice Geometric Mean Market Maker.
  */
-contract GeometricMean2 is PairStrategy {
+contract GeometricMean is PairStrategy {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
@@ -41,7 +41,7 @@ contract GeometricMean2 is PairStrategy {
         address controller;
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     string public constant override name = "GeometricMean";
 
     mapping(uint256 => InternalParams) public internalParams;
@@ -63,11 +63,11 @@ contract GeometricMean2 is PairStrategy {
         uint256 totalLiquidity;
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function init(
         address,
         uint256 poolId,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     ) external onlyDFMM returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
@@ -107,11 +107,11 @@ contract GeometricMean2 is PairStrategy {
             (state.valid, state.invariant, state.reserves, state.totalLiquidity);
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function update(
         address sender,
         uint256 poolId,
-        IDFMM2.Pool calldata,
+        IDFMM.Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
@@ -132,7 +132,7 @@ contract GeometricMean2 is PairStrategy {
         }
     }
 
-    /// @inheritdoc IStrategy2
+    /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)
         public
         view
@@ -164,7 +164,7 @@ contract GeometricMean2 is PairStrategy {
 
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes memory
     ) internal pure override returns (uint256[] memory deltas) {
         deltas = new uint256[](2);
@@ -179,7 +179,7 @@ contract GeometricMean2 is PairStrategy {
 
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM2.Pool memory pool,
+        IDFMM.Pool memory pool,
         bytes memory
     ) internal pure override returns (uint256[] memory deltas) {
         deltas = new uint256[](2);

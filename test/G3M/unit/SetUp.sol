@@ -2,9 +2,9 @@
 pragma solidity ^0.8.13;
 
 import {
-    GeometricMean2,
+    GeometricMean,
     GeometricMeanParams
-} from "src/GeometricMean/GeometricMean2.sol";
+} from "src/GeometricMean/GeometricMean.sol";
 import { GeometricMeanSolver } from "src/GeometricMean/GeometricMeanSolver.sol";
 import "test/utils/SetUp.sol";
 import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
@@ -13,7 +13,7 @@ import "solmate/utils/FixedPointMathLib.sol";
 using FixedPointMathLib for uint256;
 
 contract G3MSetUp is SetUp {
-    GeometricMean2 g3m;
+    GeometricMean g3m;
     GeometricMeanSolver solver;
 
     uint256 public POOL_ID;
@@ -32,7 +32,7 @@ contract G3MSetUp is SetUp {
 
     function setUp() public override {
         SetUp.setUp();
-        g3m = new GeometricMean2(address(dfmm));
+        g3m = new GeometricMean(address(dfmm));
         solver = new GeometricMeanSolver(address(g3m));
     }
 
@@ -43,7 +43,7 @@ contract G3MSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM2.InitParams memory defaultInitParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory defaultInitParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(g3m),

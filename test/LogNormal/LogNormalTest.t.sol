@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import "src/DFMM2.sol";
+import "src/DFMM.sol";
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
 import { ONE, TWO } from "src/lib/StrategyLib.sol";
@@ -11,7 +11,7 @@ import { ONE, TWO } from "src/lib/StrategyLib.sol";
 contract LogNormalTest is Test {
     using stdStorage for StdStorage;
 
-    DFMM2 dfmm;
+    DFMM dfmm;
     LogNormal logNormal;
     LogNormalSolver solver;
     address tokenX;
@@ -25,7 +25,7 @@ contract LogNormalTest is Test {
         MockERC20(tokenX).mint(address(this), 100_000_000 ether);
         MockERC20(tokenY).mint(address(this), 100_000_000 ether);
 
-        dfmm = new DFMM2(address(0));
+        dfmm = new DFMM(address(0));
         logNormal = new LogNormal(address(dfmm));
         solver = new LogNormalSolver(address(logNormal));
         MockERC20(tokenX).approve(address(dfmm), type(uint256).max);
@@ -50,7 +50,7 @@ contract LogNormalTest is Test {
         tokens[0] = tokenX;
         tokens[1] = tokenY;
 
-        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),
@@ -82,7 +82,7 @@ contract LogNormalTest is Test {
         tokens[0] = tokenX;
         tokens[1] = tokenY;
 
-        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),
@@ -113,7 +113,7 @@ contract LogNormalTest is Test {
         tokens[0] = tokenX;
         tokens[1] = tokenY;
 
-        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),

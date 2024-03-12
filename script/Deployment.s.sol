@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import "src/DFMM2.sol";
+import "src/DFMM.sol";
 import "solmate/tokens/WETH.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 
@@ -12,7 +12,7 @@ contract DeploymentScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         WETH weth = new WETH();
-        DFMM2 dfmm = new DFMM2(address(weth));
+        DFMM dfmm = new DFMM(address(weth));
         // GeometricMean g3m = new GeometricMean(address(dfmm));
         // LogNormal logNormal = new LogNormal(address(dfmm));
 

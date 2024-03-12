@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { ConstantSumSetUp } from "./SetUp.sol";
 import { ConstantSum, ConstantSumParams } from "src/ConstantSum/ConstantSum.sol";
-import { DFMM2, IDFMM2 } from "src/DFMM2.sol";
+import { DFMM, IDFMM } from "src/DFMM.sol";
 
 contract ConstantSumInitTest is ConstantSumSetUp {
     function test_ConstantSum_init_InitializesPool() public {
@@ -25,7 +25,7 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(constantSum),

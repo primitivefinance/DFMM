@@ -2,10 +2,10 @@
 pragma solidity ^0.8.13;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
-import { IStrategy2 } from "src/interfaces/IStrategy2.sol";
-import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import { IStrategy } from "src/interfaces/IStrategy.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { computeAllocationGivenX } from "src/lib/StrategyLib.sol";
-import { GeometricMeanParams } from "./GeometricMean2.sol";
+import { GeometricMeanParams } from "./GeometricMean.sol";
 import {
     encodeFeeUpdate,
     encodeWeightXUpdate,
@@ -33,10 +33,10 @@ contract GeometricMeanSolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
-    IStrategy2 public strategy;
+    IStrategy public strategy;
 
     constructor(address strategy_) {
-        strategy = IStrategy2(strategy_);
+        strategy = IStrategy(strategy_);
     }
 
     function getPoolParams(uint256 poolId)
@@ -45,7 +45,7 @@ contract GeometricMeanSolver {
         returns (GeometricMeanParams memory params)
     {
         return abi.decode(
-            IStrategy2(strategy).getPoolParams(poolId), (GeometricMeanParams)
+            IStrategy(strategy).getPoolParams(poolId), (GeometricMeanParams)
         );
     }
 
@@ -55,7 +55,7 @@ contract GeometricMeanSolver {
         returns (uint256, uint256, uint256)
     {
         (uint256[] memory reserves, uint256 totalLiquidity) =
-            IDFMM2(IStrategy2(strategy).dfmm()).getReservesAndLiquidity(poolId);
+            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
         return (reserves[0], reserves[1], totalLiquidity);
     }
 
@@ -180,8 +180,8 @@ contract GeometricMeanSolver {
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
         GeometricMeanParams memory params = getPoolParams(poolId);
-        IDFMM2.Pool memory pool =
-            IDFMM2(IStrategy2(strategy).dfmm()).getPool(poolId);
+        IDFMM.Pool memory pool =
+            IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
 
         SimulateSwapState memory state;
 
@@ -222,7 +222,7 @@ contract GeometricMeanSolver {
             state.deltaLiquidity
         );
 
-        (bool valid,,,,,,) = IStrategy2(strategy).validateSwap(
+        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
 

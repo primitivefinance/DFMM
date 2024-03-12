@@ -37,7 +37,7 @@ contract LogNormalSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM2.InitParams memory defaultInitParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory defaultInitParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),
@@ -64,7 +64,7 @@ contract LogNormalSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM2.InitParams memory defaultInitParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory defaultInitParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),

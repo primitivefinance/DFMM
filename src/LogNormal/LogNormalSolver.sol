@@ -2,8 +2,8 @@
 pragma solidity ^0.8.13;
 
 import "../lib/BisectionLib.sol";
-import "src/interfaces/IDFMM2.sol";
-import "src/interfaces/IStrategy2.sol";
+import "src/interfaces/IDFMM.sol";
+import "src/interfaces/IStrategy.sol";
 import "solmate/tokens/ERC20.sol";
 import "solstat/Gaussian.sol";
 import {
@@ -54,7 +54,7 @@ contract LogNormalSolver {
         returns (LogNormalParams memory)
     {
         return abi.decode(
-            IStrategy2(strategy).getPoolParams(poolId),
+            IStrategy(strategy).getPoolParams(poolId),
             (LogNormalParams)
         );
     }
@@ -95,7 +95,7 @@ contract LogNormalSolver {
         returns (uint256[] memory, uint256)
     {
         return
-            IDFMM2(IStrategy2(strategy).dfmm()).getReservesAndLiquidity(poolId);
+            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
     }
 
     function getInitialPoolData(
@@ -202,8 +202,8 @@ contract LogNormalSolver {
         reserves[0] = rx;
         reserves[1] = ry;
 
-        int256 invariant = IStrategy2(strategy).tradingFunction(
-            reserves, L, IStrategy2(strategy).getPoolParams(poolId)
+        int256 invariant = IStrategy(strategy).tradingFunction(
+            reserves, L, IStrategy(strategy).getPoolParams(poolId)
         );
         return
             computeNextLiquidity(rx, ry, invariant, L, fetchPoolParams(poolId));
@@ -219,8 +219,8 @@ contract LogNormalSolver {
         reserves[1] = ry;
         uint256 approximatedRx = computeXGivenL(L, S, fetchPoolParams(poolId));
         reserves[0] = approximatedRx;
-        int256 invariant = IStrategy2(strategy).tradingFunction(
-            reserves, L, IStrategy2(strategy).getPoolParams(poolId)
+        int256 invariant = IStrategy(strategy).tradingFunction(
+            reserves, L, IStrategy(strategy).getPoolParams(poolId)
         );
         return computeNextRx(
             ry, L, invariant, approximatedRx, fetchPoolParams(poolId)
@@ -237,8 +237,8 @@ contract LogNormalSolver {
         reserves[0] = rx;
         uint256 approximatedRy = computeYGivenL(L, S, fetchPoolParams(poolId));
         reserves[1] = approximatedRy;
-        int256 invariant = IStrategy2(strategy).tradingFunction(
-            reserves, L, IStrategy2(strategy).getPoolParams(poolId)
+        int256 invariant = IStrategy(strategy).tradingFunction(
+            reserves, L, IStrategy(strategy).getPoolParams(poolId)
         );
         return computeNextRy(
             rx, L, invariant, approximatedRy, fetchPoolParams(poolId)
@@ -310,7 +310,7 @@ contract LogNormalSolver {
             }
         }
 
-        IDFMM2.Pool memory pool;
+        IDFMM.Pool memory pool;
         pool.reserves = preReserves;
         pool.totalLiquidity = preTotalLiquidity;
 
@@ -327,7 +327,7 @@ contract LogNormalSolver {
         }
 
         uint256 poolId = poolId;
-        (bool valid,,,,,,) = IStrategy2(strategy).validateSwap(
+        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
         return (

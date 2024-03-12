@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "src/interfaces/IDFMM.sol";
+import { IDFMM } from "src/interfaces/IDFMM.sol";
 
 /**
  * @title Strategy Interface.
@@ -30,9 +30,8 @@ interface IStrategy {
      * @param poolId Id of the pool to initialize.
      * @param data Pool parameters encoded as bytes.
      * @return valid True if the initialization is valid.
-     * @return swapConstantGrowth Initial swap growth.
-     * @return reserveX Initial reserve of token X.
-     * @return reserveY Initial reserve of token Y.
+     * @return invariant Initial swap growth.
+     * @return reserves Initial reserves of the pool.
      * @return totalLiquidity Initial liquidity of the pool.
      */
     function init(
@@ -44,9 +43,8 @@ interface IStrategy {
         external
         returns (
             bool valid,
-            int256 swapConstantGrowth,
-            uint256 reserveX,
-            uint256 reserveY,
+            int256 invariant,
+            uint256[] memory reserves,
             uint256 totalLiquidity
         );
 
@@ -70,8 +68,7 @@ interface IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
+            uint256[] memory deltas,
             uint256 deltaLiquidity
         );
 
@@ -86,8 +83,7 @@ interface IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
+            uint256[] memory deltas,
             uint256 deltaLiquidity
         );
 
@@ -102,10 +98,11 @@ interface IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
-            uint256 deltaLiquidity,
-            bool isSwapXForY
+            uint256 tokenInIndex,
+            uint256 tokenOutIndex,
+            uint256 amountIn,
+            uint256 amountOut,
+            uint256 deltaLiquidity
         );
 
     function update(
@@ -116,8 +113,7 @@ interface IStrategy {
     ) external;
 
     function tradingFunction(
-        uint256 reserveX,
-        uint256 reserveY,
+        uint256[] memory reserves,
         uint256 totalLiquidity,
         bytes memory params
     ) external view returns (int256);

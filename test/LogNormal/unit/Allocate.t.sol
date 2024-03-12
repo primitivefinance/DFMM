@@ -9,7 +9,6 @@ import {
     computeDeltaXGivenDeltaL,
     computeDeltaYGivenDeltaL
 } from "src/lib/StrategyLib.sol";
-import "forge-std/console2.sol";
 
 contract LogNormalAllocateTest is LogNormalSetUp {
     function test_LogNormal_allocate_GivenL() public init {

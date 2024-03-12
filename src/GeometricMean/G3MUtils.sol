@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {
     GeometricMeanParams,
     UpdateCode
-} from "src/GeometricMean/GeometricMean2.sol";
+} from "src/GeometricMean/GeometricMean.sol";
 import {
     computeY,
     computeL,

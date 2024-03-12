@@ -3,8 +3,8 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import { DFMM2 } from "src/DFMM2.sol";
-import "src/GeometricMean/GeometricMean2.sol";
+import { DFMM } from "src/DFMM.sol";
+import "src/GeometricMean/GeometricMean.sol";
 import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
 
 interface USDC {
@@ -17,11 +17,11 @@ interface USDC {
 }
 
 contract G3MTestFork is Test {
-    DFMM2 dfmm;
+    DFMM dfmm;
     ERC20 usdc;
     ERC20 weth;
     ERC20 dai;
-    GeometricMean2 g3m;
+    GeometricMean g3m;
 
     function setUp() public {
         vm.createSelectFork(vm.envString("MAINNET_RPC_URL"));
@@ -42,8 +42,8 @@ contract G3MTestFork is Test {
         deal(address(weth), address(this), 1 ether);
         deal(address(dai), address(this), 10_000 ether);
 
-        dfmm = new DFMM2(address(0));
-        g3m = new GeometricMean2(address(dfmm));
+        dfmm = new DFMM(address(0));
+        g3m = new GeometricMean(address(dfmm));
 
         usdc.approve(address(dfmm), type(uint256).max);
         weth.approve(address(dfmm), type(uint256).max);
@@ -71,7 +71,7 @@ contract G3MTestFork is Test {
         tokens[1] = address(usdc);
 
         dfmm.init(
-            IDFMM2.InitParams({
+            IDFMM.InitParams({
                 name: "",
                 symbol: "",
                 strategy: address(g3m),
@@ -109,7 +109,7 @@ contract G3MTestFork is Test {
         tokens[1] = address(dai);
 
         dfmm.init(
-            IDFMM2.InitParams({
+            IDFMM.InitParams({
                 name: "",
                 symbol: "",
                 strategy: address(g3m),

@@ -27,7 +27,7 @@ contract LogNormalInitTest is LogNormalSetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenX);
 
-        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),
@@ -35,7 +35,7 @@ contract LogNormalInitTest is LogNormalSetUp {
             data: defaultInitialPoolData
         });
 
-        vm.expectRevert(IDFMM2.InvalidTokens.selector);
+        vm.expectRevert(IDFMM.InvalidTokens.selector);
         dfmm.init(initParams);
     }
 }

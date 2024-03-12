@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
-import { LibString } from "solmate/utils/LibString.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
-import { abs } from "solstat/Units.sol";
-import { IDFMM } from "./interfaces/IDFMM.sol";
 import { IStrategy } from "./interfaces/IStrategy.sol";
 import {
     computeScalingFactor,
@@ -23,13 +21,10 @@ import { LPToken } from "./LPToken.sol";
 contract DFMM is IDFMM {
     using FixedPointMathLib for uint256;
 
-    /// @inheritdoc IDFMM
     Pool[] public pools;
 
-    /// @inheritdoc IDFMM
     address public immutable lpTokenImplementation;
 
-    /// @inheritdoc IDFMM
     address public immutable weth;
 
     /// @dev Part of the reentrancy lock, 1 = unlocked, 2 = locked.
@@ -61,21 +56,16 @@ contract DFMM is IDFMM {
         LPToken(lpTokenImplementation).initialize("", "");
     }
 
-    /// @inheritdoc IDFMM
     function init(InitParams calldata params)
         external
         payable
         lock
-        returns (uint256, uint256, uint256, uint256)
+        returns (uint256, uint256[] memory, uint256)
     {
-        if (params.tokenX == params.tokenY) revert InvalidTokens();
-
         Pool memory pool = Pool({
             strategy: params.strategy,
-            tokenX: params.tokenX,
-            tokenY: params.tokenY,
-            reserveX: 0,
-            reserveY: 0,
+            tokens: params.tokens,
+            reserves: new uint256[](params.tokens.length),
             totalLiquidity: 0,
             liquidityToken: address(0)
         });
@@ -83,178 +73,167 @@ contract DFMM is IDFMM {
         (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
+            uint256[] memory reserves,
             uint256 totalLiquidity
         ) = IStrategy(params.strategy).init(
             msg.sender, pools.length, pool, params.data
         );
 
-        if (!valid) {
-            revert Invalid(invariant < 0, abs(invariant));
-        }
+        if (!valid) revert InvalidInvariant(invariant);
 
         LPToken liquidityToken = LPToken(clone(lpTokenImplementation));
 
-        string memory tokenMetadata =
-            _prepareTokenMetadata(params.strategy, params.tokenX, params.tokenY);
-        liquidityToken.initialize(tokenMetadata, tokenMetadata);
+        liquidityToken.initialize(params.name, params.symbol);
         liquidityToken.mint(msg.sender, totalLiquidity - BURNT_LIQUIDITY);
         liquidityToken.mint(address(0), BURNT_LIQUIDITY);
 
-        pool.reserveX = reserveX;
-        pool.reserveY = reserveY;
+        pool.reserves = reserves;
         pool.totalLiquidity = totalLiquidity;
         pool.liquidityToken = address(liquidityToken);
 
         pools.push(pool);
         uint256 poolId = pools.length - 1;
 
-        _transferFrom(params.tokenX, reserveX);
-        _transferFrom(params.tokenY, reserveY);
-
-        emitInit(poolId, address(liquidityToken));
-
-        return (poolId, reserveX, reserveY, totalLiquidity - BURNT_LIQUIDITY);
-    }
-
-    function emitInit(uint256 poolId, address lpToken) private {
-        Pool memory pool = pools[poolId];
+        for (uint256 i = 0; i < params.tokens.length; i++) {
+            if (params.tokens[i] != address(0)) {
+                _transferFrom(params.tokens[i], reserves[i]);
+            }
+        }
 
         emit Init(
             msg.sender,
             pool.strategy,
-            lpToken,
-            pool.tokenX,
-            pool.tokenY,
+            address(liquidityToken),
             poolId,
-            pool.reserveX,
-            pool.reserveY,
+            pool.tokens,
+            pool.reserves,
             pool.totalLiquidity
         );
+
+        return (poolId, reserves, totalLiquidity - BURNT_LIQUIDITY);
     }
 
-    function _prepareTokenMetadata(
-        address strategy,
-        address tokenX,
-        address tokenY
-    ) internal view returns (string memory) {
-        return string.concat(
-            "DFMM-",
-            IStrategy(strategy).name(),
-            "-",
-            ERC20(tokenX).symbol(),
-            "-",
-            ERC20(tokenY).symbol(),
-            "-",
-            LibString.toString(pools.length)
-        );
-    }
-
-    /// @inheritdoc IDFMM
     function allocate(
         uint256 poolId,
         bytes calldata data
-    ) external payable lock returns (uint256, uint256) {
+    ) external payable lock returns (uint256[] memory) {
         (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
+            uint256[] memory deltas,
             uint256 deltaLiquidity
         ) = IStrategy(pools[poolId].strategy).validateAllocate(
             msg.sender, poolId, pools[poolId], data
         );
 
-        if (!valid) {
-            revert Invalid(invariant < 0, abs(invariant));
-        }
+        if (!valid) revert InvalidInvariant(invariant);
 
-        pools[poolId].reserveX += deltaX;
-        pools[poolId].reserveY += deltaY;
+        for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
+            if (pools[poolId].tokens[i] != address(0)) {
+                pools[poolId].reserves[i] += deltas[i];
+            }
+        }
         pools[poolId].totalLiquidity += deltaLiquidity;
 
         _manageTokens(poolId, true, deltaLiquidity);
 
-        _transferFrom(pools[poolId].tokenX, deltaX);
-        _transferFrom(pools[poolId].tokenY, deltaY);
+        for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
+            if (pools[poolId].tokens[i] != address(0)) {
+                _transferFrom(pools[poolId].tokens[i], deltas[i]);
+            }
+        }
 
-        emit Allocate(msg.sender, poolId, deltaX, deltaY, deltaLiquidity);
-        return (deltaX, deltaY);
+        emit Allocate(msg.sender, poolId, deltas, deltaLiquidity);
+        return deltas;
     }
 
-    /// @inheritdoc IDFMM
     function deallocate(
         uint256 poolId,
         bytes calldata data
-    ) external lock returns (uint256, uint256) {
+    ) external lock returns (uint256[] memory) {
         (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
+            uint256[] memory deltas,
             uint256 deltaLiquidity
         ) = IStrategy(pools[poolId].strategy).validateDeallocate(
             msg.sender, poolId, pools[poolId], data
         );
 
-        if (!valid) {
-            revert Invalid(invariant < 0, abs(invariant));
+        if (!valid) revert InvalidInvariant(invariant);
+
+        for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
+            if (pools[poolId].tokens[i] != address(0)) {
+                pools[poolId].reserves[i] -= deltas[i];
+            }
         }
 
-        pools[poolId].reserveX -= deltaX;
-        pools[poolId].reserveY -= deltaY;
+        _manageTokens(poolId, false, deltaLiquidity);
         pools[poolId].totalLiquidity -= deltaLiquidity;
 
-        _manageTokens(poolId, false, deltaLiquidity);
+        for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
+            if (pools[poolId].tokens[i] != address(0)) {
+                _transfer(pools[poolId].tokens[i], msg.sender, deltas[i]);
+            }
+        }
 
-        _transfer(pools[poolId].tokenX, msg.sender, deltaX);
-        _transfer(pools[poolId].tokenY, msg.sender, deltaY);
-
-        emit Deallocate(msg.sender, poolId, deltaX, deltaY, deltaLiquidity);
-        return (deltaX, deltaY);
+        emit Deallocate(msg.sender, poolId, deltas, deltaLiquidity);
+        return deltas;
     }
 
-    /// @inheritdoc IDFMM
+    struct SwapState {
+        bool valid;
+        int256 invariant;
+        uint256 tokenInIndex;
+        uint256 tokenOutIndex;
+        uint256 amountIn;
+        uint256 amountOut;
+        uint256 deltaLiquidity;
+    }
+
     function swap(
         uint256 poolId,
         bytes calldata data
-    ) external lock returns (uint256, uint256) {
+    ) external lock returns (address, address, uint256, uint256) {
+        SwapState memory state;
+
         (
-            bool valid,
-            int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
-            uint256 deltaLiquidity,
-            bool isSwapXForY
+            state.valid,
+            state.invariant,
+            state.tokenInIndex,
+            state.tokenOutIndex,
+            state.amountIn,
+            state.amountOut,
+            state.deltaLiquidity
         ) = IStrategy(pools[poolId].strategy).validateSwap(
             msg.sender, poolId, pools[poolId], data
         );
 
-        if (!valid) {
-            revert Invalid(invariant < 0, abs(invariant));
-        }
+        if (!state.valid) revert InvalidInvariant(state.invariant);
 
-        pools[poolId].totalLiquidity += deltaLiquidity;
+        pools[poolId].totalLiquidity += state.deltaLiquidity;
 
-        if (isSwapXForY) {
-            pools[poolId].reserveX += deltaX;
-            pools[poolId].reserveY -= deltaY;
-            _transferFrom(pools[poolId].tokenX, deltaX);
-            _transfer(pools[poolId].tokenY, msg.sender, deltaY);
-        } else {
-            pools[poolId].reserveX -= deltaX;
-            pools[poolId].reserveY += deltaY;
-            _transferFrom(pools[poolId].tokenY, deltaY);
-            _transfer(pools[poolId].tokenX, msg.sender, deltaX);
-        }
+        pools[poolId].reserves[state.tokenInIndex] += state.amountIn;
+        pools[poolId].reserves[state.tokenOutIndex] -= state.amountOut;
 
-        emit Swap(msg.sender, poolId, isSwapXForY, deltaX, deltaX);
+        address tokenIn = pools[poolId].tokens[state.tokenInIndex];
+        address tokenOut = pools[poolId].tokens[state.tokenOutIndex];
 
-        return (deltaX, deltaY);
+        _transferFrom(tokenIn, state.amountIn);
+        _transfer(tokenOut, msg.sender, state.amountOut);
+
+        emit Swap(
+            msg.sender,
+            poolId,
+            tokenIn,
+            tokenOut,
+            state.amountIn,
+            state.amountOut
+        );
+
+        return (tokenIn, tokenOut, state.amountIn, state.amountOut);
     }
 
-    /// @inheritdoc IDFMM
     function update(uint256 poolId, bytes calldata data) external lock {
         IStrategy(pools[poolId].strategy).update(
             msg.sender, poolId, pools[poolId], data
@@ -329,7 +308,7 @@ contract DFMM is IDFMM {
 
         if (isAllocate) {
             uint256 amount =
-                deltaL.mulWadDown(totalSupply.divWadDown(totalLiquidity));
+                deltaL.mulWadDown(totalSupply.divWadUp(totalLiquidity));
             liquidityToken.mint(msg.sender, amount);
         } else {
             uint256 amount =
@@ -386,13 +365,9 @@ contract DFMM is IDFMM {
     function getReservesAndLiquidity(uint256 poolId)
         external
         view
-        returns (uint256, uint256, uint256)
+        returns (uint256[] memory, uint256)
     {
-        return (
-            pools[poolId].reserveX,
-            pools[poolId].reserveY,
-            pools[poolId].totalLiquidity
-        );
+        return (pools[poolId].reserves, pools[poolId].totalLiquidity);
     }
 
     /**

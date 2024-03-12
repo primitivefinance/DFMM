@@ -3,14 +3,14 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import "src/DFMM2.sol";
+import "src/DFMM.sol";
 import "src/ConstantSum/ConstantSum.sol";
 import "src/ConstantSum/ConstantSumSolver.sol";
 
 contract ConstantSumTest is Test {
     using stdStorage for StdStorage;
 
-    DFMM2 dfmm;
+    DFMM dfmm;
     ConstantSum constantSum;
     ConstantSumSolver solver;
     MockERC20 tokenX;
@@ -25,7 +25,7 @@ contract ConstantSumTest is Test {
         tokenX.mint(address(this), 100_000_000 ether);
         tokenY.mint(address(this), 100_000_000 ether);
 
-        dfmm = new DFMM2(address(0));
+        dfmm = new DFMM(address(0));
         constantSum = new ConstantSum(address(dfmm));
         solver = new ConstantSumSolver(address(constantSum));
         tokenX.approve(address(dfmm), type(uint256).max);
@@ -51,7 +51,7 @@ contract ConstantSumTest is Test {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(constantSum),
@@ -82,7 +82,7 @@ contract ConstantSumTest is Test {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        IDFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "",
             symbol: "",
             strategy: address(constantSum),
@@ -103,7 +103,7 @@ contract ConstantSumTest is Test {
         assertEq(params.controller, address(0));
 
         (uint256[] memory reserves, uint256 initL) =
-            DFMM2(dfmm).getReservesAndLiquidity(poolId);
+            DFMM(dfmm).getReservesAndLiquidity(poolId);
 
         assertEq(reserves[0], 1 ether);
         assertEq(reserves[1], 1 ether);

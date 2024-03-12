@@ -7,14 +7,14 @@ import "solmate/test/utils/mocks/MockERC20.sol";
 
 import "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 import "src/NTokenGeometricMean/NTokenGeometricMeanSolver.sol";
-import "src/interfaces/IDFMM2.sol";
-import "src/DFMM2.sol";
+import "src/interfaces/IDFMM.sol";
+import "src/DFMM.sol";
 
 contract NTokenGeometricMeanTest is Test {
     using stdStorage for StdStorage;
     using FixedPointMathLib for uint256;
 
-    DFMM2 dfmm;
+    DFMM dfmm;
     NTokenGeometricMean g3m;
     NTokenGeometricMeanSolver solver;
     address tokenA;
@@ -42,7 +42,7 @@ contract NTokenGeometricMeanTest is Test {
         MockERC20(tokenC).mint(address(this), 100_000_000e18);
         MockERC20(tokenD).mint(address(this), 100_000_000e18);
 
-        dfmm = new DFMM2(address(0));
+        dfmm = new DFMM(address(0));
         g3m = new NTokenGeometricMean(address(dfmm));
         solver = new NTokenGeometricMeanSolver(address(g3m));
 
@@ -74,7 +74,7 @@ contract NTokenGeometricMeanTest is Test {
         console2.log("addr of strategy", address(g3m));
 
         dfmm.init(
-            IDFMM2.InitParams({
+            IDFMM.InitParams({
                 name: "4-token-LP",
                 symbol: "4T",
                 strategy: address(g3m),
@@ -108,7 +108,7 @@ contract NTokenGeometricMeanTest is Test {
 
         bytes memory initData =
             solver.getInitialPoolData(reserveNumeraire, prices, params);
-        DFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        DFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "4-token-LP",
             symbol: "4T",
             strategy: address(g3m),
@@ -147,7 +147,7 @@ contract NTokenGeometricMeanTest is Test {
 
         bytes memory initData =
             solver.getInitialPoolData(reserveNumeraire, prices, params);
-        DFMM2.InitParams memory initParams = IDFMM2.InitParams({
+        DFMM.InitParams memory initParams = IDFMM.InitParams({
             name: "4-token-LP",
             symbol: "4T",
             strategy: address(g3m),

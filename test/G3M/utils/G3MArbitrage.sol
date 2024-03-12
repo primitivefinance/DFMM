@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { bisection } from "src/lib/BisectionLib.sol";
 import { computeTradingFunction, ONE } from "src/GeometricMean/G3MMath.sol";
-import { GeometricMeanParams } from "src/GeometricMean/GeometricMean2.sol";
+import { GeometricMeanParams } from "src/GeometricMean/GeometricMean.sol";
 import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
 
 using FixedPointMathLib for uint256;
