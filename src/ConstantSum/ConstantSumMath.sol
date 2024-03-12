@@ -15,8 +15,7 @@ function computeTradingFunction(
     uint256 price
 ) pure returns (int256) {
     return int256(reserves[0].divWadUp(totalLiquidity))
-        + int256(reserves[1].divWadUp(totalLiquidity.mulWadUp(price)))
-        - int256(ONE);
+        + int256(reserves[1].divWadUp(totalLiquidity.mulWadUp(price))) - int256(ONE);
 }
 
 function computeInitialPoolData(
@@ -27,7 +26,10 @@ function computeInitialPoolData(
     // The pool can be initialized with any non-negative amount of rx, and ry.
     // so we have to allow a user to pass an amount of both even if one is zero.
     uint256 L = rx + ry.divWadUp(params.price);
-    return abi.encode(rx, ry, L, params);
+    uint256[] memory reserves = new uint256[](2);
+    reserves[0] = rx;
+    reserves[1] = ry;
+    return abi.encode(reserves, L, params);
 }
 
 function computeDeallocateGivenDeltaX(
@@ -38,7 +40,7 @@ function computeDeallocateGivenDeltaX(
 ) view returns (uint256 deltaY, uint256 deltaL) {
     uint256 a = deltaX.divWadDown(rX);
     if (rY > 0) {
-      deltaY = a.mulWadDown(rY);
+        deltaY = a.mulWadDown(rY);
     }
     deltaL = a.mulWadDown(totalLiquidity);
 }
@@ -51,7 +53,7 @@ function computeDeallocateGivenDeltaY(
 ) view returns (uint256 deltaX, uint256 deltaL) {
     uint256 a = deltaY.divWadDown(rY);
     if (rX > 0) {
-      deltaY = a.mulWadDown(rX);
+        deltaY = a.mulWadDown(rX);
     }
     deltaL = a.mulWadDown(totalLiquidity);
 }
@@ -64,7 +66,7 @@ function computeAllocateGivenDeltaX(
 ) view returns (uint256 deltaY, uint256 deltaL) {
     uint256 a = deltaX.divWadUp(rX);
     if (rY > 0) {
-      deltaY = a.mulWadUp(rY);
+        deltaY = a.mulWadUp(rY);
     }
     deltaL = a.mulWadUp(totalLiquidity);
 }
@@ -77,7 +79,7 @@ function computeAllocateGivenDeltaY(
 ) view returns (uint256 deltaX, uint256 deltaL) {
     uint256 a = deltaY.divWadUp(rY);
     if (rX > 0) {
-      deltaX = a.mulWadUp(rX);
+        deltaX = a.mulWadUp(rX);
     }
     deltaL = a.mulWadUp(totalLiquidity);
 }
