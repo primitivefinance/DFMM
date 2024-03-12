@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import "./ConstantSumMath.sol";
 import "./ConstantSumUtils.sol";
-import "src/interfaces/IDFMM.sol";
 import { PairStrategy, IDFMM2, IStrategy2 } from "src/PairStrategy.sol";
 
 struct InternalParams {
@@ -114,18 +113,18 @@ contract ConstantSum is PairStrategy {
     }
 
     function _computeAllocateDeltasGivenDeltaL(
-        uint256 deltaLiquidity,
-        IDFMM2.Pool memory pool,
-        bytes memory data
-    ) internal view override returns (uint256[] memory) {
+        uint256,
+        IDFMM2.Pool memory,
+        bytes memory
+    ) internal pure override returns (uint256[] memory) {
         return new uint256[](0);
     }
 
     function _computeDeallocateDeltasGivenDeltaL(
-        uint256 deltaLiquidity,
-        IDFMM2.Pool memory pool,
-        bytes memory data
-    ) internal view override returns (uint256[] memory) {
+        uint256,
+        IDFMM2.Pool memory,
+        bytes memory
+    ) internal pure override returns (uint256[] memory) {
         return new uint256[](0);
     }
 }

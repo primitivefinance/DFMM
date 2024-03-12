@@ -37,7 +37,7 @@ function computeDeallocateGivenDeltaX(
     uint256 rX,
     uint256 rY,
     uint256 totalLiquidity
-) view returns (uint256 deltaY, uint256 deltaL) {
+) pure returns (uint256 deltaY, uint256 deltaL) {
     uint256 a = deltaX.divWadDown(rX);
     if (rY > 0) {
         deltaY = a.mulWadDown(rY);
@@ -50,7 +50,7 @@ function computeDeallocateGivenDeltaY(
     uint256 rX,
     uint256 rY,
     uint256 totalLiquidity
-) view returns (uint256 deltaX, uint256 deltaL) {
+) pure returns (uint256 deltaX, uint256 deltaL) {
     uint256 a = deltaY.divWadDown(rY);
     if (rX > 0) {
         deltaY = a.mulWadDown(rX);
@@ -63,7 +63,7 @@ function computeAllocateGivenDeltaX(
     uint256 rX,
     uint256 rY,
     uint256 totalLiquidity
-) view returns (uint256 deltaY, uint256 deltaL) {
+) pure returns (uint256 deltaY, uint256 deltaL) {
     uint256 a = deltaX.divWadUp(rX);
     if (rY > 0) {
         deltaY = a.mulWadUp(rY);
@@ -76,7 +76,7 @@ function computeAllocateGivenDeltaY(
     uint256 rX,
     uint256 rY,
     uint256 totalLiquidity
-) view returns (uint256 deltaX, uint256 deltaL) {
+) pure returns (uint256 deltaX, uint256 deltaL) {
     uint256 a = deltaY.divWadUp(rY);
     if (rX > 0) {
         deltaX = a.mulWadUp(rX);
