@@ -33,13 +33,12 @@ contract DFMMSetUp is SetUp {
     }
 
     modifier initPool() {
-        bytes memory params = abi.encode(
-            true,
-            int256(1 ether),
-            uint256(1 ether),
-            uint256(1 ether),
-            uint256(1 ether)
-        );
+        uint256[] memory reserves = new uint256[](2);
+        reserves[0] = 1 ether;
+        reserves[1] = 1 ether;
+
+        bytes memory params =
+            abi.encode(true, int256(1 ether), reserves, uint256(1 ether));
         (POOL_ID,,) = dfmm.init(getDefaultPoolParams(params));
         _;
     }
