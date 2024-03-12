@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { IDFMM } from "src/interfaces/IDFMM.sol";
-import { Strategy } from "src/Strategy.sol";
+import { IDFMM2 } from "src/interfaces/IDFMM2.sol";
+import { IStrategy2 } from "src/interfaces/IStrategy2.sol";
 
-contract MockStrategy is Strategy {
+contract MockStrategy is IStrategy2 {
     string public constant name = "MockStrategy";
+    address public immutable dfmm;
 
-    constructor(address dfmm_) Strategy(dfmm_) { }
+    constructor(address dfmm_) {
+        dfmm = dfmm_;
+    }
 
     function equals(
         string memory a,
@@ -21,7 +24,7 @@ contract MockStrategy is Strategy {
     function init(
         address,
         uint256,
-        IDFMM.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     )
         external
@@ -29,19 +32,18 @@ contract MockStrategy is Strategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 reserveX,
-            uint256 reserveY,
+            uint256[] memory reserves,
             uint256 totalLiquidity
         )
     {
-        (valid, invariant, reserveX, reserveY, totalLiquidity) =
-            abi.decode(data, (bool, int256, uint256, uint256, uint256));
+        (valid, invariant, reserves, totalLiquidity) =
+            abi.decode(data, (bool, int256, uint256[], uint256));
     }
 
     function validateAllocate(
         address,
         uint256,
-        IDFMM.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     )
         external
@@ -50,19 +52,18 @@ contract MockStrategy is Strategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
+            uint256[] memory deltas,
             uint256 deltaLiquidity
         )
     {
-        (valid, invariant, deltaX, deltaY, deltaLiquidity) =
-            abi.decode(data, (bool, int256, uint256, uint256, uint256));
+        (valid, invariant, deltas, deltaLiquidity) =
+            abi.decode(data, (bool, int256, uint256[], uint256));
     }
 
     function validateDeallocate(
         address,
         uint256,
-        IDFMM.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     )
         external
@@ -71,19 +72,18 @@ contract MockStrategy is Strategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
+            uint256[] memory deltas,
             uint256 deltaLiquidity
         )
     {
-        (valid, invariant, deltaX, deltaY, deltaLiquidity) =
-            abi.decode(data, (bool, int256, uint256, uint256, uint256));
+        (valid, invariant, deltas, deltaLiquidity) =
+            abi.decode(data, (bool, int256, uint256[], uint256));
     }
 
     function validateSwap(
         address,
         uint256,
-        IDFMM.Pool calldata,
+        IDFMM2.Pool calldata,
         bytes calldata data
     )
         external
@@ -92,20 +92,30 @@ contract MockStrategy is Strategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
-            uint256 deltaLiquidity,
-            bool isSwapXForY
+            uint256 tokenInIndex,
+            uint256 tokenOutIndex,
+            uint256 amountIn,
+            uint256 amountOut,
+            uint256 deltaLiquidity
         )
     {
-        (valid, invariant, deltaX, deltaY, deltaLiquidity, isSwapXForY) =
-            abi.decode(data, (bool, int256, uint256, uint256, uint256, bool));
+        (
+            valid,
+            invariant,
+            tokenInIndex,
+            tokenOutIndex,
+            amountIn,
+            amountOut,
+            deltaLiquidity
+        ) = abi.decode(
+            data, (bool, int256, uint256, uint256, uint256, uint256, uint256)
+        );
     }
 
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        IDFMM2.Pool calldata pool,
         bytes calldata data
     ) external { }
 
@@ -122,27 +132,10 @@ contract MockStrategy is Strategy {
     { }
 
     function tradingFunction(
-        uint256,
-        uint256,
+        uint256[] memory,
         uint256,
         bytes memory
-    ) public pure override returns (int256) {
+    ) external pure returns (int256) {
         return int256(0);
-    }
-
-    function _computeDeltaXGivenDeltaL(
-        uint256,
-        IDFMM.Pool calldata,
-        bytes memory
-    ) internal pure override returns (uint256) {
-        return 0;
-    }
-
-    function _computeDeltaYGivenDeltaL(
-        uint256,
-        IDFMM.Pool calldata,
-        bytes memory
-    ) internal pure override returns (uint256) {
-        return 0;
     }
 }
