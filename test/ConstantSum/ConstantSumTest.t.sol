@@ -3,14 +3,14 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import "src/DFMM.sol";
+import "src/DFMM2.sol";
 import "src/ConstantSum/ConstantSum.sol";
 import "src/ConstantSum/ConstantSumSolver.sol";
 
 contract ConstantSumTest is Test {
     using stdStorage for StdStorage;
 
-    DFMM dfmm;
+    DFMM2 dfmm;
     ConstantSum constantSum;
     ConstantSumSolver solver;
     MockERC20 tokenX;
@@ -25,7 +25,7 @@ contract ConstantSumTest is Test {
         tokenX.mint(address(this), 100_000_000 ether);
         tokenY.mint(address(this), 100_000_000 ether);
 
-        dfmm = new DFMM(address(0));
+        dfmm = new DFMM2(address(0));
         constantSum = new ConstantSum(address(dfmm));
         solver = new ConstantSumSolver(address(constantSum));
         tokenX.approve(address(dfmm), type(uint256).max);
@@ -35,8 +35,11 @@ contract ConstantSumTest is Test {
     modifier basic_feeless() {
         vm.warp(0);
 
-        ConstantSumParams memory params = 
-            ConstantSumParams({ price: ONE * 2, swapFee: 0, controller: address(0) });
+        ConstantSumParams memory params = ConstantSumParams({
+            price: ONE * 2,
+            swapFee: 0,
+            controller: address(0)
+        });
 
         uint256 init_x = ONE * 1;
         uint256 init_y = ONE * 1;
@@ -44,10 +47,15 @@ contract ConstantSumTest is Test {
         bytes memory initData =
             solver.getInitialPoolData(init_x, init_y, params);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(constantSum),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: initData
         });
 
@@ -58,8 +66,7 @@ contract ConstantSumTest is Test {
     modifier basic() {
         vm.warp(0);
 
-        ConstantSumParams memory params = 
-            ConstantSumParams({
+        ConstantSumParams memory params = ConstantSumParams({
             price: ONE * 2,
             swapFee: TEST_SWAP_FEE,
             controller: address(0)
@@ -71,10 +78,15 @@ contract ConstantSumTest is Test {
         bytes memory initData =
             solver.getInitialPoolData(init_x, init_y, params);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        IDFMM2.InitParams memory initParams = IDFMM2.InitParams({
+            name: "",
+            symbol: "",
             strategy: address(constantSum),
-            tokenX: address(tokenX),
-            tokenY: address(tokenY),
+            tokens: tokens,
             data: initData
         });
 
@@ -84,18 +96,17 @@ contract ConstantSumTest is Test {
 
     function test_init() public basic {
         uint256 poolId = dfmm.nonce() - 1;
-        (ConstantSumParams memory params) = abi.decode(
-            constantSum.getPoolParams(poolId), (ConstantSumParams)
-        );
+        (ConstantSumParams memory params) =
+            abi.decode(constantSum.getPoolParams(poolId), (ConstantSumParams));
         assertEq(params.price, 2 ether);
         assertEq(params.swapFee, 0.003 ether);
         assertEq(params.controller, address(0));
 
-        (uint256 initRx, uint256 initRy, uint256 initL) =
-            DFMM(dfmm).getReservesAndLiquidity(poolId);
+        (uint256[] memory reserves, uint256 initL) =
+            DFMM2(dfmm).getReservesAndLiquidity(poolId);
 
-        assertEq(initRx, 1 ether);
-        assertEq(initRy, 1 ether);
+        assertEq(reserves[0], 1 ether);
+        assertEq(reserves[1], 1 ether);
         assertEq(initL, 1.5 ether);
     }
 
@@ -110,12 +121,17 @@ contract ConstantSumTest is Test {
         uint256 poolId = dfmm.nonce() - 1;
         (,, bytes memory swapData) =
             solver.simulateSwap(poolId, isSwapXForY, amountIn);
-        (uint256 deltaX, uint256 deltaY) = dfmm.swap(poolId, swapData);
+        (,, uint256 inputAmount, uint256 outputAmount) =
+            dfmm.swap(poolId, swapData);
 
-        assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + deltaX);
-        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - deltaY);
-        assertEq(tokenX.balanceOf(address(this)), preUserBalanceX - deltaX);
-        assertEq(tokenY.balanceOf(address(this)), preUserBalanceY + deltaY);
+        assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
+        assertEq(
+            tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - outputAmount
+        );
+        assertEq(tokenX.balanceOf(address(this)), preUserBalanceX - inputAmount);
+        assertEq(
+            tokenY.balanceOf(address(this)), preUserBalanceY + outputAmount
+        );
     }
 
     function test_constant_sum_swap_y_in_no_fee() public basic_feeless {
@@ -129,12 +145,17 @@ contract ConstantSumTest is Test {
         uint256 poolId = dfmm.nonce() - 1;
         (,, bytes memory swapData) =
             solver.simulateSwap(poolId, isSwapXForY, amountIn);
-        (uint256 deltaX, uint256 deltaY) = dfmm.swap(poolId, swapData);
+        (,, uint256 inputAmount, uint256 outputAmount) =
+            dfmm.swap(poolId, swapData);
 
-        assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - deltaX);
-        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY + deltaY);
-        assertEq(tokenX.balanceOf(address(this)), preUserBalanceX + deltaX);
-        assertEq(tokenY.balanceOf(address(this)), preUserBalanceY - deltaY);
+        assertEq(
+            tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - outputAmount
+        );
+        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY + inputAmount);
+        assertEq(
+            tokenX.balanceOf(address(this)), preUserBalanceX + outputAmount
+        );
+        assertEq(tokenY.balanceOf(address(this)), preUserBalanceY - inputAmount);
     }
 
     function test_constant_sum_swap_x_in_invalid() public basic_feeless {
@@ -164,12 +185,17 @@ contract ConstantSumTest is Test {
         uint256 poolId = dfmm.nonce() - 1;
         (,, bytes memory swapData) =
             solver.simulateSwap(poolId, isSwapXForY, amountIn);
-        (uint256 deltaX, uint256 deltaY) = dfmm.swap(poolId, swapData);
+        (,, uint256 inputAmount, uint256 outputAmount) =
+            dfmm.swap(poolId, swapData);
 
-        assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + deltaX);
-        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - deltaY);
-        assertEq(tokenX.balanceOf(address(this)), preUserBalanceX - deltaX);
-        assertEq(tokenY.balanceOf(address(this)), preUserBalanceY + deltaY);
+        assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
+        assertEq(
+            tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - outputAmount
+        );
+        assertEq(tokenX.balanceOf(address(this)), preUserBalanceX - inputAmount);
+        assertEq(
+            tokenY.balanceOf(address(this)), preUserBalanceY + outputAmount
+        );
     }
 
     function test_constant_sum_swap_y_in_with_fee() public basic {
@@ -183,14 +209,19 @@ contract ConstantSumTest is Test {
         uint256 poolId = dfmm.nonce() - 1;
         (,, bytes memory swapData) =
             solver.simulateSwap(poolId, isSwapXForY, amountIn);
-        (uint256 deltaX, uint256 deltaY) = dfmm.swap(poolId, swapData);
+        (,, uint256 inputAmount, uint256 outputAmount) =
+            dfmm.swap(poolId, swapData);
 
-        assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - deltaX);
-        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY + deltaY);
-        assertEq(tokenX.balanceOf(address(this)), preUserBalanceX + deltaX);
-        assertEq(tokenY.balanceOf(address(this)), preUserBalanceY - deltaY);
+        assertEq(
+            tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - outputAmount
+        );
+        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY + inputAmount);
+        assertEq(
+            tokenX.balanceOf(address(this)), preUserBalanceX + outputAmount
+        );
+        assertEq(tokenY.balanceOf(address(this)), preUserBalanceY - inputAmount);
     }
-/*
+    /*
     function test_constant_sum_allocate() public basic {
         uint256 poolId = dfmm.nonce() - 1;
         uint256 amountX = 0.1 ether;
