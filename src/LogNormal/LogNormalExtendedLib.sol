@@ -130,7 +130,10 @@ function computeInitialPoolData(
     uint256 ry = computeYGivenL(L, initialPrice, params);
     int256 invariant = LogNormalLib.tradingFunction(amountX, ry, L, params);
     L = computeNextLiquidity(amountX, ry, invariant, L, params);
-    return abi.encode(amountX, ry, L, params);
+    uint256[] memory reserves = new uint256[](2);
+    reserves[0] = amountX;
+    reserves[1] = ry;
+    return abi.encode(reserves, L, params);
 }
 
 function computeNextLiquidity(
