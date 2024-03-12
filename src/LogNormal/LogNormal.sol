@@ -54,26 +54,7 @@ contract LogNormal is PairStrategy {
             uint256 totalLiquidity
         )
     {
-        (valid, invariant, reserves, totalLiquidity,) =
-            _decodeInit(poolId, data);
-    }
-
-    /// @dev Decodes, stores and validates pool initialization parameters.
-    /// Note that this function was purely made to avoid the stack too deep
-    /// error in the `init()` function.
-    function _decodeInit(
-        uint256 poolId,
-        bytes calldata data
-    )
-        private
-        returns (
-            bool valid,
-            int256 invariant,
-            uint256[] memory reserves,
-            uint256 totalLiquidity,
-            LogNormalParams memory params
-        )
-    {
+        LogNormalParams memory params;
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, LogNormalParams));
 
