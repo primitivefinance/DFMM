@@ -11,13 +11,9 @@ contract DFMMInit is DFMMSetUp, Script {
     uint256 initialReserveX = 1 ether;
     uint256 initialReserveY = 1 ether;
     uint256 initialLiquidity = 1 ether;
-    bytes defaultData = abi.encode(
-        valid,
-        initialInvariant,
-        initialReserveX,
-        initialReserveY,
-        initialLiquidity
-    );
+    uint256[] defaultReserves = [initialReserveX, initialReserveY];
+    bytes defaultData =
+        abi.encode(valid, initialInvariant, defaultReserves, initialLiquidity);
 
     function test_DFMM_init_StoresStrategyInitialReservesAndLiquidity()
         public
