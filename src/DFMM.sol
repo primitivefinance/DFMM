@@ -376,6 +376,8 @@ contract DFMM is IDFMM {
      * @dev This function should NOT be used in a non-view call, as the
      * values can be manipulated. In the future this function might be
      * removed.
+     *
+     * This function truncates the result, effectively rounding down by 1 wei.
      */
     function liquidityOf(
         address account,
@@ -385,6 +387,18 @@ contract DFMM is IDFMM {
         uint256 balance = liquidityToken.balanceOf(account);
         uint256 totalSupply = liquidityToken.totalSupply();
         uint256 totalLiquidity = pools[poolId].totalLiquidity;
-        return balance.mulWadDown(totalLiquidity.divWadDown(totalSupply));
+
+        // Rounds up if there is a remainder.
+        // @clemlak review the rounding logic that should be returned. 
+        // I argue it should be rounded down since removing liquidity will round down, 
+        // but I would need to double check all the liquidity<>liquidity token accounting 
+        // logic to be sure.
+        uint256 liquidityOwned = balance * totalLiquidity / totalSupply;
+        uint256 remainder = balance * totalLiquidity % totalSupply;
+        if (remainder == 0) {
+            return liquidityOwned;
+        } else {
+            return liquidityOwned + 1;
+        }
     }
 }
