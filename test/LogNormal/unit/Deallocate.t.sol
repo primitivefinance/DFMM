@@ -2,6 +2,12 @@
 pragma solidity ^0.8.13;
 
 import "./SetUp.sol";
+import {
+    computeDeltaLGivenDeltaX,
+    computeDeltaYGivenDeltaX,
+    computeDeltaLGivenDeltaY,
+    computeDeltaXGivenDeltaL
+} from "src/lib/StrategyLib.sol";
 
 contract LogNormalDeallocateTest is LogNormalSetUp {
     function test_LogNormal_deallocate_GivenX() public init {

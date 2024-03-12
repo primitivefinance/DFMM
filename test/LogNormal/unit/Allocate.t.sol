@@ -2,17 +2,24 @@
 pragma solidity ^0.8.13;
 
 import "./SetUp.sol";
+import { computeDeltaGivenDeltaLRoundUp } from "src/LogNormal/LogNormalMath.sol";
+import {
+    computeDeltaLGivenDeltaY,
+    computeDeltaXGivenDeltaL
+} from "src/lib/StrategyLib.sol";
 
 contract LogNormalAllocateTest is LogNormalSetUp {
     function test_LogNormal_allocate_GivenX() public init {
-        uint256 maxDeltaX = 0.1 ether;
-
-        (uint256[] memory reserves, uint256 liquidity) =
+        (uint256[] memory reserves, uint256 totalLiquidity) =
             dfmm.getReservesAndLiquidity(POOL_ID);
-        uint256 deltaLiquidity =
-            computeDeltaLGivenDeltaX(maxDeltaX, liquidity, reserves[0]);
-        uint256 maxDeltaY =
-            computeDeltaYGivenDeltaX(maxDeltaX, reserves[0], reserves[1]);
+
+        uint256 deltaLiquidity = 0.1 ether;
+        uint256 maxDeltaX = computeDeltaGivenDeltaLRoundUp(
+            reserves[0], deltaLiquidity, totalLiquidity
+        );
+        uint256 maxDeltaY = computeDeltaGivenDeltaLRoundUp(
+            reserves[1], deltaLiquidity, totalLiquidity
+        );
 
         // uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
         // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);

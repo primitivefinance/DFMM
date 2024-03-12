@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import "./LogNormalMath.sol";
 import "./LogNormal.sol";
 import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
+import { Gaussian } from "solstat/Gaussian.sol";
+import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;

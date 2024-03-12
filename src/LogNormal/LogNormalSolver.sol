@@ -7,6 +7,10 @@ import "src/interfaces/IDFMM2.sol";
 import "src/interfaces/IStrategy2.sol";
 import "solmate/tokens/ERC20.sol";
 import "solstat/Gaussian.sol";
+import {
+    computeAllocationGivenX,
+    computeAllocationGivenY
+} from "src/lib/StrategyLib.sol";
 
 contract LogNormalSolver {
     using FixedPointMathLib for uint256;
