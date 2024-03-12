@@ -28,3 +28,19 @@ function computeSigmaSqrtTau(
 function computeHalfSigmaSquared(uint256 sigma) pure returns (uint256) {
     return HALF.mulWadDown(uint256(int256(sigma).powWad(int256(TWO))));
 }
+
+function computeDeltaGivenDeltaLRoundUp(
+    uint256 reserve,
+    uint256 deltaLiquidity,
+    uint256 totalLiquidity
+) pure returns (uint256) {
+    return reserve.mulWadUp(deltaLiquidity.divWadUp(totalLiquidity));
+}
+
+function computeDeltaGivenDeltaLRoundDown(
+    uint256 reserve,
+    uint256 deltaLiquidity,
+    uint256 totalLiquidity
+) pure returns (uint256) {
+    return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
+}
