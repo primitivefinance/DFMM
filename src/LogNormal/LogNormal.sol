@@ -139,12 +139,12 @@ contract LogNormal is PairStrategy {
     ) internal pure override returns (uint256[] memory) {
         uint256[] memory deltas = new uint256[](2);
 
-        deltas[0] = pool.reserves[0].mulWadUp(
-            deltaLiquidity.divWadUp(pool.totalLiquidity)
+        deltas[0] = computeDeltaGivenDeltaLRoundUp(
+            pool.reserves[0], deltaLiquidity, pool.totalLiquidity
         );
 
-        deltas[1] = pool.reserves[1].mulWadUp(
-            deltaLiquidity.divWadUp(pool.totalLiquidity)
+        deltas[1] = computeDeltaGivenDeltaLRoundUp(
+            pool.reserves[1], deltaLiquidity, pool.totalLiquidity
         );
 
         return deltas;
@@ -157,14 +157,13 @@ contract LogNormal is PairStrategy {
     ) internal pure override returns (uint256[] memory) {
         uint256[] memory deltas = new uint256[](2);
 
-        deltas[0] = pool.reserves[0].mulWadDown(
-            deltaLiquidity.divWadDown(pool.totalLiquidity)
+        deltas[0] = computeDeltaGivenDeltaLRoundDown(
+            pool.reserves[0], deltaLiquidity, pool.totalLiquidity
         );
 
-        deltas[1] = pool.reserves[1].mulWadDown(
-            deltaLiquidity.divWadDown(pool.totalLiquidity)
+        deltas[1] = computeDeltaGivenDeltaLRoundDown(
+            pool.reserves[1], deltaLiquidity, pool.totalLiquidity
         );
-
         return deltas;
     }
 }
