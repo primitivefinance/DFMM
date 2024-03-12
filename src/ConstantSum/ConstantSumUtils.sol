@@ -1,10 +1,7 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {
-    ConstantSumParams,
-    UpdateCode
-} from "src/ConstantSum/ConstantSum.sol";
+import { ConstantSumParams, UpdateCode } from "src/ConstantSum/ConstantSum.sol";
 import "./ConstantSumMath.sol";
 
 function encodeFeeUpdate(uint256 swapFee) pure returns (bytes memory) {
@@ -44,4 +41,3 @@ function decodeControllerUpdate(bytes memory data)
 {
     (, controller) = abi.decode(data, (UpdateCode, address));
 }
-

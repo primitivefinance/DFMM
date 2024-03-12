@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import "./ConstantSumMath.sol";
 import "./ConstantSumUtils.sol";
 import "src/interfaces/IDFMM.sol";
-import { Strategy, IStrategy } from "src/Strategy.sol";
 import { PairStrategy, IDFMM2, IStrategy2 } from "src/PairStrategy.sol";
 
 struct InternalParams {
@@ -59,9 +58,8 @@ contract ConstantSum is PairStrategy {
         internalParams[poolId].swapFee = params.swapFee;
 
         // Get the trading function and check this is valid
-        invariant = tradingFunction(
-            reserves, totalLiquidity, abi.encode(params) 
-        );
+        invariant =
+            tradingFunction(reserves, totalLiquidity, abi.encode(params));
 
         valid = -EPSILON < invariant && invariant < EPSILON;
 
@@ -76,20 +74,14 @@ contract ConstantSum is PairStrategy {
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
-        UpdateCode updateCode =
-            abi.decode(data, (UpdateCode));
+        UpdateCode updateCode = abi.decode(data, (UpdateCode));
 
         if (updateCode == UpdateCode.Price) {
-            (internalParams[poolId].price,) =
-                decodePriceUpdate(data);
+            (internalParams[poolId].price,) = decodePriceUpdate(data);
         } else if (updateCode == UpdateCode.SwapFee) {
-            internalParams[poolId].swapFee =
-                decodeFeeUpdate(data);
-        } else if (
-            updateCode == UpdateCode.Controller
-        ) {
-            internalParams[poolId].controller =
-                decodeControllerUpdate(data);
+            internalParams[poolId].swapFee = decodeFeeUpdate(data);
+        } else if (updateCode == UpdateCode.Controller) {
+            internalParams[poolId].controller = decodeControllerUpdate(data);
         } else {
             revert InvalidUpdateCode();
         }
@@ -110,7 +102,7 @@ contract ConstantSum is PairStrategy {
     }
 
     function tradingFunction(
-        uint256[] memory reserves, 
+        uint256[] memory reserves,
         uint256 totalLiquidity,
         bytes memory params
     ) public pure override returns (int256) {
@@ -126,7 +118,7 @@ contract ConstantSum is PairStrategy {
         IDFMM2.Pool memory pool,
         bytes memory data
     ) internal view override returns (uint256[] memory) {
-      return new uint256[](0);
+        return new uint256[](0);
     }
 
     function _computeDeallocateDeltasGivenDeltaL(
@@ -134,6 +126,6 @@ contract ConstantSum is PairStrategy {
         IDFMM2.Pool memory pool,
         bytes memory data
     ) internal view override returns (uint256[] memory) {
-      return new uint256[](0);
+        return new uint256[](0);
     }
 }

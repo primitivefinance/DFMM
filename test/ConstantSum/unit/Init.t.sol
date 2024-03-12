@@ -9,8 +9,7 @@ contract ConstantSumInitTest is ConstantSumSetUp {
     function test_ConstantSum_init_InitializesPool() public {
         uint256 price = 1 ether;
 
-        ConstantSumParams memory params = 
-            ConstantSumParams({
+        ConstantSumParams memory params = ConstantSumParams({
             price: price,
             swapFee: TEST_SWAP_FEE,
             controller: address(this)
