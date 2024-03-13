@@ -1,6 +1,7 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { DFMMSetUp, DFMM } from "./SetUp.sol";
 
 contract DFMMInternal is DFMM {
@@ -35,5 +36,23 @@ contract DFMMInternalTest is DFMMSetUp {
         assertEq(weth.balanceOf(address(dfmmInternal)), amount);
         assertEq(address(weth).balance, 1 ether);
         assertEq(address(dfmmInternal).balance, 0);
+    }
+
+    function testFuzz_DFMM_transferFrom_TransferTokens(uint256 amount) public {
+        vm.assume(
+            amount
+                <
+                115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_458
+        );
+        MockERC20 token = new MockERC20("", "", 18);
+        token.mint(address(this), amount);
+        token.approve(address(dfmmInternal), amount);
+        uint256 preDFMMBalance = token.balanceOf(address(dfmmInternal));
+        uint256 preThisBalance = token.balanceOf(address(this));
+        dfmmInternal.transferFrom(address(token), amount);
+        assertEq(
+            token.balanceOf(address(dfmmInternal)), preDFMMBalance + amount
+        );
+        assertEq(token.balanceOf(address(this)), preThisBalance - amount);
     }
 }
