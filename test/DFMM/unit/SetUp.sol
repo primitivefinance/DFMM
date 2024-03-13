@@ -30,8 +30,8 @@ contract DFMMSetUp is SetUp {
             strategy: address(strategy),
             tokens: tokens,
             data: data,
-            feeCollector: address(0),
-            controllerFee: 0
+            feeCollector: address(this),
+            controllerFee: 0.5 ether
         });
     }
 
