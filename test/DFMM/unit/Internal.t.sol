@@ -74,4 +74,13 @@ contract DFMMInternalTest is DFMMSetUp {
             token.balanceOf(address(this)), preThisBalance - scaledDownAmount
         );
     }
+
+    function test_DFMM_transferFrom_RevertsIfBalanceIsInsufficient() public {
+        ERC20WithFees token = new ERC20WithFees("", "", 18, 500);
+        uint256 amount = 1 ether;
+        token.mint(address(this), amount);
+        token.approve(address(dfmmInternal), amount);
+        vm.expectRevert(IDFMM.InvalidTransfer.selector);
+        dfmmInternal.transferFrom(address(token), amount);
+    }
 }
