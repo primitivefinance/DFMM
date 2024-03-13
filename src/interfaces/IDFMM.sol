@@ -62,6 +62,9 @@ interface IDFMM {
     /// @dev Thrown when a clone contract could not be deployed.
     error ERC1167FailedCreateClone();
 
+    /// @dev Thrown when the caller is not the pool controller.
+    error NotController();
+
     // Events
 
     /**
