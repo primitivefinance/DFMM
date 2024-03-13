@@ -19,6 +19,7 @@ import {
 } from "src/LogNormal/LogNormalUtils.sol";
 import { LogNormalParams } from "src/LogNormal/LogNormal.sol";
 import {
+    computeTradingFunction,
     computeNextLiquidity,
     computeXGivenL,
     computeNextRx,
@@ -27,6 +28,7 @@ import {
     computePriceGivenX,
     computePriceGivenY
 } from "src/LogNormal/LogNormalMath.sol";
+import "forge-std/console2.sol";
 
 contract LogNormalSolver {
     using FixedPointMathLib for uint256;
@@ -196,15 +198,13 @@ contract LogNormalSolver {
         uint256 ry,
         uint256 L
     ) public view returns (uint256) {
-        uint256[] memory reserves = new uint256[](2);
-        reserves[0] = rx;
-        reserves[1] = ry;
+        LogNormalParams memory poolParams = getPoolParams(poolId);
 
-        int256 invariant = IStrategy(strategy).tradingFunction(
-            reserves, L, IStrategy(strategy).getPoolParams(poolId)
+        int256 invariant = computeTradingFunction(
+            rx, ry, L, poolParams 
         );
         return
-            computeNextLiquidity(rx, ry, invariant, L, getPoolParams(poolId));
+            computeNextLiquidity(rx, ry, invariant, L, poolParams);
     }
 
     function getNextReserveX(
@@ -213,15 +213,13 @@ contract LogNormalSolver {
         uint256 L,
         uint256 S
     ) public view returns (uint256) {
-        uint256[] memory reserves = new uint256[](2);
-        reserves[1] = ry;
-        uint256 approximatedRx = computeXGivenL(L, S, getPoolParams(poolId));
-        reserves[0] = approximatedRx;
-        int256 invariant = IStrategy(strategy).tradingFunction(
-            reserves, L, IStrategy(strategy).getPoolParams(poolId)
+        LogNormalParams memory poolParams = getPoolParams(poolId);
+        uint256 approximatedRx = computeXGivenL(L, S, poolParams);
+        int256 invariant = computeTradingFunction(
+            approximatedRx, ry, L, poolParams 
         );
         return computeNextRx(
-            ry, L, invariant, approximatedRx, getPoolParams(poolId)
+            ry, L, invariant, approximatedRx, poolParams 
         );
     }
 
@@ -231,15 +229,13 @@ contract LogNormalSolver {
         uint256 L,
         uint256 S
     ) public view returns (uint256) {
-        uint256[] memory reserves = new uint256[](2);
-        reserves[0] = rx;
-        uint256 approximatedRy = computeYGivenL(L, S, getPoolParams(poolId));
-        reserves[1] = approximatedRy;
-        int256 invariant = IStrategy(strategy).tradingFunction(
-            reserves, L, IStrategy(strategy).getPoolParams(poolId)
+        LogNormalParams memory poolParams = getPoolParams(poolId);
+        uint256 approximatedRy = computeYGivenL(L, S, poolParams);
+        int256 invariant = computeTradingFunction(
+            rx, approximatedRy, L, poolParams 
         );
         return computeNextRy(
-            rx, L, invariant, approximatedRy, getPoolParams(poolId)
+            rx, L, invariant, approximatedRy, poolParams 
         );
     }
 
@@ -276,6 +272,8 @@ contract LogNormalSolver {
                 uint256 approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
 
+                console2.log(approxPrice);
+
                 endReserves.ry = getNextReserveY(
                     poolId, endReserves.rx, endReserves.L, approxPrice
                 );
@@ -294,6 +292,7 @@ contract LogNormalSolver {
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
+                console2.log(approxPrice);
 
                 endReserves.rx = getNextReserveX(
                     poolId, endReserves.ry, endReserves.L, approxPrice

@@ -11,7 +11,7 @@ contract LogNormalSwapTest is LogNormalSetUp {
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        uint256 amountIn = 0.1 ether;
+        uint256 amountIn = 0.00001 ether;
         bool swapXForY = true;
 
         (bool valid, uint256 amountOut,, bytes memory payload) =
@@ -39,7 +39,7 @@ contract LogNormalSwapTest is LogNormalSetUp {
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        uint256 amountIn = 0.1 ether;
+        uint256 amountIn = 0.000001 ether;
         bool swapXForY = false;
 
         (bool valid,,, bytes memory payload) =
