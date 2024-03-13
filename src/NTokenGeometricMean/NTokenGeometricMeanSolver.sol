@@ -51,8 +51,7 @@ contract NTokenGeometricMeanSolver {
         view
         returns (uint256[] memory, uint256)
     {
-        return
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        return IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
     }
 
     struct SimulateSwapState {

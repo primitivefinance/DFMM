@@ -23,7 +23,7 @@ contract LogNormalAllocateTest is LogNormalSetUp {
             reserves[1], deltaLiquidity, totalLiquidity
         );
 
-        (,uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
+        (, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
         uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
         console2.log(preTotalLiquidity);
         console2.log(preLiquidityBalance);
@@ -31,18 +31,16 @@ contract LogNormalAllocateTest is LogNormalSetUp {
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         dfmm.allocate(POOL_ID, data);
 
-        (,uint256 postTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
+        (, uint256 postTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
         uint256 postLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
         console2.log(postTotalLiquidity);
         console2.log(postLiquidityBalance);
 
         uint256 deltaTotalLiquidity = postTotalLiquidity - preTotalLiquidity;
-        uint256 deltaLiquidityBalance = postLiquidityBalance - preLiquidityBalance;
+        uint256 deltaLiquidityBalance =
+            postLiquidityBalance - preLiquidityBalance;
 
-        assertEq(
-            deltaTotalLiquidity,
-            deltaLiquidityBalance
-        );
+        assertEq(deltaTotalLiquidity, deltaLiquidityBalance);
     }
 
     function test_LogNormal_allocate_GivenX() public init {
@@ -113,7 +111,6 @@ contract LogNormalAllocateTest is LogNormalSetUp {
         uint256 deltaYMax =
             computeDeltaYGivenDeltaL(deltaLiquidity, liquidity, reserves[1]);
 
-
         bytes memory data = abi.encode(deltaX, deltaYMax, deltaLiquidity);
         dfmm.allocate(POOL_ID, data);
 
@@ -133,7 +130,6 @@ contract LogNormalAllocateTest is LogNormalSetUp {
             computeDeltaLGivenDeltaY(maxDeltaY, liquidity, reserves[1]);
         uint256 maxDeltaX =
             computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
-
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         dfmm.allocate(POOL_ID, data);

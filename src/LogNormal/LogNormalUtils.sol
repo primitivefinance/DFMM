@@ -1,10 +1,7 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {
-    LogNormalParams,
-    UpdateCode
-} from "src/LogNormal/LogNormal.sol";
+import { LogNormalParams, UpdateCode } from "src/LogNormal/LogNormal.sol";
 import {
     computeLGivenX,
     computeYGivenL,
@@ -80,11 +77,10 @@ function computeInitialPoolData(
     return abi.encode(reserves, L, params);
 }
 /// @dev Casts a positived signed integer to an unsigned integer, reverting if `x` is negative.
+
 function toUint(int256 x) pure returns (uint256) {
     unchecked {
         require(x >= 0, "toUint: negative");
         return uint256(x);
     }
 }
-
-

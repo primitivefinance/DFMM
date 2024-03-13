@@ -190,9 +190,8 @@ function findRootLiquidity(
 ) pure returns (int256) {
     (uint256 rX, uint256 rY,, GeometricMeanParams memory params) =
         abi.decode(data, (uint256, uint256, int256, (GeometricMeanParams)));
-        return computeTradingFunction({ rX: rX, rY: rY, L: L, params: params });
+    return computeTradingFunction({ rX: rX, rY: rY, L: L, params: params });
 }
-
 
 function computeNextLiquidity(
     uint256 rX,
@@ -216,7 +215,7 @@ function computeNextLiquidity(
         }
     } else {
         while (computedInvariant > 0) {
-            upper = upper.mulDivUp(1_001, 1_000);
+            upper = upper.mulDivUp(1001, 1000);
             computedInvariant = computeTradingFunction({
                 rX: rX,
                 rY: rY,

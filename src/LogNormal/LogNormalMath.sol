@@ -22,8 +22,7 @@ function computeTradingFunction(
     LogNormalParams memory params
 ) pure returns (int256) {
     int256 a = Gaussian.ppf(int256(rX.divWadDown(L)));
-    int256 b =
-        Gaussian.ppf(int256(rY.divWadDown(L.mulWadDown(params.mean))));
+    int256 b = Gaussian.ppf(int256(rY.divWadDown(L.mulWadDown(params.mean))));
     return a + b + int256(params.width);
 }
 
@@ -42,8 +41,6 @@ function computeDeltaGivenDeltaLRoundDown(
 ) pure returns (uint256) {
     return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
 }
-
-
 
 function computeLnSDivK(uint256 S, uint256 K) pure returns (int256 lnSDivK) {
     lnSDivK = int256(S.divWadUp(K)).lnWad();
@@ -147,9 +144,8 @@ function computePriceGivenX(
     LogNormalParams memory params
 ) pure returns (uint256) {
     // $$\frac{1}{2} \sigma^2$$
-    uint256 a = HALF.mulWadDown(
-        uint256(int256(params.width).powWad(int256(2 ether)))
-    );
+    uint256 a =
+        HALF.mulWadDown(uint256(int256(params.width).powWad(int256(2 ether))));
     // $$\Phi^{-1} (1 - \frac{x}{L})$$
     int256 b = Gaussian.ppf(int256(ONE - rX.divWadDown(L)));
 
@@ -166,13 +162,11 @@ function computePriceGivenY(
     LogNormalParams memory params
 ) pure returns (uint256) {
     // $$\frac{1}{2} \sigma^2$$
-    uint256 a = HALF.mulWadDown(
-        uint256(int256(params.width).powWad(int256(2 ether)))
-    );
+    uint256 a =
+        HALF.mulWadDown(uint256(int256(params.width).powWad(int256(2 ether))));
 
     // $$\Phi^{-1} (\frac{y}{\mu L})$$
-    int256 b =
-        Gaussian.ppf(int256(rY.divWadDown(params.mean.mulWadDown(L))));
+    int256 b = Gaussian.ppf(int256(rY.divWadDown(params.mean.mulWadDown(L))));
 
     // $$\exp (\Phi^{-1} (\frac{y}{\mu L}) \sigma  + \frac{1}{2} \sigma^2  )$$
     int256 exp = (b.wadMul(int256(params.width)) + int256(a)).expWad();
@@ -224,7 +218,9 @@ function computeNextLiquidity(
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             lower = lower.mulDivDown(999, 1000);
-            uint256 min = rX > rY.divWadDown(params.mean) ? rX + 1000 : rY.divWadDown(params.mean) + 1000;
+            uint256 min = rX > rY.divWadDown(params.mean)
+                ? rX + 1000
+                : rY.divWadDown(params.mean) + 1000;
             lower = lower < rX ? min : lower;
             computedInvariant = computeTradingFunction({
                 rX: rX,

@@ -4,12 +4,16 @@ pragma solidity ^0.8.13;
 import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
-import { computeTradingFunction, computeDeltaGivenDeltaLRoundUp, computeDeltaGivenDeltaLRoundDown } from "src/LogNormal/LogNormalMath.sol";
 import {
-  decodeFeeUpdate,
-  decodeMeanUpdate,
-  decodeWidthUpdate,
-  decodeControllerUpdate
+    computeTradingFunction,
+    computeDeltaGivenDeltaLRoundUp,
+    computeDeltaGivenDeltaLRoundDown
+} from "src/LogNormal/LogNormalMath.sol";
+import {
+    decodeFeeUpdate,
+    decodeMeanUpdate,
+    decodeWidthUpdate,
+    decodeControllerUpdate
 } from "src/LogNormal/LogNormalUtils.sol";
 
 enum UpdateCode {
@@ -75,11 +79,8 @@ contract LogNormal is PairStrategy {
         internalParams[poolId].swapFee = params.swapFee;
         internalParams[poolId].controller = params.controller;
 
-        invariant = tradingFunction(
-            reserves,
-            totalLiquidity,
-            getPoolParams(poolId)
-        );
+        invariant =
+            tradingFunction(reserves, totalLiquidity, getPoolParams(poolId));
         // todo: should the be EXACTLY 0? just positive? within an epsilon?
         valid = -(EPSILON) < invariant && invariant < EPSILON;
     }
@@ -92,8 +93,7 @@ contract LogNormal is PairStrategy {
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
-        UpdateCode updateCode =
-            abi.decode(data, (UpdateCode));
+        UpdateCode updateCode = abi.decode(data, (UpdateCode));
 
         if (updateCode == UpdateCode.SwapFee) {
             internalParams[poolId].swapFee = decodeFeeUpdate(data);
@@ -106,8 +106,7 @@ contract LogNormal is PairStrategy {
                 decodeMeanUpdate(data);
             internalParams[poolId].mean.set(targetMean, targetTimestamp);
         } else if (updateCode == UpdateCode.Controller) {
-            internalParams[poolId].controller =
-                decodeControllerUpdate(data);
+            internalParams[poolId].controller = decodeControllerUpdate(data);
         } else {
             revert InvalidUpdateCode();
         }

@@ -11,21 +11,21 @@ import {
     computeAllocationGivenY
 } from "src/lib/StrategyLib.sol";
 import {
-  encodeFeeUpdate,
-  encodeMeanUpdate,
-  encodeWidthUpdate,
-  encodeControllerUpdate,
-  computeInitialPoolData
+    encodeFeeUpdate,
+    encodeMeanUpdate,
+    encodeWidthUpdate,
+    encodeControllerUpdate,
+    computeInitialPoolData
 } from "src/LogNormal/LogNormalUtils.sol";
 import { LogNormalParams } from "src/LogNormal/LogNormal.sol";
 import {
-  computeNextLiquidity,
-  computeXGivenL,
-  computeNextRx,
-  computeYGivenL,
-  computeNextRy,
-  computePriceGivenX,
-  computePriceGivenY
+    computeNextLiquidity,
+    computeXGivenL,
+    computeNextRx,
+    computeYGivenL,
+    computeNextRy,
+    computePriceGivenX,
+    computePriceGivenY
 } from "src/LogNormal/LogNormalMath.sol";
 
 contract LogNormalSolver {
@@ -54,8 +54,7 @@ contract LogNormalSolver {
         returns (LogNormalParams memory)
     {
         return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId),
-            (LogNormalParams)
+            IStrategy(strategy).getPoolParams(poolId), (LogNormalParams)
         );
     }
 
@@ -94,8 +93,7 @@ contract LogNormalSolver {
         view
         returns (uint256[] memory, uint256)
     {
-        return
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        return IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
     }
 
     function getInitialPoolData(
@@ -333,9 +331,7 @@ contract LogNormalSolver {
         return (
             valid,
             state.amountOut,
-            computePriceGivenX(
-                endReserves.rx, endReserves.L, poolParams
-                ),
+            computePriceGivenX(endReserves.rx, endReserves.L, poolParams),
             swapData
         );
     }
@@ -363,9 +359,6 @@ contract LogNormalSolver {
         returns (uint256 price)
     {
         (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        price = computePriceGivenX(
-            reserves[0], L, fetchPoolParams(poolId)
-        );
+        price = computePriceGivenX(reserves[0], L, fetchPoolParams(poolId));
     }
-
 }

@@ -111,14 +111,8 @@ contract LogNormalArbitrage {
         bytes memory data,
         uint256 v
     ) internal pure returns (int256) {
-        (
-            uint256 S,
-            uint256 rX,
-            uint256 L,
-            LogNormalParams memory params
-        ) = abi.decode(
-            data, (uint256, uint256, uint256, LogNormalParams)
-        );
+        (uint256 S, uint256 rX, uint256 L, LogNormalParams memory params) =
+            abi.decode(data, (uint256, uint256, uint256, LogNormalParams));
         return diffLower({
             S: int256(S),
             rX: int256(rX),
@@ -132,14 +126,8 @@ contract LogNormalArbitrage {
         bytes memory data,
         uint256 v
     ) internal pure returns (int256) {
-        (
-            uint256 S,
-            uint256 rY,
-            uint256 L,
-            LogNormalParams memory params
-        ) = abi.decode(
-            data, (uint256, uint256, uint256, LogNormalParams)
-        );
+        (uint256 S, uint256 rY, uint256 L, LogNormalParams memory params) =
+            abi.decode(data, (uint256, uint256, uint256, LogNormalParams));
         return diffRaise({
             S: int256(S),
             rY: int256(rY),
