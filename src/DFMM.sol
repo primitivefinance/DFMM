@@ -224,7 +224,7 @@ contract DFMM is IDFMM {
 
         if (_pools[poolId].feeCollector != address(0)) {
             uint256 fees =
-                state.deltaLiquidity * 10_000 / _pools[poolId].controllerFee;
+                state.deltaLiquidity * _pools[poolId].controllerFee / 10_000;
             _manageTokens(msg.sender, poolId, true, fees);
         }
 
