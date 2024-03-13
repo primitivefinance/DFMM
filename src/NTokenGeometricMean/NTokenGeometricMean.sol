@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
-import { NTokenStrategy, IStrategy, IDFMM } from "src/NTokenStrategy.sol";
+import { NTokenStrategy, IStrategy, IDFMM, Pool } from "src/NTokenStrategy.sol";
 import {
     decodeFeeUpdate,
     decodeWeightsUpdate,
@@ -67,7 +67,7 @@ contract NTokenGeometricMean is NTokenStrategy {
     function init(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        Pool calldata,
         bytes calldata data
     ) external returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
@@ -118,7 +118,7 @@ contract NTokenGeometricMean is NTokenStrategy {
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        Pool calldata,
         bytes calldata data
     ) external {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
@@ -189,7 +189,7 @@ contract NTokenGeometricMean is NTokenStrategy {
     function _computeAllocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory maxDeltas,
-        IDFMM.Pool memory pool
+        Pool memory pool
     )
         internal
         pure
@@ -213,7 +213,7 @@ contract NTokenGeometricMean is NTokenStrategy {
     function _computeDeallocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory minDeltas,
-        IDFMM.Pool memory pool
+        Pool memory pool
     )
         internal
         pure

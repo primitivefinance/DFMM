@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "./ConstantSumMath.sol";
 import "./ConstantSumUtils.sol";
-import { PairStrategy, IDFMM, IStrategy } from "src/PairStrategy.sol";
+import { PairStrategy, IStrategy, Pool } from "src/PairStrategy.sol";
 
 struct InternalParams {
     uint256 price;
@@ -37,7 +37,7 @@ contract ConstantSum is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        Pool calldata,
         bytes calldata data
     )
         public
@@ -69,7 +69,7 @@ contract ConstantSum is PairStrategy {
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
@@ -114,7 +114,7 @@ contract ConstantSum is PairStrategy {
 
     function _computeAllocateDeltasGivenDeltaL(
         uint256,
-        IDFMM.Pool memory,
+        Pool memory,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
         return new uint256[](0);
@@ -122,7 +122,7 @@ contract ConstantSum is PairStrategy {
 
     function _computeDeallocateDeltasGivenDeltaL(
         uint256,
-        IDFMM.Pool memory,
+        Pool memory,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
         return new uint256[](0);

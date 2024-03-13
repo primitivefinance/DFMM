@@ -1,7 +1,7 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { IStrategy, IDFMM } from "src/interfaces/IStrategy.sol";
+import { IStrategy, IDFMM, Pool } from "src/interfaces/IStrategy.sol";
 
 /**
  * @title Strategy base contract for DFMM.
@@ -27,7 +27,7 @@ abstract contract NTokenStrategy is IStrategy {
     function validateAllocate(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        Pool calldata pool,
         bytes calldata data
     )
         external
@@ -63,7 +63,7 @@ abstract contract NTokenStrategy is IStrategy {
     function validateDeallocate(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        Pool calldata pool,
         bytes calldata data
     )
         external
@@ -98,7 +98,7 @@ abstract contract NTokenStrategy is IStrategy {
     function validateSwap(
         address,
         uint256 poolId,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes memory data
     )
         external
@@ -144,7 +144,7 @@ abstract contract NTokenStrategy is IStrategy {
     function _computeAllocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory maxDeltas,
-        IDFMM.Pool memory pool
+        Pool memory pool
     )
         internal
         view
@@ -154,7 +154,7 @@ abstract contract NTokenStrategy is IStrategy {
     function _computeDeallocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory minDeltas,
-        IDFMM.Pool memory pool
+        Pool memory pool
     )
         internal
         view

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
 import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
 import {
@@ -58,7 +58,7 @@ contract LogNormal is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        Pool calldata,
         bytes calldata data
     )
         public
@@ -89,7 +89,7 @@ contract LogNormal is PairStrategy {
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
@@ -144,7 +144,7 @@ contract LogNormal is PairStrategy {
 
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
         uint256[] memory deltas = new uint256[](2);
@@ -162,7 +162,7 @@ contract LogNormal is PairStrategy {
 
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
         uint256[] memory deltas = new uint256[](2);

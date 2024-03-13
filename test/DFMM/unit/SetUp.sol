@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { SetUp, IDFMM, DFMM } from "test/utils/SetUp.sol";
+import { InitParams } from "src/interfaces/IDFMM.sol";
 import { MockStrategy } from "test/utils/MockStrategy.sol";
 
 contract DFMMSetUp is SetUp {
@@ -17,13 +18,13 @@ contract DFMMSetUp is SetUp {
     function getDefaultPoolParams(bytes memory data)
         internal
         view
-        returns (IDFMM.InitParams memory)
+        returns (InitParams memory)
     {
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        return IDFMM.InitParams({
+        return InitParams({
             name: "Default Pool",
             symbol: "POOL",
             strategy: address(strategy),
@@ -56,7 +57,7 @@ contract DFMMSetUp is SetUp {
         tokens[1] = address(tokenY);
 
         (POOL_ID,,) = dfmm.init(
-            IDFMM.InitParams({
+            InitParams({
                 name: "Default Pool",
                 symbol: "POOL",
                 strategy: address(strategy),

@@ -308,7 +308,7 @@ contract LogNormalSolver {
             }
         }
 
-        IDFMM.Pool memory pool;
+        Pool memory pool;
         pool.reserves = preReserves;
         pool.totalLiquidity = preTotalLiquidity;
 

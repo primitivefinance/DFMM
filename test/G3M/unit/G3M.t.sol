@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
-import { DFMM, IDFMM } from "src/DFMM.sol";
+import { DFMM, IDFMM, InitParams, Pool } from "src/DFMM.sol";
 import { GeometricMean } from "src/GeometricMean/GeometricMean.sol";
 import {
     GeometricMeanSolver,
@@ -59,7 +59,7 @@ contract SetUp is Test {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        InitParams memory initParams = InitParams({
             name: "Test Pool",
             symbol: "TPOOL",
             strategy: address(g3m),
@@ -73,7 +73,7 @@ contract SetUp is Test {
     function test_G3M2_allocate() public {
         test_G3M2_init();
 
-        IDFMM.Pool memory pool = dfmm.getPool(POOL_ID);
+        Pool memory pool = dfmm.getPool(POOL_ID);
 
         console.log(pool.reserves[0]);
         console.log(pool.reserves[1]);
@@ -93,7 +93,7 @@ contract SetUp is Test {
     function test_G3M2_deallocate() public {
         test_G3M2_allocate();
 
-        IDFMM.Pool memory pool = dfmm.getPool(POOL_ID);
+        Pool memory pool = dfmm.getPool(POOL_ID);
 
         console.log(pool.reserves[0]);
         console.log(pool.reserves[1]);
@@ -116,7 +116,7 @@ contract SetUp is Test {
         view
         returns (address)
     {
-        IDFMM.Pool memory pool = dfmm.getPool(poolId);
+        Pool memory pool = dfmm.getPool(poolId);
         return pool.liquidityToken;
     }
 

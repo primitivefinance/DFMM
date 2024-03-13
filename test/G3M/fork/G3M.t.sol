@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
-import { DFMM } from "src/DFMM.sol";
+import { DFMM, InitParams } from "src/DFMM.sol";
 import "src/GeometricMean/GeometricMean.sol";
 import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
 
@@ -71,7 +71,7 @@ contract G3MTestFork is Test {
         tokens[1] = address(usdc);
 
         dfmm.init(
-            IDFMM.InitParams({
+            InitParams({
                 name: "",
                 symbol: "",
                 strategy: address(g3m),
@@ -109,7 +109,7 @@ contract G3MTestFork is Test {
         tokens[1] = address(dai);
 
         dfmm.init(
-            IDFMM.InitParams({
+            InitParams({
                 name: "",
                 symbol: "",
                 strategy: address(g3m),

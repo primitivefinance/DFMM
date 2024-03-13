@@ -82,7 +82,7 @@ contract ConstantSumSolver {
             );
         }
 
-        IDFMM.Pool memory pool;
+        Pool memory pool;
         pool.reserves = reserves;
         pool.totalLiquidity = totalLiquidity;
 

@@ -3,12 +3,13 @@ pragma solidity ^0.8.13;
 
 import { stdError } from "forge-std/StdError.sol";
 import { DFMMSetUp, DFMM, IDFMM } from "./SetUp.sol";
+import { InitParams } from "src/interfaces/IDFMM.sol";
 
 contract DFMMDeallocateTest is DFMMSetUp {
     /*
     function test_DFMM_deallocate_TransfersTokens() public {
         (uint256 poolId,,,) = dfmm.init(
-            IDFMM.InitParams({
+            InitParams({
                 strategy: address(strategy),
                 tokenX: address(tokenX),
                 tokenY: address(tokenY),
@@ -63,7 +64,7 @@ contract DFMMDeallocateTest is DFMMSetUp {
         reserves[0] = 1 ether;
         reserves[1] = 1 ether;
 
-        IDFMM.InitParams memory params = IDFMM.InitParams({
+        InitParams memory params = InitParams({
             name: "",
             symbol: "",
             strategy: address(strategy),
@@ -93,7 +94,7 @@ contract DFMMDeallocateTest is DFMMSetUp {
         reserves[0] = 1 ether;
         reserves[1] = 1 ether;
 
-        IDFMM.InitParams memory params = IDFMM.InitParams({
+        InitParams memory params = InitParams({
             name: "",
             symbol: "",
             strategy: address(strategy),

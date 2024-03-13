@@ -1,29 +1,29 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+// Structs
+
+struct Pool {
+    address strategy;
+    address[] tokens;
+    uint256[] reserves;
+    uint256 totalLiquidity;
+    address liquidityToken;
+}
+
+struct InitParams {
+    string name;
+    string symbol;
+    address strategy;
+    address[] tokens;
+    bytes data;
+}
+
 /**
  * @title DFMM Interface
  * @author Primitive
  */
 interface IDFMM {
-    // Structs
-
-    struct Pool {
-        address strategy;
-        address[] tokens;
-        uint256[] reserves;
-        uint256 totalLiquidity;
-        address liquidityToken;
-    }
-
-    struct InitParams {
-        string name;
-        string symbol;
-        address strategy;
-        address[] tokens;
-        bytes data;
-    }
-
     // Errors
 
     error OnlyWETH();

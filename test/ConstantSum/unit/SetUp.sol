@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import "src/ConstantSum/ConstantSum.sol";
 import "src/ConstantSum/ConstantSumSolver.sol";
 import "test/utils/SetUp.sol";
+import { InitParams } from "src/interfaces/IDFMM.sol";
 
 contract ConstantSumSetUp is SetUp {
     ConstantSum constantSum;
@@ -40,7 +41,7 @@ contract ConstantSumSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        InitParams memory initParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(constantSum),

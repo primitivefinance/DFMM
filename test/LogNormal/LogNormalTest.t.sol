@@ -50,7 +50,7 @@ contract LogNormalTest is Test {
         tokens[0] = tokenX;
         tokens[1] = tokenY;
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        InitParams memory initParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),
@@ -82,7 +82,7 @@ contract LogNormalTest is Test {
         tokens[0] = tokenX;
         tokens[1] = tokenY;
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        InitParams memory initParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),
@@ -113,7 +113,7 @@ contract LogNormalTest is Test {
         tokens[0] = tokenX;
         tokens[1] = tokenY;
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        InitParams memory initParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),

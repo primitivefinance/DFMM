@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { IStrategy } from "src/interfaces/IStrategy.sol";
-import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
 import { computeAllocationGivenX } from "src/lib/StrategyLib.sol";
 import { GeometricMeanParams } from "./GeometricMean.sol";
 import {
@@ -180,8 +180,7 @@ contract GeometricMeanSolver {
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
         GeometricMeanParams memory params = getPoolParams(poolId);
-        IDFMM.Pool memory pool =
-            IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
 
         SimulateSwapState memory state;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { IDFMM, Pool, InitParams } from "src/interfaces/IDFMM.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
@@ -23,6 +23,7 @@ contract DFMM is IDFMM {
 
     Pool[] public pools;
 
+    /// @inheritdoc IDFMM
     address public immutable lpTokenImplementation;
 
     address public immutable weth;

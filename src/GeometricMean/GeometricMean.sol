@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
-import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { Pool } from "src/interfaces/IDFMM.sol";
 import {
     computeTradingFunction,
     computeDeltaGivenDeltaLRoundUp,
@@ -67,7 +67,7 @@ contract GeometricMean is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        Pool calldata,
         bytes calldata data
     ) external onlyDFMM returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
@@ -111,7 +111,7 @@ contract GeometricMean is PairStrategy {
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata,
+        Pool calldata,
         bytes calldata data
     ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
@@ -164,7 +164,7 @@ contract GeometricMean is PairStrategy {
 
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes memory
     ) internal pure override returns (uint256[] memory deltas) {
         deltas = new uint256[](2);
@@ -179,7 +179,7 @@ contract GeometricMean is PairStrategy {
 
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes memory
     ) internal pure override returns (uint256[] memory deltas) {
         deltas = new uint256[](2);

@@ -1,7 +1,7 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { IStrategy, IDFMM } from "src/interfaces/IStrategy.sol";
+import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
 import "forge-std/console2.sol";
 
 /**
@@ -28,7 +28,7 @@ abstract contract PairStrategy is IStrategy {
     function validateAllocate(
         address,
         uint256 poolId,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes calldata data
     )
         external
@@ -77,7 +77,7 @@ abstract contract PairStrategy is IStrategy {
     function validateDeallocate(
         address,
         uint256 poolId,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes calldata data
     )
         external
@@ -121,7 +121,7 @@ abstract contract PairStrategy is IStrategy {
     function validateSwap(
         address,
         uint256 poolId,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes memory data
     )
         external
@@ -166,13 +166,13 @@ abstract contract PairStrategy is IStrategy {
 
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes memory data
     ) internal view virtual returns (uint256[] memory);
 
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
-        IDFMM.Pool memory pool,
+        Pool memory pool,
         bytes memory data
     ) internal view virtual returns (uint256[] memory);
 }

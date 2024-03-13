@@ -9,6 +9,7 @@ import { GeometricMeanSolver } from "src/GeometricMean/GeometricMeanSolver.sol";
 import "test/utils/SetUp.sol";
 import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
 import "solmate/utils/FixedPointMathLib.sol";
+import { InitParams } from "src/interfaces/IDFMM.sol";
 
 using FixedPointMathLib for uint256;
 
@@ -43,7 +44,7 @@ contract G3MSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
-        IDFMM.InitParams memory defaultInitParams = IDFMM.InitParams({
+        InitParams memory defaultInitParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(g3m),

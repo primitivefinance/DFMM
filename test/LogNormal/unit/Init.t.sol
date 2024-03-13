@@ -27,7 +27,7 @@ contract LogNormalInitTest is LogNormalSetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenX);
 
-        IDFMM.InitParams memory initParams = IDFMM.InitParams({
+        InitParams memory initParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(logNormal),

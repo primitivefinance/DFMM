@@ -74,7 +74,7 @@ contract NTokenGeometricMeanTest is Test {
         console2.log("addr of strategy", address(g3m));
 
         dfmm.init(
-            IDFMM.InitParams({
+            InitParams({
                 name: "4-token-LP",
                 symbol: "4T",
                 strategy: address(g3m),
@@ -108,7 +108,7 @@ contract NTokenGeometricMeanTest is Test {
 
         bytes memory initData =
             solver.getInitialPoolData(reserveNumeraire, prices, params);
-        DFMM.InitParams memory initParams = IDFMM.InitParams({
+        InitParams memory initParams = InitParams({
             name: "4-token-LP",
             symbol: "4T",
             strategy: address(g3m),
@@ -147,7 +147,7 @@ contract NTokenGeometricMeanTest is Test {
 
         bytes memory initData =
             solver.getInitialPoolData(reserveNumeraire, prices, params);
-        DFMM.InitParams memory initParams = IDFMM.InitParams({
+        InitParams memory initParams = InitParams({
             name: "4-token-LP",
             symbol: "4T",
             strategy: address(g3m),
