@@ -30,6 +30,7 @@ import {
     computeDeltaLXIn,
     computeDeltaLYIn
 } from "src/LogNormal/LogNormalMath.sol";
+import "forge-std/console2.sol";
 
 contract LogNormalSolver {
     using FixedPointMathLib for uint256;
@@ -257,6 +258,7 @@ contract LogNormalSolver {
 
             if (swapXIn) {
                 state.deltaLiquidity = computeDeltaLXIn(amountIn, preReserves[0], preReserves[1], preTotalLiquidity, poolParams);
+                console2.log("x dL", state.deltaLiquidity);
 
                 endReserves.rx = preReserves[0] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
@@ -274,6 +276,7 @@ contract LogNormalSolver {
                 state.amountOut = preReserves[1] - endReserves.ry;
             } else {
                 state.deltaLiquidity = computeDeltaLYIn(amountIn, preReserves[0], preReserves[1], preTotalLiquidity, poolParams);
+                console2.log("y dL", state.deltaLiquidity);
 
                 endReserves.ry = preReserves[1] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;

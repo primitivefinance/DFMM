@@ -188,8 +188,8 @@ function computeDeltaLYIn(
     LogNormalParams memory params
 ) pure returns (uint256 deltaL) {
     uint256 fees = params.swapFee.mulWadUp(amountIn);
-    uint256 py = computePriceGivenY(ry, L, params);
-    deltaL = L.mulWadUp(fees).divWadDown(py.mulWadDown(rx) + ry);
+    uint256 px = computePriceGivenX(rx, L, params);
+    deltaL = L.mulWadUp(fees).divWadDown(px.mulWadDown(rx) + ry);
 }
 
 /// @dev This is a pure anonymous function defined at the file level, which allows

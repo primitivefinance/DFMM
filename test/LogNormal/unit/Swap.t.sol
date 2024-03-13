@@ -99,7 +99,33 @@ contract LogNormalSwapTest is LogNormalSetUp {
         vm.expectRevert();
         dfmm.swap(POOL_ID, payload);
     }
-    function test_LogNormal_swap_ChargesCorrectFees() public init {
+    function test_LogNormal_swap_ChargesCorrectFeesYIn() public deep {
+        uint256 amountIn = 1 ether;
+        bool swapXForY = false;
+
+        (bool valid,,, bytes memory payload) =
+            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+
+        (,, uint256 inputAmount, uint256 outputAmount) =
+            dfmm.swap(POOL_ID, payload);
+
+        console2.log(inputAmount);
+        console2.log(outputAmount);
+      
+    }
+
+    function test_LogNormal_swap_ChargesCorrectFeesXIn() public deep {
+        uint256 amountIn = 1 ether;
+        bool swapXForY = true;
+
+        (bool valid,,, bytes memory payload) =
+            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+
+        (,, uint256 inputAmount, uint256 outputAmount) =
+            dfmm.swap(POOL_ID, payload);
+
+        console2.log(inputAmount);
+        console2.log(outputAmount);
       
     }
 }

@@ -17,8 +17,8 @@ contract SetUp is Test {
     function setUp() public virtual {
         tokenX = new MockERC20("Test Token X", "TSTX", 18);
         tokenY = new MockERC20("Test Token Y", "TSTY", 18);
-        tokenX.mint(address(this), 100_000e18);
-        tokenY.mint(address(this), 100_000e18);
+        tokenX.mint(address(this), 10_000_000_000_000e18);
+        tokenY.mint(address(this), 10_000_000_000_000e18);
 
         weth = new WETH();
         dfmm = new DFMM(address(weth));
