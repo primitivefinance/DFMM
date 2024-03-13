@@ -28,7 +28,6 @@ import {
     computePriceGivenX,
     computePriceGivenY
 } from "src/LogNormal/LogNormalMath.sol";
-import "forge-std/console2.sol";
 
 contract LogNormalSolver {
     using FixedPointMathLib for uint256;
