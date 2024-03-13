@@ -11,6 +11,10 @@ contract DFMMInternal is DFMM {
     function transferFrom(address token, uint256 amount) external payable {
         _transferFrom(token, amount);
     }
+
+    function transfer(address token, address to, uint256 amount) external {
+        _transfer(token, to, amount);
+    }
 }
 
 contract DFMMInternalTest is DFMMSetUp {
@@ -82,5 +86,16 @@ contract DFMMInternalTest is DFMMSetUp {
         token.approve(address(dfmmInternal), amount);
         vm.expectRevert(IDFMM.InvalidTransfer.selector);
         dfmmInternal.transferFrom(address(token), amount);
+    }
+
+    function test_DFMM_transfer_UnwrapsETH() public {
+        address to = address(this);
+        uint256 amount = 1 ether;
+        weth.deposit{ value: amount }();
+        uint256 preETHBalance = address(to).balance;
+        deal(address(weth), address(dfmmInternal), amount);
+        dfmmInternal.transfer(address(weth), to, amount);
+        assertEq(weth.balanceOf(address(dfmmInternal)), 0);
+        assertEq(address(this).balance, preETHBalance + amount);
     }
 }
