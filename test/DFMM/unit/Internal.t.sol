@@ -98,4 +98,24 @@ contract DFMMInternalTest is DFMMSetUp {
         assertEq(weth.balanceOf(address(dfmmInternal)), 0);
         assertEq(address(this).balance, preETHBalance + amount);
     }
+
+    function testFuzz_DFMM_transfer_TransferTokens(
+        address to,
+        uint256 amount
+    ) public {
+        vm.assume(
+            amount
+                <
+                115_792_089_237_316_195_423_570_985_008_687_907_853_269_984_665_640_564_039_458
+        );
+        MockERC20 token = new MockERC20("", "", 18);
+        token.mint(address(dfmmInternal), amount);
+        uint256 preDFMMBalance = token.balanceOf(address(dfmmInternal));
+        uint256 preThisBalance = token.balanceOf(address(to));
+        dfmmInternal.transfer(address(token), address(to), amount);
+        assertEq(
+            token.balanceOf(address(dfmmInternal)), preDFMMBalance - amount
+        );
+        assertEq(token.balanceOf(address(to)), preThisBalance + amount);
+    }
 }
