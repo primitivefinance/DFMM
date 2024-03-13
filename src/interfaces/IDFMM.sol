@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-// Structs
-
 /**
  * @dev Parameters of a DFMM pool.
  * @param strategy Address of the associated strategy contract.
@@ -42,8 +40,10 @@ struct InitParams {
 interface IDFMM {
     // Errors
 
+    /// @dev Thrown when the caller is not the WETH contract.
     error OnlyWETH();
 
+    /// @dev Thrown when a token transfer fails.
     error InvalidTransfer();
 
     /// @dev Thrown when the invariant is invalid.
