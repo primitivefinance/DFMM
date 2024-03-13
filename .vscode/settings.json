@@ -1,0 +1,10 @@
+{
+    "editor.formatOnSave": true,
+    "solidity.formatter": "forge",
+    "[solidity]": {
+        "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
+    },
+    "mathover.matchRegex": "\\$\\$(.*?)\\$\\$",
+    "mathover.forwardSkip": 2,
+    "mathover.backwardSkip": 2
+}

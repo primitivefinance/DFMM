@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "src/interfaces/IDFMM.sol";
+import { Pool } from "src/interfaces/IDFMM.sol";
 
 /**
  * @title Strategy Interface.
@@ -20,6 +20,8 @@ interface IStrategy {
     /// @dev Thrown when the sender is authorized.
     error InvalidSender();
 
+    error DeltaError(uint256 expected, uint256 actual);
+
     // Setters
 
     /**
@@ -28,23 +30,21 @@ interface IStrategy {
      * @param poolId Id of the pool to initialize.
      * @param data Pool parameters encoded as bytes.
      * @return valid True if the initialization is valid.
-     * @return swapConstantGrowth Initial swap growth.
-     * @return reserveX Initial reserve of token X.
-     * @return reserveY Initial reserve of token Y.
+     * @return invariant Initial swap growth.
+     * @return reserves Initial reserves of the pool.
      * @return totalLiquidity Initial liquidity of the pool.
      */
     function init(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        Pool calldata pool,
         bytes calldata data
     )
         external
         returns (
             bool valid,
-            int256 swapConstantGrowth,
-            uint256 reserveX,
-            uint256 reserveY,
+            int256 invariant,
+            uint256[] memory reserves,
             uint256 totalLiquidity
         );
 
@@ -60,7 +60,7 @@ interface IStrategy {
     function validateAllocate(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        Pool calldata pool,
         bytes calldata data
     )
         external
@@ -68,15 +68,14 @@ interface IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
+            uint256[] memory deltas,
             uint256 deltaLiquidity
         );
 
     function validateDeallocate(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        Pool calldata pool,
         bytes calldata data
     )
         external
@@ -84,38 +83,39 @@ interface IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256 deltaX,
-            uint256 deltaY,
+            uint256[] memory deltas,
             uint256 deltaLiquidity
         );
 
     function validateSwap(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        Pool calldata pool,
         bytes calldata data
     )
         external
         view
         returns (
             bool valid,
-            int256 swapConstantGrowth,
-            int256 liquidityDelta,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity
+            int256 invariant,
+            uint256 tokenInIndex,
+            uint256 tokenOutIndex,
+            uint256 amountIn,
+            uint256 amountOut,
+            uint256 deltaLiquidity
         );
 
     function update(
         address sender,
         uint256 poolId,
-        IDFMM.Pool calldata pool,
+        Pool calldata pool,
         bytes calldata data
     ) external;
 
-    function computeSwapConstant(
-        uint256 poolId,
-        bytes memory data
+    function tradingFunction(
+        uint256[] memory reserves,
+        uint256 totalLiquidity,
+        bytes memory params
     ) external view returns (int256);
 
     function dfmm() external view returns (address);
