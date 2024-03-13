@@ -196,6 +196,9 @@ interface IDFMM {
 
     // Getters
 
+    /// @notice Returns the amount of initialized pools.
+    function nonce() external view returns (uint256);
+
     /// @notice Address of the implementation of the LPToken contract.
     function lpTokenImplementation() external view returns (address);
 

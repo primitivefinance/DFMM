@@ -364,19 +364,19 @@ contract DFMM is IDFMM {
         }
     }
 
-    // Lens
+    // Getters
 
-    /// @notice Returns the amount of initialized pools.
+    /// @inheritdoc IDFMM
     function nonce() external view returns (uint256) {
         return pools.length;
     }
 
-    /// @notice Returns the pool `poolId` as a Pool struct.
+    /// @inheritdoc IDFMM
     function getPool(uint256 poolId) external view returns (Pool memory) {
         return pools[poolId];
     }
 
-    /// @notice Returns the reserves and liquidity of pool `poolId`.
+    /// @inheritdoc IDFMM
     function getReservesAndLiquidity(uint256 poolId)
         external
         view
