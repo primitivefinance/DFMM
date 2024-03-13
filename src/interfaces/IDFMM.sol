@@ -52,7 +52,11 @@ interface IDFMM {
     /// @dev Thrown when pool tokens are identical.
     error DuplicateTokens();
 
-    error InvalidTokensLength();
+    /// @dev Thrown when a pool is being initalized with less than two tokens.
+    error InvalidMinimumTokens();
+
+    /// @dev Thrown when a pool is being initalized with more than eight tokens.
+    error InvalidMaximumTokens();
 
     /// @dev Thrown when a new call is made during a locked state.
     error Locked();
