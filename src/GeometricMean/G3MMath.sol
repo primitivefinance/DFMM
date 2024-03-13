@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { GeometricMeanParams } from "src/GeometricMean/GeometricMean.sol";
 import { bisection } from "src/lib/BisectionLib.sol";
-import "forge-std/console2.sol";
 
 uint256 constant ONE = 1 ether;
 
