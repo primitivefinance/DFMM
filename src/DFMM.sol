@@ -73,7 +73,7 @@ contract DFMM is IDFMM {
             reserves: new uint256[](params.tokens.length),
             totalLiquidity: 0,
             liquidityToken: address(0),
-            controller: params.controller,
+            feeCollector: params.feeCollector,
             controllerFee: params.controllerFee
         });
 
@@ -222,7 +222,7 @@ contract DFMM is IDFMM {
 
         _pools[poolId].totalLiquidity += state.deltaLiquidity;
 
-        if (_pools[poolId].controller != address(0)) {
+        if (_pools[poolId].feeCollector != address(0)) {
             uint256 fees =
                 state.deltaLiquidity * 10_000 / _pools[poolId].controllerFee;
             _manageTokens(msg.sender, poolId, true, fees);
