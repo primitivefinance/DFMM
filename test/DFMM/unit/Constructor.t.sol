@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "./SetUp.sol";
+import { DFMMSetUp } from "./SetUp.sol";
 import { LPToken } from "src/LPToken.sol";
 
 contract DFMMConstructorTest is DFMMSetUp {
