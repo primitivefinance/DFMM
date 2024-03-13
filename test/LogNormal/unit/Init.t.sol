@@ -32,7 +32,9 @@ contract LogNormalInitTest is LogNormalSetUp {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: defaultInitialPoolData
+            data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         vm.expectRevert(IDFMM.InvalidTokens.selector);

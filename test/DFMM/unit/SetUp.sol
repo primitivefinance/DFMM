@@ -29,7 +29,9 @@ contract DFMMSetUp is SetUp {
             symbol: "POOL",
             strategy: address(strategy),
             tokens: tokens,
-            data: data
+            data: data,
+            feeCollector: address(0),
+            controllerFee: 0
         });
     }
 
@@ -62,7 +64,9 @@ contract DFMMSetUp is SetUp {
                 symbol: "POOL",
                 strategy: address(strategy),
                 tokens: tokens,
-                data: params
+                data: params,
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
         _;
