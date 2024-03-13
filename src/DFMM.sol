@@ -315,12 +315,13 @@ contract DFMM is IDFMM {
      * @dev Mints or burns liquidity tokens. Note that the amount of minted
      * or burnt tokens is NOT the same as the amount of liquidity added or
      * removed from the pool.
+     * @param recipient Address receiving the minted LP tokens.
      * @param poolId Id of the associated pool.
      * @param isAllocate True if tokens will be minted, false otherwise.
      * @param deltaL Amount of liquidity added or removed from the pool.
      */
     function _manageTokens(
-        address account,
+        address recipient,
         uint256 poolId,
         bool isAllocate,
         uint256 deltaL
@@ -332,7 +333,7 @@ contract DFMM is IDFMM {
         if (isAllocate) {
             uint256 amount =
                 deltaL.mulWadDown(totalSupply.divWadDown(totalLiquidity));
-            liquidityToken.mint(account, amount);
+            liquidityToken.mint(recipient, amount);
         } else {
             uint256 amount =
                 deltaL.mulWadUp(totalSupply.divWadUp(totalLiquidity));
