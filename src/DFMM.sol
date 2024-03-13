@@ -67,7 +67,8 @@ contract DFMM is IDFMM {
         lock
         returns (uint256, uint256[] memory, uint256)
     {
-        if (params.tokens.length < 2) revert InvalidTokensLength();
+        if (params.tokens.length < 2) revert InvalidMinimumTokens();
+        if (params.tokens.length > 8) revert InvalidMaximumTokens();
 
         Pool memory pool = Pool({
             strategy: params.strategy,
