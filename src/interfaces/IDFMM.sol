@@ -50,7 +50,7 @@ interface IDFMM {
     error InvalidInvariant(int256 invariant);
 
     /// @dev Thrown when pool tokens are identical.
-    error InvalidTokens();
+    error DuplicateTokens();
 
     /// @dev Thrown when a new call is made during a locked state.
     error Locked();
