@@ -99,4 +99,7 @@ contract LogNormalSwapTest is LogNormalSetUp {
         vm.expectRevert();
         dfmm.swap(POOL_ID, payload);
     }
+    function test_LogNormal_swap_ChargesCorrectFees() public init {
+      
+    }
 }

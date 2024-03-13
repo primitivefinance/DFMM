@@ -26,7 +26,9 @@ import {
     computeYGivenL,
     computeNextRy,
     computePriceGivenX,
-    computePriceGivenY
+    computePriceGivenY,
+    computeDeltaLXIn,
+    computeDeltaLYIn
 } from "src/LogNormal/LogNormalMath.sol";
 
 contract LogNormalSolver {
@@ -254,7 +256,7 @@ contract LogNormalSolver {
             );
 
             if (swapXIn) {
-                state.deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee);
+                state.deltaLiquidity = computeDeltaLXIn(amountIn, preReserves[0], preReserves[1], preTotalLiquidity, poolParams);
 
                 endReserves.rx = preReserves[0] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
@@ -271,8 +273,7 @@ contract LogNormalSolver {
                 );
                 state.amountOut = preReserves[1] - endReserves.ry;
             } else {
-                state.deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee)
-                    .divWadUp(poolParams.mean);
+                state.deltaLiquidity = computeDeltaLYIn(amountIn, preReserves[0], preReserves[1], preTotalLiquidity, poolParams);
 
                 endReserves.ry = preReserves[1] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
