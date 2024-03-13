@@ -36,6 +36,28 @@ pub struct InitParams {
     pub token_y: ::ethers::core::types::Address,
     pub data: ::ethers::core::types::Bytes,
 }
+/// `Pool(address,address,address,uint256,uint256,uint256,address)`
+#[derive(
+    Clone,
+    ::ethers::contract::EthAbiType,
+    ::ethers::contract::EthAbiCodec,
+    serde::Serialize,
+    serde::Deserialize,
+    Default,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+)]
+pub struct Pool {
+    pub strategy: ::ethers::core::types::Address,
+    pub token_x: ::ethers::core::types::Address,
+    pub token_y: ::ethers::core::types::Address,
+    pub reserve_x: ::ethers::core::types::U256,
+    pub reserve_y: ::ethers::core::types::U256,
+    pub total_liquidity: ::ethers::core::types::U256,
+    pub liquidity_token: ::ethers::core::types::Address,
+}
 /// `FuzzInterface(address,string[])`
 #[derive(
     Clone,

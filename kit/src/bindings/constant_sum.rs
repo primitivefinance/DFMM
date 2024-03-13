@@ -10,6 +10,7 @@ pub use constant_sum::*;
     non_camel_case_types
 )]
 pub mod constant_sum {
+    pub use super::super::shared_types::*;
     #[allow(deprecated)]
     fn __abi() -> ::ethers::core::abi::Abi {
         ::ethers::core::abi::ethabi::Contract {
@@ -109,6 +110,21 @@ pub mod constant_sum {
                                 kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("pool"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                ],),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("struct IDFMM.Pool"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
@@ -234,6 +250,21 @@ pub mod constant_sum {
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("pool"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                ],),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("struct IDFMM.Pool"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
                                 name: ::std::borrow::ToOwned::to_owned("data"),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
                                 internal_type: ::core::option::Option::Some(
@@ -247,9 +278,9 @@ pub mod constant_sum {
                     },],
                 ),
                 (
-                    ::std::borrow::ToOwned::to_owned("validateAllocateOrDeallocate"),
+                    ::std::borrow::ToOwned::to_owned("validateAllocate"),
                     ::std::vec![::ethers::core::abi::ethabi::Function {
-                        name: ::std::borrow::ToOwned::to_owned("validateAllocateOrDeallocate",),
+                        name: ::std::borrow::ToOwned::to_owned("validateAllocate"),
                         inputs: ::std::vec![
                             ::ethers::core::abi::ethabi::Param {
                                 name: ::std::string::String::new(),
@@ -263,6 +294,21 @@ pub mod constant_sum {
                                 kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("pool"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                ],),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("struct IDFMM.Pool"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
@@ -289,21 +335,104 @@ pub mod constant_sum {
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("reserveX"),
+                                name: ::std::borrow::ToOwned::to_owned("deltaX"),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("uint256"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("reserveY"),
+                                name: ::std::borrow::ToOwned::to_owned("deltaY"),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("uint256"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("totalLiquidity"),
+                                name: ::std::borrow::ToOwned::to_owned("deltaLiquidity"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                        ],
+                        constant: ::core::option::Option::None,
+                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                    },],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("validateDeallocate"),
+                    ::std::vec![::ethers::core::abi::ethabi::Function {
+                        name: ::std::borrow::ToOwned::to_owned("validateDeallocate"),
+                        inputs: ::std::vec![
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("address"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("poolId"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("pool"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                ],),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("struct IDFMM.Pool"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("data"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("bytes"),
+                                ),
+                            },
+                        ],
+                        outputs: ::std::vec![
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("valid"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("bool"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("invariant"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("int256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("deltaX"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("deltaY"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("deltaLiquidity"),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("uint256"),
@@ -331,6 +460,21 @@ pub mod constant_sum {
                                 kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("pool"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                ],),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("struct IDFMM.Pool"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
@@ -422,12 +566,12 @@ pub mod constant_sum {
     pub static CONSTANTSUM_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
         ::ethers::contract::Lazy::new(__abi);
     #[rustfmt::skip]
-    const __BYTECODE: &[u8] = b"`\x804a\0tW`\x1Fa\x0B\xBF8\x81\x90\x03\x91\x82\x01`\x1F\x19\x16\x83\x01\x91`\x01`\x01`@\x1B\x03\x83\x11\x84\x84\x10\x17a\0yW\x80\x84\x92` \x94`@R\x839\x81\x01\x03\x12a\0tWQ`\x01`\x01`\xA0\x1B\x03\x81\x16\x90\x81\x90\x03a\0tW`\0\x80T`\x01`\x01`\xA0\x1B\x03\x19\x16\x91\x90\x91\x17\x90U`@Qa\x0B/\x90\x81a\0\x90\x829\xF3[`\0\x80\xFD[cNH{q`\xE0\x1B`\0R`A`\x04R`$`\0\xFD\xFE`\x80`@R`\x046\x10\x15a\0\x12W`\0\x80\xFD[`\0\x805`\xE0\x1C\x90\x81b.RK\x14a\0\xA9WP\x80c\x06\xFD\xDE\x03\x14a\0\xA4W\x80c\x1E\xDBq\xE5\x14a\0\x9FW\x80ch\xBD>8\x14a\0\x9AW\x80cs\xCB-\x03\x14a\0\x95W\x80c\x8A\x04\xBD\xD5\x14a\0\x90W\x80c\xAC\xAD)\x89\x14a\0\x8BW\x80c\xAF\xBA\x13\xC4\x14a\0\x86Wc\xDC\x17\x83U\x14a\0\x81W`\0\x80\xFD[a\x08\x15V[a\x07\xECV[a\x06\x9DV[a\x06cV[a\x05LV[a\x03:V[a\x02\x82V[a\x02#V[4a\x01;W`@6`\x03\x19\x01\x12a\x01;W`$5\x90g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11a\x01;W6`#\x83\x01\x12\x15a\x01;Wa\x017a\x01'a\x01\x02a\0\xF36`\x04\x87\x015`$\x88\x01a\x01\x97V[` \x80\x82Q\x83\x01\x01\x91\x01a\x08HV[\x90a\x01 a\x01\x11`\x045a\t\x90V[` \x80\x82Q\x83\x01\x01\x91\x01a\x08cV[Q\x92a\n\x04V[`@Q\x90\x81R\x90\x81\x90` \x82\x01\x90V[\x03\x90\xF3[\x80\xFD[cNH{q`\xE0\x1B`\0R`A`\x04R`$`\0\xFD[``\x81\x01\x90\x81\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x17a\x01pW`@RV[a\x01>V[\x90`\x1F\x80\x19\x91\x01\x16\x81\x01\x90\x81\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x17a\x01pW`@RV[\x92\x91\x92g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11a\x01pW`@Q\x91a\x01\xC1`\x1F\x82\x01`\x1F\x19\x16` \x01\x84a\x01uV[\x82\x94\x81\x84R\x81\x83\x01\x11a\x01\xDEW\x82\x81` \x93\x84`\0\x96\x017\x01\x01RV[`\0\x80\xFD[\x91\x90\x82Q\x92\x83\x82R`\0[\x84\x81\x10a\x02\x0FWPP\x82`\0` \x80\x94\x95\x84\x01\x01R`\x1F\x80\x19\x91\x01\x16\x01\x01\x90V[` \x81\x83\x01\x81\x01Q\x84\x83\x01\x82\x01R\x01a\x01\xEEV[4a\x01\xDEW`\x006`\x03\x19\x01\x12a\x01\xDEW`@Q`@\x81\x01\x90\x80\x82\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x83\x11\x17a\x01pWa\x017\x91`@R`\x0B\x81RjConstantSum`\xA8\x1B` \x82\x01R`@Q\x91\x82\x91` \x83R` \x83\x01\x90a\x01\xE3V[4a\x01\xDEW` 6`\x03\x19\x01\x12a\x01\xDEW`\x045`\0R`\x01` R```@`\0 \x80T\x90`\x01\x81\x01T\x90`\x02`\x01\x80`\xA0\x1B\x03\x91\x01T\x16\x90`@Q\x92\x83R` \x83\x01R`@\x82\x01R\xF3[`\x01`\x01`\xA0\x1B\x03\x81\x16\x03a\x01\xDEWV[\x90```\x03\x19\x83\x01\x12a\x01\xDEW`\x045a\x02\xF8\x81a\x02\xCEV[\x91`$5\x91`D5g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x92\x83\x82\x11a\x01\xDEW\x80`#\x83\x01\x12\x15a\x01\xDEW\x81`\x04\x015\x93\x84\x11a\x01\xDEW`$\x84\x83\x01\x01\x11a\x01\xDEW`$\x01\x91\x90V[4a\x01\xDEWa\x03H6a\x02\xDFV[\x92P\x90a\x03\xA2``a\x03\\a\x01\x11\x84a\t\x90V[`\0T\x90\x93\x90a\x03\x82\x90a\x03v\x90`\x01`\x01`\xA0\x1B\x03\x16\x81V[`\x01`\x01`\xA0\x1B\x03\x16\x90V[`@Q\x80\x80\x95\x81\x94c3\x85N\xFD`\xE2\x1B\x83R`\x04\x83\x01\x91\x90` \x83\x01\x92RV[\x03\x91Z\xFA\x92\x83\x15a\x05GW`\0\x94`\0\x92`\0\x95a\x05\nW[P\x90a\x03\xC9\x91\x81\x01\x90a\x08\xA9V[\x92\x91\x93\x90\x95`\0\x92\x80\x86\x11`\0\x14a\x04oWPa\x04\x0Fa\x04\x07a\x04!\x94a\x04\x01a\x03\xF6a\x04\x18\x95\x8Aa\x08\xDAV[` \x87\x01Q\x90a\n\xCDV[\x90a\x08\xECV[\x96[\x85a\x08\xF9V[\x95\x86\x12\x15a\t\x12V[Q\x82\x86\x85a\n\x04V[\x93\x84`\x13\x19\x12\x92\x83a\x04dW[a\x017\x93\x94`@Q\x96\x87\x96\x87\x92`\xA0\x94\x91\x97\x96\x95\x92`\xC0\x85\x01\x98\x15\x15\x85R` \x85\x01R`@\x84\x01R``\x83\x01R`\x80\x82\x01R\x01RV[`\x14\x86\x12\x93Pa\x04.V[\x92PP\x81\x86\x11\x15a\x04\xACWa\x04\x18a\x04\x0Fa\x04\xA6a\x04\x9Ea\x04\x93a\x04!\x96\x8Ba\x08\xDAV[` \x86\x01Q\x90a\n\xCDV[\x84Q\x90a\n\x9DV[\x96a\x04\tV[`@QbF\x1B\xCD`\xE5\x1B\x81R` `\x04\x82\x01R`0`$\x82\x01R\x7Finvalid swap: inputs x and y hav`D\x82\x01Roe the same sign!`\x80\x1B`d\x82\x01R`\x84\x90\xFD[\x90\x94Pa\x055\x91\x95Pa\x03\xC9\x92P``=``\x11a\x05@W[a\x05-\x81\x83a\x01uV[\x81\x01\x90a\x08HV[\x91\x95\x91\x94\x90\x92a\x03\xBBV[P=a\x05#V[a\x08\x9DV[4a\x01\xDEWa\x05Z6a\x02\xDFV[`\0T\x91\x93P\x90`\x01`\x01`\xA0\x1B\x03\x163\x03a\x06QW\x82\x90a\x05za\t/V[P\x81\x01\x03\x91`\xC0\x83\x12a\x01\xDEW\x805\x91` \x82\x015\x91```@\x82\x015\x95`_\x19\x01\x12a\x01\xDEWa\x06\x0F\x91`\x01a\x06\x04`@Q\x93a\x05\xB7\x85a\x01TV[``\x81\x015\x80\x86R`\xA0` \x87\x01\x92`\x80\x81\x015\x84R\x015a\x05\xD8\x81a\x02\xCEV[`@\x87\x01Ra\x05\xF1\x85`\0R`\x01` R`@`\0 \x90V[UQ\x92`\0R`\x01` R`@`\0 \x90V[\x01UQ\x84\x83\x85a\n\x04V[\x92\x83`\x13\x19\x12\x91\x82a\x06FW[`@\x80Q\x93\x15\x15\x84R` \x84\x01\x95\x90\x95R\x93\x82\x01\x92\x90\x92R``\x81\x01\x92\x90\x92R`\x80\x82\x01R`\xA0\x90\xF3[`\x14\x85\x12\x92Pa\x06\x1CV[`@QchS\xCB\xA7`\xE0\x1B\x81R`\x04\x90\xFD[4a\x01\xDEWa\x06\x94a\x01\x11a\x06\x8Aa\x06\x0Fa\x06}6a\x02\xDFV[\x90\x80\x92\x95\x93P\x01\x90a\x08\xA9V[\x95\x91\x94\x90\x93a\t\x90V[Q\x84\x83\x85a\n\x04V[4a\x01\xDEWa\x06\xAB6a\x02\xDFV[`\0T\x90\x93\x90`\x01`\x01`\xA0\x1B\x03\x90\x81\x163\x03a\x06QWa\x06\xECa\x03v`\x02a\x06\xDE\x87`\0R`\x01` R`@`\0 \x90V[\x01T`\x01`\x01`\xA0\x1B\x03\x16\x90V[\x91\x16\x03a\x07\xDAWa\x06\xFF\x83\x82\x01\x82a\tXV[a\x07\x08\x81a\tpV[`\x02\x81\x03a\x07=WPa\x07$a\x07)\x91a\x07:\x93\x946\x91a\x01\x97V[a\n{V[\x91`\0R`\x01` R`@`\0 \x90V[U\0[a\x07F\x81a\tpV[`\x01\x81\x03a\x07yWPa\x07da\x07$a\x07u\x92`\x01\x94\x956\x91a\x01\x97V[\x92`\0R`\x01` R`@`\0 \x90V[\x01U\0[\x80a\x07\x85`\x03\x92a\tpV[\x03a\x07\xC8Wa\x07\xA6a\x07da\x07\xA1`\x02\x93a\x07\xC6\x966\x91a\x01\x97V[a\nSV[\x01\x80T`\x01`\x01`\xA0\x1B\x03\x19\x16`\x01`\x01`\xA0\x1B\x03\x90\x92\x16\x91\x90\x91\x17\x90UV[\0[`@Qc#]+=`\xE0\x1B\x81R`\x04\x90\xFD[`@Qcn\xDA\xEF/`\xE1\x1B\x81R`\x04\x90\xFD[4a\x01\xDEW`\x006`\x03\x19\x01\x12a\x01\xDEW`\0T`@Q`\x01`\x01`\xA0\x1B\x03\x90\x91\x16\x81R` \x90\xF3[4a\x01\xDEW` 6`\x03\x19\x01\x12a\x01\xDEWa\x017a\x084`\x045a\t\x90V[`@Q\x91\x82\x91` \x83R` \x83\x01\x90a\x01\xE3V[\x90\x81``\x91\x03\x12a\x01\xDEW\x80Q\x91`@` \x83\x01Q\x92\x01Q\x90V[\x90\x81``\x91\x03\x12a\x01\xDEW`@\x80Q\x91a\x08|\x83a\x01TV[\x80Q\x83R` \x81\x01Q` \x84\x01R\x01Qa\x08\x95\x81a\x02\xCEV[`@\x82\x01R\x90V[`@Q=`\0\x82>=\x90\xFD[\x90\x81``\x91\x03\x12a\x01\xDEW\x805\x91`@` \x83\x015\x92\x015\x90V[cNH{q`\xE0\x1B`\0R`\x11`\x04R`$`\0\xFD[\x91\x90\x82\x03\x91\x82\x11a\x08\xE7WV[a\x08\xC4V[\x91\x90\x82\x01\x80\x92\x11a\x08\xE7WV[\x81\x81\x03\x92\x91`\0\x13\x80\x15\x82\x85\x13\x16\x91\x84\x12\x16\x17a\x08\xE7WV[\x15a\t\x19WV[cNH{q`\xE0\x1B`\0R`\x01`\x04R`$`\0\xFD[`@Q\x90a\t<\x82a\x01TV[`\0`@\x83\x82\x81R\x82` \x82\x01R\x01RV[`\x04\x11\x15a\x01\xDEWV[\x90\x81` \x91\x03\x12a\x01\xDEW5a\tm\x81a\tNV[\x90V[`\x04\x11\x15a\tzWV[cNH{q`\xE0\x1B`\0R`!`\x04R`$`\0\xFD[a\t\x98a\t/V[\x90\x80`\0R`\x01` R`@\x90\x81`\0 T\x83R`\0R`\x01` R`\x01\x81`\0 \x01T\x91` \x81\x01\x92\x83R\x81Q\x92\x81Q` \x85\x01RQ\x82\x84\x01R\x81`\x01\x80`\xA0\x1B\x03\x91\x01Q\x16``\x83\x01R``\x82R`\x80\x82\x01\x90\x82\x82\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x83\x11\x17a\x01pWR\x90V[\x82\x93a\n\x16a\n\"\x94a\n\x1C\x93a\n\x9DV[\x94a\n\xCDV[\x90a\n\x9DV[\x90`\0\x82\x82\x01\x92\x83\x12\x91\x12\x90\x80\x15\x82\x16\x91\x15\x16\x17a\x08\xE7Wg\r\xE0\xB6\xB3\xA7c\xFF\xFF\x19\x81\x01\x90\x81\x13`\x01\x16a\x08\xE7W\x90V[`@\x81\x80Q\x81\x01\x03\x12a\x01\xDEW\x80a\np` `@\x93\x01Qa\tNV[\x01Qa\x03v\x81a\x02\xCEV[`@\x81\x80Q\x81\x01\x03\x12a\x01\xDEW\x80a\n\x98` `@\x93\x01Qa\tNV[\x01Q\x90V[\x90g\r\xE0\xB6\xB3\xA7d\0\0\x91\x82\x81\x02\x92\x81\x84\x04\x14\x90\x15\x17\x81\x15\x15\x16\x15a\x01\xDEW`\x01\x90`\0\x19\x83\x01\x04\x01\x90\x15\x15\x02\x90V[\x81\x81\x02\x91\x81\x83\x04\x14\x90\x15\x17`\x01\x16\x15a\x01\xDEW`\x01g\r\xE0\xB6\xB3\xA7d\0\0`\0\x19\x83\x01\x04\x01\x90\x15\x15\x02\x90V\xFE\xA2dipfsX\"\x12 \nk\x9C@\x8CM\xDB\xA5\x886`\xA6!\xB7\x9E\xDA~\xAA\xE5\xE5\xBD\xE2GI\x194\xD6n\xA1\x03\xE6TdsolcC\0\x08\x16\x003";
+    const __BYTECODE: &[u8] = b"`\x80`@R4\x80\x15a\0\x10W`\0\x80\xFD[P`@Qa\x0E\xC98\x03\x80a\x0E\xC9\x839\x81\x01`@\x81\x90Ra\0/\x91a\0TV[`\0\x80T`\x01`\x01`\xA0\x1B\x03\x19\x16`\x01`\x01`\xA0\x1B\x03\x92\x90\x92\x16\x91\x90\x91\x17\x90Ua\0\x84V[`\0` \x82\x84\x03\x12\x15a\0fW`\0\x80\xFD[\x81Q`\x01`\x01`\xA0\x1B\x03\x81\x16\x81\x14a\0}W`\0\x80\xFD[\x93\x92PPPV[a\x0E6\x80a\0\x93`\09`\0\xF3\xFE`\x80`@R4\x80\x15a\0\x10W`\0\x80\xFD[P`\x046\x10a\0\x9DW`\x005`\xE0\x1C\x80c2\xE3\x830\x11a\0fW\x80c2\xE3\x830\x14a\x01\xACW\x80c9n>|\x14a\x01\xBFW\x80ce\xC9\xFF\xC2\x14a\x01\xD2W\x80c\xAF\xBA\x13\xC4\x14a\x02\x14W\x80c\xDC\x17\x83U\x14a\x02?W`\0\x80\xFD[\x80b.RK\x14a\0\xA2W\x80c\x02J\xA2\x06\x14a\0\xC8W\x80c\x06\xFD\xDE\x03\x14a\x01\x05W\x80c\x18\x1C\xBA\xB4\x14a\x01<W\x80c\x1E\xDBq\xE5\x14a\x01QW[`\0\x80\xFD[a\0\xB5a\0\xB06`\x04a\t\xB8V[a\x02RV[`@Q\x90\x81R` \x01[`@Q\x80\x91\x03\x90\xF3[a\0\xDBa\0\xD66`\x04a\noV[a\x02\xA6V[`@\x80Q\x95\x15\x15\x86R` \x86\x01\x94\x90\x94R\x92\x84\x01\x91\x90\x91R``\x83\x01R`\x80\x82\x01R`\xA0\x01a\0\xBFV[a\x01/`@Q\x80`@\x01`@R\x80`\x0B\x81R` \x01jConstantSum`\xA8\x1B\x81RP\x81V[`@Qa\0\xBF\x91\x90a\x0B`V[a\x01Oa\x01J6`\x04a\noV[a\x03\x1EV[\0[a\x01\x88a\x01_6`\x04a\x0BsV[`\x01` \x81\x90R`\0\x91\x82R`@\x90\x91 \x80T\x91\x81\x01T`\x02\x90\x91\x01T`\x01`\x01`\xA0\x1B\x03\x16\x83V[`@\x80Q\x93\x84R` \x84\x01\x92\x90\x92R`\x01`\x01`\xA0\x1B\x03\x16\x90\x82\x01R``\x01a\0\xBFV[a\0\xDBa\x01\xBA6`\x04a\noV[a\x05\x1FV[a\0\xDBa\x01\xCD6`\x04a\noV[a\x05\xEEV[a\x01\xE5a\x01\xE06`\x04a\noV[a\x064V[`@\x80Q\x96\x15\x15\x87R` \x87\x01\x95\x90\x95R\x93\x85\x01\x92\x90\x92R``\x84\x01R`\x80\x83\x01R`\xA0\x82\x01R`\xC0\x01a\0\xBFV[`\0Ta\x02'\x90`\x01`\x01`\xA0\x1B\x03\x16\x81V[`@Q`\x01`\x01`\xA0\x1B\x03\x90\x91\x16\x81R` \x01a\0\xBFV[a\x01/a\x02M6`\x04a\x0BsV[a\x07\xC9V[`\0\x80`\0\x80\x84\x80` \x01\x90Q\x81\x01\x90a\x02l\x91\x90a\x0B\x8CV[\x92P\x92P\x92Pa\x02\x9A\x83\x83\x83a\x02\x81\x8Aa\x07\xC9V[\x80` \x01\x90Q\x81\x01\x90a\x02\x94\x91\x90a\x0B\xBAV[Qa\x08[V[\x93PPPP[\x92\x91PPV[`\0\x80\x80\x80\x80a\x02\xB8\x86\x88\x01\x88a\x0B\xFCV[\x91\x94P\x92P\x90Pa\x02\xF5a\x02\xD0\x84``\x8B\x015a\x0C>V[a\x02\xDE\x84``\x8C\x015a\x0C>V[a\x02\xEC\x84`\xA0\x8D\x015a\x0C>V[a\x02\x81\x8Da\x07\xC9V[\x93P\x83a\x03\x02`\x14a\x0CQV[\x12\x80\x15a\x03\x0FWP`\x14\x84\x12[\x94P\x95P\x95P\x95P\x95P\x95\x90PV[`\0T`\x01`\x01`\xA0\x1B\x03\x163\x14a\x03IW`@QchS\xCB\xA7`\xE0\x1B\x81R`\x04\x01`@Q\x80\x91\x03\x90\xFD[`\0\x84\x81R`\x01` R`@\x90 `\x02\x01T`\x01`\x01`\xA0\x1B\x03\x86\x81\x16\x91\x16\x14a\x03\x86W`@Qcn\xDA\xEF/`\xE1\x1B\x81R`\x04\x01`@Q\x80\x91\x03\x90\xFD[`\0a\x03\x94\x82\x84\x01\x84a\x0CzV[\x90P`\x02\x81`\x03\x81\x11\x15a\x03\xAAWa\x03\xAAa\x0C\x97V[\x03a\x04\x02Wa\x03\xEE\x83\x83\x80\x80`\x1F\x01` \x80\x91\x04\x02` \x01`@Q\x90\x81\x01`@R\x80\x93\x92\x91\x90\x81\x81R` \x01\x83\x83\x80\x82\x847`\0\x92\x01\x91\x90\x91RPa\x08\xA1\x92PPPV[`\0\x86\x81R`\x01` R`@\x90 Ua\x05\x17V[`\x01\x81`\x03\x81\x11\x15a\x04\x16Wa\x04\x16a\x0C\x97V[\x03a\x04rWa\x04Z\x83\x83\x80\x80`\x1F\x01` \x80\x91\x04\x02` \x01`@Q\x90\x81\x01`@R\x80\x93\x92\x91\x90\x81\x81R` \x01\x83\x83\x80\x82\x847`\0\x92\x01\x91\x90\x91RPa\x08\xBE\x92PPPV[`\0\x86\x81R`\x01` \x81\x90R`@\x90\x91 \x01Ua\x05\x17V[`\x03\x81`\x03\x81\x11\x15a\x04\x86Wa\x04\x86a\x0C\x97V[\x03a\x04\xFEWa\x04\xCA\x83\x83\x80\x80`\x1F\x01` \x80\x91\x04\x02` \x01`@Q\x90\x81\x01`@R\x80\x93\x92\x91\x90\x81\x81R` \x01\x83\x83\x80\x82\x847`\0\x92\x01\x91\x90\x91RPa\x08\xDD\x92PPPV[`\0\x86\x81R`\x01` R`@\x90 `\x02\x01\x80T`\x01`\x01`\xA0\x1B\x03\x19\x16`\x01`\x01`\xA0\x1B\x03\x92\x90\x92\x16\x91\x90\x91\x17\x90Ua\x05\x17V[`@Qc#]+=`\xE0\x1B\x81R`\x04\x01`@Q\x80\x91\x03\x90\xFD[PPPPPPV[`\0\x80T\x81\x90\x81\x90\x81\x90\x81\x90`\x01`\x01`\xA0\x1B\x03\x163\x14a\x05SW`@QchS\xCB\xA7`\xE0\x1B\x81R`\x04\x01`@Q\x80\x91\x03\x90\xFD[a\x05\x80`@Q\x80``\x01`@R\x80`\0\x81R` \x01`\0\x81R` \x01`\0`\x01`\x01`\xA0\x1B\x03\x16\x81RP\x90V[a\x05\x8C\x87\x89\x01\x89a\x0C\xADV[\x80Q`\0\x8F\x81R`\x01` \x81\x81R`@\x90\x92 \x92\x83U\x90\x83\x01Q\x91\x01U\x80Q\x93\x97P\x91\x95P\x93P\x91Pa\x05\xC4\x90\x85\x90\x85\x90\x85\x90a\x08[V[\x94P\x84a\x05\xD1`\x14a\x0CQV[\x12\x80\x15a\x05\xDEWP`\x14\x85\x12[\x95PP\x95P\x95P\x95P\x95P\x95\x90PV[`\0\x80\x80\x80\x80a\x06\0\x86\x88\x01\x88a\x0B\xFCV[\x91\x94P\x92P\x90Pa\x02\xF5a\x06\x18\x84``\x8B\x015a\r V[a\x06&\x84`\x80\x8C\x015a\r V[a\x02\xEC\x84`\xA0\x8D\x015a\r V[`\0\x80`\0\x80`\0\x80`\0a\x06H\x8Ba\x07\xC9V[\x80` \x01\x90Q\x81\x01\x90a\x06[\x91\x90a\x0B\xBAV[\x90Pa\x06i\x88\x8A\x01\x8Aa\x0B\xFCV[\x91\x95P\x93P\x91P`\0\x80\x80``\x8D\x015\x87\x11\x15a\x06\xBAWa\x06\x8E``\x8E\x015\x88a\r V[\x91Pa\x06\xA7\x84` \x01Q\x83a\x08\xF4\x90\x91\x90c\xFF\xFF\xFF\xFF\x16V[\x90Pa\x06\xB3\x81\x84a\x0C>V[\x92Pa\x07lV[\x8C`\x80\x015\x86\x11\x15a\x07\x07Wa\x06\xD4`\x80\x8E\x015\x87a\r V[\x91Pa\x06\xED\x84` \x01Q\x83a\x08\xF4\x90\x91\x90c\xFF\xFF\xFF\xFF\x16V[\x84Q\x90\x91Pa\x06\xFD\x90\x82\x90a\t\tV[a\x06\xB3\x90\x84a\x0C>V[`@QbF\x1B\xCD`\xE5\x1B\x81R` `\x04\x82\x01R`0`$\x82\x01R\x7Finvalid swap: inputs x and y hav`D\x82\x01Roe the same sign!`\x80\x1B`d\x82\x01R`\x84\x01`@Q\x80\x91\x03\x90\xFD[a\x07z`\xA0\x8E\x015\x86a\r3V[\x97P\x82\x88\x12\x15a\x07\x8CWa\x07\x8Ca\rZV[a\x07\x9C\x87\x87\x87\x87`\0\x01Qa\x08[V[\x98P\x88a\x07\xA9`\x14a\x0CQV[\x12\x80\x15a\x07\xB6WP`\x14\x89\x12[\x99PPPPP\x95P\x95P\x95P\x95P\x95P\x95V[``a\x07\xF8`@Q\x80``\x01`@R\x80`\0\x81R` \x01`\0\x81R` \x01`\0`\x01`\x01`\xA0\x1B\x03\x16\x81RP\x90V[`\0\x83\x81R`\x01` \x81\x81R`@\x80\x84 \x80T\x86R\x93\x87\x90R\x82\x82R\x92\x90\x91\x01T\x83\x82\x01\x90\x81R\x82Q\x84Q\x92\x81\x01\x92\x90\x92RQ\x81\x83\x01R\x90\x82\x01Q`\x01`\x01`\xA0\x1B\x03\x16``\x82\x01R`\x80\x01`@Q` \x81\x83\x03\x03\x81R\x90`@R\x91PP\x91\x90PV[`\0g\r\xE0\xB6\xB3\xA7d\0\0a\x08za\x08s\x85\x85a\x08\xF4V[\x86\x90a\t\tV[a\x08\x84\x87\x86a\t\tV[a\x08\x8E\x91\x90a\rpV[a\x08\x98\x91\x90a\r3V[\x95\x94PPPPPV[`\0\x81\x80` \x01\x90Q\x81\x01\x90a\x08\xB7\x91\x90a\r\x98V[\x93\x92PPPV[`\0\x80\x82\x80` \x01\x90Q\x81\x01\x90a\x08\xD5\x91\x90a\r\x98V[\x94\x93PPPPV[`\0\x80\x82\x80` \x01\x90Q\x81\x01\x90a\x08\xD5\x91\x90a\r\xC6V[`\0a\x08\xB7\x83\x83g\r\xE0\xB6\xB3\xA7d\0\0a\t\x1AV[`\0a\x08\xB7\x83g\r\xE0\xB6\xB3\xA7d\0\0\x84[\x82\x82\x02\x81\x15\x15\x84\x15\x85\x83\x04\x85\x14\x17\x16a\t2W`\0\x80\xFD[`\x01\x82`\x01\x83\x03\x04\x01\x81\x15\x15\x02\x90P\x93\x92PPPV[cNH{q`\xE0\x1B`\0R`A`\x04R`$`\0\xFD[`@Q``\x81\x01g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x82\x82\x10\x17\x15a\t\x81Wa\t\x81a\tHV[`@R\x90V[`@Q`\x1F\x82\x01`\x1F\x19\x16\x81\x01g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x82\x82\x10\x17\x15a\t\xB0Wa\t\xB0a\tHV[`@R\x91\x90PV[`\0\x80`@\x83\x85\x03\x12\x15a\t\xCBW`\0\x80\xFD[\x825\x91P` \x80\x84\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80\x82\x11\x15a\t\xEBW`\0\x80\xFD[\x81\x86\x01\x91P\x86`\x1F\x83\x01\x12a\t\xFFW`\0\x80\xFD[\x815\x81\x81\x11\x15a\n\x11Wa\n\x11a\tHV[a\n#`\x1F\x82\x01`\x1F\x19\x16\x85\x01a\t\x87V[\x91P\x80\x82R\x87\x84\x82\x85\x01\x01\x11\x15a\n9W`\0\x80\xFD[\x80\x84\x84\x01\x85\x84\x017`\0\x84\x82\x84\x01\x01RP\x80\x93PPPP\x92P\x92\x90PV[`\x01`\x01`\xA0\x1B\x03\x81\x16\x81\x14a\nlW`\0\x80\xFD[PV[`\0\x80`\0\x80`\0\x85\x87\x03a\x01@\x81\x12\x15a\n\x89W`\0\x80\xFD[\x865a\n\x94\x81a\nWV[\x95P` \x87\x015\x94P`\xE0`?\x19\x82\x01\x12\x15a\n\xAFW`\0\x80\xFD[P`@\x86\x01\x92Pa\x01 \x86\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80\x82\x11\x15a\n\xD2W`\0\x80\xFD[\x81\x88\x01\x91P\x88`\x1F\x83\x01\x12a\n\xE6W`\0\x80\xFD[\x815\x81\x81\x11\x15a\n\xF5W`\0\x80\xFD[\x89` \x82\x85\x01\x01\x11\x15a\x0B\x07W`\0\x80\xFD[\x96\x99\x95\x98P\x93\x96P` \x01\x94\x93\x92PPPV[`\0\x81Q\x80\x84R`\0[\x81\x81\x10\x15a\x0B@W` \x81\x85\x01\x81\x01Q\x86\x83\x01\x82\x01R\x01a\x0B$V[P`\0` \x82\x86\x01\x01R` `\x1F\x19`\x1F\x83\x01\x16\x85\x01\x01\x91PP\x92\x91PPV[` \x81R`\0a\x08\xB7` \x83\x01\x84a\x0B\x1AV[`\0` \x82\x84\x03\x12\x15a\x0B\x85W`\0\x80\xFD[P5\x91\x90PV[`\0\x80`\0``\x84\x86\x03\x12\x15a\x0B\xA1W`\0\x80\xFD[\x83Q\x92P` \x84\x01Q\x91P`@\x84\x01Q\x90P\x92P\x92P\x92V[`\0``\x82\x84\x03\x12\x15a\x0B\xCCW`\0\x80\xFD[a\x0B\xD4a\t^V[\x82Q\x81R` \x83\x01Q` \x82\x01R`@\x83\x01Qa\x0B\xF0\x81a\nWV[`@\x82\x01R\x93\x92PPPV[`\0\x80`\0``\x84\x86\x03\x12\x15a\x0C\x11W`\0\x80\xFD[PP\x815\x93` \x83\x015\x93P`@\x90\x92\x015\x91\x90PV[cNH{q`\xE0\x1B`\0R`\x11`\x04R`$`\0\xFD[\x80\x82\x01\x80\x82\x11\x15a\x02\xA0Wa\x02\xA0a\x0C(V[`\0`\x01`\xFF\x1B\x82\x01a\x0CfWa\x0Cfa\x0C(V[P`\0\x03\x90V[`\x04\x81\x10a\nlW`\0\x80\xFD[`\0` \x82\x84\x03\x12\x15a\x0C\x8CW`\0\x80\xFD[\x815a\x08\xB7\x81a\x0CmV[cNH{q`\xE0\x1B`\0R`!`\x04R`$`\0\xFD[`\0\x80`\0\x80\x84\x86\x03`\xC0\x81\x12\x15a\x0C\xC4W`\0\x80\xFD[\x855\x94P` \x86\x015\x93P`@\x86\x015\x92P```_\x19\x82\x01\x12\x15a\x0C\xE8W`\0\x80\xFD[Pa\x0C\xF1a\t^V[``\x86\x015\x81R`\x80\x86\x015` \x82\x01R`\xA0\x86\x015a\r\x10\x81a\nWV[`@\x82\x01R\x93\x96\x92\x95P\x90\x93PPV[\x81\x81\x03\x81\x81\x11\x15a\x02\xA0Wa\x02\xA0a\x0C(V[\x81\x81\x03`\0\x83\x12\x80\x15\x83\x83\x13\x16\x83\x83\x12\x82\x16\x17\x15a\rSWa\rSa\x0C(V[P\x92\x91PPV[cNH{q`\xE0\x1B`\0R`\x01`\x04R`$`\0\xFD[\x80\x82\x01\x82\x81\x12`\0\x83\x12\x80\x15\x82\x16\x82\x15\x82\x16\x17\x15a\r\x90Wa\r\x90a\x0C(V[PP\x92\x91PPV[`\0\x80`@\x83\x85\x03\x12\x15a\r\xABW`\0\x80\xFD[\x82Qa\r\xB6\x81a\x0CmV[` \x93\x90\x93\x01Q\x92\x94\x92\x93PPPV[`\0\x80`@\x83\x85\x03\x12\x15a\r\xD9W`\0\x80\xFD[\x82Qa\r\xE4\x81a\x0CmV[` \x84\x01Q\x90\x92Pa\r\xF5\x81a\nWV[\x80\x91PP\x92P\x92\x90PV\xFE\xA2dipfsX\"\x12 \0q*\x83dZ\x07\x97?\xB3L\x16\xFF\xBF\xF9VyU\xBC\xCE\"+\xF48\xC1\x7F\x8E\xC9\x95\"!\xBBdsolcC\0\x08\x16\x003";
     /// The bytecode of the contract.
     pub static CONSTANTSUM_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__BYTECODE);
     #[rustfmt::skip]
-    const __DEPLOYED_BYTECODE: &[u8] = b"`\x80`@R`\x046\x10\x15a\0\x12W`\0\x80\xFD[`\0\x805`\xE0\x1C\x90\x81b.RK\x14a\0\xA9WP\x80c\x06\xFD\xDE\x03\x14a\0\xA4W\x80c\x1E\xDBq\xE5\x14a\0\x9FW\x80ch\xBD>8\x14a\0\x9AW\x80cs\xCB-\x03\x14a\0\x95W\x80c\x8A\x04\xBD\xD5\x14a\0\x90W\x80c\xAC\xAD)\x89\x14a\0\x8BW\x80c\xAF\xBA\x13\xC4\x14a\0\x86Wc\xDC\x17\x83U\x14a\0\x81W`\0\x80\xFD[a\x08\x15V[a\x07\xECV[a\x06\x9DV[a\x06cV[a\x05LV[a\x03:V[a\x02\x82V[a\x02#V[4a\x01;W`@6`\x03\x19\x01\x12a\x01;W`$5\x90g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11a\x01;W6`#\x83\x01\x12\x15a\x01;Wa\x017a\x01'a\x01\x02a\0\xF36`\x04\x87\x015`$\x88\x01a\x01\x97V[` \x80\x82Q\x83\x01\x01\x91\x01a\x08HV[\x90a\x01 a\x01\x11`\x045a\t\x90V[` \x80\x82Q\x83\x01\x01\x91\x01a\x08cV[Q\x92a\n\x04V[`@Q\x90\x81R\x90\x81\x90` \x82\x01\x90V[\x03\x90\xF3[\x80\xFD[cNH{q`\xE0\x1B`\0R`A`\x04R`$`\0\xFD[``\x81\x01\x90\x81\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x17a\x01pW`@RV[a\x01>V[\x90`\x1F\x80\x19\x91\x01\x16\x81\x01\x90\x81\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x17a\x01pW`@RV[\x92\x91\x92g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11a\x01pW`@Q\x91a\x01\xC1`\x1F\x82\x01`\x1F\x19\x16` \x01\x84a\x01uV[\x82\x94\x81\x84R\x81\x83\x01\x11a\x01\xDEW\x82\x81` \x93\x84`\0\x96\x017\x01\x01RV[`\0\x80\xFD[\x91\x90\x82Q\x92\x83\x82R`\0[\x84\x81\x10a\x02\x0FWPP\x82`\0` \x80\x94\x95\x84\x01\x01R`\x1F\x80\x19\x91\x01\x16\x01\x01\x90V[` \x81\x83\x01\x81\x01Q\x84\x83\x01\x82\x01R\x01a\x01\xEEV[4a\x01\xDEW`\x006`\x03\x19\x01\x12a\x01\xDEW`@Q`@\x81\x01\x90\x80\x82\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x83\x11\x17a\x01pWa\x017\x91`@R`\x0B\x81RjConstantSum`\xA8\x1B` \x82\x01R`@Q\x91\x82\x91` \x83R` \x83\x01\x90a\x01\xE3V[4a\x01\xDEW` 6`\x03\x19\x01\x12a\x01\xDEW`\x045`\0R`\x01` R```@`\0 \x80T\x90`\x01\x81\x01T\x90`\x02`\x01\x80`\xA0\x1B\x03\x91\x01T\x16\x90`@Q\x92\x83R` \x83\x01R`@\x82\x01R\xF3[`\x01`\x01`\xA0\x1B\x03\x81\x16\x03a\x01\xDEWV[\x90```\x03\x19\x83\x01\x12a\x01\xDEW`\x045a\x02\xF8\x81a\x02\xCEV[\x91`$5\x91`D5g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x92\x83\x82\x11a\x01\xDEW\x80`#\x83\x01\x12\x15a\x01\xDEW\x81`\x04\x015\x93\x84\x11a\x01\xDEW`$\x84\x83\x01\x01\x11a\x01\xDEW`$\x01\x91\x90V[4a\x01\xDEWa\x03H6a\x02\xDFV[\x92P\x90a\x03\xA2``a\x03\\a\x01\x11\x84a\t\x90V[`\0T\x90\x93\x90a\x03\x82\x90a\x03v\x90`\x01`\x01`\xA0\x1B\x03\x16\x81V[`\x01`\x01`\xA0\x1B\x03\x16\x90V[`@Q\x80\x80\x95\x81\x94c3\x85N\xFD`\xE2\x1B\x83R`\x04\x83\x01\x91\x90` \x83\x01\x92RV[\x03\x91Z\xFA\x92\x83\x15a\x05GW`\0\x94`\0\x92`\0\x95a\x05\nW[P\x90a\x03\xC9\x91\x81\x01\x90a\x08\xA9V[\x92\x91\x93\x90\x95`\0\x92\x80\x86\x11`\0\x14a\x04oWPa\x04\x0Fa\x04\x07a\x04!\x94a\x04\x01a\x03\xF6a\x04\x18\x95\x8Aa\x08\xDAV[` \x87\x01Q\x90a\n\xCDV[\x90a\x08\xECV[\x96[\x85a\x08\xF9V[\x95\x86\x12\x15a\t\x12V[Q\x82\x86\x85a\n\x04V[\x93\x84`\x13\x19\x12\x92\x83a\x04dW[a\x017\x93\x94`@Q\x96\x87\x96\x87\x92`\xA0\x94\x91\x97\x96\x95\x92`\xC0\x85\x01\x98\x15\x15\x85R` \x85\x01R`@\x84\x01R``\x83\x01R`\x80\x82\x01R\x01RV[`\x14\x86\x12\x93Pa\x04.V[\x92PP\x81\x86\x11\x15a\x04\xACWa\x04\x18a\x04\x0Fa\x04\xA6a\x04\x9Ea\x04\x93a\x04!\x96\x8Ba\x08\xDAV[` \x86\x01Q\x90a\n\xCDV[\x84Q\x90a\n\x9DV[\x96a\x04\tV[`@QbF\x1B\xCD`\xE5\x1B\x81R` `\x04\x82\x01R`0`$\x82\x01R\x7Finvalid swap: inputs x and y hav`D\x82\x01Roe the same sign!`\x80\x1B`d\x82\x01R`\x84\x90\xFD[\x90\x94Pa\x055\x91\x95Pa\x03\xC9\x92P``=``\x11a\x05@W[a\x05-\x81\x83a\x01uV[\x81\x01\x90a\x08HV[\x91\x95\x91\x94\x90\x92a\x03\xBBV[P=a\x05#V[a\x08\x9DV[4a\x01\xDEWa\x05Z6a\x02\xDFV[`\0T\x91\x93P\x90`\x01`\x01`\xA0\x1B\x03\x163\x03a\x06QW\x82\x90a\x05za\t/V[P\x81\x01\x03\x91`\xC0\x83\x12a\x01\xDEW\x805\x91` \x82\x015\x91```@\x82\x015\x95`_\x19\x01\x12a\x01\xDEWa\x06\x0F\x91`\x01a\x06\x04`@Q\x93a\x05\xB7\x85a\x01TV[``\x81\x015\x80\x86R`\xA0` \x87\x01\x92`\x80\x81\x015\x84R\x015a\x05\xD8\x81a\x02\xCEV[`@\x87\x01Ra\x05\xF1\x85`\0R`\x01` R`@`\0 \x90V[UQ\x92`\0R`\x01` R`@`\0 \x90V[\x01UQ\x84\x83\x85a\n\x04V[\x92\x83`\x13\x19\x12\x91\x82a\x06FW[`@\x80Q\x93\x15\x15\x84R` \x84\x01\x95\x90\x95R\x93\x82\x01\x92\x90\x92R``\x81\x01\x92\x90\x92R`\x80\x82\x01R`\xA0\x90\xF3[`\x14\x85\x12\x92Pa\x06\x1CV[`@QchS\xCB\xA7`\xE0\x1B\x81R`\x04\x90\xFD[4a\x01\xDEWa\x06\x94a\x01\x11a\x06\x8Aa\x06\x0Fa\x06}6a\x02\xDFV[\x90\x80\x92\x95\x93P\x01\x90a\x08\xA9V[\x95\x91\x94\x90\x93a\t\x90V[Q\x84\x83\x85a\n\x04V[4a\x01\xDEWa\x06\xAB6a\x02\xDFV[`\0T\x90\x93\x90`\x01`\x01`\xA0\x1B\x03\x90\x81\x163\x03a\x06QWa\x06\xECa\x03v`\x02a\x06\xDE\x87`\0R`\x01` R`@`\0 \x90V[\x01T`\x01`\x01`\xA0\x1B\x03\x16\x90V[\x91\x16\x03a\x07\xDAWa\x06\xFF\x83\x82\x01\x82a\tXV[a\x07\x08\x81a\tpV[`\x02\x81\x03a\x07=WPa\x07$a\x07)\x91a\x07:\x93\x946\x91a\x01\x97V[a\n{V[\x91`\0R`\x01` R`@`\0 \x90V[U\0[a\x07F\x81a\tpV[`\x01\x81\x03a\x07yWPa\x07da\x07$a\x07u\x92`\x01\x94\x956\x91a\x01\x97V[\x92`\0R`\x01` R`@`\0 \x90V[\x01U\0[\x80a\x07\x85`\x03\x92a\tpV[\x03a\x07\xC8Wa\x07\xA6a\x07da\x07\xA1`\x02\x93a\x07\xC6\x966\x91a\x01\x97V[a\nSV[\x01\x80T`\x01`\x01`\xA0\x1B\x03\x19\x16`\x01`\x01`\xA0\x1B\x03\x90\x92\x16\x91\x90\x91\x17\x90UV[\0[`@Qc#]+=`\xE0\x1B\x81R`\x04\x90\xFD[`@Qcn\xDA\xEF/`\xE1\x1B\x81R`\x04\x90\xFD[4a\x01\xDEW`\x006`\x03\x19\x01\x12a\x01\xDEW`\0T`@Q`\x01`\x01`\xA0\x1B\x03\x90\x91\x16\x81R` \x90\xF3[4a\x01\xDEW` 6`\x03\x19\x01\x12a\x01\xDEWa\x017a\x084`\x045a\t\x90V[`@Q\x91\x82\x91` \x83R` \x83\x01\x90a\x01\xE3V[\x90\x81``\x91\x03\x12a\x01\xDEW\x80Q\x91`@` \x83\x01Q\x92\x01Q\x90V[\x90\x81``\x91\x03\x12a\x01\xDEW`@\x80Q\x91a\x08|\x83a\x01TV[\x80Q\x83R` \x81\x01Q` \x84\x01R\x01Qa\x08\x95\x81a\x02\xCEV[`@\x82\x01R\x90V[`@Q=`\0\x82>=\x90\xFD[\x90\x81``\x91\x03\x12a\x01\xDEW\x805\x91`@` \x83\x015\x92\x015\x90V[cNH{q`\xE0\x1B`\0R`\x11`\x04R`$`\0\xFD[\x91\x90\x82\x03\x91\x82\x11a\x08\xE7WV[a\x08\xC4V[\x91\x90\x82\x01\x80\x92\x11a\x08\xE7WV[\x81\x81\x03\x92\x91`\0\x13\x80\x15\x82\x85\x13\x16\x91\x84\x12\x16\x17a\x08\xE7WV[\x15a\t\x19WV[cNH{q`\xE0\x1B`\0R`\x01`\x04R`$`\0\xFD[`@Q\x90a\t<\x82a\x01TV[`\0`@\x83\x82\x81R\x82` \x82\x01R\x01RV[`\x04\x11\x15a\x01\xDEWV[\x90\x81` \x91\x03\x12a\x01\xDEW5a\tm\x81a\tNV[\x90V[`\x04\x11\x15a\tzWV[cNH{q`\xE0\x1B`\0R`!`\x04R`$`\0\xFD[a\t\x98a\t/V[\x90\x80`\0R`\x01` R`@\x90\x81`\0 T\x83R`\0R`\x01` R`\x01\x81`\0 \x01T\x91` \x81\x01\x92\x83R\x81Q\x92\x81Q` \x85\x01RQ\x82\x84\x01R\x81`\x01\x80`\xA0\x1B\x03\x91\x01Q\x16``\x83\x01R``\x82R`\x80\x82\x01\x90\x82\x82\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x83\x11\x17a\x01pWR\x90V[\x82\x93a\n\x16a\n\"\x94a\n\x1C\x93a\n\x9DV[\x94a\n\xCDV[\x90a\n\x9DV[\x90`\0\x82\x82\x01\x92\x83\x12\x91\x12\x90\x80\x15\x82\x16\x91\x15\x16\x17a\x08\xE7Wg\r\xE0\xB6\xB3\xA7c\xFF\xFF\x19\x81\x01\x90\x81\x13`\x01\x16a\x08\xE7W\x90V[`@\x81\x80Q\x81\x01\x03\x12a\x01\xDEW\x80a\np` `@\x93\x01Qa\tNV[\x01Qa\x03v\x81a\x02\xCEV[`@\x81\x80Q\x81\x01\x03\x12a\x01\xDEW\x80a\n\x98` `@\x93\x01Qa\tNV[\x01Q\x90V[\x90g\r\xE0\xB6\xB3\xA7d\0\0\x91\x82\x81\x02\x92\x81\x84\x04\x14\x90\x15\x17\x81\x15\x15\x16\x15a\x01\xDEW`\x01\x90`\0\x19\x83\x01\x04\x01\x90\x15\x15\x02\x90V[\x81\x81\x02\x91\x81\x83\x04\x14\x90\x15\x17`\x01\x16\x15a\x01\xDEW`\x01g\r\xE0\xB6\xB3\xA7d\0\0`\0\x19\x83\x01\x04\x01\x90\x15\x15\x02\x90V\xFE\xA2dipfsX\"\x12 \nk\x9C@\x8CM\xDB\xA5\x886`\xA6!\xB7\x9E\xDA~\xAA\xE5\xE5\xBD\xE2GI\x194\xD6n\xA1\x03\xE6TdsolcC\0\x08\x16\x003";
+    const __DEPLOYED_BYTECODE: &[u8] = b"`\x80`@R4\x80\x15a\0\x10W`\0\x80\xFD[P`\x046\x10a\0\x9DW`\x005`\xE0\x1C\x80c2\xE3\x830\x11a\0fW\x80c2\xE3\x830\x14a\x01\xACW\x80c9n>|\x14a\x01\xBFW\x80ce\xC9\xFF\xC2\x14a\x01\xD2W\x80c\xAF\xBA\x13\xC4\x14a\x02\x14W\x80c\xDC\x17\x83U\x14a\x02?W`\0\x80\xFD[\x80b.RK\x14a\0\xA2W\x80c\x02J\xA2\x06\x14a\0\xC8W\x80c\x06\xFD\xDE\x03\x14a\x01\x05W\x80c\x18\x1C\xBA\xB4\x14a\x01<W\x80c\x1E\xDBq\xE5\x14a\x01QW[`\0\x80\xFD[a\0\xB5a\0\xB06`\x04a\t\xB8V[a\x02RV[`@Q\x90\x81R` \x01[`@Q\x80\x91\x03\x90\xF3[a\0\xDBa\0\xD66`\x04a\noV[a\x02\xA6V[`@\x80Q\x95\x15\x15\x86R` \x86\x01\x94\x90\x94R\x92\x84\x01\x91\x90\x91R``\x83\x01R`\x80\x82\x01R`\xA0\x01a\0\xBFV[a\x01/`@Q\x80`@\x01`@R\x80`\x0B\x81R` \x01jConstantSum`\xA8\x1B\x81RP\x81V[`@Qa\0\xBF\x91\x90a\x0B`V[a\x01Oa\x01J6`\x04a\noV[a\x03\x1EV[\0[a\x01\x88a\x01_6`\x04a\x0BsV[`\x01` \x81\x90R`\0\x91\x82R`@\x90\x91 \x80T\x91\x81\x01T`\x02\x90\x91\x01T`\x01`\x01`\xA0\x1B\x03\x16\x83V[`@\x80Q\x93\x84R` \x84\x01\x92\x90\x92R`\x01`\x01`\xA0\x1B\x03\x16\x90\x82\x01R``\x01a\0\xBFV[a\0\xDBa\x01\xBA6`\x04a\noV[a\x05\x1FV[a\0\xDBa\x01\xCD6`\x04a\noV[a\x05\xEEV[a\x01\xE5a\x01\xE06`\x04a\noV[a\x064V[`@\x80Q\x96\x15\x15\x87R` \x87\x01\x95\x90\x95R\x93\x85\x01\x92\x90\x92R``\x84\x01R`\x80\x83\x01R`\xA0\x82\x01R`\xC0\x01a\0\xBFV[`\0Ta\x02'\x90`\x01`\x01`\xA0\x1B\x03\x16\x81V[`@Q`\x01`\x01`\xA0\x1B\x03\x90\x91\x16\x81R` \x01a\0\xBFV[a\x01/a\x02M6`\x04a\x0BsV[a\x07\xC9V[`\0\x80`\0\x80\x84\x80` \x01\x90Q\x81\x01\x90a\x02l\x91\x90a\x0B\x8CV[\x92P\x92P\x92Pa\x02\x9A\x83\x83\x83a\x02\x81\x8Aa\x07\xC9V[\x80` \x01\x90Q\x81\x01\x90a\x02\x94\x91\x90a\x0B\xBAV[Qa\x08[V[\x93PPPP[\x92\x91PPV[`\0\x80\x80\x80\x80a\x02\xB8\x86\x88\x01\x88a\x0B\xFCV[\x91\x94P\x92P\x90Pa\x02\xF5a\x02\xD0\x84``\x8B\x015a\x0C>V[a\x02\xDE\x84``\x8C\x015a\x0C>V[a\x02\xEC\x84`\xA0\x8D\x015a\x0C>V[a\x02\x81\x8Da\x07\xC9V[\x93P\x83a\x03\x02`\x14a\x0CQV[\x12\x80\x15a\x03\x0FWP`\x14\x84\x12[\x94P\x95P\x95P\x95P\x95P\x95\x90PV[`\0T`\x01`\x01`\xA0\x1B\x03\x163\x14a\x03IW`@QchS\xCB\xA7`\xE0\x1B\x81R`\x04\x01`@Q\x80\x91\x03\x90\xFD[`\0\x84\x81R`\x01` R`@\x90 `\x02\x01T`\x01`\x01`\xA0\x1B\x03\x86\x81\x16\x91\x16\x14a\x03\x86W`@Qcn\xDA\xEF/`\xE1\x1B\x81R`\x04\x01`@Q\x80\x91\x03\x90\xFD[`\0a\x03\x94\x82\x84\x01\x84a\x0CzV[\x90P`\x02\x81`\x03\x81\x11\x15a\x03\xAAWa\x03\xAAa\x0C\x97V[\x03a\x04\x02Wa\x03\xEE\x83\x83\x80\x80`\x1F\x01` \x80\x91\x04\x02` \x01`@Q\x90\x81\x01`@R\x80\x93\x92\x91\x90\x81\x81R` \x01\x83\x83\x80\x82\x847`\0\x92\x01\x91\x90\x91RPa\x08\xA1\x92PPPV[`\0\x86\x81R`\x01` R`@\x90 Ua\x05\x17V[`\x01\x81`\x03\x81\x11\x15a\x04\x16Wa\x04\x16a\x0C\x97V[\x03a\x04rWa\x04Z\x83\x83\x80\x80`\x1F\x01` \x80\x91\x04\x02` \x01`@Q\x90\x81\x01`@R\x80\x93\x92\x91\x90\x81\x81R` \x01\x83\x83\x80\x82\x847`\0\x92\x01\x91\x90\x91RPa\x08\xBE\x92PPPV[`\0\x86\x81R`\x01` \x81\x90R`@\x90\x91 \x01Ua\x05\x17V[`\x03\x81`\x03\x81\x11\x15a\x04\x86Wa\x04\x86a\x0C\x97V[\x03a\x04\xFEWa\x04\xCA\x83\x83\x80\x80`\x1F\x01` \x80\x91\x04\x02` \x01`@Q\x90\x81\x01`@R\x80\x93\x92\x91\x90\x81\x81R` \x01\x83\x83\x80\x82\x847`\0\x92\x01\x91\x90\x91RPa\x08\xDD\x92PPPV[`\0\x86\x81R`\x01` R`@\x90 `\x02\x01\x80T`\x01`\x01`\xA0\x1B\x03\x19\x16`\x01`\x01`\xA0\x1B\x03\x92\x90\x92\x16\x91\x90\x91\x17\x90Ua\x05\x17V[`@Qc#]+=`\xE0\x1B\x81R`\x04\x01`@Q\x80\x91\x03\x90\xFD[PPPPPPV[`\0\x80T\x81\x90\x81\x90\x81\x90\x81\x90`\x01`\x01`\xA0\x1B\x03\x163\x14a\x05SW`@QchS\xCB\xA7`\xE0\x1B\x81R`\x04\x01`@Q\x80\x91\x03\x90\xFD[a\x05\x80`@Q\x80``\x01`@R\x80`\0\x81R` \x01`\0\x81R` \x01`\0`\x01`\x01`\xA0\x1B\x03\x16\x81RP\x90V[a\x05\x8C\x87\x89\x01\x89a\x0C\xADV[\x80Q`\0\x8F\x81R`\x01` \x81\x81R`@\x90\x92 \x92\x83U\x90\x83\x01Q\x91\x01U\x80Q\x93\x97P\x91\x95P\x93P\x91Pa\x05\xC4\x90\x85\x90\x85\x90\x85\x90a\x08[V[\x94P\x84a\x05\xD1`\x14a\x0CQV[\x12\x80\x15a\x05\xDEWP`\x14\x85\x12[\x95PP\x95P\x95P\x95P\x95P\x95\x90PV[`\0\x80\x80\x80\x80a\x06\0\x86\x88\x01\x88a\x0B\xFCV[\x91\x94P\x92P\x90Pa\x02\xF5a\x06\x18\x84``\x8B\x015a\r V[a\x06&\x84`\x80\x8C\x015a\r V[a\x02\xEC\x84`\xA0\x8D\x015a\r V[`\0\x80`\0\x80`\0\x80`\0a\x06H\x8Ba\x07\xC9V[\x80` \x01\x90Q\x81\x01\x90a\x06[\x91\x90a\x0B\xBAV[\x90Pa\x06i\x88\x8A\x01\x8Aa\x0B\xFCV[\x91\x95P\x93P\x91P`\0\x80\x80``\x8D\x015\x87\x11\x15a\x06\xBAWa\x06\x8E``\x8E\x015\x88a\r V[\x91Pa\x06\xA7\x84` \x01Q\x83a\x08\xF4\x90\x91\x90c\xFF\xFF\xFF\xFF\x16V[\x90Pa\x06\xB3\x81\x84a\x0C>V[\x92Pa\x07lV[\x8C`\x80\x015\x86\x11\x15a\x07\x07Wa\x06\xD4`\x80\x8E\x015\x87a\r V[\x91Pa\x06\xED\x84` \x01Q\x83a\x08\xF4\x90\x91\x90c\xFF\xFF\xFF\xFF\x16V[\x84Q\x90\x91Pa\x06\xFD\x90\x82\x90a\t\tV[a\x06\xB3\x90\x84a\x0C>V[`@QbF\x1B\xCD`\xE5\x1B\x81R` `\x04\x82\x01R`0`$\x82\x01R\x7Finvalid swap: inputs x and y hav`D\x82\x01Roe the same sign!`\x80\x1B`d\x82\x01R`\x84\x01`@Q\x80\x91\x03\x90\xFD[a\x07z`\xA0\x8E\x015\x86a\r3V[\x97P\x82\x88\x12\x15a\x07\x8CWa\x07\x8Ca\rZV[a\x07\x9C\x87\x87\x87\x87`\0\x01Qa\x08[V[\x98P\x88a\x07\xA9`\x14a\x0CQV[\x12\x80\x15a\x07\xB6WP`\x14\x89\x12[\x99PPPPP\x95P\x95P\x95P\x95P\x95P\x95V[``a\x07\xF8`@Q\x80``\x01`@R\x80`\0\x81R` \x01`\0\x81R` \x01`\0`\x01`\x01`\xA0\x1B\x03\x16\x81RP\x90V[`\0\x83\x81R`\x01` \x81\x81R`@\x80\x84 \x80T\x86R\x93\x87\x90R\x82\x82R\x92\x90\x91\x01T\x83\x82\x01\x90\x81R\x82Q\x84Q\x92\x81\x01\x92\x90\x92RQ\x81\x83\x01R\x90\x82\x01Q`\x01`\x01`\xA0\x1B\x03\x16``\x82\x01R`\x80\x01`@Q` \x81\x83\x03\x03\x81R\x90`@R\x91PP\x91\x90PV[`\0g\r\xE0\xB6\xB3\xA7d\0\0a\x08za\x08s\x85\x85a\x08\xF4V[\x86\x90a\t\tV[a\x08\x84\x87\x86a\t\tV[a\x08\x8E\x91\x90a\rpV[a\x08\x98\x91\x90a\r3V[\x95\x94PPPPPV[`\0\x81\x80` \x01\x90Q\x81\x01\x90a\x08\xB7\x91\x90a\r\x98V[\x93\x92PPPV[`\0\x80\x82\x80` \x01\x90Q\x81\x01\x90a\x08\xD5\x91\x90a\r\x98V[\x94\x93PPPPV[`\0\x80\x82\x80` \x01\x90Q\x81\x01\x90a\x08\xD5\x91\x90a\r\xC6V[`\0a\x08\xB7\x83\x83g\r\xE0\xB6\xB3\xA7d\0\0a\t\x1AV[`\0a\x08\xB7\x83g\r\xE0\xB6\xB3\xA7d\0\0\x84[\x82\x82\x02\x81\x15\x15\x84\x15\x85\x83\x04\x85\x14\x17\x16a\t2W`\0\x80\xFD[`\x01\x82`\x01\x83\x03\x04\x01\x81\x15\x15\x02\x90P\x93\x92PPPV[cNH{q`\xE0\x1B`\0R`A`\x04R`$`\0\xFD[`@Q``\x81\x01g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x82\x82\x10\x17\x15a\t\x81Wa\t\x81a\tHV[`@R\x90V[`@Q`\x1F\x82\x01`\x1F\x19\x16\x81\x01g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x82\x82\x10\x17\x15a\t\xB0Wa\t\xB0a\tHV[`@R\x91\x90PV[`\0\x80`@\x83\x85\x03\x12\x15a\t\xCBW`\0\x80\xFD[\x825\x91P` \x80\x84\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80\x82\x11\x15a\t\xEBW`\0\x80\xFD[\x81\x86\x01\x91P\x86`\x1F\x83\x01\x12a\t\xFFW`\0\x80\xFD[\x815\x81\x81\x11\x15a\n\x11Wa\n\x11a\tHV[a\n#`\x1F\x82\x01`\x1F\x19\x16\x85\x01a\t\x87V[\x91P\x80\x82R\x87\x84\x82\x85\x01\x01\x11\x15a\n9W`\0\x80\xFD[\x80\x84\x84\x01\x85\x84\x017`\0\x84\x82\x84\x01\x01RP\x80\x93PPPP\x92P\x92\x90PV[`\x01`\x01`\xA0\x1B\x03\x81\x16\x81\x14a\nlW`\0\x80\xFD[PV[`\0\x80`\0\x80`\0\x85\x87\x03a\x01@\x81\x12\x15a\n\x89W`\0\x80\xFD[\x865a\n\x94\x81a\nWV[\x95P` \x87\x015\x94P`\xE0`?\x19\x82\x01\x12\x15a\n\xAFW`\0\x80\xFD[P`@\x86\x01\x92Pa\x01 \x86\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80\x82\x11\x15a\n\xD2W`\0\x80\xFD[\x81\x88\x01\x91P\x88`\x1F\x83\x01\x12a\n\xE6W`\0\x80\xFD[\x815\x81\x81\x11\x15a\n\xF5W`\0\x80\xFD[\x89` \x82\x85\x01\x01\x11\x15a\x0B\x07W`\0\x80\xFD[\x96\x99\x95\x98P\x93\x96P` \x01\x94\x93\x92PPPV[`\0\x81Q\x80\x84R`\0[\x81\x81\x10\x15a\x0B@W` \x81\x85\x01\x81\x01Q\x86\x83\x01\x82\x01R\x01a\x0B$V[P`\0` \x82\x86\x01\x01R` `\x1F\x19`\x1F\x83\x01\x16\x85\x01\x01\x91PP\x92\x91PPV[` \x81R`\0a\x08\xB7` \x83\x01\x84a\x0B\x1AV[`\0` \x82\x84\x03\x12\x15a\x0B\x85W`\0\x80\xFD[P5\x91\x90PV[`\0\x80`\0``\x84\x86\x03\x12\x15a\x0B\xA1W`\0\x80\xFD[\x83Q\x92P` \x84\x01Q\x91P`@\x84\x01Q\x90P\x92P\x92P\x92V[`\0``\x82\x84\x03\x12\x15a\x0B\xCCW`\0\x80\xFD[a\x0B\xD4a\t^V[\x82Q\x81R` \x83\x01Q` \x82\x01R`@\x83\x01Qa\x0B\xF0\x81a\nWV[`@\x82\x01R\x93\x92PPPV[`\0\x80`\0``\x84\x86\x03\x12\x15a\x0C\x11W`\0\x80\xFD[PP\x815\x93` \x83\x015\x93P`@\x90\x92\x015\x91\x90PV[cNH{q`\xE0\x1B`\0R`\x11`\x04R`$`\0\xFD[\x80\x82\x01\x80\x82\x11\x15a\x02\xA0Wa\x02\xA0a\x0C(V[`\0`\x01`\xFF\x1B\x82\x01a\x0CfWa\x0Cfa\x0C(V[P`\0\x03\x90V[`\x04\x81\x10a\nlW`\0\x80\xFD[`\0` \x82\x84\x03\x12\x15a\x0C\x8CW`\0\x80\xFD[\x815a\x08\xB7\x81a\x0CmV[cNH{q`\xE0\x1B`\0R`!`\x04R`$`\0\xFD[`\0\x80`\0\x80\x84\x86\x03`\xC0\x81\x12\x15a\x0C\xC4W`\0\x80\xFD[\x855\x94P` \x86\x015\x93P`@\x86\x015\x92P```_\x19\x82\x01\x12\x15a\x0C\xE8W`\0\x80\xFD[Pa\x0C\xF1a\t^V[``\x86\x015\x81R`\x80\x86\x015` \x82\x01R`\xA0\x86\x015a\r\x10\x81a\nWV[`@\x82\x01R\x93\x96\x92\x95P\x90\x93PPV[\x81\x81\x03\x81\x81\x11\x15a\x02\xA0Wa\x02\xA0a\x0C(V[\x81\x81\x03`\0\x83\x12\x80\x15\x83\x83\x13\x16\x83\x83\x12\x82\x16\x17\x15a\rSWa\rSa\x0C(V[P\x92\x91PPV[cNH{q`\xE0\x1B`\0R`\x01`\x04R`$`\0\xFD[\x80\x82\x01\x82\x81\x12`\0\x83\x12\x80\x15\x82\x16\x82\x15\x82\x16\x17\x15a\r\x90Wa\r\x90a\x0C(V[PP\x92\x91PPV[`\0\x80`@\x83\x85\x03\x12\x15a\r\xABW`\0\x80\xFD[\x82Qa\r\xB6\x81a\x0CmV[` \x93\x90\x93\x01Q\x92\x94\x92\x93PPPV[`\0\x80`@\x83\x85\x03\x12\x15a\r\xD9W`\0\x80\xFD[\x82Qa\r\xE4\x81a\x0CmV[` \x84\x01Q\x90\x92Pa\r\xF5\x81a\nWV[\x80\x91PP\x92P\x92\x90PV\xFE\xA2dipfsX\"\x12 \0q*\x83dZ\x07\x97?\xB3L\x16\xFF\xBF\xF9VyU\xBC\xCE\"+\xF48\xC1\x7F\x8E\xC9\x95\"!\xBBdsolcC\0\x08\x16\x003";
     /// The deployed bytecode of the contract.
     pub static CONSTANTSUM_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__DEPLOYED_BYTECODE);
@@ -540,11 +684,12 @@ pub mod constant_sum {
                 .method_hash([220, 23, 131, 85], pool_id)
                 .expect("method not found (this should never happen)")
         }
-        /// Calls the contract's `init` (0x73cb2d03) function
+        /// Calls the contract's `init` (0x32e38330) function
         pub fn init(
             &self,
             p0: ::ethers::core::types::Address,
             pool_id: ::ethers::core::types::U256,
+            pool: Pool,
             data: ::ethers::core::types::Bytes,
         ) -> ::ethers::contract::builders::ContractCall<
             M,
@@ -557,7 +702,7 @@ pub mod constant_sum {
             ),
         > {
             self.0
-                .method_hash([115, 203, 45, 3], (p0, pool_id, data))
+                .method_hash([50, 227, 131, 48], (p0, pool_id, pool, data))
                 .expect("method not found (this should never happen)")
         }
         /// Calls the contract's `internalParams` (0x1edb71e5) function
@@ -582,23 +727,24 @@ pub mod constant_sum {
                 .method_hash([6, 253, 222, 3], ())
                 .expect("method not found (this should never happen)")
         }
-        /// Calls the contract's `update` (0xacad2989) function
+        /// Calls the contract's `update` (0x181cbab4) function
         pub fn update(
             &self,
             sender: ::ethers::core::types::Address,
             pool_id: ::ethers::core::types::U256,
+            pool: Pool,
             data: ::ethers::core::types::Bytes,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
-                .method_hash([172, 173, 41, 137], (sender, pool_id, data))
+                .method_hash([24, 28, 186, 180], (sender, pool_id, pool, data))
                 .expect("method not found (this should never happen)")
         }
-        /// Calls the contract's `validateAllocateOrDeallocate` (0x8a04bdd5)
-        /// function
-        pub fn validate_allocate_or_deallocate(
+        /// Calls the contract's `validateAllocate` (0x024aa206) function
+        pub fn validate_allocate(
             &self,
             p0: ::ethers::core::types::Address,
             pool_id: ::ethers::core::types::U256,
+            pool: Pool,
             data: ::ethers::core::types::Bytes,
         ) -> ::ethers::contract::builders::ContractCall<
             M,
@@ -611,14 +757,36 @@ pub mod constant_sum {
             ),
         > {
             self.0
-                .method_hash([138, 4, 189, 213], (p0, pool_id, data))
+                .method_hash([2, 74, 162, 6], (p0, pool_id, pool, data))
                 .expect("method not found (this should never happen)")
         }
-        /// Calls the contract's `validateSwap` (0x68bd3e38) function
+        /// Calls the contract's `validateDeallocate` (0x396e3e7c) function
+        pub fn validate_deallocate(
+            &self,
+            p0: ::ethers::core::types::Address,
+            pool_id: ::ethers::core::types::U256,
+            pool: Pool,
+            data: ::ethers::core::types::Bytes,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            (
+                bool,
+                ::ethers::core::types::I256,
+                ::ethers::core::types::U256,
+                ::ethers::core::types::U256,
+                ::ethers::core::types::U256,
+            ),
+        > {
+            self.0
+                .method_hash([57, 110, 62, 124], (p0, pool_id, pool, data))
+                .expect("method not found (this should never happen)")
+        }
+        /// Calls the contract's `validateSwap` (0x65c9ffc2) function
         pub fn validate_swap(
             &self,
             p0: ::ethers::core::types::Address,
             pool_id: ::ethers::core::types::U256,
+            pool: Pool,
             data: ::ethers::core::types::Bytes,
         ) -> ::ethers::contract::builders::ContractCall<
             M,
@@ -632,7 +800,7 @@ pub mod constant_sum {
             ),
         > {
             self.0
-                .method_hash([104, 189, 62, 56], (p0, pool_id, data))
+                .method_hash([101, 201, 255, 194], (p0, pool_id, pool, data))
                 .expect("method not found (this should never happen)")
         }
     }
@@ -846,7 +1014,8 @@ pub mod constant_sum {
         pub pool_id: ::ethers::core::types::U256,
     }
     /// Container type for all input parameters for the `init` function with
-    /// signature `init(address,uint256,bytes)` and selector `0x73cb2d03`
+    /// signature `init(address,uint256,(address,address,address,uint256,
+    /// uint256,uint256,address),bytes)` and selector `0x32e38330`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -859,10 +1028,14 @@ pub mod constant_sum {
         Eq,
         Hash,
     )]
-    #[ethcall(name = "init", abi = "init(address,uint256,bytes)")]
+    #[ethcall(
+        name = "init",
+        abi = "init(address,uint256,(address,address,address,uint256,uint256,uint256,address),bytes)"
+    )]
     pub struct InitCall {
         pub p0: ::ethers::core::types::Address,
         pub pool_id: ::ethers::core::types::U256,
+        pub pool: Pool,
         pub data: ::ethers::core::types::Bytes,
     }
     /// Container type for all input parameters for the `internalParams`
@@ -899,29 +1072,8 @@ pub mod constant_sum {
     #[ethcall(name = "name", abi = "name()")]
     pub struct NameCall;
     /// Container type for all input parameters for the `update` function with
-    /// signature `update(address,uint256,bytes)` and selector `0xacad2989`
-    #[derive(
-        Clone,
-        ::ethers::contract::EthCall,
-        ::ethers::contract::EthDisplay,
-        serde::Serialize,
-        serde::Deserialize,
-        Default,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-    )]
-    #[ethcall(name = "update", abi = "update(address,uint256,bytes)")]
-    pub struct UpdateCall {
-        pub sender: ::ethers::core::types::Address,
-        pub pool_id: ::ethers::core::types::U256,
-        pub data: ::ethers::core::types::Bytes,
-    }
-    /// Container type for all input parameters for the
-    /// `validateAllocateOrDeallocate` function with signature
-    /// `validateAllocateOrDeallocate(address,uint256,bytes)` and selector
-    /// `0x8a04bdd5`
+    /// signature `update(address,uint256,(address,address,address,uint256,
+    /// uint256,uint256,address),bytes)` and selector `0x181cbab4`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -935,17 +1087,19 @@ pub mod constant_sum {
         Hash,
     )]
     #[ethcall(
-        name = "validateAllocateOrDeallocate",
-        abi = "validateAllocateOrDeallocate(address,uint256,bytes)"
+        name = "update",
+        abi = "update(address,uint256,(address,address,address,uint256,uint256,uint256,address),bytes)"
     )]
-    pub struct ValidateAllocateOrDeallocateCall {
-        pub p0: ::ethers::core::types::Address,
+    pub struct UpdateCall {
+        pub sender: ::ethers::core::types::Address,
         pub pool_id: ::ethers::core::types::U256,
+        pub pool: Pool,
         pub data: ::ethers::core::types::Bytes,
     }
-    /// Container type for all input parameters for the `validateSwap` function
-    /// with signature `validateSwap(address,uint256,bytes)` and selector
-    /// `0x68bd3e38`
+    /// Container type for all input parameters for the `validateAllocate`
+    /// function with signature
+    /// `validateAllocate(address,uint256,(address,address,address,uint256,
+    /// uint256,uint256,address),bytes)` and selector `0x024aa206`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -958,10 +1112,66 @@ pub mod constant_sum {
         Eq,
         Hash,
     )]
-    #[ethcall(name = "validateSwap", abi = "validateSwap(address,uint256,bytes)")]
+    #[ethcall(
+        name = "validateAllocate",
+        abi = "validateAllocate(address,uint256,(address,address,address,uint256,uint256,uint256,address),bytes)"
+    )]
+    pub struct ValidateAllocateCall {
+        pub p0: ::ethers::core::types::Address,
+        pub pool_id: ::ethers::core::types::U256,
+        pub pool: Pool,
+        pub data: ::ethers::core::types::Bytes,
+    }
+    /// Container type for all input parameters for the `validateDeallocate`
+    /// function with signature
+    /// `validateDeallocate(address,uint256,(address,address,address,uint256,
+    /// uint256,uint256,address),bytes)` and selector `0x396e3e7c`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    #[ethcall(
+        name = "validateDeallocate",
+        abi = "validateDeallocate(address,uint256,(address,address,address,uint256,uint256,uint256,address),bytes)"
+    )]
+    pub struct ValidateDeallocateCall {
+        pub p0: ::ethers::core::types::Address,
+        pub pool_id: ::ethers::core::types::U256,
+        pub pool: Pool,
+        pub data: ::ethers::core::types::Bytes,
+    }
+    /// Container type for all input parameters for the `validateSwap` function
+    /// with signature
+    /// `validateSwap(address,uint256,(address,address,address,uint256,uint256,
+    /// uint256,address),bytes)` and selector `0x65c9ffc2`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    #[ethcall(
+        name = "validateSwap",
+        abi = "validateSwap(address,uint256,(address,address,address,uint256,uint256,uint256,address),bytes)"
+    )]
     pub struct ValidateSwapCall {
         pub p0: ::ethers::core::types::Address,
         pub pool_id: ::ethers::core::types::U256,
+        pub pool: Pool,
         pub data: ::ethers::core::types::Bytes,
     }
     /// Container type for all of the contract's call
@@ -983,7 +1193,8 @@ pub mod constant_sum {
         InternalParams(InternalParamsCall),
         Name(NameCall),
         Update(UpdateCall),
-        ValidateAllocateOrDeallocate(ValidateAllocateOrDeallocateCall),
+        ValidateAllocate(ValidateAllocateCall),
+        ValidateDeallocate(ValidateDeallocateCall),
         ValidateSwap(ValidateSwapCall),
     }
     impl ::ethers::core::abi::AbiDecode for ConstantSumCalls {
@@ -1018,9 +1229,14 @@ pub mod constant_sum {
                 return Ok(Self::Update(decoded));
             }
             if let Ok(decoded) =
-                <ValidateAllocateOrDeallocateCall as ::ethers::core::abi::AbiDecode>::decode(data)
+                <ValidateAllocateCall as ::ethers::core::abi::AbiDecode>::decode(data)
             {
-                return Ok(Self::ValidateAllocateOrDeallocate(decoded));
+                return Ok(Self::ValidateAllocate(decoded));
+            }
+            if let Ok(decoded) =
+                <ValidateDeallocateCall as ::ethers::core::abi::AbiDecode>::decode(data)
+            {
+                return Ok(Self::ValidateDeallocate(decoded));
             }
             if let Ok(decoded) = <ValidateSwapCall as ::ethers::core::abi::AbiDecode>::decode(data)
             {
@@ -1041,7 +1257,8 @@ pub mod constant_sum {
                 Self::InternalParams(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::Name(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::Update(element) => ::ethers::core::abi::AbiEncode::encode(element),
-                Self::ValidateAllocateOrDeallocate(element) => {
+                Self::ValidateAllocate(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::ValidateDeallocate(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::ValidateSwap(element) => ::ethers::core::abi::AbiEncode::encode(element),
@@ -1058,9 +1275,8 @@ pub mod constant_sum {
                 Self::InternalParams(element) => ::core::fmt::Display::fmt(element, f),
                 Self::Name(element) => ::core::fmt::Display::fmt(element, f),
                 Self::Update(element) => ::core::fmt::Display::fmt(element, f),
-                Self::ValidateAllocateOrDeallocate(element) => {
-                    ::core::fmt::Display::fmt(element, f)
-                }
+                Self::ValidateAllocate(element) => ::core::fmt::Display::fmt(element, f),
+                Self::ValidateDeallocate(element) => ::core::fmt::Display::fmt(element, f),
                 Self::ValidateSwap(element) => ::core::fmt::Display::fmt(element, f),
             }
         }
@@ -1100,9 +1316,14 @@ pub mod constant_sum {
             Self::Update(value)
         }
     }
-    impl ::core::convert::From<ValidateAllocateOrDeallocateCall> for ConstantSumCalls {
-        fn from(value: ValidateAllocateOrDeallocateCall) -> Self {
-            Self::ValidateAllocateOrDeallocate(value)
+    impl ::core::convert::From<ValidateAllocateCall> for ConstantSumCalls {
+        fn from(value: ValidateAllocateCall) -> Self {
+            Self::ValidateAllocate(value)
+        }
+    }
+    impl ::core::convert::From<ValidateDeallocateCall> for ConstantSumCalls {
+        fn from(value: ValidateDeallocateCall) -> Self {
+            Self::ValidateDeallocate(value)
         }
     }
     impl ::core::convert::From<ValidateSwapCall> for ConstantSumCalls {
@@ -1157,7 +1378,8 @@ pub mod constant_sum {
     )]
     pub struct GetPoolParamsReturn(pub ::ethers::core::types::Bytes);
     /// Container type for all return fields from the `init` function with
-    /// signature `init(address,uint256,bytes)` and selector `0x73cb2d03`
+    /// signature `init(address,uint256,(address,address,address,uint256,
+    /// uint256,uint256,address),bytes)` and selector `0x32e38330`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -1211,10 +1433,10 @@ pub mod constant_sum {
         Hash,
     )]
     pub struct NameReturn(pub ::std::string::String);
-    /// Container type for all return fields from the
-    /// `validateAllocateOrDeallocate` function with signature
-    /// `validateAllocateOrDeallocate(address,uint256,bytes)` and selector
-    /// `0x8a04bdd5`
+    /// Container type for all return fields from the `validateAllocate`
+    /// function with signature
+    /// `validateAllocate(address,uint256,(address,address,address,uint256,
+    /// uint256,uint256,address),bytes)` and selector `0x024aa206`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -1227,16 +1449,40 @@ pub mod constant_sum {
         Eq,
         Hash,
     )]
-    pub struct ValidateAllocateOrDeallocateReturn {
+    pub struct ValidateAllocateReturn {
         pub valid: bool,
         pub invariant: ::ethers::core::types::I256,
-        pub reserve_x: ::ethers::core::types::U256,
-        pub reserve_y: ::ethers::core::types::U256,
-        pub total_liquidity: ::ethers::core::types::U256,
+        pub delta_x: ::ethers::core::types::U256,
+        pub delta_y: ::ethers::core::types::U256,
+        pub delta_liquidity: ::ethers::core::types::U256,
+    }
+    /// Container type for all return fields from the `validateDeallocate`
+    /// function with signature
+    /// `validateDeallocate(address,uint256,(address,address,address,uint256,
+    /// uint256,uint256,address),bytes)` and selector `0x396e3e7c`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    pub struct ValidateDeallocateReturn {
+        pub valid: bool,
+        pub invariant: ::ethers::core::types::I256,
+        pub delta_x: ::ethers::core::types::U256,
+        pub delta_y: ::ethers::core::types::U256,
+        pub delta_liquidity: ::ethers::core::types::U256,
     }
     /// Container type for all return fields from the `validateSwap` function
-    /// with signature `validateSwap(address,uint256,bytes)` and selector
-    /// `0x68bd3e38`
+    /// with signature
+    /// `validateSwap(address,uint256,(address,address,address,uint256,uint256,
+    /// uint256,address),bytes)` and selector `0x65c9ffc2`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,

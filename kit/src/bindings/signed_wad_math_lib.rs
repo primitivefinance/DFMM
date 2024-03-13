@@ -25,12 +25,12 @@ pub mod signed_wad_math_lib {
     pub static SIGNEDWADMATHLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
         ::ethers::contract::Lazy::new(__abi);
     #[rustfmt::skip]
-    const __BYTECODE: &[u8] = b"`\x80\x80`@R4`\x17W`:\x90\x81`\x1D\x8290\x81PP\xF3[`\0\x80\xFD\xFE`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \x81\x84\xA7\x97\x19\x14\xA0JS!\x9B\x0BO\xD18N\xC6\xBF\xB5`\xB7'BA\xE8R\xBD8\xCBg\xEB\xF7dsolcC\0\x08\x16\x003";
+    const __BYTECODE: &[u8] = b"`V`7`\x0B\x82\x82\x829\x80Q`\0\x1A`s\x14`*WcNH{q`\xE0\x1B`\0R`\0`\x04R`$`\0\xFD[0`\0R`s\x81S\x82\x81\xF3\xFEs\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x000\x14`\x80`@R`\0\x80\xFD\xFE\xA2dipfsX\"\x12 =\xB0dA\xD7\xA6\xE3v\x86\x01\xA4\x99\xDF\x88\x0F@\xE0\x1DI>;\xF1\xAB\x8Dt\xB4MM\x0E\xE0\x17jdsolcC\0\x08\x16\x003";
     /// The bytecode of the contract.
     pub static SIGNEDWADMATHLIB_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__BYTECODE);
     #[rustfmt::skip]
-    const __DEPLOYED_BYTECODE: &[u8] = b"`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \x81\x84\xA7\x97\x19\x14\xA0JS!\x9B\x0BO\xD18N\xC6\xBF\xB5`\xB7'BA\xE8R\xBD8\xCBg\xEB\xF7dsolcC\0\x08\x16\x003";
+    const __DEPLOYED_BYTECODE: &[u8] = b"s\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x000\x14`\x80`@R`\0\x80\xFD\xFE\xA2dipfsX\"\x12 =\xB0dA\xD7\xA6\xE3v\x86\x01\xA4\x99\xDF\x88\x0F@\xE0\x1DI>;\xF1\xAB\x8Dt\xB4MM\x0E\xE0\x17jdsolcC\0\x08\x16\x003";
     /// The deployed bytecode of the contract.
     pub static SIGNEDWADMATHLIB_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__DEPLOYED_BYTECODE);

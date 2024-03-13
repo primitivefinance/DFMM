@@ -25,12 +25,12 @@ pub mod constant_sum_lib {
     pub static CONSTANTSUMLIB_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
         ::ethers::contract::Lazy::new(__abi);
     #[rustfmt::skip]
-    const __BYTECODE: &[u8] = b"`\x80\x80`@R4`\x17W`:\x90\x81`\x1D\x8290\x81PP\xF3[`\0\x80\xFD\xFE`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xB5Us$K\xE3\xA7\x90\x8Bp\xB5\xA2\xA9\x97\x0F\x9F\xE5b\xA3\xBEOZ\xBA;\xF3\xDC\xCA]\xC36^1dsolcC\0\x08\x16\x003";
+    const __BYTECODE: &[u8] = b"`V`7`\x0B\x82\x82\x829\x80Q`\0\x1A`s\x14`*WcNH{q`\xE0\x1B`\0R`\0`\x04R`$`\0\xFD[0`\0R`s\x81S\x82\x81\xF3\xFEs\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x000\x14`\x80`@R`\0\x80\xFD\xFE\xA2dipfsX\"\x12 u<\x8FE\xA2vl\x01\\I\xC6\xDD<\xA56\xDB<\xE7\0\xE4b\xC6`:o\xFF\xDF\xC1\xE9\xC9\x87\xEDdsolcC\0\x08\x16\x003";
     /// The bytecode of the contract.
     pub static CONSTANTSUMLIB_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__BYTECODE);
     #[rustfmt::skip]
-    const __DEPLOYED_BYTECODE: &[u8] = b"`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \xB5Us$K\xE3\xA7\x90\x8Bp\xB5\xA2\xA9\x97\x0F\x9F\xE5b\xA3\xBEOZ\xBA;\xF3\xDC\xCA]\xC36^1dsolcC\0\x08\x16\x003";
+    const __DEPLOYED_BYTECODE: &[u8] = b"s\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x000\x14`\x80`@R`\0\x80\xFD\xFE\xA2dipfsX\"\x12 u<\x8FE\xA2vl\x01\\I\xC6\xDD<\xA56\xDB<\xE7\0\xE4b\xC6`:o\xFF\xDF\xC1\xE9\xC9\x87\xEDdsolcC\0\x08\x16\x003";
     /// The deployed bytecode of the contract.
     pub static CONSTANTSUMLIB_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__DEPLOYED_BYTECODE);
