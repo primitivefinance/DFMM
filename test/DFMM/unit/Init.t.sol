@@ -143,20 +143,20 @@ contract DFMMInit is DFMMSetUp, Script {
     }
 
     function test_DFMM_init_DeploysLPTokenClone() public initPool {
-        Pool memory pool = dfmm.getPool(POOL_ID);
+        Pool memory pool = dfmm.pools(POOL_ID);
         assertTrue(pool.liquidityToken != address(0));
         assertTrue(pool.liquidityToken.code.length > 0);
     }
 
     function test_DFMM_init_SetsLPTokenMetadata() public initPool {
-        Pool memory pool = dfmm.getPool(POOL_ID);
+        Pool memory pool = dfmm.pools(POOL_ID);
         LPToken lpToken = LPToken(pool.liquidityToken);
         assertEq(lpToken.name(), "Default Pool");
         assertEq(lpToken.symbol(), "POOL");
     }
 
     function test_DFMM_init_MintsLPTokens() public initPool {
-        Pool memory pool = dfmm.getPool(POOL_ID);
+        Pool memory pool = dfmm.pools(POOL_ID);
         LPToken lpToken = LPToken(pool.liquidityToken);
         assertEq(lpToken.balanceOf(address(this)), initialLiquidity - 1000);
         assertEq(lpToken.balanceOf(address(0)), 1000);

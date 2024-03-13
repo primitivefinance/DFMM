@@ -72,7 +72,7 @@ contract NTokenGeometricMeanSolver {
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
         NTokenGeometricMeanParams memory params = getPoolParams(poolId);
-        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).getPool(poolId);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
 
         SimulateSwapState memory state;
 

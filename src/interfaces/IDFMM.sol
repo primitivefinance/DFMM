@@ -215,5 +215,5 @@ interface IDFMM {
 
     /// @notice Returns the pool parameters of pool `poolId`.
     /// @return pool A struct containing the pool parameters.
-    function getPool(uint256 poolId) external view returns (Pool memory pool);
+    function pools(uint256 poolId) external view returns (Pool memory pool);
 }

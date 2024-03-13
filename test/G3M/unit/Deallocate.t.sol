@@ -14,7 +14,7 @@ contract G3MDeallocateTest is G3MSetUp {
             solver.deallocateGivenDeltaX(POOL_ID, minDeltaX);
         console2.log(deltaY);
         console2.log(deltaLiquidity);
-        uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
         (, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
@@ -25,7 +25,7 @@ contract G3MDeallocateTest is G3MSetUp {
         uint256 deltaTotalLiquidity = preTotalLiquidity - postTotalLiquidity;
         assertEq(
             preLiquidityBalance - deltaTotalLiquidity,
-            dfmm.liquidityOf(address(this), POOL_ID)
+            liquidityOf(address(this), POOL_ID)
         );
     }
 

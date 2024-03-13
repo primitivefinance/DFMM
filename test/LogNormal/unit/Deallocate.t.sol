@@ -20,7 +20,7 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
         uint256 minDeltaY =
             computeDeltaYGivenDeltaX(minDeltaX, reserves[0], reserves[1]);
 
-        //        uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        //        uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         //      (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
         // TODO: See if we can get a better rounding because the transaction fails
@@ -34,7 +34,7 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
         uint256 deltaTotalLiquidity = preTotalLiquidity - postTotalLiquidity;
         assertEq(
             preLiquidityBalance - deltaTotalLiquidity,
-            dfmm.liquidityOf(address(this), POOL_ID)
+            liquidityOf(address(this), POOL_ID)
         );
         */
     }
@@ -50,7 +50,7 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
         uint256 minDeltaX =
             computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
 
-        // uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        // uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
         // TODO: See if we can get a better rounding because the transaction fails
@@ -64,7 +64,7 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
         uint256 deltaTotalLiquidity = preTotalLiquidity - postTotalLiquidity;
         assertEq(
             preLiquidityBalance - deltaTotalLiquidity,
-            dfmm.liquidityOf(address(this), POOL_ID)
+            liquidityOf(address(this), POOL_ID)
         );
         */
     }

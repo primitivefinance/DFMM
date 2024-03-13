@@ -24,7 +24,7 @@ contract LogNormalAllocateTest is LogNormalSetUp {
         );
 
         (, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
-        uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         console2.log(preTotalLiquidity);
         console2.log(preLiquidityBalance);
 
@@ -32,7 +32,7 @@ contract LogNormalAllocateTest is LogNormalSetUp {
         dfmm.allocate(POOL_ID, data);
 
         (, uint256 postTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
-        uint256 postLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        uint256 postLiquidityBalance = liquidityOf(address(this), POOL_ID);
         console2.log(postTotalLiquidity);
         console2.log(postLiquidityBalance);
 
@@ -53,7 +53,7 @@ contract LogNormalAllocateTest is LogNormalSetUp {
             computeDeltaLGivenDeltaX(deltaX, liquidity, reserves[0]);
         uint256 deltaYMax =
             computeDeltaYGivenDeltaL(deltaLiquidity, liquidity, reserves[1]);
-        // uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        // uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
         bytes memory data = abi.encode(deltaX, deltaYMax, deltaLiquidity);
@@ -64,7 +64,7 @@ contract LogNormalAllocateTest is LogNormalSetUp {
         uint256 deltaTotalLiquidity = postTotalLiquidity - preTotalLiquidity;
         assertEq(
             preLiquidityBalance + deltaTotalLiquidity,
-            dfmm.liquidityOf(address(this), POOL_ID)
+            liquidityOf(address(this), POOL_ID)
         );
         */
     }
@@ -83,7 +83,7 @@ contract LogNormalAllocateTest is LogNormalSetUp {
             computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
         console2.log(maxDeltaX);
 
-        // uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        // uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
@@ -94,7 +94,7 @@ contract LogNormalAllocateTest is LogNormalSetUp {
         uint256 deltaTotalLiquidity = postTotalLiquidity - preTotalLiquidity;
         assertEq(
             preLiquidityBalance + deltaTotalLiquidity,
-            dfmm.liquidityOf(address(this), POOL_ID)
+            liquidityOf(address(this), POOL_ID)
         );
         */
     }

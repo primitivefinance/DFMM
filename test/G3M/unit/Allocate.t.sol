@@ -15,7 +15,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256[] memory reserves, uint256 liquidity) =
             dfmm.getReservesAndLiquidity(POOL_ID);
 
-        uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
@@ -30,7 +30,7 @@ contract G3MAllocateTest is G3MSetUp {
         /*
         assertEq(
             preLiquidityBalance + deltaLiquidity,
-            dfmm.liquidityOf(address(this), POOL_ID)
+            liquidityOf(address(this), POOL_ID)
         );
         */
     }
@@ -43,7 +43,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256[] memory reserves, uint256 liquidity) =
             dfmm.getReservesAndLiquidity(POOL_ID);
 
-        uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
@@ -58,7 +58,7 @@ contract G3MAllocateTest is G3MSetUp {
         /*
         assertEq(
             preLiquidityBalance + deltaLiquidity,
-            dfmm.liquidityOf(address(this), POOL_ID)
+            liquidityOf(address(this), POOL_ID)
         );
         */
     }
@@ -108,7 +108,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256[] memory reserves, uint256 liquidity) =
             dfmm.getReservesAndLiquidity(POOL_ID);
 
-        uint256 preLiquidityBalance = dfmm.liquidityOf(address(this), POOL_ID);
+        uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         console2.log(maxDeltaX);
@@ -127,7 +127,7 @@ contract G3MAllocateTest is G3MSetUp {
         /*
         assertEq(
             preLiquidityBalance + deltaLiquidity,
-            dfmm.liquidityOf(address(this), POOL_ID)
+            liquidityOf(address(this), POOL_ID)
         );
         */
     }

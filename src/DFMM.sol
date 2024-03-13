@@ -21,7 +21,7 @@ import { LPToken } from "./LPToken.sol";
 contract DFMM is IDFMM {
     using FixedPointMathLib for uint256;
 
-    Pool[] public pools;
+    Pool[] internal _pools;
 
     /// @inheritdoc IDFMM
     address public immutable lpTokenImplementation;
@@ -81,7 +81,7 @@ contract DFMM is IDFMM {
             uint256[] memory reserves,
             uint256 totalLiquidity
         ) = IStrategy(params.strategy).init(
-            msg.sender, pools.length, pool, params.data
+            msg.sender, _pools.length, pool, params.data
         );
 
         if (!valid) revert InvalidInvariant(invariant);
@@ -96,8 +96,8 @@ contract DFMM is IDFMM {
         pool.totalLiquidity = totalLiquidity;
         pool.liquidityToken = address(liquidityToken);
 
-        pools.push(pool);
-        uint256 poolId = pools.length - 1;
+        _pools.push(pool);
+        uint256 poolId = _pools.length - 1;
 
         for (uint256 i = 0; i < params.tokens.length; i++) {
             if (params.tokens[i] != address(0)) {
@@ -128,24 +128,24 @@ contract DFMM is IDFMM {
             int256 invariant,
             uint256[] memory deltas,
             uint256 deltaLiquidity
-        ) = IStrategy(pools[poolId].strategy).validateAllocate(
-            msg.sender, poolId, pools[poolId], data
+        ) = IStrategy(_pools[poolId].strategy).validateAllocate(
+            msg.sender, poolId, _pools[poolId], data
         );
 
         if (!valid) revert InvalidInvariant(invariant);
 
-        for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
-            if (pools[poolId].tokens[i] != address(0)) {
-                pools[poolId].reserves[i] += deltas[i];
+        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
+            if (_pools[poolId].tokens[i] != address(0)) {
+                _pools[poolId].reserves[i] += deltas[i];
             }
         }
-        pools[poolId].totalLiquidity += deltaLiquidity;
+        _pools[poolId].totalLiquidity += deltaLiquidity;
 
         _manageTokens(poolId, true, deltaLiquidity);
 
-        for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
-            if (pools[poolId].tokens[i] != address(0)) {
-                _transferFrom(pools[poolId].tokens[i], deltas[i]);
+        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
+            if (_pools[poolId].tokens[i] != address(0)) {
+                _transferFrom(_pools[poolId].tokens[i], deltas[i]);
             }
         }
 
@@ -163,24 +163,24 @@ contract DFMM is IDFMM {
             int256 invariant,
             uint256[] memory deltas,
             uint256 deltaLiquidity
-        ) = IStrategy(pools[poolId].strategy).validateDeallocate(
-            msg.sender, poolId, pools[poolId], data
+        ) = IStrategy(_pools[poolId].strategy).validateDeallocate(
+            msg.sender, poolId, _pools[poolId], data
         );
 
         if (!valid) revert InvalidInvariant(invariant);
 
-        for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
-            if (pools[poolId].tokens[i] != address(0)) {
-                pools[poolId].reserves[i] -= deltas[i];
+        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
+            if (_pools[poolId].tokens[i] != address(0)) {
+                _pools[poolId].reserves[i] -= deltas[i];
             }
         }
 
         _manageTokens(poolId, false, deltaLiquidity);
-        pools[poolId].totalLiquidity -= deltaLiquidity;
+        _pools[poolId].totalLiquidity -= deltaLiquidity;
 
-        for (uint256 i = 0; i < pools[poolId].tokens.length; i++) {
-            if (pools[poolId].tokens[i] != address(0)) {
-                _transfer(pools[poolId].tokens[i], msg.sender, deltas[i]);
+        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
+            if (_pools[poolId].tokens[i] != address(0)) {
+                _transfer(_pools[poolId].tokens[i], msg.sender, deltas[i]);
             }
         }
 
@@ -212,19 +212,19 @@ contract DFMM is IDFMM {
             state.amountIn,
             state.amountOut,
             state.deltaLiquidity
-        ) = IStrategy(pools[poolId].strategy).validateSwap(
-            msg.sender, poolId, pools[poolId], data
+        ) = IStrategy(_pools[poolId].strategy).validateSwap(
+            msg.sender, poolId, _pools[poolId], data
         );
 
         if (!state.valid) revert InvalidInvariant(state.invariant);
 
-        pools[poolId].totalLiquidity += state.deltaLiquidity;
+        _pools[poolId].totalLiquidity += state.deltaLiquidity;
 
-        pools[poolId].reserves[state.tokenInIndex] += state.amountIn;
-        pools[poolId].reserves[state.tokenOutIndex] -= state.amountOut;
+        _pools[poolId].reserves[state.tokenInIndex] += state.amountIn;
+        _pools[poolId].reserves[state.tokenOutIndex] -= state.amountOut;
 
-        address tokenIn = pools[poolId].tokens[state.tokenInIndex];
-        address tokenOut = pools[poolId].tokens[state.tokenOutIndex];
+        address tokenIn = _pools[poolId].tokens[state.tokenInIndex];
+        address tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
         _transferFrom(tokenIn, state.amountIn);
         _transfer(tokenOut, msg.sender, state.amountOut);
@@ -243,8 +243,8 @@ contract DFMM is IDFMM {
 
     /// @inheritdoc IDFMM
     function update(uint256 poolId, bytes calldata data) external lock {
-        IStrategy(pools[poolId].strategy).update(
-            msg.sender, poolId, pools[poolId], data
+        IStrategy(_pools[poolId].strategy).update(
+            msg.sender, poolId, _pools[poolId], data
         );
     }
 
@@ -316,9 +316,9 @@ contract DFMM is IDFMM {
         bool isAllocate,
         uint256 deltaL
     ) internal {
-        LPToken liquidityToken = LPToken(pools[poolId].liquidityToken);
+        LPToken liquidityToken = LPToken(_pools[poolId].liquidityToken);
         uint256 totalSupply = liquidityToken.totalSupply();
-        uint256 totalLiquidity = pools[poolId].totalLiquidity;
+        uint256 totalLiquidity = _pools[poolId].totalLiquidity;
 
         if (isAllocate) {
             uint256 amount =
@@ -368,12 +368,12 @@ contract DFMM is IDFMM {
 
     /// @inheritdoc IDFMM
     function nonce() external view returns (uint256) {
-        return pools.length;
+        return _pools.length;
     }
 
     /// @inheritdoc IDFMM
-    function getPool(uint256 poolId) external view returns (Pool memory) {
-        return pools[poolId];
+    function pools(uint256 poolId) external view returns (Pool memory) {
+        return _pools[poolId];
     }
 
     /// @inheritdoc IDFMM
@@ -382,24 +382,6 @@ contract DFMM is IDFMM {
         view
         returns (uint256[] memory, uint256)
     {
-        return (pools[poolId].reserves, pools[poolId].totalLiquidity);
-    }
-
-    /**
-     * @notice Returns the amount of liquidity owned by `account` for
-     * the pool `poolId`.
-     * @dev This function should NOT be used in a non-view call, as the
-     * values can be manipulated. In the future this function might be
-     * removed.
-     */
-    function liquidityOf(
-        address account,
-        uint256 poolId
-    ) public view returns (uint256) {
-        LPToken liquidityToken = LPToken(pools[poolId].liquidityToken);
-        uint256 balance = liquidityToken.balanceOf(account);
-        uint256 totalSupply = liquidityToken.totalSupply();
-        uint256 totalLiquidity = pools[poolId].totalLiquidity;
-        return balance.mulWadDown(totalLiquidity.divWadDown(totalSupply));
+        return (_pools[poolId].reserves, _pools[poolId].totalLiquidity);
     }
 }

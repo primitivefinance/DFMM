@@ -73,7 +73,7 @@ contract SetUp is Test {
     function test_G3M2_allocate() public {
         test_G3M2_init();
 
-        Pool memory pool = dfmm.getPool(POOL_ID);
+        Pool memory pool = dfmm.pools(POOL_ID);
 
         console.log(pool.reserves[0]);
         console.log(pool.reserves[1]);
@@ -93,7 +93,7 @@ contract SetUp is Test {
     function test_G3M2_deallocate() public {
         test_G3M2_allocate();
 
-        Pool memory pool = dfmm.getPool(POOL_ID);
+        Pool memory pool = dfmm.pools(POOL_ID);
 
         console.log(pool.reserves[0]);
         console.log(pool.reserves[1]);
@@ -116,7 +116,7 @@ contract SetUp is Test {
         view
         returns (address)
     {
-        Pool memory pool = dfmm.getPool(poolId);
+        Pool memory pool = dfmm.pools(poolId);
         return pool.liquidityToken;
     }
 
