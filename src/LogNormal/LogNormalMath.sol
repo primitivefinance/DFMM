@@ -8,7 +8,6 @@ import { LogNormalParams } from "src/LogNormal/LogNormal.sol";
 import { Gaussian } from "solstat/Gaussian.sol";
 import { toUint } from "src/LogNormal/LogNormalUtils.sol";
 import { bisection } from "src/lib/BisectionLib.sol";
-import "forge-std/console2.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
@@ -262,7 +261,7 @@ function computeNextRx(
     int256 invariant,
     uint256 approximatedRx,
     LogNormalParams memory params
-) view returns (uint256 rX) {
+) pure returns (uint256 rX) {
     uint256 upper = approximatedRx;
     uint256 lower = approximatedRx;
     int256 computedInvariant = invariant;
@@ -276,7 +275,6 @@ function computeNextRx(
                 L: L,
                 params: params
             });
-            //console2.log("upper branch invariant", computedInvariant);
         }
     } else {
         while (computedInvariant > 0) {
@@ -288,7 +286,6 @@ function computeNextRx(
                 L: L,
                 params: params
             });
-            //console2.log("lower branch invariant", computedInvariant);
         }
     }
     (uint256 rootInput, uint256 upperInput,) = bisection(
@@ -316,11 +313,10 @@ function computeNextRy(
     int256 invariant,
     uint256 approximatedRy,
     LogNormalParams memory params
-) view returns (uint256 rY) {
+) pure returns (uint256 rY) {
     uint256 upper = approximatedRy;
     uint256 lower = approximatedRy;
     int256 computedInvariant = invariant;
-    console2.log(computedInvariant);
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
             upper = upper.mulDivUp(1001, 1000);
@@ -330,7 +326,6 @@ function computeNextRy(
                 L: L,
                 params: params
             });
-            //console2.log("lower branch invariant", computedInvariant);
         }
     } else {
         while (computedInvariant > 0) {
@@ -341,7 +336,6 @@ function computeNextRy(
                 L: L,
                 params: params
             });
-            //console2.log("upper branch invariant", computedInvariant);
         }
     }
     (uint256 rootInput, uint256 upperInput,) = bisection(
