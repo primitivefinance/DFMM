@@ -140,7 +140,6 @@ function computePriceGivenX(
     uint256 L,
     LogNormalParams memory params
 ) pure returns (uint256) {
-    // $$\frac{1}{2} \sigma^2$$
     uint256 a = computeHalfSigmaSquared(params.width);
     // $$\Phi^{-1} (1 - \frac{x}{L})$$
     int256 b = Gaussian.ppf(int256(ONE - rX.divWadDown(L)));
@@ -157,7 +156,6 @@ function computePriceGivenY(
     uint256 L,
     LogNormalParams memory params
 ) pure returns (uint256) {
-    // $$\frac{1}{2} \sigma^2$$
     uint256 a = computeHalfSigmaSquared(params.width);
 
     // $$\Phi^{-1} (\frac{y}{\mu L})$$
