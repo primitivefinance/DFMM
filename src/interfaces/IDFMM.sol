@@ -15,6 +15,8 @@ struct Pool {
     uint256[] reserves;
     uint256 totalLiquidity;
     address liquidityToken;
+    address controller;
+    uint256 controllerFee;
 }
 
 /**
@@ -31,6 +33,8 @@ struct InitParams {
     address strategy;
     address[] tokens;
     bytes data;
+    address controller;
+    uint256 controllerFee;
 }
 
 /**
