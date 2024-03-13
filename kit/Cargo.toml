@@ -25,6 +25,7 @@ futures-util = "0.3.30"
 # Serde 
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.114"
+serde_traitobject = "0.2.8"
 
 # Errors and tracing
 anyhow = "1.0.80"

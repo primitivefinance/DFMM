@@ -1,20 +1,14 @@
-use bindings::{constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver};
-
 use super::*;
 
+#[derive(Debug)]
 pub struct ConstantSumPool {
     pub strategy_contract: ConstantSum<ArbiterMiddleware>,
     pub solver_contract: ConstantSumSolver<ArbiterMiddleware>,
-    pub parameters: ConstantSumParameters,
-}
-
-pub struct ConstantSumParameters {
-    pub price: eU256,
-    pub swap_fee: eU256,
+    pub parameters: ConstantSumParams,
 }
 
 impl PoolType for ConstantSumPool {
-    type Parameters = ConstantSumParameters;
+    type Parameters = ConstantSumParams;
     type StrategyContract = ConstantSum<ArbiterMiddleware>;
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = (AllocateOrDeallocate, eU256, eU256);
@@ -22,17 +16,17 @@ impl PoolType for ConstantSumPool {
     async fn swap_data(
         &self,
         pool_id: eU256,
-        input_token: InputToken,
+        input_token: Token,
         amount_in: eU256,
     ) -> Result<Bytes> {
         let (valid, _, data) = match input_token {
-            InputToken::TokenX => {
+            Token::TokenX => {
                 self.solver_contract
                     .simulate_swap(pool_id, true, amount_in)
                     .call()
                     .await?
             }
-            InputToken::TokenY => {
+            Token::TokenY => {
                 self.solver_contract
                     .simulate_swap(pool_id, false, amount_in)
                     .call()

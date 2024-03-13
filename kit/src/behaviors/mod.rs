@@ -7,10 +7,12 @@ use arbiter_engine::{
 use arbiter_macros::Behaviors;
 use serde::{Deserialize, Serialize};
 
-use self::deployer::Deployer;
+pub use self::deployer::{Deployer, DeploymentData};
 use super::*;
 
 pub mod deployer;
+pub mod initialize;
+pub mod liquidity_provision;
 
 #[derive(Behaviors, Debug, Deserialize, Serialize)]
 pub enum Behaviors {
