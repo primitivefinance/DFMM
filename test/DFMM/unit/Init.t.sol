@@ -131,6 +131,30 @@ contract DFMMInit is DFMMSetUp, Script {
         assertEq(lpToken.balanceOf(address(0)), 1000);
     }
 
+    function test_DFMM_init_RevertsWhenETHIsInsufficient() public {
+        uint256[] memory reserves = new uint256[](2);
+        reserves[0] = 1 ether;
+        reserves[1] = 1 ether;
+
+        bytes memory params =
+            abi.encode(true, int256(1 ether), reserves, uint256(1 ether));
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(weth);
+        tokens[1] = address(tokenY);
+
+        vm.expectRevert("TRANSFER_FROM_FAILED");
+        (POOL_ID,,) = dfmm.init{ value: 0.5 ether }(
+            IDFMM.InitParams({
+                name: "Default Pool",
+                symbol: "POOL",
+                strategy: address(strategy),
+                tokens: tokens,
+                data: params
+            })
+        );
+    }
+
     function test_DFMM_init_RevertsWhenSameTokens() public {
         skip();
         /*
