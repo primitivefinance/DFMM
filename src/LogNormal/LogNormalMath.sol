@@ -67,10 +67,9 @@ function computeLGivenX(
     LogNormalParams memory params
 ) pure returns (uint256 L) {
     int256 d1 = computeD1({ S: S, params: params });
-    int256 cdf = Gaussian.cdf(d1);
-    uint256 unsignedCdf = toUint(cdf);
+    uint256 cdf = toUint(Gaussian.cdf(d1));
 
-    L = rx.divWadUp(ONE - unsignedCdf);
+    L = rx.divWadUp(ONE - cdf);
 }
 
 /// @dev Computes reserves y given L(x, S).
