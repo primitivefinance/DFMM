@@ -48,7 +48,7 @@ contract LogNormalSolver {
         strategy = _strategy;
     }
 
-    function fetchPoolParams(uint256 poolId)
+    function getPoolParams(uint256 poolId)
         public
         view
         returns (LogNormalParams memory)
@@ -204,7 +204,7 @@ contract LogNormalSolver {
             reserves, L, IStrategy(strategy).getPoolParams(poolId)
         );
         return
-            computeNextLiquidity(rx, ry, invariant, L, fetchPoolParams(poolId));
+            computeNextLiquidity(rx, ry, invariant, L, getPoolParams(poolId));
     }
 
     function getNextReserveX(
@@ -215,13 +215,13 @@ contract LogNormalSolver {
     ) public view returns (uint256) {
         uint256[] memory reserves = new uint256[](2);
         reserves[1] = ry;
-        uint256 approximatedRx = computeXGivenL(L, S, fetchPoolParams(poolId));
+        uint256 approximatedRx = computeXGivenL(L, S, getPoolParams(poolId));
         reserves[0] = approximatedRx;
         int256 invariant = IStrategy(strategy).tradingFunction(
             reserves, L, IStrategy(strategy).getPoolParams(poolId)
         );
         return computeNextRx(
-            ry, L, invariant, approximatedRx, fetchPoolParams(poolId)
+            ry, L, invariant, approximatedRx, getPoolParams(poolId)
         );
     }
 
@@ -233,13 +233,13 @@ contract LogNormalSolver {
     ) public view returns (uint256) {
         uint256[] memory reserves = new uint256[](2);
         reserves[0] = rx;
-        uint256 approximatedRy = computeYGivenL(L, S, fetchPoolParams(poolId));
+        uint256 approximatedRy = computeYGivenL(L, S, getPoolParams(poolId));
         reserves[1] = approximatedRy;
         int256 invariant = IStrategy(strategy).tradingFunction(
             reserves, L, IStrategy(strategy).getPoolParams(poolId)
         );
         return computeNextRy(
-            rx, L, invariant, approximatedRy, fetchPoolParams(poolId)
+            rx, L, invariant, approximatedRy, getPoolParams(poolId)
         );
     }
 
@@ -259,7 +259,7 @@ contract LogNormalSolver {
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
-        LogNormalParams memory poolParams = fetchPoolParams(poolId);
+        LogNormalParams memory poolParams = getPoolParams(poolId);
 
         SimulateSwapState memory state;
 
@@ -341,7 +341,7 @@ contract LogNormalSolver {
         uint256 ry,
         uint256 L
     ) public view returns (uint256 price) {
-        price = computePriceGivenY(ry, L, fetchPoolParams(poolId));
+        price = computePriceGivenY(ry, L, getPoolParams(poolId));
     }
 
     function getPriceGivenXL(
@@ -349,7 +349,7 @@ contract LogNormalSolver {
         uint256 rx,
         uint256 L
     ) public view returns (uint256 price) {
-        price = computePriceGivenX(rx, L, fetchPoolParams(poolId));
+        price = computePriceGivenX(rx, L, getPoolParams(poolId));
     }
 
     /// @dev Computes the internal price using this strategie's slot parameters.
@@ -359,6 +359,6 @@ contract LogNormalSolver {
         returns (uint256 price)
     {
         (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        price = computePriceGivenX(reserves[0], L, fetchPoolParams(poolId));
+        price = computePriceGivenX(reserves[0], L, getPoolParams(poolId));
     }
 }

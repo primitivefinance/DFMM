@@ -1,7 +1,7 @@
 /// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { IStrategy, IDFMM, Pool } from "src/interfaces/IStrategy.sol";
+import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
 
 /**
  * @title Strategy base contract for DFMM.
