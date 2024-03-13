@@ -2,37 +2,52 @@
 pragma solidity ^0.8.13;
 
 /**
+ * @dev Parameters of a DFMM pool.
+ * @param strategy Address of the associated strategy contract.
+ * @param tokens Array of token addresses in the pool.
+ * @param reserves Array of token reserves in the pool in WAD.
+ * @param totalLiquidity Total liquidity in the pool.
+ * @param liquidityToken Address of the LP token contract.
+ */
+struct Pool {
+    address strategy;
+    address[] tokens;
+    uint256[] reserves;
+    uint256 totalLiquidity;
+    address liquidityToken;
+}
+
+/**
+ * @dev Parameters used to initialize a new DFMM pool.
+ * @param name Name of the LP token.
+ * @param symbol Symbol of the LP token.
+ * @param strategy Address of the associated strategy contract.
+ * @param tokens Array of token addresses in the pool.
+ * @param data An array of bytes used by the strategy contract.
+ */
+struct InitParams {
+    string name;
+    string symbol;
+    address strategy;
+    address[] tokens;
+    bytes data;
+}
+
+/**
  * @title DFMM Interface
  * @author Primitive
  */
 interface IDFMM {
-    // Structs
-
-    struct Pool {
-        address strategy;
-        address tokenX;
-        address tokenY;
-        uint256 reserveX;
-        uint256 reserveY;
-        uint256 totalLiquidity;
-        address liquidityToken;
-    }
-
-    struct InitParams {
-        address strategy;
-        address tokenX;
-        address tokenY;
-        bytes data;
-    }
-
     // Errors
 
+    /// @dev Thrown when the caller is not the WETH contract.
     error OnlyWETH();
 
+    /// @dev Thrown when a token transfer fails.
     error InvalidTransfer();
 
     /// @dev Thrown when the invariant is invalid.
-    error Invalid(bool negative, uint256 swapConstantGrowth);
+    error InvalidInvariant(int256 invariant);
 
     /// @dev Thrown when pool tokens are identical.
     error InvalidTokens();
@@ -40,80 +55,73 @@ interface IDFMM {
     /// @dev Thrown when a new call is made during a locked state.
     error Locked();
 
-    /// @dev Thrown when the reserves are invalid after a swap.
-    error InvalidSwap();
-
-    /// @dev Thrown when the transfer of the input amount is invalid.
-    error InvalidSwapInputTransfer();
-
-    /// @dev Thrown when the transfer of the output amount is invalid.
-    error InvalidSwapOutputTransfer();
-
     /// @dev Thrown when a clone contract could not be deployed.
     error ERC1167FailedCreateClone();
 
     // Events
 
     /**
-     * @notice Emitted when the pool is initialized.
+     * @notice Emitted when a pool is initialized.
      * @param account Address initializing the pool.
-     * @param reserveX Initial reserve of token X in the pool.
-     * @param reserveY Initial reserve of token Y in the pool.
+     * @param strategy Address of the associated strategy contract.
+     * @param lpToken Address of the LP token contract.
+     * @param poolId Id of the newly initialized pool.
+     * @param tokens Array of token addresses in the pool.
+     * @param reserves Array of token reserves in the pool in WAD.
      * @param totalLiquidity Initial liquidity in the pool.
      */
     event Init(
         address indexed account,
         address strategy,
         address lpToken,
-        address indexed tokenX,
-        address indexed tokenY,
         uint256 poolId,
-        uint256 reserveX,
-        uint256 reserveY,
+        address[] indexed tokens,
+        uint256[] reserves,
         uint256 totalLiquidity
     );
 
     /**
-     * @notice Emitted when liquidity is allocated into the pool.
+     * @notice Emitted when liquidity is allocated into a pool.
      * @param account Address allocating liquidity.
-     * @param deltaX Amount of token X being allocated.
-     * @param deltaY Amount of token Y being allocated.
+     * @param poolId Id of the pool receiving liquidity.
+     * @param deltas Array of amounts (in WAD) deposited into the pool.
      * @param deltaL Amount of liquidity received by the allocator.
      */
     event Allocate(
         address indexed account,
         uint256 poolId,
-        uint256 deltaX,
-        uint256 deltaY,
+        uint256[] deltas,
         uint256 deltaL
     );
 
     /**
-     * @notice Emitted when liquidity is deallocated from the pool.
+     * @notice Emitted when liquidity is deallocated from a pool.
      * @param account Address deallocating liquidity.
-     * @param deltaX Amount of token X being deallocated.
-     * @param deltaY Amount of token Y being deallocated.
+     * @param poolId Id of the pool losing liquidity.
+     * @param deltas Array of amounts (in WAD) withdrawn from the pool.
      * @param deltaL Amount of liquidity being deallocated.
      */
     event Deallocate(
         address indexed account,
         uint256 poolId,
-        uint256 deltaX,
-        uint256 deltaY,
+        uint256[] indexed deltas,
         uint256 deltaL
     );
 
     /**
      * @notice Emitted when a swap is made.
      * @param account Address making the swap.
-     * @param isSwapXForY True if token X are being swapped for token Y.
+     * @param poolId Id of the pool where the swap is happening.
+     * @param tokenIn Address of the token being sent.
+     * @param tokenOut Address of the token being received.
      * @param inputAmount Amount of token sent by the swapper.
      * @param outputAmount Amount of token received by the swapper.
      */
     event Swap(
         address indexed account,
         uint256 indexed poolId,
-        bool isSwapXForY,
+        address tokenIn,
+        address tokenOut,
         uint256 inputAmount,
         uint256 outputAmount
     );
@@ -124,8 +132,7 @@ interface IDFMM {
      * @notice Intializes a new pool.
      * @param params A struct containing the initialization parameters.
      * @return poolId Id of the newly initialized pool.
-     * @return reserveX Initial amount of token X in the pool.
-     * @return reserveY Initial amount of token Y in the pool.
+     * @return reserves Initial reserves of the pool in WAD.
      * @return totalLiquidity Initial amount of liquidity in the pool.
      */
     function init(InitParams calldata params)
@@ -133,46 +140,52 @@ interface IDFMM {
         payable
         returns (
             uint256 poolId,
-            uint256 reserveX,
-            uint256 reserveY,
+            uint256[] memory reserves,
             uint256 totalLiquidity
         );
 
     /**
      * @notice Allocates liquidity into the pool `poolId`.
-     * @param poolId Id of the pool to allocate liquidity into.
+     * @param poolId Id of the pool to allocate into.
      * @param data An array of bytes used by the strategy contract.
-     * @return deltaX Amount of token X allocated into the pool.
-     * @return deltaY Amount of token Y allocated into the pool.
+     * @return deltas Array of amounts (in WAD) deposited into the pool.
      */
     function allocate(
         uint256 poolId,
         bytes calldata data
-    ) external payable returns (uint256 deltaX, uint256 deltaY);
+    ) external payable returns (uint256[] memory deltas);
 
     /**
      * @notice Deallocates liquidity from the pool `poolId`.
-     * @param poolId Id of the pool to deallocate liquidity from.
+     * @param poolId Id of the pool to deallocate from.
      * @param data An array of bytes used by the strategy contract.
-     * @return deltaX Amount of token X deallocated from the pool.
-     * @return deltaY Amount of token Y deallocated from the pool.
+     * @return deltas Array of amounts (in WAD) withdrawn from the pool.
      */
     function deallocate(
         uint256 poolId,
         bytes calldata data
-    ) external returns (uint256 deltaX, uint256 deltaY);
+    ) external returns (uint256[] memory deltas);
 
     /**
      * @notice Swaps tokens into pool `poolId`.
      * @param poolId Id of the pool to swap tokens into.
      * @param data An array of bytes used by the strategy contract.
-     * @return inputAmount Amount of tokens sent to the DFMM contract.
-     * @return outputAmount Amount of tokens received by the swapper.
+     * @return tokenIn Address of the token being sent.
+     * @return tokenOut Address of the token being received.
+     * @return amountIn Amount of token sent by the swapper.
+     * @return amountOut Amount of token received by the swapper.
      */
     function swap(
         uint256 poolId,
         bytes calldata data
-    ) external returns (uint256 inputAmount, uint256 outputAmount);
+    )
+        external
+        returns (
+            address tokenIn,
+            address tokenOut,
+            uint256 amountIn,
+            uint256 amountOut
+        );
 
     /**
      * @notice Updates pool `poolId` by calling the associated strategy.
@@ -183,31 +196,24 @@ interface IDFMM {
 
     // Getters
 
+    /// @notice Returns the amount of initialized pools.
+    function nonce() external view returns (uint256);
+
     /// @notice Address of the implementation of the LPToken contract.
     function lpTokenImplementation() external view returns (address);
 
     /// @notice Address of the WETH contract.
     function weth() external view returns (address);
 
+    /// @notice Returns the reserves and total liquidity of pool `poolId`.
+    /// @return reserves Array of token reserves in the pool in WAD.
+    /// @return totalLiquidity Total liquidity in the pool.
     function getReservesAndLiquidity(uint256 poolId)
         external
         view
-        returns (
-            uint256 reserveXWad,
-            uint256 reserveYWad,
-            uint256 totalLiquidity
-        );
+        returns (uint256[] memory reserves, uint256 totalLiquidity);
 
-    function pools(uint256 poolId)
-        external
-        view
-        returns (
-            address strategy,
-            address tokenX,
-            address tokenY,
-            uint256 reserveX,
-            uint256 reserveY,
-            uint256 totalLiquidity,
-            address liquidityToken
-        );
+    /// @notice Returns the pool parameters of pool `poolId`.
+    /// @return pool A struct containing the pool parameters.
+    function pools(uint256 poolId) external view returns (Pool memory pool);
 }

@@ -97,6 +97,8 @@ To run all the tests, simply run the following command:
 forge t
 ```
 
+Learn more about our testing suite [here](./test/README.md).
+
 ### Deployment
 
 You can deploy the contracts with the following command:
