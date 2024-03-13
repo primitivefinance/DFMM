@@ -336,7 +336,7 @@ contract DFMM is IDFMM {
         } else {
             uint256 amount =
                 deltaL.mulWadUp(totalSupply.divWadUp(totalLiquidity));
-            liquidityToken.burn(account, amount);
+            liquidityToken.burn(msg.sender, amount);
         }
     }
 
