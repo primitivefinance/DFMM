@@ -3,6 +3,14 @@ pragma solidity ^0.8.13;
 
 // Structs
 
+/**
+ * @dev Parameters of a DFMM pool.
+ * @param strategy Address of the associated strategy contract.
+ * @param tokens Array of token addresses in the pool.
+ * @param reserves Array of token reserves in the pool in WAD.
+ * @param totalLiquidity Total liquidity in the pool.
+ * @param liquidityToken Address of the LP token contract.
+ */
 struct Pool {
     address strategy;
     address[] tokens;
@@ -11,6 +19,14 @@ struct Pool {
     address liquidityToken;
 }
 
+/**
+ * @dev Parameters used to initialize a new DFMM pool.
+ * @param name Name of the LP token.
+ * @param symbol Symbol of the LP token.
+ * @param strategy Address of the associated strategy contract.
+ * @param tokens Array of token addresses in the pool.
+ * @param data An array of bytes used by the strategy contract.
+ */
 struct InitParams {
     string name;
     string symbol;
