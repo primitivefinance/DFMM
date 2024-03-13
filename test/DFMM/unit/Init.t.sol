@@ -63,6 +63,35 @@ contract DFMMInit is DFMMSetUp, Script {
         );
     }
 
+    function test_DFMM_init_WrapsETH() public {
+        uint256[] memory reserves = new uint256[](2);
+        reserves[0] = 1 ether;
+        reserves[1] = 1 ether;
+
+        bytes memory params =
+            abi.encode(true, int256(1 ether), reserves, uint256(1 ether));
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(weth);
+        tokens[1] = address(tokenY);
+
+        uint256 preETHBalance = address(this).balance;
+
+        (POOL_ID,,) = dfmm.init{ value: 1 ether }(
+            IDFMM.InitParams({
+                name: "Default Pool",
+                symbol: "POOL",
+                strategy: address(strategy),
+                tokens: tokens,
+                data: params
+            })
+        );
+
+        assertLe(address(this).balance, preETHBalance - 1 ether);
+        assertEq(address(dfmm).balance, 0);
+        assertEq(weth.balanceOf(address(dfmm)), 1 ether);
+    }
+
     function test_dfmm_init_EmitsInitEvent() public {
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
