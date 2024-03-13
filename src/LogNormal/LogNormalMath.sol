@@ -8,7 +8,6 @@ import { LogNormalParams } from "src/LogNormal/LogNormal.sol";
 import { Gaussian } from "solstat/Gaussian.sol";
 import { toUint } from "src/LogNormal/LogNormalUtils.sol";
 import { bisection } from "src/lib/BisectionLib.sol";
-import { bisection2 } from "src/lib/BisectionLib2.sol";
 import "forge-std/console2.sol";
 
 using FixedPointMathLib for uint256;
@@ -238,7 +237,7 @@ function computeNextLiquidity(
             });
         }
     }
-    (uint256 rootInput,, uint256 lowerInput)   = bisection2(
+    (uint256 rootInput,, uint256 lowerInput)   = bisection(
         abi.encode(rX, rY, computedInvariant, params),
         lower,
         upper,
@@ -247,7 +246,7 @@ function computeNextLiquidity(
         findRootLiquidity
     );
 
-    if (rootInput == 0) {
+    if (computeTradingFunction({ rX: rX, rY: rY, L: rootInput, params: params }) == 0) {
       L = rootInput;
     } else  {
       L = lowerInput;
@@ -290,7 +289,7 @@ function computeNextRx(
             //console2.log("lower branch invariant", computedInvariant);
         }
     }
-    rX = bisection(
+    (uint256 rootInput, uint256 upperInput,) = bisection(
         abi.encode(rY, L, computedInvariant, params),
         lower,
         upper,
@@ -298,6 +297,12 @@ function computeNextRx(
         MAX_ITER,
         findRootX
     );
+    // `upperInput` should be positive, so if root is < 0 return upperInput instead
+    if (computeTradingFunction({ rX: rootInput, rY: rY, L: L, params: params }) == 0) {
+      rX = rootInput;
+    } else  {
+      rX = upperInput;
+    }
 }
 
 function computeNextRy(
@@ -334,7 +339,7 @@ function computeNextRy(
             //console2.log("upper branch invariant", computedInvariant);
         }
     }
-    rY = bisection(
+    (uint256 rootInput, uint256 upperInput,) = bisection(
         abi.encode(rX, L, computedInvariant, params),
         lower,
         upper,
@@ -342,4 +347,10 @@ function computeNextRy(
         MAX_ITER,
         findRootY
     );
+    // `upperInput` should be positive, so if root is < 0 return upperInput instead
+    if (computeTradingFunction({ rX: rX, rY: rootInput, L: L, params: params }) == 0) {
+      rY = rootInput;
+    } else  {
+      rY = upperInput;
+    }
 }

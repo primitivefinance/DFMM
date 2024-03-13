@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title Strategy base contract for DFMM.
@@ -145,6 +146,7 @@ abstract contract PairStrategy is IStrategy {
         invariant = tradingFunction(
             pool.reserves, pool.totalLiquidity + deltaLiquidity, params
         );
+        console2.log(invariant);
 
         valid = invariant >= 0;
     }

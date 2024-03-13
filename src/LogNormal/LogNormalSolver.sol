@@ -251,7 +251,6 @@ contract LogNormalSolver {
         bool swapXIn,
         uint256 amountIn
     ) public view returns (bool, uint256, uint256, bytes memory) {
-        Reserves memory startReserves;
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
@@ -272,12 +271,9 @@ contract LogNormalSolver {
                 uint256 approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
 
-                console2.log(approxPrice);
-
                 endReserves.ry = getNextReserveY(
                     poolId, endReserves.rx, endReserves.L, approxPrice
                 );
-                endReserves.ry += 1;
 
                 require(
                     endReserves.ry < preReserves[1],
@@ -292,12 +288,10 @@ contract LogNormalSolver {
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
-                console2.log(approxPrice);
 
                 endReserves.rx = getNextReserveX(
                     poolId, endReserves.ry, endReserves.L, approxPrice
                 );
-                endReserves.rx += 1;
 
                 require(
                     endReserves.rx < preReserves[0],

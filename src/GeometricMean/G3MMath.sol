@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { GeometricMeanParams } from "src/GeometricMean/GeometricMean.sol";
 import { bisection } from "src/lib/BisectionLib.sol";
-import { bisection2 } from "src/lib/BisectionLib2.sol";
 import "forge-std/console2.sol";
 
 uint256 constant ONE = 1 ether;
@@ -225,7 +224,7 @@ function computeNextLiquidity(
             });
         }
     }
-    (uint256 rootInput,, uint256 lowerInput) = bisection2(
+    (uint256 rootInput,, uint256 lowerInput) = bisection(
         abi.encode(rX, rY, computedInvariant, params),
         lower,
         upper,

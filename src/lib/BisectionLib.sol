@@ -29,7 +29,7 @@ function bisection(
     uint256 epsilon,
     uint256 maxIterations,
     function (bytes memory,uint256) pure returns (int256) fx
-) pure returns (uint256 root) {
+) pure returns (uint256 root, uint256 upperInput, uint256 lowerInput) {
     if (lower > upper) revert BisectionLib_InvalidBounds(lower, upper);
     // Passes the lower and upper bounds to the optimized function.
     // Reverts if the optimized function `fx` returns both negative or both positive values.
@@ -43,21 +43,23 @@ function bisection(
 
     // Distance is optimized to equal `epsilon`.
     uint256 distance = upper - lower;
+    upperInput = upper;
+    lowerInput = lower;
 
     uint256 iterations; // Bounds the amount of loops to `maxIterations`.
     do {
         // Bisection uses the point between the lower and upper bounds.
         // The `distance` is halved each iteration.
-        root = (lower + upper) / 2;
+        root = (lowerInput + upperInput) / 2;
 
         int256 output = fx(args, root);
 
         // If the product is negative, the root is between the lower and root.
         // If the product is positive, the root is between the root and upper.
         if (output * lowerOutput <= 0) {
-            upper = root; // Set the new upper bound to the root because we know its between the lower and root.
+            upperInput = root; // Set the new upper bound to the root because we know its between the lower and root.
         } else {
-            lower = root; // Set the new lower bound to the root because we know its between the upper and root.
+            lowerInput = root; // Set the new lower bound to the root because we know its between the upper and root.
             lowerOutput = output; // root function value becomes new lower output value
         }
 
