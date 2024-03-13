@@ -308,7 +308,7 @@ contract DFMM is IDFMM {
 
         if (isAllocate) {
             uint256 amount =
-                deltaL.mulWadDown(totalSupply.divWadUp(totalLiquidity));
+                deltaL.mulWadDown(totalSupply.divWadDown(totalLiquidity));
             liquidityToken.mint(msg.sender, amount);
         } else {
             uint256 amount =
