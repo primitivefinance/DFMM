@@ -7,6 +7,12 @@ import "src/DFMM.sol";
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
 import { ONE, TWO } from "src/lib/StrategyLib.sol";
+import {
+    computeNextLiquidity,
+    computeLGivenX,
+    computeYGivenL,
+    computeTradingFunction
+} from "src/LogNormal/LogNormalMath.sol";
 
 contract LogNormalTest is Test {
     using stdStorage for StdStorage;
@@ -125,6 +131,30 @@ contract LogNormalTest is Test {
 
         _;
     }
+
+    /*
+
+    function test_inital_pool_bisection() public {
+        vm.warp(0);
+
+        LogNormalParams memory params = LogNormalParams({
+            mean: ONE,
+            width: ONE,
+            swapFee: TEST_SWAP_FEE,
+            controller: address(0)
+        });
+        uint256 approxL = computeLGivenX(ONE, TWO, params);
+        uint256 ry = computeYGivenL(approxL, TWO, params);
+        int256 invariant = computeTradingFunction(ONE, ry, approxL, params);
+        (uint256 L, uint256 upperInput, uint256 lowerInput) = computeNextLiquidity2(ONE, ry, invariant, approxL, params);
+        int256 invUpper = computeTradingFunction(ONE, ry, upperInput, params);
+        int256 invLower = computeTradingFunction(ONE, ry, lowerInput, params);
+
+        console2.log(L);
+        console2.log("upper", invUpper);
+        console2.log("lower", invLower);
+    }
+    */
 
     function test_ln_swap_x_in() public basic {
         bool xIn = true;

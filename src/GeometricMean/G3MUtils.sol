@@ -13,7 +13,6 @@ import {
     computeTradingFunction,
     computeNextLiquidity
 } from "./G3MMath.sol";
-import "forge-std/console2.sol";
 
 function encodeFeeUpdate(uint256 swapFee) pure returns (bytes memory) {
     return abi.encode(UpdateCode.SwapFee, uint256(swapFee));
@@ -63,7 +62,6 @@ function computeInitialPoolData(
 
     int256 invariant =
         computeTradingFunction({ rX: amountX, rY: rY, L: L, params: params });
-    console2.log(invariant);
 
     L = computeNextLiquidity(amountX, rY, invariant, L, params);
 
