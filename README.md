@@ -147,3 +147,4 @@ These terms are used to name specific variables throuhout the codebase and the d
 Contributions are welcome! Check out our [guidelines](./CONTRIBUTING.md).
 
 ## Licences
+The Solidity contracts that make up the DFMM protocol are licensed under the [GPL-3.0](src/LICENSE). The rust sdk in the `kit/` directory is [Apache 2](kit/LICENSE).
