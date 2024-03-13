@@ -7,7 +7,12 @@ import "src/DFMM.sol";
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
 import { ONE, TWO } from "src/lib/StrategyLib.sol";
-import { computeNextLiquidity, computeLGivenX, computeYGivenL, computeTradingFunction } from "src/LogNormal/LogNormalMath.sol";
+import {
+    computeNextLiquidity,
+    computeLGivenX,
+    computeYGivenL,
+    computeTradingFunction
+} from "src/LogNormal/LogNormalMath.sol";
 
 contract LogNormalTest is Test {
     using stdStorage for StdStorage;

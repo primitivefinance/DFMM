@@ -237,7 +237,7 @@ function computeNextLiquidity(
             });
         }
     }
-    (uint256 rootInput,, uint256 lowerInput)   = bisection(
+    (uint256 rootInput,, uint256 lowerInput) = bisection(
         abi.encode(rX, rY, computedInvariant, params),
         lower,
         upper,
@@ -246,13 +246,15 @@ function computeNextLiquidity(
         findRootLiquidity
     );
 
-    if (computeTradingFunction({ rX: rX, rY: rY, L: rootInput, params: params }) == 0) {
-      L = rootInput;
-    } else  {
-      L = lowerInput;
+    if (
+        computeTradingFunction({ rX: rX, rY: rY, L: rootInput, params: params })
+            == 0
+    ) {
+        L = rootInput;
+    } else {
+        L = lowerInput;
     }
 }
-
 
 function computeNextRx(
     uint256 rY,
@@ -298,10 +300,13 @@ function computeNextRx(
         findRootX
     );
     // `upperInput` should be positive, so if root is < 0 return upperInput instead
-    if (computeTradingFunction({ rX: rootInput, rY: rY, L: L, params: params }) == 0) {
-      rX = rootInput;
-    } else  {
-      rX = upperInput;
+    if (
+        computeTradingFunction({ rX: rootInput, rY: rY, L: L, params: params })
+            == 0
+    ) {
+        rX = rootInput;
+    } else {
+        rX = upperInput;
     }
 }
 
@@ -348,9 +353,12 @@ function computeNextRy(
         findRootY
     );
     // `upperInput` should be positive, so if root is < 0 return upperInput instead
-    if (computeTradingFunction({ rX: rX, rY: rootInput, L: L, params: params }) == 0) {
-      rY = rootInput;
-    } else  {
-      rY = upperInput;
+    if (
+        computeTradingFunction({ rX: rX, rY: rootInput, L: L, params: params })
+            == 0
+    ) {
+        rY = rootInput;
+    } else {
+        rY = upperInput;
     }
 }

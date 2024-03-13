@@ -52,17 +52,15 @@ contract LogNormalSwapTest is LogNormalSetUp {
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, payload);
 
-        /*
-        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
+        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY + inputAmount);
         assertEq(
-            tokenX.balanceOf(address(dfmm)), preDfmmBalanceY - outputAmount
+            tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - outputAmount
         );
 
-        assertEq(tokenY.balanceOf(address(this)), preUserBalanceX - inputAmount);
+        assertEq(tokenY.balanceOf(address(this)), preUserBalanceY - inputAmount);
         assertEq(
-            tokenX.balanceOf(address(this)), preUserBalanceY + outputAmount
+            tokenX.balanceOf(address(this)), preUserBalanceX + outputAmount
         );
-        */
     }
 
     // TODO: force payload to yield negative invariant and assert on revert
@@ -73,28 +71,32 @@ contract LogNormalSwapTest is LogNormalSetUp {
             solver.getReservesAndLiquidity(POOL_ID);
 
         LogNormalParams memory poolParams = solver.getPoolParams(POOL_ID);
-        uint256 startL = solver.getNextLiquidity(POOL_ID, preReserves[0], preReserves[1], preTotalLiquidity);
-        uint256 deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee)
-            .divWadUp(poolParams.mean);
+        uint256 startL = solver.getNextLiquidity(
+            POOL_ID, preReserves[0], preReserves[1], preTotalLiquidity
+        );
+        uint256 deltaLiquidity =
+            amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.mean);
 
         uint256 ry = preReserves[1] + amountIn;
         uint256 L = startL + deltaLiquidity;
-        uint256 approxPrice =
-            solver.getPriceGivenYL(POOL_ID, ry, L);
+        uint256 approxPrice = solver.getPriceGivenYL(POOL_ID, ry, L);
 
-        uint256 rx = solver.getNextReserveX(
-            POOL_ID, ry, L, approxPrice
-        );
+        uint256 rx = solver.getNextReserveX(POOL_ID, ry, L, approxPrice);
 
         int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
+        while (invariant >= 0) {
+            rx -= 1;
+            invariant = computeTradingFunction(rx, ry, L, poolParams);
+        }
 
         console2.log(invariant);
 
         uint256 amountOut = preReserves[0] - rx;
 
-        bytes memory payload = abi.encode(1, 0, amountIn, amountOut, deltaLiquidity);
+        bytes memory payload =
+            abi.encode(1, 0, amountIn, amountOut, deltaLiquidity);
 
+        vm.expectRevert();
         dfmm.swap(POOL_ID, payload);
     }
-
 }

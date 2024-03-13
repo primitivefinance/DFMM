@@ -234,8 +234,8 @@ function computeNextLiquidity(
     );
 
     if (rootInput == 0) {
-      L = rootInput;
+        L = rootInput;
     } else {
-      L = lowerInput;
+        L = lowerInput;
     }
 }

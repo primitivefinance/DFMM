@@ -200,11 +200,8 @@ contract LogNormalSolver {
     ) public view returns (uint256) {
         LogNormalParams memory poolParams = getPoolParams(poolId);
 
-        int256 invariant = computeTradingFunction(
-            rx, ry, L, poolParams 
-        );
-        return
-            computeNextLiquidity(rx, ry, invariant, L, poolParams);
+        int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
+        return computeNextLiquidity(rx, ry, invariant, L, poolParams);
     }
 
     function getNextReserveX(
@@ -215,12 +212,9 @@ contract LogNormalSolver {
     ) public view returns (uint256) {
         LogNormalParams memory poolParams = getPoolParams(poolId);
         uint256 approximatedRx = computeXGivenL(L, S, poolParams);
-        int256 invariant = computeTradingFunction(
-            approximatedRx, ry, L, poolParams 
-        );
-        return computeNextRx(
-            ry, L, invariant, approximatedRx, poolParams 
-        );
+        int256 invariant =
+            computeTradingFunction(approximatedRx, ry, L, poolParams);
+        return computeNextRx(ry, L, invariant, approximatedRx, poolParams);
     }
 
     function getNextReserveY(
@@ -231,12 +225,9 @@ contract LogNormalSolver {
     ) public view returns (uint256) {
         LogNormalParams memory poolParams = getPoolParams(poolId);
         uint256 approximatedRy = computeYGivenL(L, S, poolParams);
-        int256 invariant = computeTradingFunction(
-            rx, approximatedRy, L, poolParams 
-        );
-        return computeNextRy(
-            rx, L, invariant, approximatedRy, poolParams 
-        );
+        int256 invariant =
+            computeTradingFunction(rx, approximatedRy, L, poolParams);
+        return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
     }
 
     struct SimulateSwapState {
