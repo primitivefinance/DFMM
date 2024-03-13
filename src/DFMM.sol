@@ -26,6 +26,7 @@ contract DFMM is IDFMM {
     /// @inheritdoc IDFMM
     address public immutable lpTokenImplementation;
 
+    /// @inheritdoc IDFMM
     address public immutable weth;
 
     /// @dev Part of the reentrancy lock, 1 = unlocked, 2 = locked.
@@ -42,6 +43,7 @@ contract DFMM is IDFMM {
         _locked = 1;
     }
 
+    /// @dev Only the WETH contract can send ETH to this contract.
     receive() external payable {
         if (msg.sender != weth) revert OnlyWETH();
     }
@@ -50,6 +52,7 @@ contract DFMM is IDFMM {
      * @dev The implementation of the LPToken contract is also
      * deployed at the same time. It'll be used later to deploy
      * new LPTokens using the [clone factory pattern](https://eips.ethereum.org/EIPS/eip-1167).
+     * @param weth_ The address of the WETH contract.
      */
     constructor(address weth_) {
         weth = weth_;
@@ -57,6 +60,7 @@ contract DFMM is IDFMM {
         LPToken(lpTokenImplementation).initialize("", "");
     }
 
+    /// @inheritdoc IDFMM
     function init(InitParams calldata params)
         external
         payable
@@ -114,6 +118,7 @@ contract DFMM is IDFMM {
         return (poolId, reserves, totalLiquidity - BURNT_LIQUIDITY);
     }
 
+    /// @inheritdoc IDFMM
     function allocate(
         uint256 poolId,
         bytes calldata data
@@ -148,6 +153,7 @@ contract DFMM is IDFMM {
         return deltas;
     }
 
+    /// @inheritdoc IDFMM
     function deallocate(
         uint256 poolId,
         bytes calldata data
@@ -235,6 +241,7 @@ contract DFMM is IDFMM {
         return (tokenIn, tokenOut, state.amountIn, state.amountOut);
     }
 
+    /// @inheritdoc IDFMM
     function update(uint256 poolId, bytes calldata data) external lock {
         IStrategy(pools[poolId].strategy).update(
             msg.sender, poolId, pools[poolId], data
@@ -244,8 +251,9 @@ contract DFMM is IDFMM {
     // Internals
 
     /**
-     * @dev Transfers `amount` of `token` from the sender to the contract.
-     * Note that if ETH is present in the contract, it will be wrapped to WETH.
+     * @dev Transfers `amount` of `token` from the sender to the contract. Note
+     * that if ETH is present in the contract, it will be wrapped to WETH. Any
+     * excess of ETH will be sent back to the sender.
      * @param token Address of the token to transfer.
      * @param amount Amount to transfer expressed in WAD.
      */
@@ -296,7 +304,12 @@ contract DFMM is IDFMM {
     }
 
     /**
-     * @dev Mints or burns liquidity tokens.
+     * @dev Mints or burns liquidity tokens. Note that the amount of minted
+     * or burnt tokens is NOT the same as the amount of liquidity added or
+     * removed from the pool.
+     * @param poolId Id of the associated pool.
+     * @param isAllocate True if tokens will be minted, false otherwise.
+     * @param deltaL Amount of liquidity added or removed from the pool.
      */
     function _manageTokens(
         uint256 poolId,
@@ -319,9 +332,10 @@ contract DFMM is IDFMM {
     }
 
     /**
-     * @dev Deploys and returns the address of a clone that mimics the behaviour of `implementation`.
-     * This function uses the create opcode, which should never revert.
-     * This function is taken from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Clones.sol#L23.
+     * @dev Deploys and returns the address of a clone contract that mimics
+     * the behaviour of the contract deployed at the address `implementation`.
+     * This function uses the `CREATE` opcode, which should never revert.
+     * This function was taken from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Clones.sol#L23.
      */
     function clone(address implementation)
         internal
