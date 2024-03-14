@@ -23,7 +23,6 @@ contract LogNormalInitTest is LogNormalSetUp {
     }
 
     function test_LogNormal_init_RevertsIfInvalidTokens() public {
-        skip();
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenX);
@@ -38,7 +37,7 @@ contract LogNormalInitTest is LogNormalSetUp {
             controllerFee: 0
         });
 
-        vm.expectRevert(IDFMM.InvalidTokens.selector);
+        vm.expectRevert(IDFMM.InvalidDuplicateTokens.selector);
         dfmm.init(initParams);
     }
 

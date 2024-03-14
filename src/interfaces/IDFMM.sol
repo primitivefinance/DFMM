@@ -54,7 +54,16 @@ interface IDFMM {
     error InvalidInvariant(int256 invariant);
 
     /// @dev Thrown when pool tokens are identical.
-    error InvalidTokens();
+    error InvalidDuplicateTokens();
+
+    /// @dev Thrown when a pool is being initalized with less than two tokens.
+    error InvalidMinimumTokens();
+
+    /// @dev Thrown when a pool is being initalized with more than eight tokens.
+    error InvalidMaximumTokens();
+
+    /// @dev Thrown when a token has more than 18 decimals or less than 6.
+    error InvalidTokenDecimals();
 
     /// @dev Thrown when a new call is made during a locked state.
     error Locked();
