@@ -185,6 +185,7 @@ interface IDFMM {
     /**
      * @notice Swaps tokens into pool `poolId`.
      * @param poolId Id of the pool to swap tokens into.
+     * @param recipient Address receiving the output tokens.
      * @param data An array of bytes used by the strategy contract.
      * @return tokenIn Address of the token being sent.
      * @return tokenOut Address of the token being received.
@@ -193,6 +194,7 @@ interface IDFMM {
      */
     function swap(
         uint256 poolId,
+        address recipient,
         bytes calldata data
     )
         external
