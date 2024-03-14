@@ -14,7 +14,7 @@ import {
     computeDeltaGivenDeltaLRoundUp,
     computeDeltaGivenDeltaLRoundDown
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
-import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
+import { ONE } from "src/lib/StrategyLib.sol";
 
 /// @dev Parameterization of the GeometricMean curve.
 struct NTokenGeometricMeanParams {
@@ -111,7 +111,7 @@ contract NTokenGeometricMean is NTokenStrategy {
             state.reserves, state.totalLiquidity, getPoolParams(poolId)
         );
 
-        bool valid = -(EPSILON) < invariant && invariant < EPSILON;
+        bool valid = invariant >= 0;
 
         return (valid, invariant, state.reserves, state.totalLiquidity);
     }
