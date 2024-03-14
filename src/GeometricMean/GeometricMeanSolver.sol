@@ -8,10 +8,10 @@ import { GeometricMeanParams } from "./GeometricMean.sol";
 import {
     encodeFeeUpdate,
     encodeWeightXUpdate,
-    encodeControllerUpdate,
-    computeInitialPoolData
+    encodeControllerUpdate
 } from "./G3MUtils.sol";
 import {
+    computeInitialPoolData,
     computeL,
     computePrice,
     computeLGivenX,

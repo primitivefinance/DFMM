@@ -7,7 +7,7 @@ import {
 } from "src/GeometricMean/GeometricMean.sol";
 import { GeometricMeanSolver } from "src/GeometricMean/GeometricMeanSolver.sol";
 import "test/utils/SetUp.sol";
-import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
+import { computeInitialPoolData } from "src/GeometricMean/G3MMath.sol";
 import "solmate/utils/FixedPointMathLib.sol";
 import { InitParams } from "src/interfaces/IDFMM.sol";
 

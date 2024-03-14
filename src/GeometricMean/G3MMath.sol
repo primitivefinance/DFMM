@@ -237,3 +237,20 @@ function computeNextLiquidity(
         L = lowerInput;
     }
 }
+
+function computeInitialPoolData(
+    uint256 amountX,
+    uint256 initialPrice,
+    GeometricMeanParams memory params
+) pure returns (bytes memory) {
+    uint256 rY = computeY(amountX, initialPrice, params);
+    uint256 L = computeL(amountX, rY, params);
+
+    int256 invariant =
+        computeTradingFunction({ rX: amountX, rY: rY, L: L, params: params });
+
+    L = computeNextLiquidity(amountX, rY, invariant, L, params);
+
+    return
+        abi.encode(amountX, rY, L, params.wX, params.swapFee, params.controller);
+}
