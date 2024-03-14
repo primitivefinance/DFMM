@@ -52,7 +52,7 @@ function computeDeallocateGivenDeltaY(
 ) pure returns (uint256 deltaX, uint256 deltaL) {
     uint256 a = deltaY.divWadDown(rY);
     if (rX > 0) {
-        deltaY = a.mulWadDown(rX);
+        deltaX = a.mulWadDown(rX);
     }
     deltaL = a.mulWadDown(totalLiquidity);
 }
