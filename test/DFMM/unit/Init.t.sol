@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
+import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { LPToken } from "src/LPToken.sol";
 import { DFMMSetUp, IDFMM } from "./SetUp.sol";
 import { Pool, InitParams } from "src/interfaces/IDFMM.sol";
@@ -193,18 +194,46 @@ contract DFMMInit is DFMMSetUp, Script {
     }
 
     function test_DFMM_init_RevertsWhenSameTokens() public {
-        skip();
-        /*
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenX);
+
+        uint256[] memory reserves = new uint256[](2);
+
         InitParams memory params = InitParams({
+            name: "",
+            symbol: "",
             strategy: address(strategy),
-            tokenX: address(tokenX),
-            tokenY: address(tokenX),
-            data: ""
+            tokens: tokens,
+            data: abi.encode(true, int256(1 ether), reserves, uint256(1 ether)),
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
-        vm.expectRevert(IDFMM.InvalidTokens.selector);
+        vm.expectRevert(IDFMM.InvalidDuplicateTokens.selector);
         dfmm.init(params);
-        */
+    }
+
+    function test_DFMM_init_RevertsWhenDuplicateTokens() public {
+        address[] memory tokens = new address[](3);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+        tokens[1] = address(tokenX);
+
+        uint256[] memory reserves = new uint256[](3);
+
+        InitParams memory params = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(strategy),
+            tokens: tokens,
+            data: abi.encode(true, int256(1 ether), reserves, uint256(1 ether)),
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        vm.expectRevert(IDFMM.InvalidDuplicateTokens.selector);
+        dfmm.init(params);
     }
 
     function test_DFMM_init_RevertsWhenNotValid() public {
