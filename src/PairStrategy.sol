@@ -40,12 +40,12 @@ abstract contract PairStrategy is IStrategy {
             uint256 deltaLiquidity
         )
     {
+        // We use `deltaL` as a temporary variable because
+        // we cannot assign to `deltaLiquidity` directly.
         (uint256 maxDeltaX, uint256 maxDeltaY, uint256 deltaL) =
             abi.decode(data, (uint256, uint256, uint256));
-
-        // TODO: This is a small trick because `deltaLiquidity` cannot be used
-        // directly, let's fix this later.
         deltaLiquidity = deltaL;
+
         deltas = _computeAllocateDeltasGivenDeltaL(
             deltaLiquidity, pool, getPoolParams(poolId)
         );
