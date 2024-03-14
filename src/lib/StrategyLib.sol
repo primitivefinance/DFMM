@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import "solstat/Gaussian.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 /// @dev Taking the square root of a WAD value returns a value with units of 1E9.
 /// Multiplying the result by SQRT_WAD will normalize it back to WAD units.

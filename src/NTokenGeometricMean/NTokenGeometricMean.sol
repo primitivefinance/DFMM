@@ -3,7 +3,7 @@ pragma solidity 0.8.22;
 
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
 import { NTokenStrategy, IStrategy } from "src/NTokenStrategy.sol";
-import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
+import { Pool } from "src/interfaces/IDFMM.sol";
 import {
     decodeFeeUpdate,
     decodeWeightsUpdate,

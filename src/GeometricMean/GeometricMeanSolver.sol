@@ -4,7 +4,6 @@ pragma solidity 0.8.22;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { IStrategy } from "src/interfaces/IStrategy.sol";
 import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
-import { computeAllocationGivenX } from "src/lib/StrategyLib.sol";
 import { GeometricMeanParams } from "./GeometricMean.sol";
 import {
     encodeFeeUpdate,
