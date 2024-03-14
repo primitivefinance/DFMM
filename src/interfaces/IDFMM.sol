@@ -54,7 +54,7 @@ interface IDFMM {
     error InvalidInvariant(int256 invariant);
 
     /// @dev Thrown when pool tokens are identical.
-    error DuplicateTokens();
+    error InvalidDuplicateTokens();
 
     /// @dev Thrown when a pool is being initalized with less than two tokens.
     error InvalidMinimumTokens();
