@@ -68,7 +68,7 @@ contract ConstantSum is PairStrategy {
         invariant =
             tradingFunction(reserves, totalLiquidity, abi.encode(params));
 
-        valid = -EPSILON < invariant && invariant < EPSILON;
+        valid = invariant >= 0;
 
         return (valid, invariant, reserves, totalLiquidity);
     }
