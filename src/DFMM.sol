@@ -258,11 +258,12 @@ contract DFMM is IDFMM {
         address tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
         _transferFrom(tokenIn, state.amountIn);
-        _transfer(tokenOut, msg.sender, state.amountOut);
+        _transfer(tokenOut, recipient, state.amountOut);
 
         emit Swap(
             msg.sender,
             poolId,
+            recipient,
             tokenIn,
             tokenOut,
             state.amountIn,
