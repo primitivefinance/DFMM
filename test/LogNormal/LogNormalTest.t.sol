@@ -61,7 +61,9 @@ contract LogNormalTest is Test {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         dfmm.init(initParams);
@@ -93,7 +95,9 @@ contract LogNormalTest is Test {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         dfmm.init(initParams);
@@ -124,7 +128,9 @@ contract LogNormalTest is Test {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         dfmm.init(initParams);

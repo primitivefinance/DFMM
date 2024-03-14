@@ -38,7 +38,9 @@ contract G3MInitTest is G3MSetUp {
             symbol: "",
             strategy: address(g3m),
             tokens: tokens,
-            data: defaultInitialPoolData
+            data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         vm.expectRevert(GeometricMean.InvalidWeightX.selector);

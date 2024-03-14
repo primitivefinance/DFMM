@@ -15,6 +15,8 @@ struct Pool {
     uint256[] reserves;
     uint256 totalLiquidity;
     address liquidityToken;
+    address feeCollector;
+    uint256 controllerFee;
 }
 
 /**
@@ -31,6 +33,8 @@ struct InitParams {
     address strategy;
     address[] tokens;
     bytes data;
+    address feeCollector;
+    uint256 controllerFee;
 }
 
 /**
@@ -57,6 +61,9 @@ interface IDFMM {
 
     /// @dev Thrown when a clone contract could not be deployed.
     error ERC1167FailedCreateClone();
+
+    /// @dev Thrown when the caller is not the pool controller.
+    error NotController();
 
     // Events
 

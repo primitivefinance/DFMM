@@ -55,7 +55,9 @@ contract LogNormalSetUp is SetUp {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: defaultInitialPoolData
+            data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(defaultInitParams);
@@ -102,7 +104,9 @@ contract LogNormalSetUp is SetUp {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: computeInitialPoolData(1 ether, 2500 ether, params)
+            data: computeInitialPoolData(1 ether, 2500 ether, params),
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(defaultInitParams);
