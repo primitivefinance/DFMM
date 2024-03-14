@@ -104,12 +104,26 @@ contract DFMM is IDFMM {
         _pools.push(pool);
         uint256 poolId = _pools.length - 1;
 
+        // TODO: Improve this code.
+        uint256 tokensLength = params.tokens.length;
+        for (uint256 i = 0; i < tokensLength; i++) {
+            address token = params.tokens[i];
+
+            for (uint256 j = 0; j < tokensLength; j++) {
+                if (i != j && token == params.tokens[j]) {
+                    revert InvalidDuplicateTokens();
+                }
+            }
+        }
+
         for (uint256 i = 0; i < params.tokens.length; i++) {
             if (params.tokens[i] != address(0)) {
                 uint256 decimals = ERC20(params.tokens[i]).decimals();
+
                 if (decimals > 18 || decimals < 6) {
                     revert InvalidTokenDecimals();
                 }
+
                 _transferFrom(params.tokens[i], reserves[i]);
             }
         }
