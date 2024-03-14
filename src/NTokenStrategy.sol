@@ -42,10 +42,12 @@ abstract contract NTokenStrategy is IStrategy {
             uint256 deltaLiquidity
         )
     {
+        // We use `deltaL` as a temporary variable because
+        // we cannot assign to `deltaLiquidity` directly.
         (uint256[] memory maxTokenDeltas, uint256 deltaL) =
             abi.decode(data, (uint256[], uint256));
-
         deltaLiquidity = deltaL;
+
         (uint256[] memory deltas, uint256[] memory nextReserves) =
         _computeAllocateDeltasAndReservesGivenDeltaL(
             deltaLiquidity, maxTokenDeltas, pool
