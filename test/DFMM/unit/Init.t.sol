@@ -216,6 +216,29 @@ contract DFMMInit is DFMMSetUp, Script {
         dfmm.init(params);
     }
 
+    function test_DFMM_init_RevertsWhenDecimalsTooHigh() public {
+        MockERC20 token = new MockERC20("Token", "TKN", 19);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(token);
+
+        uint256[] memory reserves = new uint256[](2);
+
+        InitParams memory params = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(strategy),
+            tokens: tokens,
+            data: abi.encode(true, int256(1 ether), reserves, uint256(1 ether)),
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        vm.expectRevert(IDFMM.InvalidTokenDecimals.selector);
+        dfmm.init(params);
+    }
+
     function test_DFMM_init_RevertsWhenSameTokens() public {
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
