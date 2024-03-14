@@ -199,6 +199,7 @@ interface IDFMM {
         bytes calldata data
     )
         external
+        payable
         returns (
             address tokenIn,
             address tokenOut,
