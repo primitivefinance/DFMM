@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
 
 /**
- * @title Strategy base contract for DFMM.
+ * @title Pair strategy base contract for DFMM.
  * @notice This abstract contract defines the basic behavior of
  * a two-token strategy for DFMM. It is meant to be inherited by
  * a concrete strategy implementation.

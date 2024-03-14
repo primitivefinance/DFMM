@@ -4,13 +4,17 @@ pragma solidity ^0.8.13;
 import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
 
 /**
- * @title Strategy base contract for DFMM.
+ * @title N-token strategy base contract for DFMM.
+ * @notice This abstract contract defines the basic behavior of
+ * a n-token strategy for DFMM. It is meant to be inherited by
+ * a concrete strategy implementation.
  * @author Primitive
  */
 abstract contract NTokenStrategy is IStrategy {
     /// @inheritdoc IStrategy
     address public immutable dfmm;
 
+    /// @param dfmm_ Address of the DFMM contract.
     constructor(address dfmm_) {
         dfmm = dfmm_;
     }
@@ -93,6 +97,7 @@ abstract contract NTokenStrategy is IStrategy {
         valid = invariant >= 0;
     }
 
+    /// @inheritdoc IStrategy
     function validateSwap(
         address,
         uint256 poolId,
@@ -127,12 +132,14 @@ abstract contract NTokenStrategy is IStrategy {
         valid = invariant >= 0;
     }
 
+    /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)
         public
         view
         virtual
         returns (bytes memory);
 
+    /// @inheritdoc IStrategy
     function tradingFunction(
         uint256[] memory reserves,
         uint256 totalLiquidity,
