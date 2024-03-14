@@ -12,7 +12,13 @@ import {
 } from "./G3MMath.sol";
 import { ONE } from "src/lib/StrategyLib.sol";
 
-/// @dev Parameterization of the GeometricMean curve.
+/**
+ * @dev Parameterization of the GeometricMean curve.
+ * @param wX Weight of token X in WAD.
+ * @param wY Weight of token Y in WAD.
+ * @param swapFee Swap fee in WAD.
+ * @param controller Address of the controller.
+ */
 struct GeometricMeanParams {
     uint256 wX;
     uint256 wY;
@@ -49,6 +55,7 @@ contract GeometricMean is PairStrategy {
     /// @param dfmm_ Address of the DFMM contract.
     constructor(address dfmm_) PairStrategy(dfmm_) { }
 
+    /// @dev Thrown if the weight of X is greater than 1 (in WAD).
     error InvalidWeightX();
 
     struct InitState {
@@ -148,6 +155,7 @@ contract GeometricMean is PairStrategy {
         return abi.encode(params);
     }
 
+    /// @inheritdoc IStrategy
     function tradingFunction(
         uint256[] memory reserves,
         uint256 totalLiquidity,
@@ -161,6 +169,7 @@ contract GeometricMean is PairStrategy {
         );
     }
 
+    /// @inheritdoc PairStrategy
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,
@@ -176,6 +185,7 @@ contract GeometricMean is PairStrategy {
         );
     }
 
+    /// @inheritdoc PairStrategy
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,
