@@ -21,6 +21,7 @@ import { LPToken } from "./LPToken.sol";
 contract DFMM is IDFMM {
     using FixedPointMathLib for uint256;
 
+    /// @dev Array containing all the pools.
     Pool[] internal _pools;
 
     /// @inheritdoc IDFMM
@@ -211,6 +212,7 @@ contract DFMM is IDFMM {
         uint256 deltaLiquidity;
     }
 
+    /// @inheritdoc IDFMM
     function swap(
         uint256 poolId,
         address recipient,
