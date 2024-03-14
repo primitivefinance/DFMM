@@ -69,7 +69,9 @@ contract DFMMDeallocateTest is DFMMSetUp {
             symbol: "",
             strategy: address(strategy),
             tokens: tokens,
-            data: abi.encode(true, int256(1 ether), reserves, 1 ether)
+            data: abi.encode(true, int256(1 ether), reserves, 1 ether),
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (uint256 poolId,,) = dfmm.init(params);
@@ -99,7 +101,9 @@ contract DFMMDeallocateTest is DFMMSetUp {
             symbol: "",
             strategy: address(strategy),
             tokens: tokens,
-            data: abi.encode(true, int256(1 ether), reserves, 1 ether)
+            data: abi.encode(true, int256(1 ether), reserves, 1 ether),
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (uint256 poolId,,) = dfmm.init(params);

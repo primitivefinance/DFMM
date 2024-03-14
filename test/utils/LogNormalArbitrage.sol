@@ -361,7 +361,7 @@ contract LogNormalArbitrage {
         if (lowerBoundOutput < 0) {
             return 0;
         }
-        v = bisection(
+        (v,,) = bisection(
             abi.encode(S, rX, L, params),
             lower,
             upper,
@@ -384,7 +384,7 @@ contract LogNormalArbitrage {
         if (lowerBoundOutput < 0) {
             return 0;
         }
-        v = bisection(
+        (v,,) = bisection(
             abi.encode(S, rY, L, params),
             lower,
             upper,

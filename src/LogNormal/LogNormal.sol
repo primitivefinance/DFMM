@@ -81,8 +81,7 @@ contract LogNormal is PairStrategy {
 
         invariant =
             tradingFunction(reserves, totalLiquidity, getPoolParams(poolId));
-        // todo: should the be EXACTLY 0? just positive? within an epsilon?
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
+        valid = invariant >= 0;
     }
 
     /// @inheritdoc IStrategy

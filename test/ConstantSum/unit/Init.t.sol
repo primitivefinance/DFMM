@@ -30,7 +30,9 @@ contract ConstantSumInitTest is ConstantSumSetUp {
             symbol: "",
             strategy: address(constantSum),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         dfmm.init(initParams);

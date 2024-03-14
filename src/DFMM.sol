@@ -75,7 +75,9 @@ contract DFMM is IDFMM {
             tokens: params.tokens,
             reserves: new uint256[](params.tokens.length),
             totalLiquidity: 0,
-            liquidityToken: address(0)
+            liquidityToken: address(0),
+            feeCollector: params.feeCollector,
+            controllerFee: params.controllerFee
         });
 
         (
@@ -146,9 +148,9 @@ contract DFMM is IDFMM {
                 _pools[poolId].reserves[i] += deltas[i];
             }
         }
-        _pools[poolId].totalLiquidity += deltaLiquidity;
 
-        _manageTokens(poolId, true, deltaLiquidity);
+        _pools[poolId].totalLiquidity += deltaLiquidity;
+        _manageTokens(msg.sender, poolId, true, deltaLiquidity);
 
         for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
             if (_pools[poolId].tokens[i] != address(0)) {
@@ -182,7 +184,7 @@ contract DFMM is IDFMM {
             }
         }
 
-        _manageTokens(poolId, false, deltaLiquidity);
+        _manageTokens(msg.sender, poolId, false, deltaLiquidity);
         _pools[poolId].totalLiquidity -= deltaLiquidity;
 
         for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
@@ -226,6 +228,13 @@ contract DFMM is IDFMM {
         if (!state.valid) revert InvalidInvariant(state.invariant);
 
         _pools[poolId].totalLiquidity += state.deltaLiquidity;
+
+        if (_pools[poolId].feeCollector != address(0)) {
+            uint256 fees = state.deltaLiquidity * _pools[poolId].controllerFee
+                / FixedPointMathLib.WAD;
+            if (fees == 0) ++fees;
+            _manageTokens(_pools[poolId].feeCollector, poolId, true, fees);
+        }
 
         _pools[poolId].reserves[state.tokenInIndex] += state.amountIn;
         _pools[poolId].reserves[state.tokenOutIndex] -= state.amountOut;
@@ -314,11 +323,13 @@ contract DFMM is IDFMM {
      * @dev Mints or burns liquidity tokens. Note that the amount of minted
      * or burnt tokens is NOT the same as the amount of liquidity added or
      * removed from the pool.
+     * @param recipient Address receiving the minted LP tokens.
      * @param poolId Id of the associated pool.
      * @param isAllocate True if tokens will be minted, false otherwise.
      * @param deltaL Amount of liquidity added or removed from the pool.
      */
     function _manageTokens(
+        address recipient,
         uint256 poolId,
         bool isAllocate,
         uint256 deltaL
@@ -330,7 +341,7 @@ contract DFMM is IDFMM {
         if (isAllocate) {
             uint256 amount =
                 deltaL.mulWadDown(totalSupply.divWadDown(totalLiquidity));
-            liquidityToken.mint(msg.sender, amount);
+            liquidityToken.mint(recipient, amount);
         } else {
             uint256 amount =
                 deltaL.mulWadUp(totalSupply.divWadUp(totalLiquidity));

@@ -67,10 +67,9 @@ function computeLGivenX(
     LogNormalParams memory params
 ) pure returns (uint256 L) {
     int256 d1 = computeD1({ S: S, params: params });
-    int256 cdf = Gaussian.cdf(d1);
-    uint256 unsignedCdf = toUint(cdf);
+    uint256 cdf = toUint(Gaussian.cdf(d1));
 
-    L = rx.divWadUp(ONE - unsignedCdf);
+    L = rx.divWadUp(ONE - cdf);
 }
 
 /// @dev Computes reserves y given L(x, S).
@@ -80,12 +79,10 @@ function computeYGivenL(
     uint256 S,
     LogNormalParams memory params
 ) pure returns (uint256 ry) {
-    int256 d2 = computeD2(S, params);
-    int256 cdf = Gaussian.cdf(d2);
-    uint256 unsignedCdf = toUint(cdf);
+    int256 d2 = computeD2({ S: S, params: params });
+    uint256 cdf = toUint(Gaussian.cdf(d2));
 
-    // TODO: Double check this formula
-    ry = L.mulWadUp(unsignedCdf);
+    ry = params.mean.mulWadUp(L).mulWadUp(cdf);
 }
 
 /// @dev Computes reserves x given L(y, S).
@@ -143,9 +140,7 @@ function computePriceGivenX(
     uint256 L,
     LogNormalParams memory params
 ) pure returns (uint256) {
-    // $$\frac{1}{2} \sigma^2$$
-    uint256 a =
-        HALF.mulWadDown(uint256(int256(params.width).powWad(int256(2 ether))));
+    uint256 a = computeHalfSigmaSquared(params.width);
     // $$\Phi^{-1} (1 - \frac{x}{L})$$
     int256 b = Gaussian.ppf(int256(ONE - rX.divWadDown(L)));
 
@@ -153,7 +148,7 @@ function computePriceGivenX(
     int256 exp = (b.wadMul(int256(params.width)) - int256(a)).expWad();
 
     // $$\mu \exp (\Phi^{-1}  (1 - \frac{x}{L} ) \sigma  - \frac{1}{2} \sigma^2  )$$
-    return params.mean.mulWadUp(a.mulWadUp(uint256(exp)));
+    return params.mean.mulWadUp(uint256(exp));
 }
 
 function computePriceGivenY(
@@ -161,9 +156,7 @@ function computePriceGivenY(
     uint256 L,
     LogNormalParams memory params
 ) pure returns (uint256) {
-    // $$\frac{1}{2} \sigma^2$$
-    uint256 a =
-        HALF.mulWadDown(uint256(int256(params.width).powWad(int256(2 ether))));
+    uint256 a = computeHalfSigmaSquared(params.width);
 
     // $$\Phi^{-1} (\frac{y}{\mu L})$$
     int256 b = Gaussian.ppf(int256(rY.divWadDown(params.mean.mulWadDown(L))));
@@ -172,7 +165,7 @@ function computePriceGivenY(
     int256 exp = (b.wadMul(int256(params.width)) + int256(a)).expWad();
 
     // $$\mu \exp (\Phi^{-1} (\frac{y}{\mu L}) \sigma  + \frac{1}{2} \sigma^2  )$$
-    return params.mean.mulWadUp(a.mulWadUp(uint256(exp)));
+    return params.mean.mulWadUp(uint256(exp));
 }
 
 /// @dev This is a pure anonymous function defined at the file level, which allows
@@ -240,14 +233,23 @@ function computeNextLiquidity(
             });
         }
     }
-    L = bisection(
+    (uint256 rootInput,, uint256 lowerInput) = bisection(
         abi.encode(rX, rY, computedInvariant, params),
         lower,
         upper,
-        0,
+        1,
         MAX_ITER,
         findRootLiquidity
     );
+
+    if (
+        computeTradingFunction({ rX: rX, rY: rY, L: rootInput, params: params })
+            == 0
+    ) {
+        L = rootInput;
+    } else {
+        L = lowerInput;
+    }
 }
 
 function computeNextRx(
@@ -283,7 +285,7 @@ function computeNextRx(
             });
         }
     }
-    rX = bisection(
+    (uint256 rootInput, uint256 upperInput,) = bisection(
         abi.encode(rY, L, computedInvariant, params),
         lower,
         upper,
@@ -291,6 +293,15 @@ function computeNextRx(
         MAX_ITER,
         findRootX
     );
+    // `upperInput` should be positive, so if root is < 0 return upperInput instead
+    if (
+        computeTradingFunction({ rX: rootInput, rY: rY, L: L, params: params })
+            == 0
+    ) {
+        rX = rootInput;
+    } else {
+        rX = upperInput;
+    }
 }
 
 function computeNextRy(
@@ -324,7 +335,7 @@ function computeNextRy(
             });
         }
     }
-    rY = bisection(
+    (uint256 rootInput, uint256 upperInput,) = bisection(
         abi.encode(rX, L, computedInvariant, params),
         lower,
         upper,
@@ -332,4 +343,13 @@ function computeNextRy(
         MAX_ITER,
         findRootY
     );
+    // `upperInput` should be positive, so if root is < 0 return upperInput instead
+    if (
+        computeTradingFunction({ rX: rX, rY: rootInput, L: L, params: params })
+            == 0
+    ) {
+        rY = rootInput;
+    } else {
+        rY = upperInput;
+    }
 }

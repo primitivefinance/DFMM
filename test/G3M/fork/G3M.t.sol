@@ -76,7 +76,9 @@ contract G3MTestFork is Test {
                 symbol: "",
                 strategy: address(g3m),
                 tokens: tokens,
-                data: computeInitialPoolData(reserveX, price, params)
+                data: computeInitialPoolData(reserveX, price, params),
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
 
@@ -114,7 +116,9 @@ contract G3MTestFork is Test {
                 symbol: "",
                 strategy: address(g3m),
                 tokens: tokens,
-                data: computeInitialPoolData(reserveX, price, params)
+                data: computeInitialPoolData(reserveX, price, params),
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
 

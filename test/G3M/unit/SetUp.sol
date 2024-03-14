@@ -49,7 +49,9 @@ contract G3MSetUp is SetUp {
             symbol: "",
             strategy: address(g3m),
             tokens: tokens,
-            data: defaultInitialPoolData
+            data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(defaultInitParams);

@@ -67,7 +67,7 @@ abstract contract PairStrategy is IStrategy {
             getPoolParams(poolId)
         );
 
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
+        valid = invariant >= 0;
     }
 
     /// @inheritdoc IStrategy
@@ -112,7 +112,7 @@ abstract contract PairStrategy is IStrategy {
             getPoolParams(poolId)
         );
 
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
+        valid = invariant >= 0;
     }
 
     function validateSwap(
@@ -146,7 +146,7 @@ abstract contract PairStrategy is IStrategy {
             pool.reserves, pool.totalLiquidity + deltaLiquidity, params
         );
 
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
+        valid = invariant >= 0;
     }
 
     function getPoolParams(uint256 poolId)
