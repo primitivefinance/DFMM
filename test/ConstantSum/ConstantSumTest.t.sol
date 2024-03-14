@@ -106,12 +106,11 @@ contract ConstantSumTest is Test {
         assertEq(params.swapFee, 0.003 ether);
         assertEq(params.controller, address(0));
 
-        (uint256[] memory reserves, uint256 initL) =
-            DFMM(dfmm).getReservesAndLiquidity(poolId);
+        Pool memory pool = dfmm.pools(poolId);
 
-        assertEq(reserves[0], 1 ether);
-        assertEq(reserves[1], 1 ether);
-        assertEq(initL, 1.5 ether);
+        assertEq(pool.reserves[0], 1 ether);
+        assertEq(pool.reserves[1], 1 ether);
+        assertEq(pool.totalLiquidity, 1.5 ether);
     }
 
     function test_constant_sum_swap_x_in_no_fee() public basic_feeless {

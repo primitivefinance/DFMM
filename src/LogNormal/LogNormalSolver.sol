@@ -96,7 +96,8 @@ contract LogNormalSolver {
         view
         returns (uint256[] memory, uint256)
     {
-        return IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        return (pool.reserves, pool.totalLiquidity);
     }
 
     function getInitialPoolData(

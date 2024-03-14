@@ -22,7 +22,7 @@ contract DFMMInit is DFMMSetUp, Script {
     {
         (uint256 poolId,,) = dfmm.init(getDefaultPoolParams(defaultData));
         (uint256[] memory reserves, uint256 totalLiquidity) =
-            dfmm.getReservesAndLiquidity(poolId);
+            getReservesAndLiquidity(poolId);
         assertEq(initialLiquidity, totalLiquidity);
         assertEq(initialReserveX, reserves[0]);
         assertEq(initialReserveY, reserves[1]);
@@ -52,7 +52,7 @@ contract DFMMInit is DFMMSetUp, Script {
         uint256 tokenYPreBalance = tokenY.balanceOf(address(this));
 
         (uint256 poolId,,) = dfmm.init(getDefaultPoolParams(defaultData));
-        (uint256[] memory reserves,) = dfmm.getReservesAndLiquidity(poolId);
+        (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
 
         assertEq(tokenX.balanceOf(address(dfmm)), dfmmPreBalanceX + reserves[0]);
         assertEq(tokenY.balanceOf(address(dfmm)), dfmmPreBalanceY + reserves[1]);

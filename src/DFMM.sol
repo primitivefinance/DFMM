@@ -399,13 +399,4 @@ contract DFMM is IDFMM {
     function pools(uint256 poolId) external view returns (Pool memory) {
         return _pools[poolId];
     }
-
-    /// @inheritdoc IDFMM
-    function getReservesAndLiquidity(uint256 poolId)
-        external
-        view
-        returns (uint256[] memory, uint256)
-    {
-        return (_pools[poolId].reserves, _pools[poolId].totalLiquidity);
-    }
 }

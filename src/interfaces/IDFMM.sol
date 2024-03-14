@@ -225,14 +225,6 @@ interface IDFMM {
     /// @notice Address of the WETH contract.
     function weth() external view returns (address);
 
-    /// @notice Returns the reserves and total liquidity of pool `poolId`.
-    /// @return reserves Array of token reserves in the pool in WAD.
-    /// @return totalLiquidity Total liquidity in the pool.
-    function getReservesAndLiquidity(uint256 poolId)
-        external
-        view
-        returns (uint256[] memory reserves, uint256 totalLiquidity);
-
     /// @notice Returns the pool parameters of pool `poolId`.
     /// @return pool A struct containing the pool parameters.
     function pools(uint256 poolId) external view returns (Pool memory pool);

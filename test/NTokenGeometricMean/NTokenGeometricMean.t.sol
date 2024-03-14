@@ -194,14 +194,14 @@ contract NTokenGeometricMeanTest is Test {
         bytes memory data = abi.encode(maxDeltas, deltaL);
 
         (uint256[] memory preReserves, uint256 preL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(poolId);
         console2.log(preReserves[0]);
         console2.log(preL);
 
         dfmm.allocate(poolId, data);
 
         (uint256[] memory postReserves, uint256 postL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(poolId);
         console2.log(postReserves[0]);
         console2.log(postL);
     }
@@ -235,14 +235,14 @@ contract NTokenGeometricMeanTest is Test {
         bytes memory data = abi.encode(minDeltas, deltaL);
 
         (uint256[] memory preReserves, uint256 preL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(poolId);
         console2.log(preReserves[0]);
         console2.log(preL);
 
         dfmm.deallocate(poolId, data);
 
         (uint256[] memory postReserves, uint256 postL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(poolId);
         console2.log(postReserves[0]);
         console2.log(postL);
     }
@@ -287,12 +287,12 @@ contract NTokenGeometricMeanTest is Test {
         bytes memory data = abi.encode(maxDeltas, deltaL);
 
         (uint256[] memory preReserves, uint256 preL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(poolId);
 
         dfmm.allocate(poolId, data);
 
         (uint256[] memory postReserves, uint256 postL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(poolId);
     }
 
     function test_4_token_allocate_given_delta_t_non_uniform()
@@ -338,14 +338,14 @@ contract NTokenGeometricMeanTest is Test {
         bytes memory data = abi.encode(minDeltas, deltaL);
 
         (uint256[] memory preReserves, uint256 preL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(poolId);
         console2.log(preReserves[0]);
         console2.log(preL);
 
         dfmm.deallocate(poolId, data);
 
         (uint256[] memory postReserves, uint256 postL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(poolId);
         console2.log(postReserves[0]);
         console2.log(postL);
     }

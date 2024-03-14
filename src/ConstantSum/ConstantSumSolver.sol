@@ -42,8 +42,7 @@ contract ConstantSumSolver {
         bool swapXIn,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
-        (uint256[] memory reserves, uint256 totalLiquidity) =
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
         ConstantSumParams memory poolParams = abi.decode(
             IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
         );
@@ -56,7 +55,7 @@ contract ConstantSumSolver {
                 ONE - poolParams.swapFee
             );
 
-            if (reserves[1] < state.amountOut) {
+            if (pool.reserves[1] < state.amountOut) {
                 revert NotEnoughLiquidity();
             }
         } else {
@@ -65,7 +64,7 @@ contract ConstantSumSolver {
             state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
-            if (reserves[0] < state.amountOut) {
+            if (pool.reserves[0] < state.amountOut) {
                 revert NotEnoughLiquidity();
             }
         }
@@ -81,10 +80,6 @@ contract ConstantSumSolver {
                 1, 0, amountIn, state.amountOut, state.deltaLiquidity
             );
         }
-
-        Pool memory pool;
-        pool.reserves = reserves;
-        pool.totalLiquidity = totalLiquidity;
 
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData

@@ -16,12 +16,12 @@ contract G3MDeallocateTest is G3MSetUp {
         console2.log(deltaLiquidity);
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
-        (, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
+        (, uint256 preTotalLiquidity) = getReservesAndLiquidity(POOL_ID);
 
         bytes memory data = abi.encode(minDeltaX, deltaY, deltaLiquidity);
         dfmm.deallocate(POOL_ID, data);
 
-        (, uint256 postTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
+        (, uint256 postTotalLiquidity) = getReservesAndLiquidity(POOL_ID);
         uint256 deltaTotalLiquidity = preTotalLiquidity - postTotalLiquidity;
         assertEq(
             preLiquidityBalance - deltaTotalLiquidity,
@@ -69,13 +69,13 @@ contract G3MDeallocateTest is G3MSetUp {
         (uint256 minDeltaX, uint256 deltaLiquidity) =
             solver.allocateGivenDeltaY(POOL_ID, minDeltaY);
         (uint256[] memory reserves, uint256 liquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            getReservesAndLiquidity(POOL_ID);
 
         bytes memory data = abi.encode(minDeltaX, minDeltaY, deltaLiquidity);
         (uint256[] memory deltas) = dfmm.deallocate(POOL_ID, data);
 
         (uint256[] memory adjustedReserves, uint256 adjustedLiquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            getReservesAndLiquidity(POOL_ID);
 
         assertEq(adjustedReserves[0], reserves[0] - deltas[0], "bad x");
         assertEq(adjustedReserves[1], reserves[1] - deltas[1], "bad y");

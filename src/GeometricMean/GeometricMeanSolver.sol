@@ -54,9 +54,8 @@ contract GeometricMeanSolver {
         view
         returns (uint256, uint256, uint256)
     {
-        (uint256[] memory reserves, uint256 totalLiquidity) =
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
-        return (reserves[0], reserves[1], totalLiquidity);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        return (pool.reserves[0], pool.reserves[1], pool.totalLiquidity);
     }
 
     function prepareFeeUpdate(uint256 swapFee)
