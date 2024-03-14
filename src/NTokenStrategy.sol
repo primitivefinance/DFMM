@@ -56,7 +56,7 @@ abstract contract NTokenStrategy is IStrategy {
             getPoolParams(poolId)
         );
 
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
+        valid = invariant >= 0;
     }
 
     /// @inheritdoc IStrategy
@@ -92,7 +92,7 @@ abstract contract NTokenStrategy is IStrategy {
             getPoolParams(poolId)
         );
 
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
+        valid = invariant >= 0;
     }
 
     function validateSwap(
@@ -126,7 +126,7 @@ abstract contract NTokenStrategy is IStrategy {
             getPoolParams(poolId)
         );
 
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
+        valid = invariant >= 0;
     }
 
     function getPoolParams(uint256 poolId)
