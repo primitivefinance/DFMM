@@ -136,6 +136,7 @@ interface IDFMM {
     event Swap(
         address indexed account,
         uint256 indexed poolId,
+        address recipient,
         address tokenIn,
         address tokenOut,
         uint256 inputAmount,
