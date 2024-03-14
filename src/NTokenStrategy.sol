@@ -11,8 +11,6 @@ abstract contract NTokenStrategy is IStrategy {
     /// @inheritdoc IStrategy
     address public immutable dfmm;
 
-    int256 public constant EPSILON = 20;
-
     constructor(address dfmm_) {
         dfmm = dfmm_;
     }

@@ -15,9 +15,6 @@ int256 constant I_ONE = int256(ONE);
 int256 constant I_TWO = int256(TWO);
 int256 constant I_HALF = int256(HALF);
 
-/// @dev the swap constant should never fall outside of range [-EPSILON, EPSILON]
-int256 constant EPSILON = 20;
-
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
 

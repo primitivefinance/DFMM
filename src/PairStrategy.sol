@@ -14,8 +14,6 @@ abstract contract PairStrategy is IStrategy {
     /// @inheritdoc IStrategy
     address public immutable dfmm;
 
-    int256 public constant EPSILON = 20;
-
     /// @param dfmm_ Address of the DFMM contract.
     constructor(address dfmm_) {
         dfmm = dfmm_;
