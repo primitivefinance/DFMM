@@ -38,7 +38,7 @@ contract LogNormalInitTest is LogNormalSetUp {
             controllerFee: 0
         });
 
-        vm.expectRevert(IDFMM.InvalidTokens.selector);
+        vm.expectRevert(IDFMM.InvalidDuplicateTokens.selector);
         dfmm.init(initParams);
     }
 
