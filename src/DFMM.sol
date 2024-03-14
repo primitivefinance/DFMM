@@ -223,6 +223,7 @@ contract DFMM is IDFMM {
 
     function swap(
         uint256 poolId,
+        address recipient,
         bytes calldata data
     ) external lock returns (address, address, uint256, uint256) {
         SwapState memory state;
