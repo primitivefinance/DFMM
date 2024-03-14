@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.22;
 
-import "./ConstantSumMath.sol";
-import "./ConstantSumUtils.sol";
+import {
+    FixedPointMathLib, computeTradingFunction
+} from "./ConstantSumMath.sol";
+import {
+    decodePriceUpdate,
+    decodeFeeUpdate,
+    decodeControllerUpdate
+} from "./ConstantSumUtils.sol";
 import { PairStrategy, IStrategy, Pool } from "src/PairStrategy.sol";
 
 struct InternalParams {
