@@ -71,12 +71,14 @@ contract DFMM is IDFMM {
         if (params.tokens.length < 2) revert InvalidMinimumTokens();
         if (params.tokens.length > 8) revert InvalidMaximumTokens();
 
+        LPToken liquidityToken = LPToken(clone(lpTokenImplementation));
+
         Pool memory pool = Pool({
             strategy: params.strategy,
             tokens: params.tokens,
             reserves: new uint256[](params.tokens.length),
             totalLiquidity: 0,
-            liquidityToken: address(0),
+            liquidityToken: address(liquidityToken),
             feeCollector: params.feeCollector,
             controllerFee: params.controllerFee
         });
@@ -92,15 +94,12 @@ contract DFMM is IDFMM {
 
         if (!valid) revert InvalidInvariant(invariant);
 
-        LPToken liquidityToken = LPToken(clone(lpTokenImplementation));
-
         liquidityToken.initialize(params.name, params.symbol);
         liquidityToken.mint(msg.sender, totalLiquidity - BURNT_LIQUIDITY);
         liquidityToken.mint(address(0), BURNT_LIQUIDITY);
 
         pool.reserves = reserves;
         pool.totalLiquidity = totalLiquidity;
-        pool.liquidityToken = address(liquidityToken);
 
         _pools.push(pool);
         uint256 poolId = _pools.length - 1;
