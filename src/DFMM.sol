@@ -225,7 +225,7 @@ contract DFMM is IDFMM {
         uint256 poolId,
         address recipient,
         bytes calldata data
-    ) external lock returns (address, address, uint256, uint256) {
+    ) external payable lock returns (address, address, uint256, uint256) {
         SwapState memory state;
 
         (
