@@ -146,6 +146,15 @@ abstract contract NTokenStrategy is IStrategy {
         bytes memory params
     ) public view virtual returns (int256);
 
+    /**
+     * @notice Computes the token deltas and the next reserves for
+     * an allocation.
+     * @param deltaLiquidity Amount of liquidity to allocate.
+     * @param maxDeltas Maximum token deltas to spend (in WAD).
+     * @param pool Structure containing the pool.
+     * @return deltas Required token deltas to allocate (in WAD).
+     * @return nextReserves Reserves after the allocation.
+     */
     function _computeAllocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory maxDeltas,
@@ -156,6 +165,15 @@ abstract contract NTokenStrategy is IStrategy {
         virtual
         returns (uint256[] memory deltas, uint256[] memory nextReserves);
 
+    /**
+     * @notice Computes the token deltas and the next reserves for
+     * a deallocation.
+     * @param deltaLiquidity Amount of liquidity to deallocate.
+     * @param minDeltas Minimum token deltas to receive (in WAD).
+     * @param pool Structure containing the pool.
+     * @return deltas Token deltas being deallocated (in WAD).
+     * @return nextReserves Reserves after the deallocation.
+     */
     function _computeDeallocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory minDeltas,
