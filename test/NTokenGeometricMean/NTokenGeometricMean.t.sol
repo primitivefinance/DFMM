@@ -257,7 +257,7 @@ contract NTokenGeometricMeanTest is Test {
             solver.simulateSwap(poolId, tokenInIndex, tokenOutIndex, amountIn);
         console2.log("amountOut", amountOut);
         console2.log("valid", valid);
-        dfmm.swap(poolId, data);
+        dfmm.swap(poolId, address(this), data);
     }
 
     function test_4_token_compute_price() public basic {
@@ -362,7 +362,7 @@ contract NTokenGeometricMeanTest is Test {
         (bool valid, uint256 amountOut, bytes memory data) =
             solver.simulateSwap(poolId, tokenInIndex, tokenOutIndex, amountIn);
 
-        dfmm.swap(poolId, data);
+        dfmm.swap(poolId, address(this), data);
     }
 
     function test_4_token_compute_price_non_uniform()

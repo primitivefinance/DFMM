@@ -168,7 +168,7 @@ contract LogNormalTest is Test {
         uint256 poolId = dfmm.nonce() - 1;
         (,,, bytes memory swapData) = solver.simulateSwap(poolId, xIn, amountIn);
 
-        dfmm.swap(poolId, swapData);
+        dfmm.swap(poolId, address(this), swapData);
     }
 
     function test_ln_swap_y_in() public basic {
@@ -177,7 +177,7 @@ contract LogNormalTest is Test {
         uint256 poolId = dfmm.nonce() - 1;
         (,,, bytes memory swapData) = solver.simulateSwap(poolId, xIn, amountIn);
 
-        dfmm.swap(poolId, swapData);
+        dfmm.swap(poolId, address(this), swapData);
     }
 
     // todo: write assertApproxEq

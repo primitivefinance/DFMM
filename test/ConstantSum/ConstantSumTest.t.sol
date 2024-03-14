@@ -126,7 +126,7 @@ contract ConstantSumTest is Test {
         (,, bytes memory swapData) =
             solver.simulateSwap(poolId, isSwapXForY, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(poolId, swapData);
+            dfmm.swap(poolId, address(this), swapData);
 
         assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
         assertEq(
@@ -150,7 +150,7 @@ contract ConstantSumTest is Test {
         (,, bytes memory swapData) =
             solver.simulateSwap(poolId, isSwapXForY, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(poolId, swapData);
+            dfmm.swap(poolId, address(this), swapData);
 
         assertEq(
             tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - outputAmount
@@ -190,7 +190,7 @@ contract ConstantSumTest is Test {
         (,, bytes memory swapData) =
             solver.simulateSwap(poolId, isSwapXForY, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(poolId, swapData);
+            dfmm.swap(poolId, address(this), swapData);
 
         assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
         assertEq(
@@ -214,7 +214,7 @@ contract ConstantSumTest is Test {
         (,, bytes memory swapData) =
             solver.simulateSwap(poolId, isSwapXForY, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(poolId, swapData);
+            dfmm.swap(poolId, address(this), swapData);
 
         assertEq(
             tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - outputAmount

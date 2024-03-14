@@ -25,7 +25,7 @@ contract LogNormalSwapTest is LogNormalSetUp {
         console.log("amountOut:", amountOut);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, payload);
+            dfmm.swap(POOL_ID, address(this), payload);
         assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
         assertEq(
             tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - outputAmount
@@ -50,7 +50,7 @@ contract LogNormalSwapTest is LogNormalSetUp {
             solver.simulateSwap(POOL_ID, swapXForY, amountIn);
         assertEq(valid, true);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, payload);
+            dfmm.swap(POOL_ID, address(this), payload);
 
         assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY + inputAmount);
         assertEq(
@@ -97,8 +97,9 @@ contract LogNormalSwapTest is LogNormalSetUp {
             abi.encode(1, 0, amountIn, amountOut, deltaLiquidity);
 
         vm.expectRevert();
-        dfmm.swap(POOL_ID, payload);
+        dfmm.swap(POOL_ID, address(this), payload);
     }
+
     function test_LogNormal_swap_ChargesCorrectFeesYIn() public deep {
         uint256 amountIn = 1 ether;
         bool swapXForY = false;
@@ -107,11 +108,10 @@ contract LogNormalSwapTest is LogNormalSetUp {
             solver.simulateSwap(POOL_ID, swapXForY, amountIn);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, payload);
+            dfmm.swap(POOL_ID, address(this), payload);
 
         console2.log(inputAmount);
         console2.log(outputAmount);
-      
     }
 
     function test_LogNormal_swap_ChargesCorrectFeesXIn() public deep {
@@ -122,10 +122,9 @@ contract LogNormalSwapTest is LogNormalSetUp {
             solver.simulateSwap(POOL_ID, swapXForY, amountIn);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, payload);
+            dfmm.swap(POOL_ID, address(this), payload);
 
         console2.log(inputAmount);
         console2.log(outputAmount);
-      
     }
 }
