@@ -3,8 +3,7 @@ pragma solidity 0.8.22;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { ConstantSumParams } from "src/ConstantSum/ConstantSum.sol";
-
-uint256 constant ONE = 1 ether;
+import { ONE } from "src/lib/StrategyLib.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
