@@ -4,7 +4,11 @@ pragma solidity 0.8.22;
 import { Pool, IStrategy } from "src/interfaces/IStrategy.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { ConstantSumParams } from "./ConstantSum.sol";
-import { encodePriceUpdate } from "./ConstantSumUtils.sol";
+import {
+    encodePriceUpdate,
+    encodeFeeUpdate,
+    encodeControllerUpdate
+} from "./ConstantSumUtils.sol";
 import {
     ONE,
     computeInitialPoolData,
@@ -97,6 +101,22 @@ contract ConstantSumSolver {
         pure
         returns (bytes memory)
     {
-        return encodePriceUpdate(newPrice, 0);
+        return encodePriceUpdate(newPrice);
+    }
+
+    function prepareSwapFeeUpdate(uint256 newSwapFee)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodeFeeUpdate(newSwapFee);
+    }
+
+    function prepareControllerUpdate(address newController)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodeControllerUpdate(newController);
     }
 }
