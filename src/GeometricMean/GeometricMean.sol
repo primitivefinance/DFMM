@@ -100,8 +100,7 @@ contract GeometricMean is PairStrategy {
             abi.decode(getPoolParams(poolId), (GeometricMeanParams))
         );
 
-        // todo: should the be EXACTLY 0? just positive? within an epsilon?
-        state.valid = -(EPSILON) < state.invariant && state.invariant < EPSILON;
+        state.valid = state.invariant >= 0;
 
         return
             (state.valid, state.invariant, state.reserves, state.totalLiquidity);
