@@ -168,6 +168,30 @@ function computePriceGivenY(
     return params.mean.mulWadUp(uint256(exp));
 }
 
+function computeDeltaLXIn(
+    uint256 amountIn,
+    uint256 rx,
+    uint256 ry,
+    uint256 L,
+    LogNormalParams memory params
+) pure returns (uint256 deltaL) {
+    uint256 fees = params.swapFee.mulWadUp(amountIn);
+    uint256 px = computePriceGivenX(rx, L, params);
+    deltaL = px.mulWadUp(L).mulWadUp(fees).divWadDown(px.mulWadDown(rx) + ry);
+}
+
+function computeDeltaLYIn(
+    uint256 amountIn,
+    uint256 rx,
+    uint256 ry,
+    uint256 L,
+    LogNormalParams memory params
+) pure returns (uint256 deltaL) {
+    uint256 fees = params.swapFee.mulWadUp(amountIn);
+    uint256 px = computePriceGivenX(rx, L, params);
+    deltaL = L.mulWadUp(fees).divWadDown(px.mulWadDown(rx) + ry);
+}
+
 /// @dev This is a pure anonymous function defined at the file level, which allows
 /// it to be passed as an argument to another function. BisectionLib.sol takes this
 /// function as an argument to find the root of the trading function given the reserveYWad.
