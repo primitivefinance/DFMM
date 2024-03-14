@@ -64,7 +64,9 @@ contract SetUp is Test {
             symbol: "TPOOL",
             strategy: address(g3m),
             tokens: tokens,
-            data: defaultInitialPoolData
+            data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(initParams);

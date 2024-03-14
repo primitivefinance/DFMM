@@ -46,7 +46,9 @@ contract ConstantSumSetUp is SetUp {
             symbol: "",
             strategy: address(constantSum),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(initParams);

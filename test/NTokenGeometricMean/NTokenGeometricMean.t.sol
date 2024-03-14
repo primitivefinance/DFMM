@@ -79,7 +79,9 @@ contract NTokenGeometricMeanTest is Test {
                 symbol: "4T",
                 strategy: address(g3m),
                 tokens: tokens,
-                data: solver.getInitialPoolData(ONE * 10, prices, params)
+                data: solver.getInitialPoolData(ONE * 10, prices, params),
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
     }
@@ -113,7 +115,9 @@ contract NTokenGeometricMeanTest is Test {
             symbol: "4T",
             strategy: address(g3m),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         dfmm.init(initParams);
@@ -152,7 +156,9 @@ contract NTokenGeometricMeanTest is Test {
             symbol: "4T",
             strategy: address(g3m),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         dfmm.init(initParams);

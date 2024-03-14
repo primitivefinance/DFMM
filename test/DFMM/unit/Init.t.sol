@@ -87,7 +87,9 @@ contract DFMMInit is DFMMSetUp, Script {
                 symbol: "POOL",
                 strategy: address(strategy),
                 tokens: tokens,
-                data: params
+                data: params,
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
 
@@ -114,7 +116,9 @@ contract DFMMInit is DFMMSetUp, Script {
                 symbol: "POOL",
                 strategy: address(strategy),
                 tokens: tokens,
-                data: params
+                data: params,
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
 
@@ -181,7 +185,9 @@ contract DFMMInit is DFMMSetUp, Script {
                 symbol: "POOL",
                 strategy: address(strategy),
                 tokens: tokens,
-                data: params
+                data: params,
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
     }
@@ -213,7 +219,9 @@ contract DFMMInit is DFMMSetUp, Script {
             tokens: tokens,
             data: abi.encode(
                 false, initialInvariant, defaultReserves, initialLiquidity
-                )
+                ),
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         vm.expectRevert(
