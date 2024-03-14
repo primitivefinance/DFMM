@@ -65,6 +65,34 @@ contract DFMMInit is DFMMSetUp, Script {
         );
     }
 
+    function test_DFMM_init_AcceptsTwoToEightTokens() public {
+        for (uint256 i = 2; i < 9; i++) {
+            address[] memory tokens = new address[](i);
+            uint256[] memory reserves = new uint256[](i);
+
+            for (uint256 j = 0; j < i; j++) {
+                MockERC20 token = new MockERC20("", "", 18);
+                token.mint(address(this), 1 ether);
+                token.approve(address(dfmm), 1 ether);
+
+                tokens[j] = address(token);
+                reserves[j] = 1 ether;
+            }
+
+            InitParams memory params = InitParams({
+                name: "",
+                symbol: "",
+                strategy: address(strategy),
+                tokens: tokens,
+                data: abi.encode(true, int256(1 ether), reserves, uint256(1 ether)),
+                feeCollector: address(0),
+                controllerFee: 0
+            });
+
+            dfmm.init(params);
+        }
+    }
+
     function test_DFMM_init_AcceptsWETH() public {
         deal(address(weth), address(this), 1 ether);
         weth.approve(address(dfmm), 1 ether);
