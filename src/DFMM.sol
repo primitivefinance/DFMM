@@ -117,15 +117,13 @@ contract DFMM is IDFMM {
         }
 
         for (uint256 i = 0; i < params.tokens.length; i++) {
-            if (params.tokens[i] != address(0)) {
-                uint256 decimals = ERC20(params.tokens[i]).decimals();
+            uint256 decimals = ERC20(params.tokens[i]).decimals();
 
-                if (decimals > 18 || decimals < 6) {
-                    revert InvalidTokenDecimals();
-                }
-
-                _transferFrom(params.tokens[i], reserves[i]);
+            if (decimals > 18 || decimals < 6) {
+                revert InvalidTokenDecimals();
             }
+
+            _transferFrom(params.tokens[i], reserves[i]);
         }
 
         emit Init(
@@ -158,18 +156,14 @@ contract DFMM is IDFMM {
         if (!valid) revert InvalidInvariant(invariant);
 
         for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
-            if (_pools[poolId].tokens[i] != address(0)) {
-                _pools[poolId].reserves[i] += deltas[i];
-            }
+            _pools[poolId].reserves[i] += deltas[i];
         }
 
         _pools[poolId].totalLiquidity += deltaLiquidity;
         _manageTokens(msg.sender, poolId, true, deltaLiquidity);
 
         for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
-            if (_pools[poolId].tokens[i] != address(0)) {
-                _transferFrom(_pools[poolId].tokens[i], deltas[i]);
-            }
+            _transferFrom(_pools[poolId].tokens[i], deltas[i]);
         }
 
         emit Allocate(msg.sender, poolId, deltas, deltaLiquidity);
@@ -193,18 +187,14 @@ contract DFMM is IDFMM {
         if (!valid) revert InvalidInvariant(invariant);
 
         for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
-            if (_pools[poolId].tokens[i] != address(0)) {
-                _pools[poolId].reserves[i] -= deltas[i];
-            }
+            _pools[poolId].reserves[i] -= deltas[i];
         }
 
         _manageTokens(msg.sender, poolId, false, deltaLiquidity);
         _pools[poolId].totalLiquidity -= deltaLiquidity;
 
         for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
-            if (_pools[poolId].tokens[i] != address(0)) {
-                _transfer(_pools[poolId].tokens[i], msg.sender, deltas[i]);
-            }
+            _transfer(_pools[poolId].tokens[i], msg.sender, deltas[i]);
         }
 
         emit Deallocate(msg.sender, poolId, deltas, deltaLiquidity);
