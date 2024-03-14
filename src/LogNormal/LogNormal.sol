@@ -141,6 +141,7 @@ contract LogNormal is PairStrategy {
         );
     }
 
+    /// @inheritdoc PairStrategy
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,
@@ -159,6 +160,7 @@ contract LogNormal is PairStrategy {
         return deltas;
     }
 
+    /// @inheritdoc PairStrategy
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,
