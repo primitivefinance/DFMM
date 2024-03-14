@@ -38,8 +38,10 @@ contract ConstantSum is PairStrategy {
 
     mapping(uint256 => InternalParams) public internalParams;
 
+    /// @param dfmm_ Address of the DFMM contract.
     constructor(address dfmm_) PairStrategy(dfmm_) { }
 
+    /// @inheritdoc IStrategy
     function init(
         address,
         uint256 poolId,
@@ -92,6 +94,7 @@ contract ConstantSum is PairStrategy {
         }
     }
 
+    /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)
         public
         view
@@ -106,6 +109,7 @@ contract ConstantSum is PairStrategy {
         return abi.encode(params);
     }
 
+    /// @inheritdoc IStrategy
     function tradingFunction(
         uint256[] memory reserves,
         uint256 totalLiquidity,
@@ -118,6 +122,7 @@ contract ConstantSum is PairStrategy {
         );
     }
 
+    /// @inheritdoc PairStrategy
     function _computeAllocateDeltasGivenDeltaL(
         uint256,
         Pool memory,
@@ -126,6 +131,7 @@ contract ConstantSum is PairStrategy {
         return new uint256[](0);
     }
 
+    /// @inheritdoc PairStrategy
     function _computeDeallocateDeltasGivenDeltaL(
         uint256,
         Pool memory,
