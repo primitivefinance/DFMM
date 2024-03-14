@@ -84,7 +84,7 @@ contract ConstantSum is PairStrategy {
         UpdateCode updateCode = abi.decode(data, (UpdateCode));
 
         if (updateCode == UpdateCode.Price) {
-            (internalParams[poolId].price,) = decodePriceUpdate(data);
+            (internalParams[poolId].price) = decodePriceUpdate(data);
         } else if (updateCode == UpdateCode.SwapFee) {
             internalParams[poolId].swapFee = decodeFeeUpdate(data);
         } else if (updateCode == UpdateCode.Controller) {
