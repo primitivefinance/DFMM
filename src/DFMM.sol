@@ -104,7 +104,6 @@ contract DFMM is IDFMM {
         _pools.push(pool);
         uint256 poolId = _pools.length - 1;
 
-        // TODO: Improve this code.
         uint256 tokensLength = params.tokens.length;
         for (uint256 i = 0; i < tokensLength; i++) {
             address token = params.tokens[i];
@@ -346,12 +345,10 @@ contract DFMM is IDFMM {
         uint256 totalLiquidity = _pools[poolId].totalLiquidity;
 
         if (isAllocate) {
-            uint256 amount =
-                deltaL.mulWadDown(totalSupply.divWadDown(totalLiquidity));
+            uint256 amount = deltaL.mulDivDown(totalSupply, totalLiquidity);
             liquidityToken.mint(recipient, amount);
         } else {
-            uint256 amount =
-                deltaL.mulWadUp(totalSupply.divWadUp(totalLiquidity));
+            uint256 amount = deltaL.mulDivUp(totalSupply, totalLiquidity);
             liquidityToken.burn(msg.sender, amount);
         }
     }
