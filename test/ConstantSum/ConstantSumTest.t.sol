@@ -16,6 +16,8 @@ contract ConstantSumTest is Test {
     MockERC20 tokenX;
     MockERC20 tokenY;
 
+    uint256 POOL_ID;
+
     uint256 public constant TEST_ZERO_FEE = 0;
     uint256 public constant TEST_SWAP_FEE = 0.003 ether;
 
@@ -61,7 +63,7 @@ contract ConstantSumTest is Test {
             controllerFee: 0
         });
 
-        dfmm.init(initParams);
+        (POOL_ID,,) = dfmm.init(initParams);
         _;
     }
 
@@ -94,19 +96,18 @@ contract ConstantSumTest is Test {
             controllerFee: 0
         });
 
-        dfmm.init(initParams);
+        (POOL_ID,,) = dfmm.init(initParams);
         _;
     }
 
     function test_init() public basic {
-        uint256 poolId = dfmm.nonce() - 1;
         (ConstantSumParams memory params) =
-            abi.decode(constantSum.getPoolParams(poolId), (ConstantSumParams));
+            abi.decode(constantSum.getPoolParams(POOL_ID), (ConstantSumParams));
         assertEq(params.price, 2 ether);
         assertEq(params.swapFee, 0.003 ether);
         assertEq(params.controller, address(0));
 
-        Pool memory pool = dfmm.pools(poolId);
+        Pool memory pool = dfmm.pools(POOL_ID);
 
         assertEq(pool.reserves[0], 1 ether);
         assertEq(pool.reserves[1], 1 ether);
@@ -121,11 +122,11 @@ contract ConstantSumTest is Test {
 
         bool isSwapXForY = true;
         uint256 amountIn = 0.1 ether;
-        uint256 poolId = dfmm.nonce() - 1;
+
         (,, bytes memory swapData) =
-            solver.simulateSwap(poolId, isSwapXForY, amountIn);
+            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(poolId, address(this), swapData);
+            dfmm.swap(POOL_ID, address(this), swapData);
 
         assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
         assertEq(
@@ -145,11 +146,10 @@ contract ConstantSumTest is Test {
 
         bool isSwapXForY = false;
         uint256 amountIn = 0.1 ether;
-        uint256 poolId = dfmm.nonce() - 1;
         (,, bytes memory swapData) =
-            solver.simulateSwap(poolId, isSwapXForY, amountIn);
+            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(poolId, address(this), swapData);
+            dfmm.swap(POOL_ID, address(this), swapData);
 
         assertEq(
             tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - outputAmount
@@ -164,17 +164,15 @@ contract ConstantSumTest is Test {
     function test_constant_sum_swap_x_in_invalid() public basic_feeless {
         bool xIn = true;
         uint256 amountIn = 1.1 ether;
-        uint256 poolId = dfmm.nonce() - 1;
         vm.expectRevert(ConstantSumSolver.NotEnoughLiquidity.selector);
-        solver.simulateSwap(poolId, xIn, amountIn);
+        solver.simulateSwap(POOL_ID, xIn, amountIn);
     }
 
     function test_constant_sum_swap_y_in_invalid() public basic_feeless {
         bool xIn = false;
         uint256 amountIn = 2.1 ether;
-        uint256 poolId = dfmm.nonce() - 1;
         vm.expectRevert(ConstantSumSolver.NotEnoughLiquidity.selector);
-        solver.simulateSwap(poolId, xIn, amountIn);
+        solver.simulateSwap(POOL_ID, xIn, amountIn);
     }
 
     function test_constant_sum_swap_x_in_with_fee() public basic {
@@ -185,11 +183,10 @@ contract ConstantSumTest is Test {
 
         bool isSwapXForY = true;
         uint256 amountIn = 0.1 ether;
-        uint256 poolId = dfmm.nonce() - 1;
         (,, bytes memory swapData) =
-            solver.simulateSwap(poolId, isSwapXForY, amountIn);
+            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(poolId, address(this), swapData);
+            dfmm.swap(POOL_ID, address(this), swapData);
 
         assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
         assertEq(
@@ -209,11 +206,10 @@ contract ConstantSumTest is Test {
 
         bool isSwapXForY = false;
         uint256 amountIn = 0.1 ether;
-        uint256 poolId = dfmm.nonce() - 1;
         (,, bytes memory swapData) =
-            solver.simulateSwap(poolId, isSwapXForY, amountIn);
+            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(poolId, address(this), swapData);
+            dfmm.swap(POOL_ID, address(this), swapData);
 
         assertEq(
             tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - outputAmount

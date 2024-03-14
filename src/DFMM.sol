@@ -391,11 +391,6 @@ contract DFMM is IDFMM {
     // Getters
 
     /// @inheritdoc IDFMM
-    function nonce() external view returns (uint256) {
-        return _pools.length;
-    }
-
-    /// @inheritdoc IDFMM
     function pools(uint256 poolId) external view returns (Pool memory) {
         return _pools[poolId];
     }
