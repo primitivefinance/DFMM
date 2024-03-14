@@ -26,7 +26,6 @@ contract LogNormalSetUp is SetUp {
         controller: address(this)
     });
 
-
     uint256 defaultReserveX = ONE;
     uint256 defaultReserveXDeep = ONE * 10_000_000;
 
@@ -34,8 +33,9 @@ contract LogNormalSetUp is SetUp {
     bytes defaultInitialPoolData =
         computeInitialPoolData(defaultReserveX, defaultPrice, defaultParams);
 
-    bytes defaultInitialPoolDataDeep =
-        computeInitialPoolData(defaultReserveXDeep, defaultPrice, defaultParamsDeep);
+    bytes defaultInitialPoolDataDeep = computeInitialPoolData(
+        defaultReserveXDeep, defaultPrice, defaultParamsDeep
+    );
 
     function setUp() public override {
         SetUp.setUp();
@@ -77,7 +77,9 @@ contract LogNormalSetUp is SetUp {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: defaultInitialPoolDataDeep
+            data: defaultInitialPoolDataDeep,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(defaultInitParamsDeep);
