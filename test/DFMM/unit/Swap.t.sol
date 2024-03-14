@@ -46,7 +46,11 @@ contract DFMMSwapTest is DFMMSetUp {
         uint256 fees = deltaLiquidity * pool.controllerFee / 1 ether;
         uint256 feesInToken =
             fees * token.totalSupply() / (pool.totalLiquidity + deltaLiquidity);
-        dfmm.swap(POOL_ID, abi.encode(true, 0, 0, 1, 1 ether, 1 ether, 1 ether));
+        dfmm.swap(
+            POOL_ID,
+            address(this),
+            abi.encode(true, 0, 0, 1, 1 ether, 1 ether, 1 ether)
+        );
         assertEq(token.balanceOf(address(this)), preBalance + feesInToken);
     }
 }

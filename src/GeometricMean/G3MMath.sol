@@ -4,8 +4,7 @@ pragma solidity ^0.8.13;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { GeometricMeanParams } from "src/GeometricMean/GeometricMean.sol";
 import { bisection } from "src/lib/BisectionLib.sol";
-
-uint256 constant ONE = 1 ether;
+import { ONE } from "src/lib/StrategyLib.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
@@ -237,4 +236,21 @@ function computeNextLiquidity(
     } else {
         L = lowerInput;
     }
+}
+
+function computeInitialPoolData(
+    uint256 amountX,
+    uint256 initialPrice,
+    GeometricMeanParams memory params
+) pure returns (bytes memory) {
+    uint256 rY = computeY(amountX, initialPrice, params);
+    uint256 L = computeL(amountX, rY, params);
+
+    int256 invariant =
+        computeTradingFunction({ rX: amountX, rY: rY, L: L, params: params });
+
+    L = computeNextLiquidity(amountX, rY, invariant, L, params);
+
+    return
+        abi.encode(amountX, rY, L, params.wX, params.swapFee, params.controller);
 }

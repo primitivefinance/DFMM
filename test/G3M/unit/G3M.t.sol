@@ -13,9 +13,9 @@ import {
 import {
     computePrice,
     computeY,
-    computeLGivenX
+    computeLGivenX,
+    computeInitialPoolData
 } from "src/GeometricMean/G3MMath.sol";
-import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
 
 contract SetUp is Test {
     DFMM dfmm;

@@ -1,18 +1,20 @@
-/// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
 import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
 
 /**
- * @title Strategy base contract for DFMM.
+ * @title Pair strategy base contract for DFMM.
+ * @notice This abstract contract defines the basic behavior of
+ * a two-token strategy for DFMM. It is meant to be inherited by
+ * a concrete strategy implementation.
  * @author Primitive
  */
 abstract contract PairStrategy is IStrategy {
     /// @inheritdoc IStrategy
     address public immutable dfmm;
 
-    int256 public constant EPSILON = 20;
-
+    /// @param dfmm_ Address of the DFMM contract.
     constructor(address dfmm_) {
         dfmm = dfmm_;
     }
@@ -40,12 +42,12 @@ abstract contract PairStrategy is IStrategy {
             uint256 deltaLiquidity
         )
     {
+        // We use `deltaL` as a temporary variable because
+        // we cannot assign to `deltaLiquidity` directly.
         (uint256 maxDeltaX, uint256 maxDeltaY, uint256 deltaL) =
             abi.decode(data, (uint256, uint256, uint256));
-
-        // TODO: This is a small trick because `deltaLiquidity` cannot be used
-        // directly, let's fix this later.
         deltaLiquidity = deltaL;
+
         deltas = _computeAllocateDeltasGivenDeltaL(
             deltaLiquidity, pool, getPoolParams(poolId)
         );
@@ -115,6 +117,7 @@ abstract contract PairStrategy is IStrategy {
         valid = invariant >= 0;
     }
 
+    /// @inheritdoc IStrategy
     function validateSwap(
         address,
         uint256 poolId,
@@ -149,24 +152,44 @@ abstract contract PairStrategy is IStrategy {
         valid = invariant >= 0;
     }
 
+    /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)
         public
         view
         virtual
         returns (bytes memory);
 
+    /// @inheritdoc IStrategy
     function tradingFunction(
         uint256[] memory reserves,
         uint256 totalLiquidity,
         bytes memory params
     ) public view virtual returns (int256);
 
+    /**
+     * @dev Computes the deltas to allocate given a liquidity delta.
+     * This function is meant to be implemented by the strategy
+     * inheriting from this contract.
+     * @param deltaLiquidity Amount of liquidity to allocate.
+     * @param pool Structure containing the pool.
+     * @param data Additional data for the strategy.
+     * @return deltas Amount of tokens to allocate (expressed in WAD).
+     */
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,
         bytes memory data
     ) internal view virtual returns (uint256[] memory);
 
+    /**
+     * @dev Computes the deltas to de de allocate given a liquidity.
+     * delta. This function is meant to be implemented by the
+     * strategy inheriting from this contract.
+     * @param deltaLiquidity Amount of liquidity to deallocate.
+     * @param pool Structure containing the pool.
+     * @param data Additional data for the strategy.
+     * @return deltas Amount of tokens to deallocate (expressed in WAD).
+     */
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,

@@ -56,4 +56,13 @@ contract SetUp is Test {
             return liquidityOwned + 1;
         }
     }
+
+    function getReservesAndLiquidity(uint256 poolId)
+        public
+        view
+        returns (uint256[] memory, uint256)
+    {
+        Pool memory pool = dfmm.pools(poolId);
+        return (pool.reserves, pool.totalLiquidity);
+    }
 }

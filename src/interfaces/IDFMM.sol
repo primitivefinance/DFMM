@@ -136,6 +136,7 @@ interface IDFMM {
     event Swap(
         address indexed account,
         uint256 indexed poolId,
+        address recipient,
         address tokenIn,
         address tokenOut,
         uint256 inputAmount,
@@ -185,6 +186,7 @@ interface IDFMM {
     /**
      * @notice Swaps tokens into pool `poolId`.
      * @param poolId Id of the pool to swap tokens into.
+     * @param recipient Address receiving the output tokens.
      * @param data An array of bytes used by the strategy contract.
      * @return tokenIn Address of the token being sent.
      * @return tokenOut Address of the token being received.
@@ -193,9 +195,11 @@ interface IDFMM {
      */
     function swap(
         uint256 poolId,
+        address recipient,
         bytes calldata data
     )
         external
+        payable
         returns (
             address tokenIn,
             address tokenOut,
@@ -212,22 +216,11 @@ interface IDFMM {
 
     // Getters
 
-    /// @notice Returns the amount of initialized pools.
-    function nonce() external view returns (uint256);
-
     /// @notice Address of the implementation of the LPToken contract.
     function lpTokenImplementation() external view returns (address);
 
     /// @notice Address of the WETH contract.
     function weth() external view returns (address);
-
-    /// @notice Returns the reserves and total liquidity of pool `poolId`.
-    /// @return reserves Array of token reserves in the pool in WAD.
-    /// @return totalLiquidity Total liquidity in the pool.
-    function getReservesAndLiquidity(uint256 poolId)
-        external
-        view
-        returns (uint256[] memory reserves, uint256 totalLiquidity);
 
     /// @notice Returns the pool parameters of pool `poolId`.
     /// @return pool A struct containing the pool parameters.

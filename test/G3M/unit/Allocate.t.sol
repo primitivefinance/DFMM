@@ -13,7 +13,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256 maxDeltaY, uint256 deltaLiquidity) =
             solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
         (uint256[] memory reserves, uint256 liquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            getReservesAndLiquidity(POOL_ID);
 
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
@@ -21,7 +21,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
 
         (uint256[] memory adjustedReserves, uint256 adjustedLiquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            getReservesAndLiquidity(POOL_ID);
 
         assertEq(adjustedReserves[0], reserves[0] + deltas[0]);
         assertEq(adjustedReserves[1], reserves[1] + deltas[1]);
@@ -41,7 +41,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256 maxDeltaY, uint256 deltaLiquidity) =
             solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
         (uint256[] memory reserves, uint256 liquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            getReservesAndLiquidity(POOL_ID);
 
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
@@ -49,7 +49,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
 
         (uint256[] memory adjustedReserves, uint256 adjustedLiquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            getReservesAndLiquidity(POOL_ID);
 
         assertEq(adjustedReserves[0], reserves[0] + deltas[0]);
         assertEq(adjustedReserves[1], reserves[1] + deltas[1]);
@@ -106,7 +106,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256 maxDeltaX, uint256 deltaLiquidity) =
             solver.allocateGivenDeltaY(POOL_ID, maxDeltaY);
         (uint256[] memory reserves, uint256 liquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            getReservesAndLiquidity(POOL_ID);
 
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
@@ -118,7 +118,7 @@ contract G3MAllocateTest is G3MSetUp {
         (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
 
         (uint256[] memory adjustedReserves, uint256 adjustedLiquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            getReservesAndLiquidity(POOL_ID);
 
         assertEq(adjustedReserves[0], reserves[0] + deltas[0]);
         assertEq(adjustedReserves[1], reserves[1] + deltas[1]);

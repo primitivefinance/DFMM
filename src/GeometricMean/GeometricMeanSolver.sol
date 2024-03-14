@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { IStrategy } from "src/interfaces/IStrategy.sol";
 import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
-import { computeAllocationGivenX } from "src/lib/StrategyLib.sol";
 import { GeometricMeanParams } from "./GeometricMean.sol";
 import {
     encodeFeeUpdate,
     encodeWeightXUpdate,
-    encodeControllerUpdate,
-    computeInitialPoolData
+    encodeControllerUpdate
 } from "./G3MUtils.sol";
 import {
+    computeInitialPoolData,
     computeL,
     computePrice,
     computeLGivenX,
@@ -54,9 +53,8 @@ contract GeometricMeanSolver {
         view
         returns (uint256, uint256, uint256)
     {
-        (uint256[] memory reserves, uint256 totalLiquidity) =
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
-        return (reserves[0], reserves[1], totalLiquidity);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        return (pool.reserves[0], pool.reserves[1], pool.totalLiquidity);
     }
 
     function prepareFeeUpdate(uint256 swapFee)

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
 import { NTokenStrategy, IStrategy } from "src/NTokenStrategy.sol";
-import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
+import { Pool } from "src/interfaces/IDFMM.sol";
 import {
     decodeFeeUpdate,
     decodeWeightsUpdate,
@@ -14,9 +14,14 @@ import {
     computeDeltaGivenDeltaLRoundUp,
     computeDeltaGivenDeltaLRoundDown
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
-import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
+import { ONE } from "src/lib/StrategyLib.sol";
 
-/// @dev Parameterization of the GeometricMean curve.
+/**
+ * @dev Parameterization of the GeometricMean curve.
+ * @param weights Weights of the tokens in WAD.
+ * @param swapFee Swap fee in WAD.
+ * @param controller Address of the controller.
+ */
 struct NTokenGeometricMeanParams {
     uint256[] weights;
     uint256 swapFee;
@@ -50,8 +55,13 @@ contract NTokenGeometricMean is NTokenStrategy {
     /// @param dfmm_ Address of the DFMM contract.
     constructor(address dfmm_) NTokenStrategy(dfmm_) { }
 
+    /// @dev Thrown when the sum of the weights is not equal to 1 (in WAD).
     error InvalidWeights(uint256 totalWeight);
+
+    /// @dev Thrown when the length of the reserves and the tokens are not matching.
     error InvalidConfiguration(uint256 reservesLength, uint256 weightsLength);
+
+    /// @dev Thrown when the length of the new weights does not match the old one.
     error InvalidWeightUpdateLength(uint256 updateLength, uint256 weightsLength);
 
     struct InitState {
@@ -65,6 +75,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         uint256[] weights;
     }
 
+    /// @inheritdoc IStrategy
     function init(
         address,
         uint256 poolId,
@@ -111,11 +122,12 @@ contract NTokenGeometricMean is NTokenStrategy {
             state.reserves, state.totalLiquidity, getPoolParams(poolId)
         );
 
-        bool valid = -(EPSILON) < invariant && invariant < EPSILON;
+        bool valid = invariant >= 0;
 
         return (valid, invariant, state.reserves, state.totalLiquidity);
     }
 
+    /// @inheritdoc IStrategy
     function update(
         address sender,
         uint256 poolId,
@@ -155,6 +167,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         }
     }
 
+    /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)
         public
         view
@@ -175,6 +188,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         return abi.encode(params);
     }
 
+    /// @inheritdoc IStrategy
     function tradingFunction(
         uint256[] memory reserves,
         uint256 totalLiquidity,
@@ -187,6 +201,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         );
     }
 
+    /// @inheritdoc NTokenStrategy
     function _computeAllocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory maxDeltas,
@@ -211,6 +226,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         }
     }
 
+    /// @inheritdoc NTokenStrategy
     function _computeDeallocateDeltasAndReservesGivenDeltaL(
         uint256 deltaLiquidity,
         uint256[] memory minDeltas,

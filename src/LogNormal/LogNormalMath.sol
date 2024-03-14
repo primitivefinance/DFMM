@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
-import { ONE, TWO, HALF } from "src/lib/StrategyLib.sol";
+import { ONE, HALF } from "src/lib/StrategyLib.sol";
 import { LogNormalParams } from "src/LogNormal/LogNormal.sol";
 import { Gaussian } from "solstat/Gaussian.sol";
 import { toUint } from "src/LogNormal/LogNormalUtils.sol";

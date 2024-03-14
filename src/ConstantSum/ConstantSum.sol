@@ -1,8 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
-import "./ConstantSumMath.sol";
-import "./ConstantSumUtils.sol";
+import {
+    FixedPointMathLib, computeTradingFunction
+} from "./ConstantSumMath.sol";
+import {
+    decodePriceUpdate,
+    decodeFeeUpdate,
+    decodeControllerUpdate
+} from "./ConstantSumUtils.sol";
 import { PairStrategy, IStrategy, Pool } from "src/PairStrategy.sol";
 
 struct InternalParams {
@@ -32,8 +38,10 @@ contract ConstantSum is PairStrategy {
 
     mapping(uint256 => InternalParams) public internalParams;
 
+    /// @param dfmm_ Address of the DFMM contract.
     constructor(address dfmm_) PairStrategy(dfmm_) { }
 
+    /// @inheritdoc IStrategy
     function init(
         address,
         uint256 poolId,
@@ -60,7 +68,7 @@ contract ConstantSum is PairStrategy {
         invariant =
             tradingFunction(reserves, totalLiquidity, abi.encode(params));
 
-        valid = -EPSILON < invariant && invariant < EPSILON;
+        valid = invariant >= 0;
 
         return (valid, invariant, reserves, totalLiquidity);
     }
@@ -76,7 +84,7 @@ contract ConstantSum is PairStrategy {
         UpdateCode updateCode = abi.decode(data, (UpdateCode));
 
         if (updateCode == UpdateCode.Price) {
-            (internalParams[poolId].price,) = decodePriceUpdate(data);
+            (internalParams[poolId].price) = decodePriceUpdate(data);
         } else if (updateCode == UpdateCode.SwapFee) {
             internalParams[poolId].swapFee = decodeFeeUpdate(data);
         } else if (updateCode == UpdateCode.Controller) {
@@ -86,6 +94,7 @@ contract ConstantSum is PairStrategy {
         }
     }
 
+    /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)
         public
         view
@@ -100,6 +109,7 @@ contract ConstantSum is PairStrategy {
         return abi.encode(params);
     }
 
+    /// @inheritdoc IStrategy
     function tradingFunction(
         uint256[] memory reserves,
         uint256 totalLiquidity,
@@ -112,6 +122,7 @@ contract ConstantSum is PairStrategy {
         );
     }
 
+    /// @inheritdoc PairStrategy
     function _computeAllocateDeltasGivenDeltaL(
         uint256,
         Pool memory,
@@ -120,6 +131,7 @@ contract ConstantSum is PairStrategy {
         return new uint256[](0);
     }
 
+    /// @inheritdoc PairStrategy
     function _computeDeallocateDeltasGivenDeltaL(
         uint256,
         Pool memory,

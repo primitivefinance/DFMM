@@ -1,18 +1,7 @@
-/// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
-import {
-    GeometricMeanParams,
-    UpdateCode
-} from "src/GeometricMean/GeometricMean.sol";
-import {
-    computeY,
-    computeL,
-    computeLGivenX,
-    computeLGivenY,
-    computeTradingFunction,
-    computeNextLiquidity
-} from "./G3MMath.sol";
+import { UpdateCode } from "src/GeometricMean/GeometricMean.sol";
 
 function encodeFeeUpdate(uint256 swapFee) pure returns (bytes memory) {
     return abi.encode(UpdateCode.SwapFee, uint256(swapFee));
@@ -50,21 +39,4 @@ function decodeControllerUpdate(bytes memory data)
     returns (address controller)
 {
     (, controller) = abi.decode(data, (UpdateCode, address));
-}
-
-function computeInitialPoolData(
-    uint256 amountX,
-    uint256 initialPrice,
-    GeometricMeanParams memory params
-) pure returns (bytes memory) {
-    uint256 rY = computeY(amountX, initialPrice, params);
-    uint256 L = computeL(amountX, rY, params);
-
-    int256 invariant =
-        computeTradingFunction({ rX: amountX, rY: rY, L: L, params: params });
-
-    L = computeNextLiquidity(amountX, rY, invariant, L, params);
-
-    return
-        abi.encode(amountX, rY, L, params.wX, params.swapFee, params.controller);
 }

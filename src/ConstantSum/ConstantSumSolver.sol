@@ -1,10 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
-import "./ConstantSum.sol";
-import "src/interfaces/IStrategy.sol";
+import { Pool, IStrategy } from "src/interfaces/IStrategy.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
-import "solmate/tokens/ERC20.sol";
+import { ConstantSumParams } from "./ConstantSum.sol";
+import {
+    encodePriceUpdate,
+    encodeFeeUpdate,
+    encodeControllerUpdate
+} from "./ConstantSumUtils.sol";
+import {
+    ONE,
+    computeInitialPoolData,
+    FixedPointMathLib
+} from "./ConstantSumMath.sol";
 
 contract ConstantSumSolver {
     error NotEnoughLiquidity();
@@ -42,8 +51,7 @@ contract ConstantSumSolver {
         bool swapXIn,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
-        (uint256[] memory reserves, uint256 totalLiquidity) =
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
         ConstantSumParams memory poolParams = abi.decode(
             IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
         );
@@ -56,7 +64,7 @@ contract ConstantSumSolver {
                 ONE - poolParams.swapFee
             );
 
-            if (reserves[1] < state.amountOut) {
+            if (pool.reserves[1] < state.amountOut) {
                 revert NotEnoughLiquidity();
             }
         } else {
@@ -65,7 +73,7 @@ contract ConstantSumSolver {
             state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
-            if (reserves[0] < state.amountOut) {
+            if (pool.reserves[0] < state.amountOut) {
                 revert NotEnoughLiquidity();
             }
         }
@@ -82,10 +90,6 @@ contract ConstantSumSolver {
             );
         }
 
-        Pool memory pool;
-        pool.reserves = reserves;
-        pool.totalLiquidity = totalLiquidity;
-
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
@@ -97,6 +101,22 @@ contract ConstantSumSolver {
         pure
         returns (bytes memory)
     {
-        return encodePriceUpdate(newPrice, 0);
+        return encodePriceUpdate(newPrice);
+    }
+
+    function prepareSwapFeeUpdate(uint256 newSwapFee)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodeFeeUpdate(newSwapFee);
+    }
+
+    function prepareControllerUpdate(address newController)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodeControllerUpdate(newController);
     }
 }

@@ -3,8 +3,7 @@ pragma solidity ^0.8.13;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { ConstantSumParams } from "src/ConstantSum/ConstantSum.sol";
-
-uint256 constant ONE = 1 ether;
+import { ONE } from "src/lib/StrategyLib.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
@@ -53,7 +52,7 @@ function computeDeallocateGivenDeltaY(
 ) pure returns (uint256 deltaX, uint256 deltaL) {
     uint256 a = deltaY.divWadDown(rY);
     if (rX > 0) {
-        deltaY = a.mulWadDown(rX);
+        deltaX = a.mulWadDown(rX);
     }
     deltaL = a.mulWadDown(totalLiquidity);
 }

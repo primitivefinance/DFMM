@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
 import { IDFMM, Pool, InitParams } from "src/interfaces/IDFMM.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
@@ -21,6 +21,7 @@ import { LPToken } from "./LPToken.sol";
 contract DFMM is IDFMM {
     using FixedPointMathLib for uint256;
 
+    /// @dev Array containing all the pools.
     Pool[] internal _pools;
 
     /// @inheritdoc IDFMM
@@ -70,12 +71,14 @@ contract DFMM is IDFMM {
         if (params.tokens.length < 2) revert InvalidMinimumTokens();
         if (params.tokens.length > 8) revert InvalidMaximumTokens();
 
+        LPToken liquidityToken = LPToken(clone(lpTokenImplementation));
+
         Pool memory pool = Pool({
             strategy: params.strategy,
             tokens: params.tokens,
             reserves: new uint256[](params.tokens.length),
             totalLiquidity: 0,
-            liquidityToken: address(0),
+            liquidityToken: address(liquidityToken),
             feeCollector: params.feeCollector,
             controllerFee: params.controllerFee
         });
@@ -91,21 +94,18 @@ contract DFMM is IDFMM {
 
         if (!valid) revert InvalidInvariant(invariant);
 
-        LPToken liquidityToken = LPToken(clone(lpTokenImplementation));
-
         liquidityToken.initialize(params.name, params.symbol);
         liquidityToken.mint(msg.sender, totalLiquidity - BURNT_LIQUIDITY);
         liquidityToken.mint(address(0), BURNT_LIQUIDITY);
 
         pool.reserves = reserves;
         pool.totalLiquidity = totalLiquidity;
-        pool.liquidityToken = address(liquidityToken);
 
         _pools.push(pool);
         uint256 poolId = _pools.length - 1;
 
-        // TODO: Improve this code.
         uint256 tokensLength = params.tokens.length;
+
         for (uint256 i = 0; i < tokensLength; i++) {
             address token = params.tokens[i];
 
@@ -116,16 +116,14 @@ contract DFMM is IDFMM {
             }
         }
 
-        for (uint256 i = 0; i < params.tokens.length; i++) {
-            if (params.tokens[i] != address(0)) {
-                uint256 decimals = ERC20(params.tokens[i]).decimals();
+        for (uint256 i = 0; i < tokensLength; i++) {
+            uint256 decimals = ERC20(params.tokens[i]).decimals();
 
-                if (decimals > 18 || decimals < 6) {
-                    revert InvalidTokenDecimals();
-                }
-
-                _transferFrom(params.tokens[i], reserves[i]);
+            if (decimals > 18 || decimals < 6) {
+                revert InvalidTokenDecimals();
             }
+
+            _transferFrom(params.tokens[i], reserves[i]);
         }
 
         emit Init(
@@ -157,19 +155,17 @@ contract DFMM is IDFMM {
 
         if (!valid) revert InvalidInvariant(invariant);
 
-        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
-            if (_pools[poolId].tokens[i] != address(0)) {
-                _pools[poolId].reserves[i] += deltas[i];
-            }
+        uint256 length = _pools[poolId].tokens.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            _pools[poolId].reserves[i] += deltas[i];
         }
 
         _pools[poolId].totalLiquidity += deltaLiquidity;
         _manageTokens(msg.sender, poolId, true, deltaLiquidity);
 
-        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
-            if (_pools[poolId].tokens[i] != address(0)) {
-                _transferFrom(_pools[poolId].tokens[i], deltas[i]);
-            }
+        for (uint256 i = 0; i < length; i++) {
+            _transferFrom(_pools[poolId].tokens[i], deltas[i]);
         }
 
         emit Allocate(msg.sender, poolId, deltas, deltaLiquidity);
@@ -192,19 +188,17 @@ contract DFMM is IDFMM {
 
         if (!valid) revert InvalidInvariant(invariant);
 
-        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
-            if (_pools[poolId].tokens[i] != address(0)) {
-                _pools[poolId].reserves[i] -= deltas[i];
-            }
+        uint256 length = _pools[poolId].tokens.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            _pools[poolId].reserves[i] -= deltas[i];
         }
 
         _manageTokens(msg.sender, poolId, false, deltaLiquidity);
         _pools[poolId].totalLiquidity -= deltaLiquidity;
 
-        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
-            if (_pools[poolId].tokens[i] != address(0)) {
-                _transfer(_pools[poolId].tokens[i], msg.sender, deltas[i]);
-            }
+        for (uint256 i = 0; i < length; i++) {
+            _transfer(_pools[poolId].tokens[i], msg.sender, deltas[i]);
         }
 
         emit Deallocate(msg.sender, poolId, deltas, deltaLiquidity);
@@ -221,10 +215,12 @@ contract DFMM is IDFMM {
         uint256 deltaLiquidity;
     }
 
+    /// @inheritdoc IDFMM
     function swap(
         uint256 poolId,
+        address recipient,
         bytes calldata data
-    ) external lock returns (address, address, uint256, uint256) {
+    ) external payable lock returns (address, address, uint256, uint256) {
         SwapState memory state;
 
         (
@@ -257,11 +253,12 @@ contract DFMM is IDFMM {
         address tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
         _transferFrom(tokenIn, state.amountIn);
-        _transfer(tokenOut, msg.sender, state.amountOut);
+        _transfer(tokenOut, recipient, state.amountOut);
 
         emit Swap(
             msg.sender,
             poolId,
+            recipient,
             tokenIn,
             tokenOut,
             state.amountIn,
@@ -353,12 +350,10 @@ contract DFMM is IDFMM {
         uint256 totalLiquidity = _pools[poolId].totalLiquidity;
 
         if (isAllocate) {
-            uint256 amount =
-                deltaL.mulWadDown(totalSupply.divWadDown(totalLiquidity));
+            uint256 amount = deltaL.mulDivDown(totalSupply, totalLiquidity);
             liquidityToken.mint(recipient, amount);
         } else {
-            uint256 amount =
-                deltaL.mulWadUp(totalSupply.divWadUp(totalLiquidity));
+            uint256 amount = deltaL.mulDivUp(totalSupply, totalLiquidity);
             liquidityToken.burn(msg.sender, amount);
         }
     }
@@ -399,21 +394,7 @@ contract DFMM is IDFMM {
     // Getters
 
     /// @inheritdoc IDFMM
-    function nonce() external view returns (uint256) {
-        return _pools.length;
-    }
-
-    /// @inheritdoc IDFMM
     function pools(uint256 poolId) external view returns (Pool memory) {
         return _pools[poolId];
-    }
-
-    /// @inheritdoc IDFMM
-    function getReservesAndLiquidity(uint256 poolId)
-        external
-        view
-        returns (uint256[] memory, uint256)
-    {
-        return (_pools[poolId].reserves, _pools[poolId].totalLiquidity);
     }
 }

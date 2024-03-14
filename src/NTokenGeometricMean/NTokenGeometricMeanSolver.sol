@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
-import "solmate/tokens/ERC20.sol";
-import "src/interfaces/IStrategy.sol";
-import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { IStrategy } from "src/interfaces/IStrategy.sol";
+import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
 import { NTokenGeometricMeanParams } from
     "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 import {
@@ -51,7 +50,8 @@ contract NTokenGeometricMeanSolver {
         view
         returns (uint256[] memory, uint256)
     {
-        return IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        return (pool.reserves, pool.totalLiquidity);
     }
 
     struct SimulateSwapState {

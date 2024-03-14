@@ -4,7 +4,8 @@ pragma solidity ^0.8.13;
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
 import "test/utils/SetUp.sol";
-import { ONE, TWO } from "src/lib/StrategyLib.sol";
+import { ONE } from "src/lib/StrategyLib.sol";
+import { InitParams } from "src/interfaces/IDFMM.sol";
 
 contract LogNormalSetUp is SetUp {
     LogNormal logNormal;

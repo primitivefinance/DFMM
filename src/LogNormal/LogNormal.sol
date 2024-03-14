@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
-import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
+import { Pool } from "src/interfaces/IDFMM.sol";
 import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
 import {
@@ -141,6 +141,7 @@ contract LogNormal is PairStrategy {
         );
     }
 
+    /// @inheritdoc PairStrategy
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,
@@ -159,6 +160,7 @@ contract LogNormal is PairStrategy {
         return deltas;
     }
 
+    /// @inheritdoc PairStrategy
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,

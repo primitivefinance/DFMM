@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
-import "../lib/BisectionLib.sol";
-import "src/interfaces/IDFMM.sol";
-import "src/interfaces/IStrategy.sol";
-import "solmate/tokens/ERC20.sol";
-import "solstat/Gaussian.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
+import { IStrategy } from "src/interfaces/IStrategy.sol";
+import { Pool, IDFMM } from "src/interfaces/IDFMM.sol";
 import {
     computeAllocationGivenX,
     computeAllocationGivenY
@@ -96,7 +94,8 @@ contract LogNormalSolver {
         view
         returns (uint256[] memory, uint256)
     {
-        return IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        return (pool.reserves, pool.totalLiquidity);
     }
 
     function getInitialPoolData(
