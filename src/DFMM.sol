@@ -105,6 +105,7 @@ contract DFMM is IDFMM {
         uint256 poolId = _pools.length - 1;
 
         uint256 tokensLength = params.tokens.length;
+
         for (uint256 i = 0; i < tokensLength; i++) {
             address token = params.tokens[i];
 
@@ -115,7 +116,7 @@ contract DFMM is IDFMM {
             }
         }
 
-        for (uint256 i = 0; i < params.tokens.length; i++) {
+        for (uint256 i = 0; i < tokensLength; i++) {
             uint256 decimals = ERC20(params.tokens[i]).decimals();
 
             if (decimals > 18 || decimals < 6) {
@@ -154,14 +155,16 @@ contract DFMM is IDFMM {
 
         if (!valid) revert InvalidInvariant(invariant);
 
-        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
+        uint256 length = _pools[poolId].tokens.length;
+
+        for (uint256 i = 0; i < length; i++) {
             _pools[poolId].reserves[i] += deltas[i];
         }
 
         _pools[poolId].totalLiquidity += deltaLiquidity;
         _manageTokens(msg.sender, poolId, true, deltaLiquidity);
 
-        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             _transferFrom(_pools[poolId].tokens[i], deltas[i]);
         }
 
@@ -185,14 +188,16 @@ contract DFMM is IDFMM {
 
         if (!valid) revert InvalidInvariant(invariant);
 
-        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
+        uint256 length = _pools[poolId].tokens.length;
+
+        for (uint256 i = 0; i < length; i++) {
             _pools[poolId].reserves[i] -= deltas[i];
         }
 
         _manageTokens(msg.sender, poolId, false, deltaLiquidity);
         _pools[poolId].totalLiquidity -= deltaLiquidity;
 
-        for (uint256 i = 0; i < _pools[poolId].tokens.length; i++) {
+        for (uint256 i = 0; i < length; i++) {
             _transfer(_pools[poolId].tokens[i], msg.sender, deltas[i]);
         }
 
