@@ -107,8 +107,10 @@ contract G3MAllocateTest is G3MSetUp {
             solver.allocateGivenDeltaY(POOL_ID, maxDeltaY);
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(POOL_ID);
+        console2.log("liquidity", liquidity);
 
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
+        console2.log(preLiquidityBalance);
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         console2.log(maxDeltaX);
@@ -124,11 +126,33 @@ contract G3MAllocateTest is G3MSetUp {
         assertEq(adjustedReserves[1], reserves[1] + deltas[1]);
         assertEq(adjustedLiquidity, liquidity + deltaLiquidity);
 
-        /*
         assertEq(
             preLiquidityBalance + deltaLiquidity,
             liquidityOf(address(this), POOL_ID)
         );
-        */
+    }
+
+    function test_G3M_allocate_ReceiveAppropriateLpTokens() public init_100 {
+
+      (uint256[] memory initialReserves, uint256 initialL) = getReservesAndLiquidity(POOL_ID);
+
+      console2.log("Initial Liquidity", initialL);
+
+      uint256 dyMax = 100 ether;
+      (uint256 dxMax, uint256 dL) = solver.allocateGivenDeltaY(POOL_ID, dyMax);
+
+      uint256 preLpTokens = liquidityOf(address(this), POOL_ID);
+
+      bytes memory data = abi.encode(dxMax, dyMax, dL);
+
+      (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
+
+      (uint256[] memory nextReserves, uint256 nextL) = getReservesAndLiquidity(POOL_ID);
+      uint256 postLpTokens = liquidityOf(address(this), POOL_ID);
+
+      console2.log("preLp", preLpTokens);
+      console2.log("postLp", postLpTokens);
+
+      assertApproxEqAbs(preLpTokens + dL, postLpTokens, 1000);
     }
 }
