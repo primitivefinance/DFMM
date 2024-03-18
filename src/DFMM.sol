@@ -161,9 +161,8 @@ contract DFMM is IDFMM {
             _pools[poolId].reserves[i] += deltas[i];
         }
 
-
-        _pools[poolId].totalLiquidity += deltaLiquidity;
         _manageTokens(msg.sender, poolId, true, deltaLiquidity);
+        _pools[poolId].totalLiquidity += deltaLiquidity;
 
         for (uint256 i = 0; i < length; i++) {
             _transferFrom(_pools[poolId].tokens[i], deltas[i]);
