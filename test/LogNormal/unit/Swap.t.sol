@@ -127,4 +127,31 @@ contract LogNormalSwapTest is LogNormalSetUp {
         console2.log(inputAmount);
         console2.log(outputAmount);
     }
+
+    function test_LogNormal_swap_WorksWith0dL() public deep {
+        uint256 amountIn = 1 ether;
+        bool swapXForY = true;
+
+        (uint256[] memory initialReserves, uint256 initialLiquidity) = solver.getReservesAndLiquidity(POOL_ID);
+        LogNormalParams memory initialParams = solver.getPoolParams(POOL_ID);
+
+        int256 initialInvariant = computeTradingFunction(initialReserves[0], initialReserves[1], initialLiquidity, initialParams);
+
+        console2.log("initial invariant: ", initialInvariant);
+
+        (,,, bytes memory payload) =
+            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+
+        (,, uint256 computedDeltaIn, uint256 computedDeltaOut,) = abi.decode(payload, (uint256, uint256, uint256, uint256, uint256));
+
+        bytes memory updatedPayload = abi.encode(0, 1, computedDeltaIn, computedDeltaOut, 0);
+
+        (,, uint256 inputAmount, uint256 outputAmount) =
+            dfmm.swap(POOL_ID, address(this), updatedPayload);
+
+        (uint256[] memory nextReserves, uint256 nextLiquidity) = solver.getReservesAndLiquidity(POOL_ID);
+        int256 nextInvariant = computeTradingFunction(nextReserves[0], nextReserves[1], nextLiquidity, initialParams);
+
+        console2.log("next invariant: ", nextInvariant);
+    }
 }
