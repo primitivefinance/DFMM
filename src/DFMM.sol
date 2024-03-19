@@ -294,7 +294,11 @@ contract DFMM is IDFMM {
                 );
             }
 
-            SafeTransferLib.safeTransferETH(msg.sender, address(this).balance);
+            if (address(this).balance > 0) {
+                SafeTransferLib.safeTransferETH(
+                    msg.sender, address(this).balance
+                );
+            }
         } else {
             uint256 downscaledAmount =
                 downscaleUp(amount, computeScalingFactor(token));
