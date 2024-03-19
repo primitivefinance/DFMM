@@ -109,8 +109,8 @@ contract DFMM is IDFMM {
         for (uint256 i = 0; i < tokensLength; i++) {
             address token = params.tokens[i];
 
-            for (uint256 j = 0; j < tokensLength; j++) {
-                if (i != j && token == params.tokens[j]) {
+            for (uint256 j = i + 1; j < tokensLength; j++) {
+                if (token == params.tokens[j]) {
                     revert InvalidDuplicateTokens();
                 }
             }
