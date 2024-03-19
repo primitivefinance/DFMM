@@ -105,6 +105,7 @@ contract ConstantSum is PairStrategy {
 
         params.price = internalParams[poolId].price;
         params.swapFee = internalParams[poolId].swapFee;
+        params.controller = internalParams[poolId].controller;
 
         return abi.encode(params);
     }
