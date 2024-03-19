@@ -31,10 +31,10 @@ contract ConstantSumGetPoolParamsTest is ConstantSumSetUp {
             controllerFee: 0
         });
 
-        dfmm.init(initParams);
+        (uint256 poolId,,) = dfmm.init(initParams);
 
         ConstantSumParams memory poolParams =
-            abi.decode(constantSum.getPoolParams(0), (ConstantSumParams));
+            abi.decode(constantSum.getPoolParams(poolId), (ConstantSumParams));
 
         assertEq(poolParams.price, initialParams.price);
         assertEq(poolParams.swapFee, initialParams.swapFee);
