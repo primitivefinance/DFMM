@@ -285,7 +285,7 @@ contract DFMM is IDFMM {
      * @param amount Amount to transfer expressed in WAD.
      */
     function _transferFrom(address token, uint256 amount) internal {
-        if (address(this).balance >= amount) {
+        if (token == weth && address(this).balance >= amount) {
             WETH(payable(weth)).deposit{ value: amount }();
 
             if (address(this).balance > 0) {
