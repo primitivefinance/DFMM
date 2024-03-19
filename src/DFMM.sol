@@ -362,7 +362,7 @@ contract DFMM is IDFMM {
      * @dev Deploys and returns the address of a clone contract that mimics
      * the behaviour of the contract deployed at the address `implementation`.
      * This function uses the `CREATE` opcode, which should never revert.
-     * This function was taken from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Clones.sol#L23.
+     * This function was taken from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/7bd2b2aaf68c21277097166a9a51eb72ae239b34/contracts/proxy/Clones.sol#L23-L41.
      */
     function clone(address implementation)
         internal
