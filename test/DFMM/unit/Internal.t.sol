@@ -53,6 +53,16 @@ contract DFMMInternalTest is DFMMSetUp {
         assertEq(address(dfmmInternal).balance, 0);
     }
 
+    function test_DFMM_transferFrom_UsesWETHAndRefunds() public {
+        uint256 amount = 1 ether;
+        weth.deposit{ value: amount }();
+        weth.approve(address(dfmmInternal), amount);
+        dfmmInternal.transferFrom{ value: amount - 1 }(address(weth), amount);
+        assertEq(weth.balanceOf(address(dfmmInternal)), amount);
+        assertEq(address(weth).balance, amount);
+        assertEq(address(dfmmInternal).balance, 0);
+    }
+
     function testFuzz_DFMM_transferFrom_TransferTokens(uint256 amount) public {
         vm.assume(
             amount
