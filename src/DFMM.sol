@@ -285,14 +285,16 @@ contract DFMM is IDFMM {
      * @param amount Amount to transfer expressed in WAD.
      */
     function _transferFrom(address token, uint256 amount) internal {
-        if (token == weth && address(this).balance >= amount) {
-            WETH(payable(weth)).deposit{ value: amount }();
-
-            if (address(this).balance > 0) {
-                SafeTransferLib.safeTransferETH(
-                    msg.sender, address(this).balance
+        if (token == weth) {
+            if (address(this).balance >= amount) {
+                WETH(payable(weth)).deposit{ value: amount }();
+            } else {
+                SafeTransferLib.safeTransferFrom(
+                    ERC20(token), msg.sender, address(this), amount
                 );
             }
+
+            SafeTransferLib.safeTransferETH(msg.sender, address(this).balance);
         } else {
             uint256 downscaledAmount =
                 downscaleUp(amount, computeScalingFactor(token));
