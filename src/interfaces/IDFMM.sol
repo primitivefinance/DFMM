@@ -56,6 +56,9 @@ interface IDFMM {
     /// @dev Thrown when pool tokens are identical.
     error InvalidDuplicateTokens();
 
+    /// @dev Thrown when a strategy is returning an invalid amount of reserves.
+    error InvalidReserves();
+
     /// @dev Thrown when a pool is being initalized with less than two tokens.
     error InvalidMinimumTokens();
 
