@@ -29,7 +29,7 @@ contract DFMMInternalTest is DFMMSetUp {
 
     function test_DFMM_transferFrom_WrapsETH() public {
         uint256 amount = 1 ether;
-        dfmmInternal.transferFrom{ value: amount }(address(0), amount);
+        dfmmInternal.transferFrom{ value: amount }(address(weth), amount);
         assertEq(weth.balanceOf(address(dfmmInternal)), amount);
         assertEq(address(weth).balance, 1 ether);
         assertEq(address(dfmmInternal).balance, 0);
@@ -37,7 +37,7 @@ contract DFMMInternalTest is DFMMSetUp {
 
     function test_DFMM_transferFrom_RefundsExtraETH() public {
         uint256 amount = 1 ether;
-        dfmmInternal.transferFrom{ value: amount * 2 }(address(0), amount);
+        dfmmInternal.transferFrom{ value: amount * 2 }(address(weth), amount);
         assertEq(weth.balanceOf(address(dfmmInternal)), amount);
         assertEq(address(weth).balance, 1 ether);
         assertEq(address(dfmmInternal).balance, 0);
