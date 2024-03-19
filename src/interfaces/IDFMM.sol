@@ -8,6 +8,8 @@ pragma solidity ^0.8.13;
  * @param reserves Array of token reserves in the pool in WAD.
  * @param totalLiquidity Total liquidity in the pool.
  * @param liquidityToken Address of the LP token contract.
+ * @param feeCollector Address receiving controller fees.
+ * @param controllerFee Fees charged on the swap fee (in WAD).
  */
 struct Pool {
     address strategy;
@@ -26,6 +28,8 @@ struct Pool {
  * @param strategy Address of the associated strategy contract.
  * @param tokens Array of token addresses in the pool.
  * @param data An array of bytes used by the strategy contract.
+ * @param feeCollector Address receiving controller fees.
+ * @param controllerFee Fees charged on the swap fee (in WAD).
  */
 struct InitParams {
     string name;
