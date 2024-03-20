@@ -117,6 +117,45 @@ contract ConstantSum is PairStrategy {
         valid = invariant >= 0;
     }
 
+    function validateDeallocate(
+        address,
+        uint256 poolId,
+        Pool memory pool,
+        bytes calldata data
+    )
+        external
+        view
+        override
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256[] memory deltas,
+            uint256 deltaLiquidity
+        )
+    {
+        (uint256 deltaX, uint256 deltaY, uint256 maxDeltaL) =
+            abi.decode(data, (uint256, uint256, uint256));
+
+        deltaLiquidity =
+            computeDeltaLiquidity(deltaX, deltaY, internalParams[poolId].price);
+        if (maxDeltaL > deltaLiquidity) revert InvalidDeltaLiquidity();
+
+        deltas = new uint256[](2);
+        deltas[0] = deltaX;
+        deltas[1] = deltaY;
+
+        pool.reserves[0] -= deltaX;
+        pool.reserves[1] -= deltaY;
+
+        invariant = tradingFunction(
+            pool.reserves,
+            pool.totalLiquidity - deltaLiquidity,
+            getPoolParams(poolId)
+        );
+
+        valid = invariant >= 0;
+    }
+
     /// @inheritdoc IStrategy
     function update(
         address sender,
