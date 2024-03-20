@@ -144,7 +144,7 @@ contract LogNormalSwapTest is LogNormalSetUp {
 
         (,, uint256 computedDeltaIn, uint256 computedDeltaOut,) = abi.decode(payload, (uint256, uint256, uint256, uint256, uint256));
 
-        bytes memory updatedPayload = abi.encode(0, 1, computedDeltaIn, computedDeltaOut, 0);
+        bytes memory updatedPayload = abi.encode(0, 1, computedDeltaIn, computedDeltaOut + 0.002999999 ether, 0);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), updatedPayload);
