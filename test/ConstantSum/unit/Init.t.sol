@@ -37,4 +37,54 @@ contract ConstantSumInitTest is ConstantSumSetUp {
 
         dfmm.init(initParams);
     }
+
+    function test_ConstantSum_init_TransfersTokens() public {
+        uint256 price = 1 ether;
+
+        ConstantSumParams memory params = ConstantSumParams({
+            price: price,
+            swapFee: TEST_SWAP_FEE,
+            controller: address(this)
+        });
+
+        uint256 reserveX = 1 ether;
+        uint256 reserveY = 1 ether;
+
+        bytes memory initData =
+            solver.getInitialPoolData(reserveX, reserveY, params);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory initParams = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(constantSum),
+            tokens: tokens,
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        uint256 dfmmPreTokenXBalance = tokenX.balanceOf(address(dfmm));
+        uint256 dfmmPreTokenYBalance = tokenY.balanceOf(address(dfmm));
+        uint256 userPreTokenXBalance = tokenX.balanceOf(address(this));
+        uint256 userPreTokenYBalance = tokenY.balanceOf(address(this));
+
+        dfmm.init(initParams);
+
+        uint256 dfmmPostTokenXBalance = tokenX.balanceOf(address(dfmm));
+        uint256 dfmmPostTokenYBalance = tokenY.balanceOf(address(dfmm));
+        uint256 userPostTokenXBalance = tokenX.balanceOf(address(this));
+        uint256 userPostTokenYBalance = tokenY.balanceOf(address(this));
+
+        assertEq(dfmmPreTokenXBalance + reserveX, dfmmPostTokenXBalance);
+
+        assertEq(dfmmPreTokenYBalance + reserveY, dfmmPostTokenYBalance);
+
+        assertEq(userPreTokenXBalance - reserveX, userPostTokenXBalance);
+
+        assertEq(userPreTokenYBalance - reserveY, userPostTokenYBalance);
+    }
 }
