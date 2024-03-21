@@ -111,7 +111,7 @@ contract ConstantSumTest is Test {
 
         assertEq(pool.reserves[0], 1 ether);
         assertEq(pool.reserves[1], 1 ether);
-        assertEq(pool.totalLiquidity, 1.5 ether);
+        assertEq(pool.totalLiquidity, 3 ether);
     }
 
     function test_constant_sum_swap_x_in_no_fee() public basic_feeless {
