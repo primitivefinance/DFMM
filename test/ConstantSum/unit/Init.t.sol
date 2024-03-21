@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { ConstantSumSetUp } from "./SetUp.sol";
 import { ConstantSum, ConstantSumParams } from "src/ConstantSum/ConstantSum.sol";
-import { DFMM, IDFMM, InitParams } from "src/DFMM.sol";
+import { Pool, InitParams } from "src/interfaces/IDFMM.sol";
+import { ConstantSumSetUp } from "./SetUp.sol";
 
 contract ConstantSumInitTest is ConstantSumSetUp {
     function test_ConstantSum_init_InitializesPool() public {
@@ -35,7 +35,11 @@ contract ConstantSumInitTest is ConstantSumSetUp {
             controllerFee: 0
         });
 
-        dfmm.init(initParams);
+        (POOL_ID,,) = dfmm.init(initParams);
+        Pool memory pool = dfmm.pools(POOL_ID);
+
+        assertEq(pool.reserves[0], reserveX);
+        assertEq(pool.reserves[1], reserveY);
     }
 
     function test_ConstantSum_init_TransfersTokens() public {
@@ -80,11 +84,8 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         uint256 userPostTokenYBalance = tokenY.balanceOf(address(this));
 
         assertEq(dfmmPreTokenXBalance + reserveX, dfmmPostTokenXBalance);
-
         assertEq(dfmmPreTokenYBalance + reserveY, dfmmPostTokenYBalance);
-
         assertEq(userPreTokenXBalance - reserveX, userPostTokenXBalance);
-
         assertEq(userPreTokenYBalance - reserveY, userPostTokenYBalance);
     }
 }
