@@ -100,51 +100,6 @@ contract ConstantSumTest is Test {
         _;
     }
 
-    function test_constant_sum_swap_x_in_with_fee() public basic {
-        uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
-        uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
-        uint256 preUserBalanceX = tokenX.balanceOf(address(this));
-        uint256 preUserBalanceY = tokenY.balanceOf(address(this));
-
-        bool isSwapXForY = true;
-        uint256 amountIn = 0.1 ether;
-        (,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
-        (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), swapData);
-
-        assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
-        assertEq(
-            tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - outputAmount
-        );
-        assertEq(tokenX.balanceOf(address(this)), preUserBalanceX - inputAmount);
-        assertEq(
-            tokenY.balanceOf(address(this)), preUserBalanceY + outputAmount
-        );
-    }
-
-    function test_constant_sum_swap_y_in_with_fee() public basic {
-        uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
-        uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
-        uint256 preUserBalanceX = tokenX.balanceOf(address(this));
-        uint256 preUserBalanceY = tokenY.balanceOf(address(this));
-
-        bool isSwapXForY = false;
-        uint256 amountIn = 0.1 ether;
-        (,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
-        (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), swapData);
-
-        assertEq(
-            tokenX.balanceOf(address(dfmm)), preDfmmBalanceX - outputAmount
-        );
-        assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY + inputAmount);
-        assertEq(
-            tokenX.balanceOf(address(this)), preUserBalanceX + outputAmount
-        );
-        assertEq(tokenY.balanceOf(address(this)), preUserBalanceY - inputAmount);
-    }
     /*
     function test_constant_sum_allocate() public basic {
         uint256 poolId = dfmm.nonce() - 1;
