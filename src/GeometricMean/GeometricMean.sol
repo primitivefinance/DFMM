@@ -74,7 +74,7 @@ contract GeometricMean is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        Pool calldata,
+        Pool calldata pool,
         bytes calldata data
     ) external onlyDFMM returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
@@ -91,6 +91,10 @@ contract GeometricMean is PairStrategy {
         ) = abi.decode(
             data, (uint256, uint256, uint256, uint256, uint256, address)
         );
+
+        if (pool.reserves.length != 2) {
+            revert InvalidReservesLength();
+        }
 
         if (state.wX >= ONE) {
             revert InvalidWeightX();
