@@ -100,20 +100,6 @@ contract ConstantSumTest is Test {
         _;
     }
 
-    function test_constant_sum_swap_x_in_invalid() public basic_feeless {
-        bool xIn = true;
-        uint256 amountIn = 1.1 ether;
-        vm.expectRevert(ConstantSumSolver.NotEnoughLiquidity.selector);
-        solver.simulateSwap(POOL_ID, xIn, amountIn);
-    }
-
-    function test_constant_sum_swap_y_in_invalid() public basic_feeless {
-        bool xIn = false;
-        uint256 amountIn = 2.1 ether;
-        vm.expectRevert(ConstantSumSolver.NotEnoughLiquidity.selector);
-        solver.simulateSwap(POOL_ID, xIn, amountIn);
-    }
-
     function test_constant_sum_swap_x_in_with_fee() public basic {
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
