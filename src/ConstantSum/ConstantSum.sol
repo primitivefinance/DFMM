@@ -45,7 +45,7 @@ contract ConstantSum is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        Pool calldata,
+        Pool calldata pool,
         bytes calldata data
     )
         public
@@ -60,6 +60,10 @@ contract ConstantSum is PairStrategy {
         ConstantSumParams memory params;
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, ConstantSumParams));
+
+        if (pool.reserves.length != 2 || reserves.length != 2) {
+            revert InvalidReservesLength();
+        }
 
         internalParams[poolId].price = params.price;
         internalParams[poolId].swapFee = params.swapFee;
