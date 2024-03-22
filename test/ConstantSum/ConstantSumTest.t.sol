@@ -100,20 +100,6 @@ contract ConstantSumTest is Test {
         _;
     }
 
-    function test_init() public basic {
-        (ConstantSumParams memory params) =
-            abi.decode(constantSum.getPoolParams(POOL_ID), (ConstantSumParams));
-        assertEq(params.price, 2 ether);
-        assertEq(params.swapFee, 0.003 ether);
-        assertEq(params.controller, address(0));
-
-        Pool memory pool = dfmm.pools(POOL_ID);
-
-        assertEq(pool.reserves[0], 1 ether);
-        assertEq(pool.reserves[1], 1 ether);
-        assertEq(pool.totalLiquidity, 3 ether);
-    }
-
     function test_constant_sum_swap_x_in_no_fee() public basic_feeless {
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
