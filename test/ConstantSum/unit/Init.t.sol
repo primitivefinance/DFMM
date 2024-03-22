@@ -42,6 +42,47 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         assertEq(pool.reserves[1], reserveY);
     }
 
+    // This test doesn't pass because the `controller` param is not stored 
+    function test_ConstantSum_init_StoresPoolParams() public {
+        skip();
+        
+        uint256 price = 1 ether;
+
+        ConstantSumParams memory params = ConstantSumParams({
+            price: price,
+            swapFee: TEST_SWAP_FEE,
+            controller: address(this)
+        });
+
+        uint256 reserveX = 1 ether;
+        uint256 reserveY = 1 ether;
+
+        bytes memory initData =
+            solver.getInitialPoolData(reserveX, reserveY, params);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory initParams = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(constantSum),
+            tokens: tokens,
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        (POOL_ID,,) = dfmm.init(initParams);
+        ConstantSumParams memory poolParams =
+            abi.decode(constantSum.getPoolParams(POOL_ID), (ConstantSumParams));
+
+        assertEq(poolParams.price, price);
+        assertEq(poolParams.swapFee, TEST_SWAP_FEE);
+        assertEq(poolParams.controller, address(this));
+    }
+
     function test_ConstantSum_init_TransfersTokens() public {
         uint256 price = 1 ether;
 
