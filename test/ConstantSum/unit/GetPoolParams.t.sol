@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { ConstantSumSetUp, ConstantSumParams, InitParams } from "./SetUp.sol";
+import { ConstantSumParams } from "src/ConstantSum/ConstantSum.sol";
+import { ConstantSumSetUp, InitParams } from "./SetUp.sol";
 
 contract ConstantSumGetPoolParamsTest is ConstantSumSetUp {
-    function test_ConstantSum_getPoolParams() public {
-        ConstantSumParams memory initialParams = ConstantSumParams({
-            price: 1 ether,
+    function test_ConstantSum_getPoolParams_ReturnsPoolParams() public {
+        ConstantSumParams memory initPoolParams = ConstantSumParams({
+            price: 2 ether,
             swapFee: TEST_SWAP_FEE,
             controller: address(this)
         });
@@ -15,7 +16,7 @@ contract ConstantSumGetPoolParamsTest is ConstantSumSetUp {
         uint256 reserveY = 1 ether;
 
         bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, initialParams);
+            solver.getInitialPoolData(reserveX, reserveY, initPoolParams);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
@@ -31,13 +32,12 @@ contract ConstantSumGetPoolParamsTest is ConstantSumSetUp {
             controllerFee: 0
         });
 
-        (uint256 poolId,,) = dfmm.init(initParams);
+        (POOL_ID,,) = dfmm.init(initParams);
 
         ConstantSumParams memory poolParams =
-            abi.decode(constantSum.getPoolParams(poolId), (ConstantSumParams));
-
-        assertEq(poolParams.price, initialParams.price);
-        assertEq(poolParams.swapFee, initialParams.swapFee);
-        assertEq(poolParams.controller, initialParams.controller);
+            abi.decode(constantSum.getPoolParams(POOL_ID), (ConstantSumParams));
+        assertEq(poolParams.swapFee, initPoolParams.swapFee);
+        assertEq(poolParams.price, initPoolParams.price);
+        assertEq(poolParams.controller, initPoolParams.controller);
     }
 }
