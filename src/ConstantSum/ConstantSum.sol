@@ -63,6 +63,7 @@ contract ConstantSum is PairStrategy {
 
         internalParams[poolId].price = params.price;
         internalParams[poolId].swapFee = params.swapFee;
+        internalParams[poolId].controller = params.controller;
 
         // Get the trading function and check this is valid
         invariant =
@@ -105,6 +106,7 @@ contract ConstantSum is PairStrategy {
 
         params.price = internalParams[poolId].price;
         params.swapFee = internalParams[poolId].swapFee;
+        params.controller = internalParams[poolId].controller;
 
         return abi.encode(params);
     }
