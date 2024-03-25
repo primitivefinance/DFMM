@@ -16,7 +16,7 @@ contract ConstantSumGetPoolParamsTest is ConstantSumSetUp {
         uint256 reserveY = 1 ether;
 
         bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, defaultParams);
+            solver.getInitialPoolData(reserveX, reserveY, initPoolParams);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
