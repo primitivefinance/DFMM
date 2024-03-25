@@ -23,6 +23,9 @@ interface IStrategy {
     /// @dev Thrown when an expected delta does not match the actual delta.
     error DeltaError(uint256 expected, uint256 actual);
 
+    /// @dev Thrown when the reserves length is not 2.
+    error InvalidReservesLength();
+
     // Setters
 
     /**

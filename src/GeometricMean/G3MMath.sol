@@ -251,6 +251,9 @@ function computeInitialPoolData(
 
     L = computeNextLiquidity(amountX, rY, invariant, L, params);
 
-    return
-        abi.encode(amountX, rY, L, params.wX, params.swapFee, params.controller);
+    uint256[] memory reserves = new uint256[](2);
+    reserves[0] = amountX;
+    reserves[1] = rY;
+
+    return abi.encode(reserves, L, params.wX, params.swapFee, params.controller);
 }
