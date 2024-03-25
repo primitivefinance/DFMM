@@ -92,6 +92,8 @@ contract DFMM is IDFMM {
             msg.sender, _pools.length, pool, params.data
         );
 
+        if (reserves.length != params.tokens.length) revert InvalidReserves();
+
         if (!valid) revert InvalidInvariant(invariant);
 
         liquidityToken.initialize(params.name, params.symbol);
@@ -109,8 +111,8 @@ contract DFMM is IDFMM {
         for (uint256 i = 0; i < tokensLength; i++) {
             address token = params.tokens[i];
 
-            for (uint256 j = 0; j < tokensLength; j++) {
-                if (i != j && token == params.tokens[j]) {
+            for (uint256 j = i + 1; j < tokensLength; j++) {
+                if (token == params.tokens[j]) {
                     revert InvalidDuplicateTokens();
                 }
             }
@@ -136,7 +138,7 @@ contract DFMM is IDFMM {
             pool.totalLiquidity
         );
 
-        return (poolId, reserves, totalLiquidity - BURNT_LIQUIDITY);
+        return (poolId, reserves, totalLiquidity);
     }
 
     /// @inheritdoc IDFMM
@@ -161,8 +163,8 @@ contract DFMM is IDFMM {
             _pools[poolId].reserves[i] += deltas[i];
         }
 
-        _pools[poolId].totalLiquidity += deltaLiquidity;
         _manageTokens(msg.sender, poolId, true, deltaLiquidity);
+        _pools[poolId].totalLiquidity += deltaLiquidity;
 
         for (uint256 i = 0; i < length; i++) {
             _transferFrom(_pools[poolId].tokens[i], deltas[i]);
@@ -368,7 +370,7 @@ contract DFMM is IDFMM {
      * @dev Deploys and returns the address of a clone contract that mimics
      * the behaviour of the contract deployed at the address `implementation`.
      * This function uses the `CREATE` opcode, which should never revert.
-     * This function was taken from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Clones.sol#L23.
+     * This function was taken from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/7bd2b2aaf68c21277097166a9a51eb72ae239b34/contracts/proxy/Clones.sol#L23-L41.
      */
     function clone(address implementation)
         internal
