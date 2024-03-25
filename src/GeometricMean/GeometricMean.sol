@@ -61,8 +61,6 @@ contract GeometricMean is PairStrategy {
     struct InitState {
         bool valid;
         int256 invariant;
-        uint256 reserveX;
-        uint256 reserveY;
         address controller;
         uint256 swapFee;
         uint256 wX;
