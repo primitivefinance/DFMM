@@ -79,20 +79,15 @@ contract GeometricMean is PairStrategy {
     ) external onlyDFMM returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
 
-        state.reserves = new uint256[](2);
-
         (
-            state.reserves[0],
-            state.reserves[1],
+            state.reserves,
             state.totalLiquidity,
             state.wX,
             state.swapFee,
             state.controller
-        ) = abi.decode(
-            data, (uint256, uint256, uint256, uint256, uint256, address)
-        );
+        ) = abi.decode(data, (uint256[], uint256, uint256, uint256, address));
 
-        if (pool.reserves.length != 2) {
+        if (pool.reserves.length != 2 || state.reserves.length != 2) {
             revert InvalidReservesLength();
         }
 
