@@ -61,8 +61,6 @@ contract GeometricMean is PairStrategy {
     struct InitState {
         bool valid;
         int256 invariant;
-        uint256 reserveX;
-        uint256 reserveY;
         address controller;
         uint256 swapFee;
         uint256 wX;
@@ -74,23 +72,22 @@ contract GeometricMean is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        Pool calldata,
+        Pool calldata pool,
         bytes calldata data
     ) external onlyDFMM returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
 
-        state.reserves = new uint256[](2);
-
         (
-            state.reserves[0],
-            state.reserves[1],
+            state.reserves,
             state.totalLiquidity,
             state.wX,
             state.swapFee,
             state.controller
-        ) = abi.decode(
-            data, (uint256, uint256, uint256, uint256, uint256, address)
-        );
+        ) = abi.decode(data, (uint256[], uint256, uint256, uint256, address));
+
+        if (pool.reserves.length != 2 || state.reserves.length != 2) {
+            revert InvalidReservesLength();
+        }
 
         if (state.wX >= ONE) {
             revert InvalidWeightX();

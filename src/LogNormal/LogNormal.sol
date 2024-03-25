@@ -58,7 +58,7 @@ contract LogNormal is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        Pool calldata,
+        Pool calldata pool,
         bytes calldata data
     )
         public
@@ -73,6 +73,10 @@ contract LogNormal is PairStrategy {
         LogNormalParams memory params;
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, LogNormalParams));
+
+        if (pool.reserves.length != 2 || reserves.length != 2) {
+            revert InvalidReservesLength();
+        }
 
         internalParams[poolId].mean.lastComputedValue = params.mean;
         internalParams[poolId].width.lastComputedValue = params.width;

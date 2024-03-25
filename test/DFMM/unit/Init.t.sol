@@ -31,8 +31,7 @@ contract DFMMInit is DFMMSetUp, Script {
     function test_DFMM_init_ReturnsStrategyInitialReserves() public {
         (, uint256[] memory reserves, uint256 totalLiquidity) =
             dfmm.init(getDefaultPoolParams(defaultData));
-        // A bit of the liquidity is burnt
-        assertEq(initialLiquidity - 1000, totalLiquidity);
+        assertEq(initialLiquidity, totalLiquidity);
         assertEq(initialReserveX, reserves[0]);
         assertEq(initialReserveY, reserves[1]);
     }
