@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import "./SetUp.sol";
 import "solmate/utils/FixedPointMathLib.sol";
+import { LPToken } from "src/LPToken.sol";
 
 contract G3MAllocateTest is G3MSetUp {
     using FixedPointMathLib for uint256;
@@ -107,8 +108,10 @@ contract G3MAllocateTest is G3MSetUp {
             solver.allocateGivenDeltaY(POOL_ID, maxDeltaY);
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(POOL_ID);
+        console2.log("liquidity", liquidity);
 
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
+        console2.log(preLiquidityBalance);
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         console2.log(maxDeltaX);
@@ -124,11 +127,30 @@ contract G3MAllocateTest is G3MSetUp {
         assertEq(adjustedReserves[1], reserves[1] + deltas[1]);
         assertEq(adjustedLiquidity, liquidity + deltaLiquidity);
 
-        /*
         assertEq(
             preLiquidityBalance + deltaLiquidity,
             liquidityOf(address(this), POOL_ID)
         );
-        */
+    }
+
+    function test_G3M_allocate_ReceiveAppropriateLpTokens() public init_100 {
+      (, uint256 initialL) = getReservesAndLiquidity(POOL_ID);
+      Pool memory pool = dfmm.pools(POOL_ID);
+      LPToken liquidityToken = LPToken(pool.liquidityToken);
+
+      uint256 startBalance = liquidityToken.balanceOf(address(this));
+
+      uint256 dyMax = 100 ether;
+      (uint256 dxMax, uint256 dL) = solver.allocateGivenDeltaY(POOL_ID, dyMax);
+      bytes memory data = abi.encode(dxMax, dyMax, dL);
+
+      dfmm.allocate(POOL_ID, data);
+
+      (, uint256 nextL) = getReservesAndLiquidity(POOL_ID);
+      uint256 endBalance = liquidityToken.balanceOf(address(this));
+      
+      // Add 1_000 wei to account for liquidity that was burnt on init
+      assertEq(startBalance + 1_000, initialL);
+      assertEq(endBalance + 1_000, nextL);
     }
 }
