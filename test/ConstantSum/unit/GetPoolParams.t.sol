@@ -6,7 +6,6 @@ import { ConstantSumSetUp, InitParams } from "./SetUp.sol";
 
 contract ConstantSumGetPoolParamsTest is ConstantSumSetUp {
     function test_ConstantSum_getPoolParams_ReturnsPoolParams() public {
-        skip();
         ConstantSumParams memory initPoolParams = ConstantSumParams({
             price: 2 ether,
             swapFee: TEST_SWAP_FEE,
