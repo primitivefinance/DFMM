@@ -92,6 +92,8 @@ contract DFMM is IDFMM {
             msg.sender, _pools.length, pool, params.data
         );
 
+        if (reserves.length != params.tokens.length) revert InvalidReserves();
+
         if (!valid) revert InvalidInvariant(invariant);
 
         liquidityToken.initialize(params.name, params.symbol);
