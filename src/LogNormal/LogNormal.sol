@@ -39,6 +39,15 @@ struct LogNormalParams {
     address controller;
 }
 
+/// @dev Thrown when the mean paramter is larger than the maximum.
+error MeanTooLarge();
+
+/// @dev Thrown when the width paramter is larger than the maximum.
+error WidthTooLarge();
+
+uint256 constant MAX_WIDTH = uint256(type(int256).max);
+uint256 constant MAX_MEAN = uint256(type(int256).max);
+
 /**
  * @title LogNormal Strategy for DFMM.
  * @author Primitive
