@@ -79,8 +79,6 @@ function computeInitialPoolData(
 /// @dev Casts a positived signed integer to an unsigned integer, reverting if `x` is negative.
 
 function toUint(int256 x) pure returns (uint256) {
-    unchecked {
-        require(x >= 0, "toUint: negative");
-        return uint256(x);
-    }
+    require(x >= 0, "toUint: negative");
+    return uint256(x);
 }
