@@ -124,9 +124,9 @@ contract DFMM is IDFMM {
             if (decimals > 18 || decimals < 6) {
                 revert InvalidTokenDecimals();
             }
-
-            _transferFrom(params.tokens[i], reserves[i]);
         }
+
+        _transferFrom(params.tokens, reserves);
 
         emit Init(
             msg.sender,
@@ -166,9 +166,7 @@ contract DFMM is IDFMM {
         _manageTokens(msg.sender, poolId, true, deltaLiquidity);
         _pools[poolId].totalLiquidity += deltaLiquidity;
 
-        for (uint256 i = 0; i < length; i++) {
-            _transferFrom(_pools[poolId].tokens[i], deltas[i]);
-        }
+        _transferFrom(_pools[poolId].tokens, deltas);
 
         emit Allocate(msg.sender, poolId, deltas, deltaLiquidity);
         return deltas;
@@ -254,7 +252,12 @@ contract DFMM is IDFMM {
         address tokenIn = _pools[poolId].tokens[state.tokenInIndex];
         address tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
-        _transferFrom(tokenIn, state.amountIn);
+        address[] memory tokens = new address[](1);
+        tokens[0] = tokenIn;
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = state.amountIn;
+        _transferFrom(tokens, amounts);
+
         _transfer(tokenOut, recipient, state.amountOut);
 
         emit Swap(
@@ -280,38 +283,42 @@ contract DFMM is IDFMM {
     // Internals
 
     /**
-     * @dev Transfers `amount` of `token` from the sender to the contract. Note
-     * that if ETH is present in the contract, it will be wrapped to WETH. Any
-     * excess of ETH will be sent back to the sender.
-     * @param token Address of the token to transfer.
-     * @param amount Amount to transfer expressed in WAD.
+     * @dev Transfers `amounts` of `tokens` from the sender to the contract. Note
+     * that if any ETH is present in the contract, it will be wrapped to WETH and
+     * used if sufficient. Any excess of ETH will be sent back to the sender.
+     * @param tokens An array of token addresses to transfer.
+     * @param amounts An array of amounts to transfer expressed in WAD.
      */
-    function _transferFrom(address token, uint256 amount) internal {
-        if (token == weth) {
-            if (address(this).balance >= amount) {
-                WETH(payable(weth)).deposit{ value: amount }();
-            } else {
-                SafeTransferLib.safeTransferFrom(
-                    ERC20(token), msg.sender, address(this), amount
-                );
-            }
+    function _transferFrom(
+        address[] memory tokens,
+        uint256[] memory amounts
+    ) internal {
+        uint256 length = tokens.length;
 
-            if (address(this).balance > 0) {
-                SafeTransferLib.safeTransferETH(
-                    msg.sender, address(this).balance
-                );
-            }
-        } else {
+        for (uint256 i = 0; i < length; i++) {
+            address token = tokens[i];
+            uint256 amount = amounts[i];
+
             uint256 downscaledAmount =
                 downscaleUp(amount, computeScalingFactor(token));
             uint256 preBalance = ERC20(token).balanceOf(address(this));
-            SafeTransferLib.safeTransferFrom(
-                ERC20(token), msg.sender, address(this), downscaledAmount
-            );
+
+            if (token == weth && address(this).balance >= amount) {
+                WETH(payable(weth)).deposit{ value: amount }();
+            } else {
+                SafeTransferLib.safeTransferFrom(
+                    ERC20(token), msg.sender, address(this), downscaledAmount
+                );
+            }
+
             uint256 postBalance = ERC20(token).balanceOf(address(this));
             if (postBalance < preBalance + downscaledAmount) {
                 revert InvalidTransfer();
             }
+        }
+
+        if (address(this).balance > 0) {
+            SafeTransferLib.safeTransferETH(msg.sender, address(this).balance);
         }
     }
 
