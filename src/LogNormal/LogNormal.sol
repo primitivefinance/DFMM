@@ -83,6 +83,9 @@ contract LogNormal is PairStrategy {
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, LogNormalParams));
 
+        if (params.mean > MAX_MEAN) revert MeanTooLarge();
+        if (params.width > MAX_WIDTH) revert WidthTooLarge();
+
         internalParams[poolId].mean.lastComputedValue = params.mean;
         internalParams[poolId].width.lastComputedValue = params.width;
         internalParams[poolId].swapFee = params.swapFee;
@@ -108,10 +111,12 @@ contract LogNormal is PairStrategy {
         } else if (updateCode == UpdateCode.Width) {
             (uint256 targetWidth, uint256 targetTimestamp) =
                 decodeWidthUpdate(data);
+            if (targetWidth > MAX_WIDTH) revert WidthTooLarge();
             internalParams[poolId].width.set(targetWidth, targetTimestamp);
         } else if (updateCode == UpdateCode.Mean) {
             (uint256 targetMean, uint256 targetTimestamp) =
                 decodeMeanUpdate(data);
+            if (targetMean > MAX_MEAN) revert MeanTooLarge();
             internalParams[poolId].mean.set(targetMean, targetTimestamp);
         } else if (updateCode == UpdateCode.Controller) {
             internalParams[poolId].controller = decodeControllerUpdate(data);
