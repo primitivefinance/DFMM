@@ -22,7 +22,7 @@ function computeTradingFunction(
     LogNormalParams memory params
 ) pure returns (int256) {
     int256 a = Gaussian.ppf(int256(rX.divWadDown(L)));
-    int256 b = Gaussian.ppf(int256(rY.divWadDown(L.mulWadDown(params.mean))));
+    int256 b = Gaussian.ppf(int256(rY.divWadDown(L.mulWadUp(params.mean))));
     return a + b + int256(params.width);
 }
 
