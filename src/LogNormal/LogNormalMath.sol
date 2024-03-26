@@ -111,8 +111,8 @@ function computeD1(
     LogNormalParams memory params
 ) pure returns (int256 d1) {
     int256 lnSDivK = computeLnSDivK(S, params.mean);
-    uint256 halfSigmaPowTwoTau = computeHalfSigmaSquared(params.width);
-    d1 = (lnSDivK + int256(halfSigmaPowTwoTau)).wadDiv(int256(params.width));
+    uint256 halfSigmaPowTwo = computeHalfSigmaSquared(params.width);
+    d1 = (lnSDivK + int256(halfSigmaPowTwo)).wadDiv(int256(params.width));
 }
 
 /// @dev Computes the d2 parameter for the Black-Scholes formula.
