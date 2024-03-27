@@ -377,3 +377,16 @@ function computeNextRy(
         rY = upperInput;
     }
 }
+
+function computeSwapXForYDeltaLiquidity(
+    uint256 deltaX,
+    uint256 reserveX,
+    uint256 reserveY,
+    uint256 totalLiquidity,
+    uint256 price,
+    uint256 swapFee
+) pure returns (uint256) {
+    uint256 a = price.divWadUp(price.mulWadUp(reserveX) + reserveY);
+    uint256 b = (ONE - swapFee).mulWadUp(deltaX).divWadUp(reserveX);
+    return a.mulWadUp(totalLiquidity).mulWadUp(b);
+}
