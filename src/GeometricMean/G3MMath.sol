@@ -254,3 +254,15 @@ function computeInitialPoolData(
     return
         abi.encode(amountX, rY, L, params.wX, params.swapFee, params.controller);
 }
+
+function computeSwapDeltaLiquidity(
+    uint256 amountIn,
+    uint256 reserve,
+    uint256 totalLiquidity,
+    uint256 weight,
+    uint256 swapFee
+) pure returns (uint256) {
+    return weight.mulWadUp(ONE - swapFee).mulWadUp(totalLiquidity).mulWadUp(
+        amountIn.divWadUp(reserve)
+    );
+}
