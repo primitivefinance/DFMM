@@ -9,7 +9,8 @@ import {
     computeDeltaGivenDeltaLRoundUp,
     computeDeltaGivenDeltaLRoundDown,
     computeSwapXForYDeltaLiquidity,
-    computeSwapYForXDeltaLiquidity
+    computeSwapYForXDeltaLiquidity,
+    computePriceGivenX
 } from "src/LogNormal/LogNormalMath.sol";
 import {
     decodeFeeUpdate,
@@ -188,11 +189,13 @@ contract LogNormal is PairStrategy {
         uint256 amountIn,
         uint256
     ) internal pure override returns (uint256) {
-        // TODO: Compute the price.
-        uint256 price;
-
         LogNormalParams memory poolParams =
             abi.decode(params, (LogNormalParams));
+
+        uint256 price = computePriceGivenX(
+            pool.reserves[0], pool.totalLiquidity, poolParams
+        );
+
         if (tokenInIndex == 0) {
             return computeSwapXForYDeltaLiquidity(
                 amountIn,
