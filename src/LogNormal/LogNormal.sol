@@ -8,9 +8,8 @@ import {
     computeTradingFunction,
     computeDeltaGivenDeltaLRoundUp,
     computeDeltaGivenDeltaLRoundDown,
-    computeSwapXForYDeltaLiquidity,
-    computeSwapYForXDeltaLiquidity,
-    computePriceGivenX
+    computeDeltaLXIn,
+    computeDeltaLYIn
 } from "src/LogNormal/LogNormalMath.sol";
 import {
     decodeFeeUpdate,
@@ -192,28 +191,22 @@ contract LogNormal is PairStrategy {
         LogNormalParams memory poolParams =
             abi.decode(params, (LogNormalParams));
 
-        uint256 price = computePriceGivenX(
-            pool.reserves[0], pool.totalLiquidity, poolParams
-        );
-
         if (tokenInIndex == 0) {
-            return computeSwapXForYDeltaLiquidity(
+            return computeDeltaLXIn(
                 amountIn,
                 pool.reserves[0],
                 pool.reserves[1],
                 pool.totalLiquidity,
-                price,
-                poolParams.swapFee
+                poolParams
             );
         }
 
-        return computeSwapYForXDeltaLiquidity(
+        return computeDeltaLYIn(
             amountIn,
             pool.reserves[0],
             pool.reserves[1],
             pool.totalLiquidity,
-            price,
-            poolParams.swapFee
+            poolParams
         );
     }
 }
