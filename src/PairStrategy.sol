@@ -143,7 +143,7 @@ abstract contract PairStrategy is IStrategy {
             abi.decode(data, (uint256, uint256, uint256, uint256));
 
         deltaLiquidity = _computeSwapDeltaLiquidity(
-            pool, tokenInIndex, tokenOutIndex, amountIn, amountOut
+            pool, params, tokenInIndex, tokenOutIndex, amountIn, amountOut
         );
 
         pool.reserves[tokenInIndex] += amountIn;
@@ -205,6 +205,7 @@ abstract contract PairStrategy is IStrategy {
      */
     function _computeSwapDeltaLiquidity(
         Pool memory pool,
+        bytes memory params,
         uint256 tokenInIndex,
         uint256 tokenOutIndex,
         uint256 amountIn,
