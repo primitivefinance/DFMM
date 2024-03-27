@@ -98,3 +98,15 @@ function computeDeltaGivenDeltaLRoundDown(
 ) pure returns (uint256) {
     return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
 }
+
+function computeSwapDeltaLiquidity(
+    uint256 delta,
+    ConstantSumParams memory params,
+    bool isSwapXForY
+) pure returns (uint256) {
+    if (isSwapXForY) {
+        return (ONE - params.swapFee).mulWadDown(delta);
+    } else {
+        return (ONE - params.swapFee).mulWadDown(params.price).mulWadDown(delta);
+    }
+}
