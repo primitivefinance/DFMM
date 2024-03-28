@@ -119,16 +119,20 @@ abstract contract NTokenStrategy is IStrategy {
             uint256 deltaLiquidity
         )
     {
-        (tokenInIndex, tokenOutIndex, amountIn, amountOut, deltaLiquidity) =
-            abi.decode(data, (uint256, uint256, uint256, uint256, uint256));
+        bytes memory params = getPoolParams(poolId);
+
+        (tokenInIndex, tokenOutIndex, amountIn, amountOut) =
+            abi.decode(data, (uint256, uint256, uint256, uint256));
+
+        deltaLiquidity = _computeSwapDeltaLiquidity(
+            pool, params, tokenInIndex, tokenOutIndex, amountIn, amountOut
+        );
 
         pool.reserves[tokenInIndex] += amountIn;
         pool.reserves[tokenOutIndex] -= amountOut;
 
         invariant = tradingFunction(
-            pool.reserves,
-            pool.totalLiquidity + deltaLiquidity,
-            getPoolParams(poolId)
+            pool.reserves, pool.totalLiquidity + deltaLiquidity, params
         );
 
         valid = invariant >= 0;
@@ -185,4 +189,16 @@ abstract contract NTokenStrategy is IStrategy {
         view
         virtual
         returns (uint256[] memory deltas, uint256[] memory nextReserves);
+
+    /**
+     * @dev Computes the deltaLiquidity for a swap operation.
+     */
+    function _computeSwapDeltaLiquidity(
+        Pool memory pool,
+        bytes memory params,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex,
+        uint256 amountIn,
+        uint256 amountOut
+    ) internal view virtual returns (uint256);
 }

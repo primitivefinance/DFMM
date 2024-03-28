@@ -7,7 +7,9 @@ import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
 import {
     computeTradingFunction,
     computeDeltaGivenDeltaLRoundUp,
-    computeDeltaGivenDeltaLRoundDown
+    computeDeltaGivenDeltaLRoundDown,
+    computeDeltaLXIn,
+    computeDeltaLYIn
 } from "src/LogNormal/LogNormalMath.sol";
 import {
     decodeFeeUpdate,
@@ -180,5 +182,35 @@ contract LogNormal is PairStrategy {
             pool.reserves[1], deltaLiquidity, pool.totalLiquidity
         );
         return deltas;
+    }
+
+    function _computeSwapDeltaLiquidity(
+        Pool memory pool,
+        bytes memory params,
+        uint256 tokenInIndex,
+        uint256,
+        uint256 amountIn,
+        uint256
+    ) internal pure override returns (uint256) {
+        LogNormalParams memory poolParams =
+            abi.decode(params, (LogNormalParams));
+
+        if (tokenInIndex == 0) {
+            return computeDeltaLXIn(
+                amountIn,
+                pool.reserves[0],
+                pool.reserves[1],
+                pool.totalLiquidity,
+                poolParams
+            );
+        }
+
+        return computeDeltaLYIn(
+            amountIn,
+            pool.reserves[0],
+            pool.reserves[1],
+            pool.totalLiquidity,
+            poolParams
+        );
     }
 }
