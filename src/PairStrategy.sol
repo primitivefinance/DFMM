@@ -186,7 +186,7 @@ abstract contract PairStrategy is IStrategy {
     ) internal view virtual returns (uint256[] memory);
 
     /**
-     * @dev Computes the deltas to de de allocate given a liquidity.
+     * @dev Computes the deltas to deallocate given a liquidity.
      * delta. This function is meant to be implemented by the
      * strategy inheriting from this contract.
      * @param deltaLiquidity Amount of liquidity to deallocate.
