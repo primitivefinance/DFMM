@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
+int256 constant EPSILON = 30;
 uint256 constant HALF = 0.5e18;
 uint256 constant ONE = 1e18;
 uint256 constant TWO = 2e18;
