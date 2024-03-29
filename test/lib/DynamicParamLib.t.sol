@@ -100,7 +100,8 @@ contract DynamicParamLibTest is Test {
     function test_DynamicParamLib_set_SetsValueIncrease() public {
         initStoredParam(10, 0, 0, 0);
         storedParam.set(20, 10);
-        assertEq(storedParam.lastComputedValue, 10);
+        // immediately updates `lastComputedValue` to 11
+        assertEq(storedParam.lastComputedValue, 11);
         assertEq(storedParam.updateEnd, 10);
         assertEq(storedParam.lastUpdateAt, block.timestamp);
         assertEq(storedParam.updatePerSecond, 1);
@@ -109,7 +110,8 @@ contract DynamicParamLibTest is Test {
     function test_DynamicParamLib_set_SetsValueDecrease() public {
         initStoredParam(20, 0, 0, 0);
         storedParam.set(10, 10);
-        assertEq(storedParam.lastComputedValue, 20);
+        // immediately updates `lastComputedValue` to 19
+        assertEq(storedParam.lastComputedValue, 19);
         assertEq(storedParam.updateEnd, 10);
         assertEq(storedParam.lastUpdateAt, block.timestamp);
         assertEq(storedParam.updatePerSecond, -1);
