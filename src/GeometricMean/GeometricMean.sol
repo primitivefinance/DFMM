@@ -92,7 +92,7 @@ contract GeometricMean is PairStrategy {
             data, (uint256, uint256, uint256, uint256, uint256, address)
         );
 
-        if (state.wX >= ONE) {
+        if (state.wX == 0 || state.wX >= ONE) {
             revert InvalidWeightX();
         }
 
