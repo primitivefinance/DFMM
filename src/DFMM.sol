@@ -239,7 +239,7 @@ contract DFMM is IDFMM {
 
         if (_pools[poolId].feeCollector != address(0)) {
             uint256 fees =
-                state.deltaLiquidity.mulWadDown(_pools[poolId].controllerFee);
+                state.deltaLiquidity.mulWadUp(_pools[poolId].controllerFee);
             _pools[poolId].totalLiquidity += state.deltaLiquidity - fees;
             _manageTokens(_pools[poolId].feeCollector, poolId, true, fees);
             _pools[poolId].totalLiquidity += fees;
