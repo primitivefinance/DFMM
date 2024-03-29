@@ -19,7 +19,7 @@ function computeTradingFunction(
         uint256 a = uint256(
             int256(reserves[i].divWadDown(L)).powWad(int256(params.weights[i]))
         );
-        accumulator.mulWadUp(a);
+        accumulator = accumulator.mulWadUp(a);
     }
 
     return int256(accumulator) - int256(ONE);
