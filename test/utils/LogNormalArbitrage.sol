@@ -34,6 +34,10 @@ interface SolverLike {
         returns (LogNormalParams memory);
 }
 
+int256 constant I_ONE = int256(ONE);
+int256 constant I_TWO = int256(TWO);
+int256 constant I_HALF = int256(HALF);
+
 contract LogNormalArbitrage {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
