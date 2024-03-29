@@ -6,7 +6,6 @@ import { ConstantSumParams } from "src/ConstantSum/ConstantSum.sol";
 import { ONE } from "src/lib/StrategyLib.sol";
 
 using FixedPointMathLib for uint256;
-using FixedPointMathLib for int256;
 
 function computeTradingFunction(
     uint256[] memory reserves,
