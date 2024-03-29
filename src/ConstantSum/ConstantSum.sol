@@ -239,13 +239,8 @@ contract ConstantSum is PairStrategy {
         uint256 amountIn,
         uint256
     ) internal pure override returns (uint256) {
-        if (tokenInIndex == 0) {
-            return computeSwapDeltaLiquidity(
-                amountIn, abi.decode(params, (ConstantSumParams)), true
-            );
-        }
         return computeSwapDeltaLiquidity(
-            amountIn, abi.decode(params, (ConstantSumParams)), false
+            amountIn, abi.decode(params, (ConstantSumParams)), tokenInIndex == 0
         );
     }
 }
