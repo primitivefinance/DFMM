@@ -17,6 +17,7 @@ import {
     decodeWidthUpdate,
     decodeControllerUpdate
 } from "src/LogNormal/LogNormalUtils.sol";
+import { EPSILON } from "src/lib/StrategyLib.sol";
 
 enum UpdateCode {
     Invalid,
@@ -87,7 +88,7 @@ contract LogNormal is PairStrategy {
 
         invariant =
             tradingFunction(reserves, totalLiquidity, getPoolParams(poolId));
-        valid = invariant >= 0;
+        valid = invariant >= 0 && invariant <= EPSILON;
     }
 
     /// @inheritdoc IStrategy
