@@ -11,7 +11,7 @@ import {
     computeDeltaGivenDeltaLRoundDown,
     computeSwapDeltaLiquidity
 } from "./G3MMath.sol";
-import { ONE } from "src/lib/StrategyLib.sol";
+import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
 
 /**
  * @dev Parameterization of the GeometricMean curve.
@@ -105,7 +105,7 @@ contract GeometricMean is PairStrategy {
             abi.decode(getPoolParams(poolId), (GeometricMeanParams))
         );
 
-        state.valid = state.invariant >= 0;
+        state.valid = state.invariant >= 0 && state.invariant <= EPSILON;
 
         return
             (state.valid, state.invariant, state.reserves, state.totalLiquidity);
