@@ -40,3 +40,15 @@ function computeDeltaLiquidity(
 ) pure returns (uint256) {
     return price.mulWadUp(deltaX) + deltaY;
 }
+
+function computeSwapDeltaLiquidity(
+    uint256 delta,
+    ConstantSumParams memory params,
+    bool isSwapXForY
+) pure returns (uint256) {
+    if (isSwapXForY) {
+        return (params.swapFee).mulWadUp(delta);
+    } else {
+        return (params.swapFee).mulDivUp(delta, params.price);
+    }
+}
