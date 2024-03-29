@@ -4,6 +4,13 @@ pragma solidity ^0.8.13;
 import "./SetUp.sol";
 import { computeTradingFunction } from "src/LogNormal/LogNormalMath.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
+import {
+    computeDeltaLGivenDeltaY,
+    computeDeltaLGivenDeltaX,
+    computeDeltaXGivenDeltaL,
+    computeDeltaYGivenDeltaL
+} from "src/lib/StrategyLib.sol";
+
 
 contract LogNormalSwapTest is LogNormalSetUp {
     using FixedPointMathLib for uint256;
@@ -126,5 +133,57 @@ contract LogNormalSwapTest is LogNormalSetUp {
 
         console2.log(inputAmount);
         console2.log(outputAmount);
+    }
+
+    function computeAllocate() internal returns (uint256 dL, uint256 dyMax){
+        uint256 deltaX = 0.1 ether;
+
+        (uint256[] memory reserves, uint256 liquidity) =
+            solver.getReservesAndLiquidity(POOL_ID);
+
+        dL =
+            computeDeltaLGivenDeltaX(deltaX, liquidity, reserves[0]);
+        dyMax =
+            computeDeltaYGivenDeltaL(dL, liquidity, reserves[1]);
+
+        console2.log("dL", dL);
+    }
+
+    function test_LogNormal_swap_CantSandwichAllocate() public init {
+        uint256 amountIn = 0.23 ether;
+
+        computeAllocate();
+
+        (uint256[] memory preReserves, uint256 preTotalLiquidity) =
+            solver.getReservesAndLiquidity(POOL_ID);
+
+        LogNormalParams memory poolParams = solver.getPoolParams(POOL_ID);
+        uint256 startL = solver.getNextLiquidity(
+            POOL_ID, preReserves[0], preReserves[1], preTotalLiquidity
+        );
+        uint256 deltaLiquidity =
+            amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.mean);
+
+        uint256 ry = preReserves[1] + amountIn;
+        uint256 L = startL + deltaLiquidity;
+        uint256 approxPrice = solver.getPriceGivenYL(POOL_ID, ry, L);
+
+        uint256 rx = solver.getNextReserveX(POOL_ID, ry, L, approxPrice);
+
+        int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
+        while (invariant <= 100_000) {
+            rx += 1000;
+            invariant = computeTradingFunction(rx, ry, L, poolParams);
+        }
+
+        uint256 amountOut = preReserves[0] - rx;
+
+        bytes memory payload =
+            abi.encode(1, 0, amountIn, amountOut, deltaLiquidity);
+        dfmm.swap(POOL_ID, address(this), payload);
+
+        console2.log("invariant", invariant);
+
+        (uint256 dL, uint256 dyMax) = computeAllocate();
     }
 }
