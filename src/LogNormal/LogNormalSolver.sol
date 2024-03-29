@@ -310,13 +310,9 @@ contract LogNormalSolver {
         bytes memory swapData;
 
         if (swapXIn) {
-            swapData = abi.encode(
-                0, 1, amountIn, state.amountOut, state.deltaLiquidity
-            );
+            swapData = abi.encode(0, 1, amountIn, state.amountOut);
         } else {
-            swapData = abi.encode(
-                1, 0, amountIn, state.amountOut, state.deltaLiquidity
-            );
+            swapData = abi.encode(1, 0, amountIn, state.amountOut);
         }
 
         uint256 poolId = poolId;
