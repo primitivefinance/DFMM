@@ -15,8 +15,8 @@ function computeTradingFunction(
     uint256 L,
     GeometricMeanParams memory params
 ) pure returns (int256) {
-    uint256 a = uint256(int256(rX.divWadDown(L)).powWad(int256(params.wX)));
-    uint256 b = uint256(int256(rY.divWadDown(L)).powWad(int256(params.wY)));
+    uint256 a = uint256(int256(rX.divWadUp(L)).powWad(int256(params.wX)));
+    uint256 b = uint256(int256(rY.divWadUp(L)).powWad(int256(params.wY)));
 
     return int256(a.mulWadUp(b)) - int256(1 ether);
 }
