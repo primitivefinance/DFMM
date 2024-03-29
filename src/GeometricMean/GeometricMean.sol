@@ -129,6 +129,9 @@ contract GeometricMean is PairStrategy {
         } else if (updateCode == UpdateCode.WeightX) {
             (, uint256 targetWeightX, uint256 targetTimestamp) =
                 abi.decode(data, (UpdateCode, uint256, uint256));
+            if (targetWeightX == 0 || targetWeightX >= ONE) {
+                revert InvalidWeightX();
+            }
             internalParams[poolId].wX.set(targetWeightX, targetTimestamp);
         } else if (updateCode == UpdateCode.Controller) {
             (, internalParams[poolId].controller) =
