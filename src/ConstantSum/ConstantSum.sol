@@ -58,9 +58,8 @@ contract ConstantSum is PairStrategy {
         )
     {
         ConstantSumParams memory params;
-        (reserves, totalLiquidity, params) =
-            abi.decode(data, (uint256[], uint256, ConstantSumParams));
-
+        (reserves, params) = abi.decode(data, (uint256[], ConstantSumParams));
+        totalLiquidity = reserves[0] + reserves[1].divWadUp(params.price);
         internalParams[poolId].price = params.price;
         internalParams[poolId].swapFee = params.swapFee;
 
