@@ -39,13 +39,15 @@ struct LogNormalParams {
     address controller;
 }
 
-/// @dev Thrown when the mean paramter is larger than the maximum.
-error MeanTooLarge();
+/// @dev Thrown when the mean parameter is not within the allowed bounds.
+error InvalidMean();
 
-/// @dev Thrown when the width paramter is larger than the maximum.
-error WidthTooLarge();
+/// @dev Thrown when the width parameter is not within the allowed bounds.
+error InvalidWidth();
 
+uint256 constant MIN_WIDTH = 1;
 uint256 constant MAX_WIDTH = uint256(type(int256).max);
+uint256 constant MIN_MEAN = 1;
 uint256 constant MAX_MEAN = uint256(type(int256).max);
 
 /**
@@ -83,8 +85,12 @@ contract LogNormal is PairStrategy {
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, LogNormalParams));
 
-        if (params.mean > MAX_MEAN) revert MeanTooLarge();
-        if (params.width > MAX_WIDTH) revert WidthTooLarge();
+        if (params.mean < MIN_WIDTH || params.mean > MAX_MEAN) {
+            revert InvalidMean();
+        }
+        if (params.width < MIN_WIDTH || params.width > MAX_WIDTH) {
+            revert InvalidWidth();
+        }
 
         internalParams[poolId].mean.lastComputedValue = params.mean;
         internalParams[poolId].width.lastComputedValue = params.width;
@@ -111,12 +117,16 @@ contract LogNormal is PairStrategy {
         } else if (updateCode == UpdateCode.Width) {
             (uint256 targetWidth, uint256 targetTimestamp) =
                 decodeWidthUpdate(data);
-            if (targetWidth > MAX_WIDTH) revert WidthTooLarge();
+            if (targetWidth < MIN_WIDTH || targetWidth > MAX_WIDTH) {
+                revert InvalidWidth();
+            }
             internalParams[poolId].width.set(targetWidth, targetTimestamp);
         } else if (updateCode == UpdateCode.Mean) {
             (uint256 targetMean, uint256 targetTimestamp) =
                 decodeMeanUpdate(data);
-            if (targetMean > MAX_MEAN) revert MeanTooLarge();
+            if (targetMean < MIN_MEAN || targetMean > MAX_MEAN) {
+                revert InvalidMean();
+            }
             internalParams[poolId].mean.set(targetMean, targetTimestamp);
         } else if (updateCode == UpdateCode.Controller) {
             internalParams[poolId].controller = decodeControllerUpdate(data);
