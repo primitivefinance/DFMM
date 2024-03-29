@@ -19,7 +19,6 @@ contract ConstantSumSolver {
     error NotEnoughLiquidity();
 
     using FixedPointMathLib for uint256;
-    using FixedPointMathLib for int256;
 
     struct Reserves {
         uint256 rx;
