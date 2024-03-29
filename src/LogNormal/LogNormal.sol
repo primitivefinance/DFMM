@@ -88,9 +88,10 @@ contract LogNormal is PairStrategy {
         if (params.mean < MIN_WIDTH || params.mean > MAX_MEAN) {
             revert InvalidMean();
         }
-        
+
         if (params.width < MIN_WIDTH || params.width > MAX_WIDTH) {
             revert InvalidWidth();
+        }
 
         if (pool.reserves.length != 2 || reserves.length != 2) {
             revert InvalidReservesLength();
