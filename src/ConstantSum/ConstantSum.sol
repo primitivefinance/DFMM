@@ -13,6 +13,7 @@ import {
     decodeControllerUpdate
 } from "./ConstantSumUtils.sol";
 import { PairStrategy, IStrategy, Pool } from "src/PairStrategy.sol";
+import { EPSILON } from "src/lib/StrategyLib.sol";
 
 struct InternalParams {
     uint256 price;
@@ -80,7 +81,7 @@ contract ConstantSum is PairStrategy {
         invariant =
             tradingFunction(reserves, totalLiquidity, abi.encode(params));
 
-        valid = invariant >= 0;
+        valid = invariant >= 0 && invariant <= EPSILON;
 
         return (valid, invariant, reserves, totalLiquidity);
     }
