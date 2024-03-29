@@ -49,6 +49,6 @@ function computeSwapDeltaLiquidity(
     if (isSwapXForY) {
         return (params.swapFee).mulWadUp(delta);
     } else {
-        return (params.swapFee).divWadDown(params.price).mulWadDown(delta);
+        return (params.swapFee).mulDivUp(delta, params.price);
     }
 }
