@@ -12,7 +12,8 @@ import {
 import {
     ONE,
     computeInitialPoolData,
-    FixedPointMathLib
+    FixedPointMathLib,
+    computeSwapDeltaLiquidity
 } from "./ConstantSumMath.sol";
 
 contract ConstantSumSolver {
@@ -59,7 +60,7 @@ contract ConstantSumSolver {
         SimulateSwapState memory state;
 
         if (swapXIn) {
-            state.deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee);
+            computeSwapDeltaLiquidity(amountIn, poolParams, true);
             state.amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
                 ONE - poolParams.swapFee
             );
@@ -68,8 +69,7 @@ contract ConstantSumSolver {
                 revert NotEnoughLiquidity();
             }
         } else {
-            state.deltaLiquidity =
-                amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.price);
+            computeSwapDeltaLiquidity(amountIn, poolParams, false);
             state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
