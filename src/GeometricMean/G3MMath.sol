@@ -99,14 +99,6 @@ function computeY(
     return params.wY.divWadDown(params.wX).mulWadDown(S).mulWadDown(x);
 }
 
-function computeX(
-    uint256 y,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wX.divWadDown(params.wY.mulWadDown(S)).mulWadDown(y);
-}
-
 function computeL(
     uint256 x,
     uint256 y,
