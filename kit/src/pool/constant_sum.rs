@@ -68,8 +68,8 @@ impl PoolType for ConstantSumPool {
                 // so need to think a little more about this
                 // let (valid, data) = self
                 //     .solver_contract
-                //     .simulate_allocate_or_deallocate(pool_id, allocate, amount_x,
-                // amount_y)     .call()
+                //     .simulate_allocate_or_deallocate(pool_id, allocate,
+                // amount_x, amount_y)     .call()
                 //     .await?;
                 // if valid {
                 //     Ok(data)
