@@ -45,16 +45,11 @@ function computeL(
     uint256[] memory reserves,
     NTokenGeometricMeanParams memory params
 ) pure returns (uint256) {
-    uint256 accumulator;
-
+    uint256 accumulator = ONE;
     for (uint256 i = 0; i < reserves.length; i++) {
         uint256 a =
             uint256(int256(reserves[i]).powWad(int256(params.weights[i])));
-        if (accumulator != 0) {
-            accumulator += a;
-        } else {
-            accumulator.mulWadUp(a);
-        }
+        accumulator = accumulator.mulWadUp(a);
     }
 
     return accumulator;
@@ -66,7 +61,7 @@ function computeReserveFromNumeraire(
     uint256 wT,
     uint256 wNumeraire
 ) pure returns (uint256) {
-    return wT.divWadDown(wNumeraire.mulWadDown(S)).mulWadDown(amountNumeraire);
+    return wT.mulDivDown(amountNumeraire, wNumeraire.mulWadUp(S));
 }
 
 function computeAllocationDeltasGivenDeltaT(
@@ -119,7 +114,7 @@ function computeNextLiquidity(
         uint256 a =
             uint256(int256(reserves[i]).powWad(int256(params.weights[i])));
         if (accumulator != 0) {
-            accumulator.mulWadUp(a);
+            accumulator = accumulator.mulWadUp(a);
         } else {
             accumulator = a;
         }
