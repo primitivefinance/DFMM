@@ -12,7 +12,8 @@ import {
 import {
     computeTradingFunction,
     computeDeltaGivenDeltaLRoundUp,
-    computeDeltaGivenDeltaLRoundDown
+    computeDeltaGivenDeltaLRoundDown,
+    computeSwapDeltaLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { ONE } from "src/lib/StrategyLib.sol";
 
@@ -69,7 +70,6 @@ contract NTokenGeometricMean is NTokenStrategy {
         int256 invariant;
         address controller;
         uint256 swapFee;
-        uint256 wX;
         uint256 totalLiquidity;
         uint256[] reserves;
         uint256[] weights;
@@ -249,5 +249,26 @@ contract NTokenGeometricMean is NTokenStrategy {
             }
             nextReserves[i] = reserveT - deltas[i];
         }
+    }
+
+    /// @inheritdoc NTokenStrategy
+    function _computeSwapDeltaLiquidity(
+        Pool memory pool,
+        bytes memory params,
+        uint256 tokenInIndex,
+        uint256,
+        uint256 amountIn,
+        uint256
+    ) internal pure override returns (uint256) {
+        NTokenGeometricMeanParams memory poolParams =
+            abi.decode(params, (NTokenGeometricMeanParams));
+
+        return computeSwapDeltaLiquidity(
+            amountIn,
+            pool.reserves[tokenInIndex],
+            pool.totalLiquidity,
+            poolParams.weights[tokenInIndex],
+            poolParams.swapFee
+        );
     }
 }
