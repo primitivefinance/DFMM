@@ -17,8 +17,7 @@ function computeAllocationGivenX(
     uint256 rx,
     uint256 L
 ) pure returns (uint256 nextRx, uint256 nextL) {
-    uint256 liquidityPerRx = L.divWadUp(rx);
-    uint256 deltaL = amountX.mulWadUp(liquidityPerRx);
+    uint256 deltaL = amountX.mulDivDown(L, rx);
     nextRx = add ? rx + amountX : rx - amountX;
     nextL = add ? L + deltaL : L - deltaL;
 }
@@ -29,8 +28,7 @@ function computeAllocationGivenY(
     uint256 ry,
     uint256 L
 ) pure returns (uint256 nextRy, uint256 nextL) {
-    uint256 liquidityPerRy = L.divWadUp(ry);
-    uint256 deltaL = amountY.mulWadUp(liquidityPerRy);
+    uint256 deltaL = amountY.mulDivDown(L, ry);
     nextRy = add ? ry + amountY : ry - amountY;
     nextL = add ? L + deltaL : L - deltaL;
 }
@@ -40,7 +38,7 @@ function computeDeltaLGivenDeltaX(
     uint256 liquidity,
     uint256 reserveX
 ) pure returns (uint256 deltaL) {
-    return liquidity.mulWadDown(deltaX.divWadDown(reserveX));
+    return liquidity.mulDivDown(deltaX, reserveX);
 }
 
 function computeDeltaLGivenDeltaY(
@@ -48,7 +46,7 @@ function computeDeltaLGivenDeltaY(
     uint256 liquidity,
     uint256 reserveY
 ) pure returns (uint256 deltaL) {
-    return liquidity.mulWadDown(deltaY.divWadDown(reserveY));
+    return liquidity.mulDivDown(deltaY, reserveY);
 }
 
 function computeDeltaYGivenDeltaX(
@@ -56,7 +54,7 @@ function computeDeltaYGivenDeltaX(
     uint256 reserveX,
     uint256 reserveY
 ) pure returns (uint256 deltaY) {
-    return reserveY.mulWadDown(deltaX.divWadUp(reserveX));
+    return reserveY.mulDivUp(deltaX, reserveX);
 }
 
 function computeDeltaXGivenDeltaL(
@@ -64,7 +62,7 @@ function computeDeltaXGivenDeltaL(
     uint256 liquidity,
     uint256 reserveX
 ) pure returns (uint256 deltaX) {
-    return reserveX.mulWadUp(deltaL.divWadUp(liquidity));
+    return reserveX.mulDivUp(deltaL, liquidity);
 }
 
 function computeDeltaYGivenDeltaL(
@@ -72,5 +70,5 @@ function computeDeltaYGivenDeltaL(
     uint256 liquidity,
     uint256 reserveY
 ) pure returns (uint256 deltaX) {
-    return reserveY.mulWadUp(deltaL.divWadUp(liquidity));
+    return reserveY.mulDivUp(deltaL, liquidity);
 }
