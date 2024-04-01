@@ -26,7 +26,7 @@ function computeDeltaGivenDeltaLRoundUp(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadUp(deltaLiquidity.divWadUp(totalLiquidity));
+    return reserve.mulDivUp(deltaLiquidity, totalLiquidity);
 }
 
 function computeDeltaGivenDeltaLRoundDown(
@@ -34,7 +34,7 @@ function computeDeltaGivenDeltaLRoundDown(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
+    return reserve.mulDivDown(deltaLiquidity, totalLiquidity);
 }
 
 function computeLGivenX(
@@ -251,6 +251,21 @@ function computeInitialPoolData(
 
     L = computeNextLiquidity(amountX, rY, invariant, L, params);
 
-    return
-        abi.encode(amountX, rY, L, params.wX, params.swapFee, params.controller);
+    uint256[] memory reserves = new uint256[](2);
+    reserves[0] = amountX;
+    reserves[1] = rY;
+
+    return abi.encode(reserves, L, params.wX, params.swapFee, params.controller);
+}
+
+function computeSwapDeltaLiquidity(
+    uint256 amountIn,
+    uint256 reserve,
+    uint256 totalLiquidity,
+    uint256 weight,
+    uint256 swapFee
+) pure returns (uint256) {
+    return weight.mulWadUp(swapFee).mulWadUp(totalLiquidity).mulWadUp(
+        amountIn.divWadUp(reserve)
+    );
 }

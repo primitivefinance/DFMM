@@ -6,9 +6,6 @@ import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 uint256 constant HALF = 0.5e18;
 uint256 constant ONE = 1e18;
 uint256 constant TWO = 2e18;
-int256 constant I_ONE = int256(ONE);
-int256 constant I_TWO = int256(TWO);
-int256 constant I_HALF = int256(HALF);
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
