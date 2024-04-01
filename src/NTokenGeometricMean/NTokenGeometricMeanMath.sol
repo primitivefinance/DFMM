@@ -30,7 +30,7 @@ function computeDeltaGivenDeltaLRoundUp(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulDivUp(deltaLiquidity, totalLiquidity);
+    return reserve.mulWadUp(deltaLiquidity.divWadUp(totalLiquidity));
 }
 
 function computeDeltaGivenDeltaLRoundDown(
@@ -38,7 +38,7 @@ function computeDeltaGivenDeltaLRoundDown(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulDivDown(deltaLiquidity, totalLiquidity);
+    return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
 }
 
 function computeL(
