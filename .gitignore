@@ -7,8 +7,6 @@ optimized-out
 kit/target
 target
 
-# VSCode
-.vscode
 .env
 report/main.aux
 report/main.pyg
