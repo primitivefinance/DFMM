@@ -12,19 +12,14 @@ import {
 } from "./G3MUtils.sol";
 import {
     computeInitialPoolData,
-    computeL,
-    computePrice,
-    computeLGivenX,
-    computeY,
-    computeX,
-    computeNextLiquidity,
     computeNextRx,
     computeNextRy,
     computeTradingFunction,
     computeAllocationGivenDeltaX,
     computeAllocationGivenDeltaY,
     computeDeallocationGivenDeltaX,
-    computeDeallocationGivenDeltaY
+    computeDeallocationGivenDeltaY,
+    computePrice
 } from "./G3MMath.sol";
 
 contract GeometricMeanSolver {
