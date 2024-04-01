@@ -70,7 +70,6 @@ contract NTokenGeometricMean is NTokenStrategy {
         int256 invariant;
         address controller;
         uint256 swapFee;
-        uint256 wX;
         uint256 totalLiquidity;
         uint256[] reserves;
         uint256[] weights;
