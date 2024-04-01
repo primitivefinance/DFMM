@@ -2,7 +2,10 @@
 pragma solidity 0.8.22;
 
 import {
-    FixedPointMathLib, computeTradingFunction
+    FixedPointMathLib,
+    computeTradingFunction,
+    computeSwapDeltaLiquidity,
+    computeDeltaLiquidity
 } from "./ConstantSumMath.sol";
 import {
     decodePriceUpdate,
@@ -33,6 +36,9 @@ enum UpdateCode {
 contract ConstantSum is PairStrategy {
     using FixedPointMathLib for uint256;
 
+    /// @notice Thrown when the expected liquidity is not met.
+    error InvalidDeltaLiquidity();
+
     /// @inheritdoc IStrategy
     string public constant name = "ConstantSum";
 
@@ -45,7 +51,7 @@ contract ConstantSum is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        Pool calldata,
+        Pool calldata pool,
         bytes calldata data
     )
         public
@@ -61,8 +67,13 @@ contract ConstantSum is PairStrategy {
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, ConstantSumParams));
 
+        if (pool.reserves.length != 2 || reserves.length != 2) {
+            revert InvalidReservesLength();
+        }
+
         internalParams[poolId].price = params.price;
         internalParams[poolId].swapFee = params.swapFee;
+        internalParams[poolId].controller = params.controller;
 
         // Get the trading function and check this is valid
         invariant =
@@ -71,6 +82,84 @@ contract ConstantSum is PairStrategy {
         valid = invariant >= 0;
 
         return (valid, invariant, reserves, totalLiquidity);
+    }
+
+    function validateAllocate(
+        address,
+        uint256 poolId,
+        Pool memory pool,
+        bytes calldata data
+    )
+        external
+        view
+        override
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256[] memory deltas,
+            uint256 deltaLiquidity
+        )
+    {
+        (uint256 deltaX, uint256 deltaY, uint256 minDeltaL) =
+            abi.decode(data, (uint256, uint256, uint256));
+
+        deltaLiquidity =
+            computeDeltaLiquidity(deltaX, deltaY, internalParams[poolId].price);
+        if (deltaLiquidity < minDeltaL) revert InvalidDeltaLiquidity();
+
+        deltas = new uint256[](2);
+        deltas[0] = deltaX;
+        deltas[1] = deltaY;
+
+        pool.reserves[0] += deltaX;
+        pool.reserves[1] += deltaY;
+
+        invariant = tradingFunction(
+            pool.reserves,
+            pool.totalLiquidity + deltaLiquidity,
+            getPoolParams(poolId)
+        );
+
+        valid = invariant >= 0;
+    }
+
+    function validateDeallocate(
+        address,
+        uint256 poolId,
+        Pool memory pool,
+        bytes calldata data
+    )
+        external
+        view
+        override
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256[] memory deltas,
+            uint256 deltaLiquidity
+        )
+    {
+        (uint256 deltaX, uint256 deltaY, uint256 maxDeltaL) =
+            abi.decode(data, (uint256, uint256, uint256));
+
+        deltaLiquidity =
+            computeDeltaLiquidity(deltaX, deltaY, internalParams[poolId].price);
+        if (maxDeltaL > deltaLiquidity) revert InvalidDeltaLiquidity();
+
+        deltas = new uint256[](2);
+        deltas[0] = deltaX;
+        deltas[1] = deltaY;
+
+        pool.reserves[0] -= deltaX;
+        pool.reserves[1] -= deltaY;
+
+        invariant = tradingFunction(
+            pool.reserves,
+            pool.totalLiquidity - deltaLiquidity,
+            getPoolParams(poolId)
+        );
+
+        valid = invariant >= 0;
     }
 
     /// @inheritdoc IStrategy
@@ -105,6 +194,7 @@ contract ConstantSum is PairStrategy {
 
         params.price = internalParams[poolId].price;
         params.swapFee = internalParams[poolId].swapFee;
+        params.controller = internalParams[poolId].controller;
 
         return abi.encode(params);
     }
@@ -128,7 +218,7 @@ contract ConstantSum is PairStrategy {
         Pool memory,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
-        return new uint256[](0);
+        return new uint256[](2);
     }
 
     /// @inheritdoc PairStrategy
@@ -137,6 +227,20 @@ contract ConstantSum is PairStrategy {
         Pool memory,
         bytes memory
     ) internal pure override returns (uint256[] memory) {
-        return new uint256[](0);
+        return new uint256[](2);
+    }
+
+    /// @inheritdoc PairStrategy
+    function _computeSwapDeltaLiquidity(
+        Pool memory,
+        bytes memory params,
+        uint256 tokenInIndex,
+        uint256,
+        uint256 amountIn,
+        uint256
+    ) internal pure override returns (uint256) {
+        return computeSwapDeltaLiquidity(
+            amountIn, abi.decode(params, (ConstantSumParams)), tokenInIndex == 0
+        );
     }
 }

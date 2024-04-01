@@ -31,7 +31,7 @@ function computeDeltaGivenDeltaLRoundUp(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadUp(deltaLiquidity.divWadUp(totalLiquidity));
+    return reserve.mulDivUp(deltaLiquidity, totalLiquidity);
 }
 
 function computeDeltaGivenDeltaLRoundDown(
@@ -39,11 +39,14 @@ function computeDeltaGivenDeltaLRoundDown(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
+    return reserve.mulDivDown(deltaLiquidity, totalLiquidity);
 }
 
-function computeLnSDivK(uint256 S, uint256 K) pure returns (int256 lnSDivK) {
-    lnSDivK = int256(S.divWadUp(K)).lnWad();
+function computeLnSDivMean(
+    uint256 S,
+    uint256 mean
+) pure returns (int256 lnSDivK) {
+    lnSDivK = int256(S.divWadUp(mean)).lnWad();
 }
 
 /**
@@ -110,9 +113,9 @@ function computeD1(
     uint256 S,
     LogNormalParams memory params
 ) pure returns (int256 d1) {
-    int256 lnSDivK = computeLnSDivK(S, params.mean);
-    uint256 halfSigmaPowTwoTau = computeHalfSigmaSquared(params.width);
-    d1 = (lnSDivK + int256(halfSigmaPowTwoTau)).wadDiv(int256(params.width));
+    int256 lnSDivMean = computeLnSDivMean(S, params.mean);
+    uint256 halfSigmaPowTwo = computeHalfSigmaSquared(params.width);
+    d1 = (lnSDivMean + int256(halfSigmaPowTwo)).wadDiv(int256(params.width));
 }
 
 /// @dev Computes the d2 parameter for the Black-Scholes formula.
@@ -124,9 +127,9 @@ function computeD2(
     uint256 S,
     LogNormalParams memory params
 ) pure returns (int256 d2) {
-    int256 lnSDivK = computeLnSDivK(S, params.mean);
+    int256 lnSDivMean = computeLnSDivMean(S, params.mean);
     uint256 halfSigmaPowTwo = computeHalfSigmaSquared(params.width);
-    d2 = (lnSDivK - int256(halfSigmaPowTwo)).wadDiv(int256(params.width));
+    d2 = (lnSDivMean - int256(halfSigmaPowTwo)).wadDiv(int256(params.width));
 }
 
 /**
