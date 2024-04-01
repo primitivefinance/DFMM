@@ -17,7 +17,6 @@ import {
     computeLGivenX,
     computeY,
     computeX,
-    computeLGivenY,
     computeNextLiquidity,
     computeNextRx,
     computeNextRy,

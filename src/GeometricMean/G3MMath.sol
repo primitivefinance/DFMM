@@ -47,14 +47,6 @@ function computeLGivenX(
     return x.mulWadUp(uint256(b));
 }
 
-function computeLGivenY(
-    uint256 y,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return y.mulWadUp(params.wX).divWadUp(params.wY.mulWadUp(S));
-}
-
 function computeXGivenL(
     uint256 L,
     uint256 S,
