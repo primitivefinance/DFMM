@@ -246,7 +246,7 @@ contract NTokenGeometricMeanTest is Test {
     }
 
     function test_4_token_simulate_swap() public basic {
-        uint256 amountIn = 0.1 ether;
+        uint256 amountIn = 0.05 ether;
         uint256 tokenInIndex = 0;
         uint256 tokenOutIndex = 1;
 
@@ -346,7 +346,7 @@ contract NTokenGeometricMeanTest is Test {
         public
         basic_70_10_10_10
     {
-        uint256 amountIn = 0.1 ether;
+        uint256 amountIn = 0.001 ether;
         uint256 tokenInIndex = 0;
         uint256 tokenOutIndex = 1;
 

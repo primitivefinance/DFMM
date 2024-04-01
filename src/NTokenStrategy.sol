@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
+import "forge-std/console2.sol";
 
 /**
  * @dev Thrown when the length of the deltas array is not the
@@ -139,6 +140,8 @@ abstract contract NTokenStrategy is IStrategy {
         deltaLiquidity = _computeSwapDeltaLiquidity(
             pool, params, tokenInIndex, tokenOutIndex, amountIn, amountOut
         );
+
+        console2.log("deltaLiquidity: %d", deltaLiquidity);
 
         pool.reserves[tokenInIndex] += amountIn;
         pool.reserves[tokenOutIndex] -= amountOut;

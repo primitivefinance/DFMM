@@ -14,9 +14,11 @@ import {
 import {
     computeAllocationDeltasGivenDeltaT,
     computeDeallocationDeltasGivenDeltaT,
-    computeNextLiquidity
+    computeNextLiquidity,
+    computeSwapDeltaLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
+import "forge-std/console2.sol";
 
 contract NTokenGeometricMeanSolver {
     using FixedPointMathLib for uint256;
@@ -84,6 +86,14 @@ contract NTokenGeometricMeanSolver {
         state.fees = amountIn.mulWadUp(params.swapFee);
         state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve)
             .mulWadUp(state.fees).mulWadUp(state.inWeight);
+        state.deltaLiquidity = computeSwapDeltaLiquidity(
+            amountIn,
+            state.inReserve, 
+            pool.totalLiquidity,
+            state.inWeight,
+            params.swapFee
+        );
+        console2.log("deltaLiquidity: %d", state.deltaLiquidity);
         {
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 accumulator = FixedPointMathLib.WAD;
@@ -102,11 +112,15 @@ contract NTokenGeometricMeanSolver {
                     int256(state.inWeight)
                 )
             );
+            console2.log("accumulator: %d", accumulator);
             uint256 a = uint256(
                 int256(n.divWadUp(d.mulWadUp(accumulator))).powWad(
                     int256(FixedPointMathLib.WAD.divWadUp(state.outWeight))
                 )
             );
+
+            console2.log("a: %d", a);
+            console2.log("outReserve: %d", state.outReserve);
 
             state.amountOut = state.outReserve - a;
         }
