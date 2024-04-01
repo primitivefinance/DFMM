@@ -81,7 +81,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         uint256 poolId,
         Pool calldata,
         bytes calldata data
-    ) external returns (bool, int256, uint256[] memory, uint256) {
+    ) external onlyDFMM returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
 
         (
@@ -133,7 +133,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         uint256 poolId,
         Pool calldata,
         bytes calldata data
-    ) external {
+    ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
         UpdateCode updateCode = abi.decode(data, (UpdateCode));
 
