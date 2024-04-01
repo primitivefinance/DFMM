@@ -92,6 +92,8 @@ contract DFMM is IDFMM {
             msg.sender, _pools.length, pool, params.data
         );
 
+        if (reserves.length != params.tokens.length) revert InvalidReserves();
+
         if (!valid) revert InvalidInvariant(invariant);
 
         liquidityToken.initialize(params.name, params.symbol);
@@ -109,8 +111,8 @@ contract DFMM is IDFMM {
         for (uint256 i = 0; i < tokensLength; i++) {
             address token = params.tokens[i];
 
-            for (uint256 j = 0; j < tokensLength; j++) {
-                if (i != j && token == params.tokens[j]) {
+            for (uint256 j = i + 1; j < tokensLength; j++) {
+                if (token == params.tokens[j]) {
                     revert InvalidDuplicateTokens();
                 }
             }
@@ -122,9 +124,9 @@ contract DFMM is IDFMM {
             if (decimals > 18 || decimals < 6) {
                 revert InvalidTokenDecimals();
             }
-
-            _transferFrom(params.tokens[i], reserves[i]);
         }
+
+        _transferFrom(params.tokens, reserves);
 
         emit Init(
             msg.sender,
@@ -136,7 +138,7 @@ contract DFMM is IDFMM {
             pool.totalLiquidity
         );
 
-        return (poolId, reserves, totalLiquidity - BURNT_LIQUIDITY);
+        return (poolId, reserves, totalLiquidity);
     }
 
     /// @inheritdoc IDFMM
@@ -161,12 +163,10 @@ contract DFMM is IDFMM {
             _pools[poolId].reserves[i] += deltas[i];
         }
 
-        _pools[poolId].totalLiquidity += deltaLiquidity;
         _manageTokens(msg.sender, poolId, true, deltaLiquidity);
+        _pools[poolId].totalLiquidity += deltaLiquidity;
 
-        for (uint256 i = 0; i < length; i++) {
-            _transferFrom(_pools[poolId].tokens[i], deltas[i]);
-        }
+        _transferFrom(_pools[poolId].tokens, deltas);
 
         emit Allocate(msg.sender, poolId, deltas, deltaLiquidity);
         return deltas;
@@ -237,13 +237,14 @@ contract DFMM is IDFMM {
 
         if (!state.valid) revert InvalidInvariant(state.invariant);
 
-        _pools[poolId].totalLiquidity += state.deltaLiquidity;
-
-        if (_pools[poolId].feeCollector != address(0)) {
-            uint256 fees = state.deltaLiquidity * _pools[poolId].controllerFee
-                / FixedPointMathLib.WAD;
-            if (fees == 0) ++fees;
+        if (_pools[poolId].controllerFee > 0) {
+            uint256 fees =
+                state.deltaLiquidity.mulWadUp(_pools[poolId].controllerFee);
+            _pools[poolId].totalLiquidity += state.deltaLiquidity - fees;
             _manageTokens(_pools[poolId].feeCollector, poolId, true, fees);
+            _pools[poolId].totalLiquidity += fees;
+        } else {
+            _pools[poolId].totalLiquidity += state.deltaLiquidity;
         }
 
         _pools[poolId].reserves[state.tokenInIndex] += state.amountIn;
@@ -252,7 +253,12 @@ contract DFMM is IDFMM {
         address tokenIn = _pools[poolId].tokens[state.tokenInIndex];
         address tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
-        _transferFrom(tokenIn, state.amountIn);
+        address[] memory tokens = new address[](1);
+        tokens[0] = tokenIn;
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = state.amountIn;
+        _transferFrom(tokens, amounts);
+
         _transfer(tokenOut, recipient, state.amountOut);
 
         emit Swap(
@@ -278,32 +284,42 @@ contract DFMM is IDFMM {
     // Internals
 
     /**
-     * @dev Transfers `amount` of `token` from the sender to the contract. Note
-     * that if ETH is present in the contract, it will be wrapped to WETH. Any
-     * excess of ETH will be sent back to the sender.
-     * @param token Address of the token to transfer.
-     * @param amount Amount to transfer expressed in WAD.
+     * @dev Transfers `amounts` of `tokens` from the sender to the contract. Note
+     * that if any ETH is present in the contract, it will be wrapped to WETH and
+     * used if sufficient. Any excess of ETH will be sent back to the sender.
+     * @param tokens An array of token addresses to transfer.
+     * @param amounts An array of amounts to transfer expressed in WAD.
      */
-    function _transferFrom(address token, uint256 amount) internal {
-        if (address(this).balance >= amount) {
-            WETH(payable(weth)).deposit{ value: amount }();
+    function _transferFrom(
+        address[] memory tokens,
+        uint256[] memory amounts
+    ) internal {
+        uint256 length = tokens.length;
 
-            if (address(this).balance > 0) {
-                SafeTransferLib.safeTransferETH(
-                    msg.sender, address(this).balance
-                );
-            }
-        } else {
+        for (uint256 i = 0; i < length; i++) {
+            address token = tokens[i];
+            uint256 amount = amounts[i];
+
             uint256 downscaledAmount =
                 downscaleUp(amount, computeScalingFactor(token));
             uint256 preBalance = ERC20(token).balanceOf(address(this));
-            SafeTransferLib.safeTransferFrom(
-                ERC20(token), msg.sender, address(this), downscaledAmount
-            );
+
+            if (token == weth && address(this).balance >= amount) {
+                WETH(payable(weth)).deposit{ value: amount }();
+            } else {
+                SafeTransferLib.safeTransferFrom(
+                    ERC20(token), msg.sender, address(this), downscaledAmount
+                );
+            }
+
             uint256 postBalance = ERC20(token).balanceOf(address(this));
             if (postBalance < preBalance + downscaledAmount) {
                 revert InvalidTransfer();
             }
+        }
+
+        if (address(this).balance > 0) {
+            SafeTransferLib.safeTransferETH(msg.sender, address(this).balance);
         }
     }
 
@@ -362,7 +378,7 @@ contract DFMM is IDFMM {
      * @dev Deploys and returns the address of a clone contract that mimics
      * the behaviour of the contract deployed at the address `implementation`.
      * This function uses the `CREATE` opcode, which should never revert.
-     * This function was taken from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/proxy/Clones.sol#L23.
+     * This function was taken from https://github.com/OpenZeppelin/openzeppelin-contracts/blob/7bd2b2aaf68c21277097166a9a51eb72ae239b34/contracts/proxy/Clones.sol#L23-L41.
      */
     function clone(address implementation)
         internal

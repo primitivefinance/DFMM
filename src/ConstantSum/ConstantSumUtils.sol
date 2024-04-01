@@ -20,7 +20,6 @@ function encodeControllerUpdate(address controller)
 
 function decodeFeeUpdate(bytes memory data) pure returns (uint256 swapFee) {
     (, swapFee) = abi.decode(data, (UpdateCode, uint256));
-    return swapFee;
 }
 
 function decodePriceUpdate(bytes memory data)
