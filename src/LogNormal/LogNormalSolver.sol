@@ -140,56 +140,59 @@ contract LogNormalSolver {
         deltaLiquidity = adjustedLiquidity - liquidity;
     }
 
+    /// @dev returns encoded data for a deallocation given delta x
     function allocateGivenX(
         uint256 poolId,
         uint256 amountX
-    ) public view returns (uint256, uint256, uint256) {
+    ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
         (uint256 nextRx, uint256 nextL) =
             computeAllocationGivenX(true, amountX, reserves[0], L);
         uint256 approximatedPrice = getPriceGivenXL(poolId, nextRx, nextL);
         uint256 nextRy =
             getNextReserveY(poolId, nextRx, nextL, approximatedPrice);
-        return (nextRx, nextRy, nextL);
+        return abi.encode(nextRx, nextRy, nextL);
     }
-
+    /// @dev returns encoded data for a deallocation given delta y
     function allocateGivenY(
         uint256 poolId,
         uint256 amountY
-    ) public view returns (uint256, uint256, uint256) {
+    ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
         (uint256 nextRy, uint256 nextL) =
             computeAllocationGivenX(true, amountY, reserves[1], L);
         uint256 approximatedPrice = getPriceGivenYL(poolId, nextRy, nextL);
         uint256 nextRx =
             getNextReserveX(poolId, nextRy, nextL, approximatedPrice);
-        return (nextRx, nextRy, nextL);
+        return abi.encode(nextRx, nextRy, nextL);
     }
 
+    /// @dev returns encoded data for a deallocation given x
     function deallocateGivenX(
         uint256 poolId,
         uint256 amountX
-    ) public view returns (uint256, uint256, uint256) {
+    ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
         (uint256 nextRx, uint256 nextL) =
             computeAllocationGivenX(false, amountX, reserves[0], L);
         uint256 approximatedPrice = getPriceGivenXL(poolId, nextRx, nextL);
         uint256 nextRy =
             getNextReserveY(poolId, nextRx, nextL, approximatedPrice);
-        return (nextRx, nextRy, nextL);
+        return abi.encode(nextRx, nextRy, nextL);
     }
 
+    /// @dev returns encoded data for a deallocation given y
     function deallocateGivenY(
         uint256 poolId,
         uint256 amountY
-    ) public view returns (uint256, uint256, uint256) {
+    ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
         (uint256 nextRy, uint256 nextL) =
             computeAllocationGivenX(false, amountY, reserves[1], L);
         uint256 approximatedPrice = getPriceGivenYL(poolId, nextRy, nextL);
         uint256 nextRx =
             getNextReserveX(poolId, nextRy, nextL, approximatedPrice);
-        return (nextRx, nextRy, nextL);
+        return abi.encode(nextRx, nextRy, nextL);
     }
 
     function getNextLiquidity(

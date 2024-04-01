@@ -88,7 +88,7 @@ impl PoolType for LogNormalPool {
         pool_id: eU256,
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        let (next_x, next_y, next_l) = match allocation_data {
+        let data = match allocation_data {
             LogNormalAllocationData::AllocateGivenX(amount_x) => {
                 self.solver_contract
                     .allocate_given_x(pool_id, amount_x)
@@ -114,12 +114,6 @@ impl PoolType for LogNormalPool {
                     .await?
             }
         };
-        let token_1 = ethers::abi::Token::Uint(next_x);
-        let token_2 = ethers::abi::Token::Uint(next_y);
-        let token_3 = ethers::abi::Token::Uint(next_l);
-        let bytes: Bytes = ethers::abi::encode(&[token_1, token_2, token_3])
-            .iter()
-            .collect();
-        Ok(bytes)
+        Ok(data)
     }
 }

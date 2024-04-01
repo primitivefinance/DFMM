@@ -114,4 +114,12 @@ contract ConstantSumSolver {
     {
         return encodeControllerUpdate(newController);
     }
+
+    function prepareAllocationData(
+        uint256 rx,
+        uint256 ry,
+        uint256 L
+    ) public pure returns (bytes memory) {
+        return abi.encode(Reserves(rx, ry, L));
+    }
 }
