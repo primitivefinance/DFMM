@@ -62,18 +62,19 @@ impl PoolType for ConstantSumPool {
     ) -> Result<Bytes> {
         let (_amount_x, _amount_y, _allocate) = match allocation_data.0 {
             AllocateOrDeallocate::Allocate => (allocation_data.1, allocation_data.2, true),
-            AllocateOrDeallocate::Deallocate => (allocation_data.1, 0.into(), false),
+            AllocateOrDeallocate::Deallocate => (allocation_data.2, allocation_data.1, false),
         };
-        todo!()
-        // let (valid, data) = self
-        //     .solver_contract
-        //     .simulate_allocate_or_deallocate(pool_id, allocate, amount_x,
-        // amount_y)     .call()
-        //     .await?;
-        // if valid {
-        //     Ok(data)
-        // } else {
-        //     anyhow::bail!("allocation was invalid!")
-        // }
+        todo!() // TODO: This was removed from the solver,
+                // so need to think a little more about this
+                // let (valid, data) = self
+                //     .solver_contract
+                //     .simulate_allocate_or_deallocate(pool_id, allocate, amount_x,
+                // amount_y)     .call()
+                //     .await?;
+                // if valid {
+                //     Ok(data)
+                // } else {
+                //     anyhow::bail!("allocation was invalid!")
+                // }
     }
 }
