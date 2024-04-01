@@ -129,7 +129,7 @@ contract NTokenGeometricMeanTest is Test {
     /// @dev Initializes a basic pool in dfmm.
     modifier basic_70_10_10_10() {
         vm.warp(0);
-        uint256 reserveNumeraire = 1 ether;
+        uint256 reserveNumeraire = 2 ether;
         uint256 price = ONE;
         uint256 w = 0.25 ether;
         uint256[] memory weights = new uint256[](4);
