@@ -67,7 +67,8 @@ contract ConstantSum is PairStrategy {
         ConstantSumParams memory params;
 
         (reserves, params) = abi.decode(data, (uint256[], ConstantSumParams));
-        totalLiquidity = reserves[0] + reserves[1].divWadUp(params.price);
+        totalLiquidity =
+            computeDeltaLiquidity(reserves[0], reserves[1], params.price);
 
         if (pool.reserves.length != 2 || reserves.length != 2) {
             revert InvalidReservesLength();
