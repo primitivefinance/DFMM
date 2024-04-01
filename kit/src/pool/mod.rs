@@ -1,5 +1,5 @@
 use arbiter_core::middleware::ArbiterMiddleware;
-use ethers::types::Bytes;
+use ethers::types::{Address, Bytes};
 
 use self::bindings::dfmm::DFMM;
 use super::*;
@@ -25,9 +25,9 @@ pub trait PoolType {
     /// Change Parameters
     #[allow(async_fn_in_trait)]
     async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes>;
-    /// Change Allocation Date
+    /// Change Allocation Data
     #[allow(async_fn_in_trait)]
-    async fn change_allocation_data(
+    async fn allocation_data(
         &self,
         pool_id: eU256,
         allocation_date: Self::AllocationData,
@@ -53,7 +53,12 @@ pub struct Pool<P: PoolType> {
 }
 
 impl<P: PoolType> Pool<P> {
-    pub async fn swap(&self, amount_in: eU256, token_in: InputToken) -> Result<()> {
+    pub async fn swap(
+        &self,
+        amount_in: eU256,
+        token_in: InputToken,
+        recipiant: Address,
+    ) -> Result<()> {
         let data = match token_in {
             InputToken::TokenX => {
                 self.instance
@@ -66,14 +71,11 @@ impl<P: PoolType> Pool<P> {
                     .await?
             }
         };
-        self.dfmm.swap(self.id, data).send().await?.await?;
+        self.dfmm
+            .swap(self.id, recipiant, data)
+            .send()
+            .await?
+            .await?;
         Ok(())
     }
 }
-
-// async fn swap_data(
-//     &self,
-//     pool_id: eU256,
-//     swap: Self::AllocationData,
-//     amount_in: eU256,
-// ) -> Result<Bytes>;

@@ -42,7 +42,7 @@ impl PoolType for ConstantSumPool {
         if valid {
             Ok(data)
         } else {
-            anyhow::bail!("swap was invalid!")
+            anyhow::bail!("swap is invalid!")
         }
     }
 
@@ -55,24 +55,25 @@ impl PoolType for ConstantSumPool {
         Ok(price_update_data)
     }
 
-    async fn change_allocation_data(
+    async fn allocation_data(
         &self,
-        pool_id: eU256,
+        _pool_id: eU256,
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        let (amount_x, amount_y, allocate) = match allocation_data.0 {
+        let (_amount_x, _amount_y, _allocate) = match allocation_data.0 {
             AllocateOrDeallocate::Allocate => (allocation_data.1, allocation_data.2, true),
             AllocateOrDeallocate::Deallocate => (allocation_data.1, 0.into(), false),
         };
-        let (valid, data) = self
-            .solver_contract
-            .simulate_allocate_or_deallocate(pool_id, allocate, amount_x, amount_y)
-            .call()
-            .await?;
-        if valid {
-            Ok(data)
-        } else {
-            anyhow::bail!("allocation was invalid!")
-        }
+        todo!()
+        // let (valid, data) = self
+        //     .solver_contract
+        //     .simulate_allocate_or_deallocate(pool_id, allocate, amount_x,
+        // amount_y)     .call()
+        //     .await?;
+        // if valid {
+        //     Ok(data)
+        // } else {
+        //     anyhow::bail!("allocation was invalid!")
+        // }
     }
 }

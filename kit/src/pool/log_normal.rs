@@ -13,7 +13,6 @@ pub enum LogNormalUpdateParameters {
     FeeUpdate(eU256),
     StrikeUpdate(eU256, eU256),
     SigmaUpdate(eU256, eU256),
-    TauUpdate(eU256, eU256),
     ControllerUpdate(Address),
 }
 
@@ -64,19 +63,13 @@ impl PoolType for LogNormalPool {
             }
             LogNormalUpdateParameters::StrikeUpdate(strike, expiry) => {
                 self.solver_contract
-                    .prepare_strike_update(strike, expiry)
+                    .prepare_mean_update(strike, expiry)
                     .call()
                     .await?
             }
             LogNormalUpdateParameters::SigmaUpdate(sigma, expiry) => {
                 self.solver_contract
-                    .prepare_sigma_update(sigma, expiry)
-                    .call()
-                    .await?
-            }
-            LogNormalUpdateParameters::TauUpdate(tau, expiry) => {
-                self.solver_contract
-                    .prepare_tau_update(tau, expiry)
+                    .prepare_width_update(sigma, expiry)
                     .call()
                     .await?
             }
@@ -90,7 +83,7 @@ impl PoolType for LogNormalPool {
         Ok(bytes)
     }
 
-    async fn change_allocation_data(
+    async fn allocation_data(
         &self,
         pool_id: eU256,
         allocation_data: Self::AllocationData,
