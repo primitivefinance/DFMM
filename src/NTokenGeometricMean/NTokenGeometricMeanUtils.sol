@@ -7,8 +7,6 @@ import {
 } from "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 import {
     computeReserveFromNumeraire,
-    computeL,
-    computeTradingFunction,
     computeNextLiquidity
 } from "./NTokenGeometricMeanMath.sol";
 
