@@ -328,8 +328,8 @@ contract LogNormalArbitrage {
         int256 mean = int256(params.mean);
         int256 width = int256(params.width);
 
-        int256 lnSDivK = computeLnSDivK(uint256(S), params.mean);
-        int256 a = lnSDivK.wadDiv(width) - width.wadDiv(I_TWO);
+        int256 lnSDivMean = computeLnSDivMean(uint256(S), params.mean);
+        int256 a = lnSDivMean.wadDiv(width) - width.wadDiv(I_TWO);
         int256 cdfA = Gaussian.cdf(a);
 
         int256 delta = L.wadMul(mean).wadMul(cdfA);
@@ -345,8 +345,8 @@ contract LogNormalArbitrage {
         int256 gamma = I_ONE - int256(params.swapFee);
         int256 width = int256(params.width);
 
-        int256 lnSDivK = computeLnSDivK(uint256(S), params.mean);
-        int256 a = Gaussian.cdf(lnSDivK.wadDiv(width) + width.wadDiv(I_TWO));
+        int256 lnSDivMean = computeLnSDivMean(uint256(S), params.mean);
+        int256 a = Gaussian.cdf(lnSDivMean.wadDiv(width) + width.wadDiv(I_TWO));
 
         int256 delta = L.wadMul(I_ONE - a);
         dx = delta - rX;
