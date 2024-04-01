@@ -8,7 +8,8 @@ import { Pool } from "src/interfaces/IDFMM.sol";
 import {
     computeTradingFunction,
     computeDeltaGivenDeltaLRoundUp,
-    computeDeltaGivenDeltaLRoundDown
+    computeDeltaGivenDeltaLRoundDown,
+    computeSwapDeltaLiquidity
 } from "./G3MMath.sol";
 import { ONE } from "src/lib/StrategyLib.sol";
 
@@ -89,7 +90,7 @@ contract GeometricMean is PairStrategy {
             revert InvalidReservesLength();
         }
 
-        if (state.wX >= ONE) {
+        if (state.wX == 0 || state.wX >= ONE) {
             revert InvalidWeightX();
         }
 
@@ -126,6 +127,9 @@ contract GeometricMean is PairStrategy {
         } else if (updateCode == UpdateCode.WeightX) {
             (, uint256 targetWeightX, uint256 targetTimestamp) =
                 abi.decode(data, (UpdateCode, uint256, uint256));
+            if (targetWeightX == 0 || targetWeightX >= ONE) {
+                revert InvalidWeightX();
+            }
             internalParams[poolId].wX.set(targetWeightX, targetTimestamp);
         } else if (updateCode == UpdateCode.Controller) {
             (, internalParams[poolId].controller) =
@@ -195,6 +199,37 @@ contract GeometricMean is PairStrategy {
 
         deltas[1] = computeDeltaGivenDeltaLRoundDown(
             pool.reserves[1], deltaLiquidity, pool.totalLiquidity
+        );
+    }
+
+    /// @inheritdoc PairStrategy
+    function _computeSwapDeltaLiquidity(
+        Pool memory pool,
+        bytes memory params,
+        uint256 tokenInIndex,
+        uint256,
+        uint256 amountIn,
+        uint256
+    ) internal pure override returns (uint256) {
+        GeometricMeanParams memory poolParams =
+            abi.decode(params, (GeometricMeanParams));
+
+        if (tokenInIndex == 0) {
+            return computeSwapDeltaLiquidity(
+                amountIn,
+                pool.reserves[0],
+                pool.totalLiquidity,
+                poolParams.wX,
+                poolParams.swapFee
+            );
+        }
+
+        return computeSwapDeltaLiquidity(
+            amountIn,
+            pool.reserves[1],
+            pool.totalLiquidity,
+            poolParams.wY,
+            poolParams.swapFee
         );
     }
 }

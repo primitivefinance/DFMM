@@ -12,14 +12,14 @@ import {
 import {
     ONE,
     computeInitialPoolData,
-    FixedPointMathLib
+    FixedPointMathLib,
+    computeSwapDeltaLiquidity
 } from "./ConstantSumMath.sol";
 
 contract ConstantSumSolver {
     error NotEnoughLiquidity();
 
     using FixedPointMathLib for uint256;
-    using FixedPointMathLib for int256;
 
     struct Reserves {
         uint256 rx;
@@ -59,7 +59,7 @@ contract ConstantSumSolver {
         SimulateSwapState memory state;
 
         if (swapXIn) {
-            state.deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee);
+            computeSwapDeltaLiquidity(amountIn, poolParams, true);
             state.amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
                 ONE - poolParams.swapFee
             );
@@ -68,8 +68,7 @@ contract ConstantSumSolver {
                 revert NotEnoughLiquidity();
             }
         } else {
-            state.deltaLiquidity =
-                amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.price);
+            computeSwapDeltaLiquidity(amountIn, poolParams, false);
             state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
@@ -81,13 +80,9 @@ contract ConstantSumSolver {
         bytes memory swapData;
 
         if (swapXIn) {
-            swapData = abi.encode(
-                0, 1, amountIn, state.amountOut, state.deltaLiquidity
-            );
+            swapData = abi.encode(0, 1, amountIn, state.amountOut);
         } else {
-            swapData = abi.encode(
-                1, 0, amountIn, state.amountOut, state.deltaLiquidity
-            );
+            swapData = abi.encode(1, 0, amountIn, state.amountOut);
         }
 
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(

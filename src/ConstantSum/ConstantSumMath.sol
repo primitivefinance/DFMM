@@ -6,7 +6,6 @@ import { ConstantSumParams } from "src/ConstantSum/ConstantSum.sol";
 import { ONE } from "src/lib/StrategyLib.sol";
 
 using FixedPointMathLib for uint256;
-using FixedPointMathLib for int256;
 
 function computeTradingFunction(
     uint256[] memory reserves,
@@ -39,4 +38,16 @@ function computeDeltaLiquidity(
     uint256 price
 ) pure returns (uint256) {
     return price.mulWadUp(deltaX) + deltaY;
+}
+
+function computeSwapDeltaLiquidity(
+    uint256 delta,
+    ConstantSumParams memory params,
+    bool isSwapXForY
+) pure returns (uint256) {
+    if (isSwapXForY) {
+        return (params.swapFee).mulWadUp(delta);
+    } else {
+        return (params.swapFee).mulDivUp(delta, params.price);
+    }
 }
