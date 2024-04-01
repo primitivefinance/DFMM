@@ -55,14 +55,6 @@ function computeXGivenL(
     return params.wX.mulWadUp(L).divWadUp(params.wY.mulWadUp(S));
 }
 
-function computeYGivenL(
-    uint256 L,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wY.mulWadUp(L).divWadUp(params.wX.mulWadUp(S));
-}
-
 function computeAllocationGivenDeltaX(
     uint256 deltaX,
     uint256 rX,
