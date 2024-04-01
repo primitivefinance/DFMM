@@ -42,7 +42,7 @@ function computeLGivenX(
     uint256 S,
     GeometricMeanParams memory params
 ) pure returns (uint256) {
-    int256 a = int256(params.wY.divWadUp(params.wX).mulWadUp(S));
+    int256 a = int256(params.wY.mulDivUp(S, params.wX));
     int256 b = a.powWad(int256(params.wY));
     return x.mulWadUp(uint256(b));
 }
