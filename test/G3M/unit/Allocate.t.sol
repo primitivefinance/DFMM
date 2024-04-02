@@ -11,15 +11,16 @@ contract G3MAllocateTest is G3MSetUp {
     function test_G3M_allocate_GivenX() public init {
         uint256 maxDeltaX = 0.1 ether;
 
-        (uint256 maxDeltaY, uint256 deltaLiquidity) =
-            solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
+        bytes memory allocateData =
+            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(POOL_ID);
+        (, uint256 maxDeltaY, uint256 deltaLiquidity) =
+            abi.decode(allocateData, (uint256, uint256, uint256));
 
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
-        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
-        (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
+        (uint256[] memory deltas) = dfmm.allocate(POOL_ID, allocateData);
 
         (uint256[] memory adjustedReserves, uint256 adjustedLiquidity) =
             getReservesAndLiquidity(POOL_ID);
@@ -39,15 +40,16 @@ contract G3MAllocateTest is G3MSetUp {
     function test_G3M_allocate_GivenX_large_delta() public init {
         uint256 maxDeltaX = 10_000 ether;
 
-        (uint256 maxDeltaY, uint256 deltaLiquidity) =
-            solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
+        bytes memory allocateData =
+            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(POOL_ID);
+        (, uint256 maxDeltaY, uint256 deltaLiquidity) =
+            abi.decode(allocateData, (uint256, uint256, uint256));
 
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
-        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
-        (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
+        (uint256[] memory deltas) = dfmm.allocate(POOL_ID, allocateData);
 
         (uint256[] memory adjustedReserves, uint256 adjustedLiquidity) =
             getReservesAndLiquidity(POOL_ID);
@@ -67,8 +69,10 @@ contract G3MAllocateTest is G3MSetUp {
     function test_G3M_allocate_MultipleTimes() public init {
         uint256 maxDeltaX = 0.1 ether;
 
-        (uint256 maxDeltaY, uint256 deltaLiquidity) =
-            solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
+        bytes memory allocateData =
+            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
+        (, uint256 maxDeltaY, uint256 deltaLiquidity) =
+            abi.decode(allocateData, (uint256, uint256, uint256));
 
         bytes memory data = abi.encode(
             maxDeltaX.mulDivUp(101, 100),
@@ -82,8 +86,10 @@ contract G3MAllocateTest is G3MSetUp {
     function test_G3M_allocate_RevertsIfMoreThanMaxDeltaX() public init {
         uint256 maxDeltaX = 0.1 ether;
 
-        (uint256 maxDeltaY, uint256 deltaLiquidity) =
-            solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
+        bytes memory allocateData =
+            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
+        (, uint256 maxDeltaY, uint256 deltaLiquidity) =
+            abi.decode(allocateData, (uint256, uint256, uint256));
 
         bytes memory data = abi.encode(maxDeltaX - 1, maxDeltaY, deltaLiquidity);
         vm.expectRevert();
@@ -93,8 +99,10 @@ contract G3MAllocateTest is G3MSetUp {
     function test_G3M_allocate_RevertsIfMoreThanMaxDeltaY() public init {
         uint256 maxDeltaX = 0.1 ether;
 
-        (uint256 maxDeltaY, uint256 deltaLiquidity) =
-            solver.allocateGivenDeltaX(POOL_ID, maxDeltaX);
+        bytes memory allocateData =
+            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
+        (, uint256 maxDeltaY, uint256 deltaLiquidity) =
+            abi.decode(allocateData, (uint256, uint256, uint256));
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY - 1, deltaLiquidity);
         vm.expectRevert();
@@ -104,8 +112,10 @@ contract G3MAllocateTest is G3MSetUp {
     function test_G3M_allocate_GivenY() public init {
         uint256 maxDeltaY = 0.1 ether;
 
-        (uint256 maxDeltaX, uint256 deltaLiquidity) =
-            solver.allocateGivenDeltaY(POOL_ID, maxDeltaY);
+        bytes memory allocateData =
+            solver.prepareAllocationDeltasGivenDeltaY(POOL_ID, maxDeltaY);
+        (uint256 maxDeltaX,, uint256 deltaLiquidity) =
+            abi.decode(allocateData, (uint256, uint256, uint256));
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(POOL_ID);
         console2.log("liquidity", liquidity);
@@ -134,23 +144,26 @@ contract G3MAllocateTest is G3MSetUp {
     }
 
     function test_G3M_allocate_ReceiveAppropriateLpTokens() public init_100 {
-      (, uint256 initialL) = getReservesAndLiquidity(POOL_ID);
-      Pool memory pool = dfmm.pools(POOL_ID);
-      LPToken liquidityToken = LPToken(pool.liquidityToken);
+        (, uint256 initialL) = getReservesAndLiquidity(POOL_ID);
+        Pool memory pool = dfmm.pools(POOL_ID);
+        LPToken liquidityToken = LPToken(pool.liquidityToken);
 
-      uint256 startBalance = liquidityToken.balanceOf(address(this));
+        uint256 startBalance = liquidityToken.balanceOf(address(this));
 
-      uint256 dyMax = 100 ether;
-      (uint256 dxMax, uint256 dL) = solver.allocateGivenDeltaY(POOL_ID, dyMax);
-      bytes memory data = abi.encode(dxMax, dyMax, dL);
+        uint256 dyMax = 100 ether;
+        bytes memory allocateData =
+            solver.prepareAllocationDeltasGivenDeltaY(POOL_ID, dyMax);
+        (uint256 maxDeltaX,, uint256 deltaLiquidity) =
+            abi.decode(allocateData, (uint256, uint256, uint256));
+        bytes memory data = abi.encode(maxDeltaX, dyMax, deltaLiquidity);
 
-      dfmm.allocate(POOL_ID, data);
+        dfmm.allocate(POOL_ID, data);
 
-      (, uint256 nextL) = getReservesAndLiquidity(POOL_ID);
-      uint256 endBalance = liquidityToken.balanceOf(address(this));
-      
-      // Add 1_000 wei to account for liquidity that was burnt on init
-      assertEq(startBalance + 1_000, initialL);
-      assertEq(endBalance + 1_000, nextL);
+        (, uint256 nextL) = getReservesAndLiquidity(POOL_ID);
+        uint256 endBalance = liquidityToken.balanceOf(address(this));
+
+        // Add 1_000 wei to account for liquidity that was burnt on init
+        assertEq(startBalance + 1000, initialL);
+        assertEq(endBalance + 1000, nextL);
     }
 }

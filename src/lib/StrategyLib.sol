@@ -57,6 +57,14 @@ function computeDeltaYGivenDeltaX(
     return reserveY.mulDivUp(deltaX, reserveX);
 }
 
+function computeDeltaXGivenDeltaY(
+    uint256 deltaY,
+    uint256 reserveX,
+    uint256 reserveY
+) pure returns (uint256 deltaX) {
+    return reserveX.mulDivUp(deltaY, reserveY);
+}
+
 function computeDeltaXGivenDeltaL(
     uint256 deltaL,
     uint256 liquidity,
@@ -71,4 +79,37 @@ function computeDeltaYGivenDeltaL(
     uint256 reserveY
 ) pure returns (uint256 deltaX) {
     return reserveY.mulDivUp(deltaL, liquidity);
+}
+
+function encodeAllocationDeltasGivenDeltaX(
+    uint256 deltaX,
+    uint256 reserveX,
+    uint256 reserveY,
+    uint256 liquidity
+) pure returns (bytes memory) {
+    uint256 deltaY = computeDeltaYGivenDeltaX(deltaX, reserveX, reserveY);
+    uint256 deltaL = computeDeltaLGivenDeltaX(deltaX, liquidity, reserveX);
+    return abi.encode(deltaX, deltaY, deltaL);
+}
+
+function encodeAllocationDeltasGivenDeltaY(
+    uint256 deltaY,
+    uint256 reserveX,
+    uint256 reserveY,
+    uint256 liquidity
+) pure returns (bytes memory) {
+    uint256 deltaX = computeDeltaXGivenDeltaY(deltaY, reserveX, reserveY);
+    uint256 deltaL = computeDeltaLGivenDeltaY(deltaY, liquidity, reserveY);
+    return abi.encode(deltaX, deltaY, deltaL);
+}
+
+function encodeAllocationDeltasGivenDeltaL(
+    uint256 deltaL,
+    uint256 reserveX,
+    uint256 reserveY,
+    uint256 liquidity
+) pure returns (bytes memory) {
+    uint256 deltaX = computeDeltaXGivenDeltaL(deltaL, reserveX, liquidity);
+    uint256 deltaY = computeDeltaYGivenDeltaL(deltaL, reserveY, liquidity);
+    return abi.encode(deltaX, deltaY, deltaL);
 }

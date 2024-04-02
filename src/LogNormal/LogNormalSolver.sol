@@ -5,10 +5,6 @@ import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { IStrategy } from "src/interfaces/IStrategy.sol";
 import { Pool, IDFMM } from "src/interfaces/IDFMM.sol";
 import {
-    computeAllocationGivenX,
-    computeAllocationGivenY
-} from "src/lib/StrategyLib.sol";
-import {
     encodeFeeUpdate,
     encodeMeanUpdate,
     encodeWidthUpdate,
@@ -28,8 +24,9 @@ import {
     computeDeltaLXIn,
     computeDeltaLYIn
 } from "src/LogNormal/LogNormalMath.sol";
+import { PairSolver } from "src/PairSolver.sol";
 
-contract LogNormalSolver {
+contract LogNormalSolver is PairSolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
@@ -96,10 +93,11 @@ contract LogNormalSolver {
     function getReservesAndLiquidity(uint256 poolId)
         public
         view
-        returns (uint256[] memory, uint256)
+        override
+        returns (uint256, uint256, uint256)
     {
         Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
-        return (pool.reserves, pool.totalLiquidity);
+        return (pool.reserves[0], pool.reserves[1], pool.totalLiquidity);
     }
 
     function getInitialPoolData(
@@ -108,134 +106,6 @@ contract LogNormalSolver {
         LogNormalParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolData(rx, S, params);
-    }
-
-    /// @notice used by kit
-    function prepareAllocateGivenDeltaX(
-        uint256 poolId,
-        uint256 deltaX
-    ) public view returns (bytes memory) {
-        (uint256[] memory reserves, uint256 liquidity) =
-            getReservesAndLiquidity(poolId);
-        (uint256 adjustedReserveX, uint256 adjustedLiquidity) =
-            computeAllocationGivenX(true, deltaX, reserves[0], liquidity);
-        uint256 approximatedPrice =
-            getPriceGivenXL(poolId, adjustedReserveX, adjustedLiquidity);
-        uint256 adjustedReserveY = getNextReserveY(
-            poolId, adjustedReserveX, adjustedLiquidity, approximatedPrice
-        );
-        uint256 deltaY = adjustedReserveY - reserves[1];
-        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
-        return abi.encode(deltaY, deltaLiquidity);
-    }
-
-    /// @notice used by kit
-    function prepareAllocateGivenDeltaY(
-        uint256 poolId,
-        uint256 deltaY
-    ) public view returns (bytes memory) {
-        (uint256[] memory reserves, uint256 liquidity) =
-            getReservesAndLiquidity(poolId);
-        (uint256 adjustedReserveY, uint256 adjustedLiquidity) =
-            computeAllocationGivenY(true, deltaY, reserves[1], liquidity);
-        uint256 approximatedPrice =
-            getPriceGivenYL(poolId, adjustedReserveY, adjustedLiquidity);
-        uint256 adjustedReserveX = getNextReserveX(
-            poolId, adjustedReserveY, adjustedLiquidity, approximatedPrice
-        );
-        uint256 deltaX = adjustedReserveX - reserves[0];
-        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
-        return abi.encode(deltaX, deltaLiquidity);
-    }
-
-    /// @notice used by kit
-    function prepareDeallocateGivenDeltaX(
-        uint256 poolId,
-        uint256 deltaX
-    ) public view returns (bytes memory) {
-        (uint256[] memory reserves, uint256 liquidity) =
-            getReservesAndLiquidity(poolId);
-        (uint256 adjustedReserveX, uint256 adjustedLiquidity) =
-            computeAllocationGivenX(false, deltaX, reserves[0], liquidity);
-        uint256 approximatedPrice =
-            getPriceGivenXL(poolId, adjustedReserveX, adjustedLiquidity);
-        uint256 adjustedReserveY = getNextReserveY(
-            poolId, adjustedReserveX, adjustedLiquidity, approximatedPrice
-        );
-        uint256 deltaY = reserves[1] - adjustedReserveY;
-        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
-        return abi.encode(deltaY, deltaLiquidity);
-    }
-
-    /// @notice used by kit
-    function prepareDeallocateGivenDeltaY(
-        uint256 poolId,
-        uint256 deltaY
-    ) public view returns (bytes memory) {
-        (uint256[] memory reserves, uint256 liquidity) =
-            getReservesAndLiquidity(poolId);
-        (uint256 adjustedReserveY, uint256 adjustedLiquidity) =
-            computeAllocationGivenY(false, deltaY, reserves[1], liquidity);
-        uint256 approximatedPrice =
-            getPriceGivenYL(poolId, adjustedReserveY, adjustedLiquidity);
-        uint256 adjustedReserveX = getNextReserveX(
-            poolId, adjustedReserveY, adjustedLiquidity, approximatedPrice
-        );
-        uint256 deltaX = reserves[0] - adjustedReserveX;
-        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
-        return abi.encode(deltaX, deltaLiquidity);
-    }
-
-    function allocateGivenX(
-        uint256 poolId,
-        uint256 amountX
-    ) public view returns (uint256, uint256, uint256) {
-        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        (uint256 nextRx, uint256 nextL) =
-            computeAllocationGivenX(true, amountX, reserves[0], L);
-        uint256 approximatedPrice = getPriceGivenXL(poolId, nextRx, nextL);
-        uint256 nextRy =
-            getNextReserveY(poolId, nextRx, nextL, approximatedPrice);
-        return (nextRx, nextRy, nextL);
-    }
-
-    function allocateGivenY(
-        uint256 poolId,
-        uint256 amountY
-    ) public view returns (uint256, uint256, uint256) {
-        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        (uint256 nextRy, uint256 nextL) =
-            computeAllocationGivenX(true, amountY, reserves[1], L);
-        uint256 approximatedPrice = getPriceGivenYL(poolId, nextRy, nextL);
-        uint256 nextRx =
-            getNextReserveX(poolId, nextRy, nextL, approximatedPrice);
-        return (nextRx, nextRy, nextL);
-    }
-
-    function deallocateGivenX(
-        uint256 poolId,
-        uint256 amountX
-    ) public view returns (uint256, uint256, uint256) {
-        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        (uint256 nextRx, uint256 nextL) =
-            computeAllocationGivenX(false, amountX, reserves[0], L);
-        uint256 approximatedPrice = getPriceGivenXL(poolId, nextRx, nextL);
-        uint256 nextRy =
-            getNextReserveY(poolId, nextRx, nextL, approximatedPrice);
-        return (nextRx, nextRy, nextL);
-    }
-
-    function deallocateGivenY(
-        uint256 poolId,
-        uint256 amountY
-    ) public view returns (uint256, uint256, uint256) {
-        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        (uint256 nextRy, uint256 nextL) =
-            computeAllocationGivenX(false, amountY, reserves[1], L);
-        uint256 approximatedPrice = getPriceGivenYL(poolId, nextRy, nextL);
-        uint256 nextRx =
-            getNextReserveX(poolId, nextRy, nextL, approximatedPrice);
-        return (nextRx, nextRy, nextL);
     }
 
     function getNextLiquidity(
@@ -290,7 +160,7 @@ contract LogNormalSolver {
         uint256 amountIn
     ) public view returns (bool, uint256, uint256, bytes memory) {
         Reserves memory endReserves;
-        (uint256[] memory preReserves, uint256 preTotalLiquidity) =
+        (uint256 preReserveX, uint256 preReserveY, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
         LogNormalParams memory poolParams = getPoolParams(poolId);
 
@@ -298,19 +168,19 @@ contract LogNormalSolver {
 
         {
             uint256 startComputedL = getNextLiquidity(
-                poolId, preReserves[0], preReserves[1], preTotalLiquidity
+                poolId, preReserveX, preReserveY, preTotalLiquidity
             );
 
             if (swapXIn) {
                 state.deltaLiquidity = computeDeltaLXIn(
                     amountIn,
-                    preReserves[0],
-                    preReserves[1],
+                    preReserveX,
+                    preReserveY,
                     preTotalLiquidity,
                     poolParams
                 );
 
-                endReserves.rx = preReserves[0] + amountIn;
+                endReserves.rx = preReserveX + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
@@ -320,20 +190,20 @@ contract LogNormalSolver {
                 );
 
                 require(
-                    endReserves.ry < preReserves[1],
+                    endReserves.ry < preReserveY,
                     "invalid swap: y reserve increased!"
                 );
-                state.amountOut = preReserves[1] - endReserves.ry;
+                state.amountOut = preReserveY - endReserves.ry;
             } else {
                 state.deltaLiquidity = computeDeltaLYIn(
                     amountIn,
-                    preReserves[0],
-                    preReserves[1],
+                    preReserveX,
+                    preReserveY,
                     preTotalLiquidity,
                     poolParams
                 );
 
-                endReserves.ry = preReserves[1] + amountIn;
+                endReserves.ry = preReserveY + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
@@ -343,15 +213,17 @@ contract LogNormalSolver {
                 );
 
                 require(
-                    endReserves.rx < preReserves[0],
+                    endReserves.rx < preReserveX,
                     "invalid swap: x reserve increased!"
                 );
-                state.amountOut = preReserves[0] - endReserves.rx;
+                state.amountOut = preReserveX - endReserves.rx;
             }
         }
 
         Pool memory pool;
-        pool.reserves = preReserves;
+        pool.reserves = new uint256[](2);
+        pool.reserves[0] = endReserves.rx;
+        pool.reserves[1] = endReserves.ry;
         pool.totalLiquidity = preTotalLiquidity;
 
         bytes memory swapData;
@@ -396,7 +268,7 @@ contract LogNormalSolver {
         view
         returns (uint256 price)
     {
-        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        price = computePriceGivenX(reserves[0], L, getPoolParams(poolId));
+        (uint256 preReserveX,, uint256 L) = getReservesAndLiquidity(poolId);
+        price = computePriceGivenX(preReserveX, L, getPoolParams(poolId));
     }
 }

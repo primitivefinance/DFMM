@@ -19,8 +19,9 @@ import {
     FixedPointMathLib,
     computeSwapDeltaLiquidity
 } from "./ConstantSumMath.sol";
+import { PairSolver } from "src/PairSolver.sol";
 
-contract ConstantSumSolver {
+contract ConstantSumSolver is PairSolver {
     error NotEnoughLiquidity();
 
     using FixedPointMathLib for uint256;
@@ -126,10 +127,11 @@ contract ConstantSumSolver {
     function getReservesAndLiquidity(uint256 poolId)
         public
         view
-        returns (uint256[] memory, uint256)
+        override
+        returns (uint256, uint256, uint256)
     {
         Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
-        return (pool.reserves, pool.totalLiquidity);
+        return (pool.reserves[0], pool.reserves[1], pool.totalLiquidity);
     }
 
     function getPoolParams(uint256 poolId)

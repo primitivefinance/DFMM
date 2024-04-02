@@ -13,12 +13,11 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
     function test_LogNormal_deallocate_GivenX() public init {
         uint256 minDeltaX = 0.1 ether;
 
-        (uint256[] memory reserves, uint256 liquidity) =
+        (uint256 rX, uint256 rY, uint256 liquidity) =
             solver.getReservesAndLiquidity(POOL_ID);
         uint256 deltaLiquidity =
-            computeDeltaLGivenDeltaX(minDeltaX, liquidity, reserves[0]);
-        uint256 minDeltaY =
-            computeDeltaYGivenDeltaX(minDeltaX, reserves[0], reserves[1]);
+            computeDeltaLGivenDeltaX(minDeltaX, liquidity, rX);
+        uint256 minDeltaY = computeDeltaYGivenDeltaX(minDeltaX, rX, rY);
 
         //        uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         //      (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
@@ -42,13 +41,13 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
     function test_LogNormal_deallocate_GivenY() public init {
         uint256 minDeltaY = 0.1 ether;
 
-        (uint256[] memory reserves, uint256 liquidity) =
+        (uint256 rX, uint256 rY, uint256 liquidity) =
             solver.getReservesAndLiquidity(POOL_ID);
 
         uint256 deltaLiquidity =
-            computeDeltaLGivenDeltaY(minDeltaY, liquidity, reserves[1]);
+            computeDeltaLGivenDeltaY(minDeltaY, liquidity, rY);
         uint256 minDeltaX =
-            computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
+            computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, rX);
 
         // uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);

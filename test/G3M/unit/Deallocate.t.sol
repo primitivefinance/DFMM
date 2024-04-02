@@ -10,16 +10,13 @@ contract G3MDeallocateTest is G3MSetUp {
 
     function test_G3M_deallocate_GivenX_DecreasesTotalLiquidity() public init {
         uint256 minDeltaX = 0.1 ether;
-        (uint256 deltaY, uint256 deltaLiquidity) =
-            solver.deallocateGivenDeltaX(POOL_ID, minDeltaX);
-        console2.log(deltaY);
-        console2.log(deltaLiquidity);
+        bytes memory deallocateData =
+            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, minDeltaX);
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
 
         (, uint256 preTotalLiquidity) = getReservesAndLiquidity(POOL_ID);
 
-        bytes memory data = abi.encode(minDeltaX, deltaY, deltaLiquidity);
-        dfmm.deallocate(POOL_ID, data);
+        dfmm.deallocate(POOL_ID, deallocateData);
 
         (, uint256 postTotalLiquidity) = getReservesAndLiquidity(POOL_ID);
         uint256 deltaTotalLiquidity = preTotalLiquidity - postTotalLiquidity;
@@ -34,10 +31,12 @@ contract G3MDeallocateTest is G3MSetUp {
         (uint256 preReserveX, uint256 preReserveY,) =
             solver.getReservesAndLiquidity(POOL_ID);
 
-        (uint256 deltaY, uint256 deltaLiquidity) =
-            solver.deallocateGivenDeltaX(POOL_ID, minDeltaX);
-        bytes memory data = abi.encode(minDeltaX, deltaY, deltaLiquidity);
-        dfmm.deallocate(POOL_ID, data);
+        bytes memory deallocateData =
+            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, minDeltaX);
+        dfmm.deallocate(POOL_ID, deallocateData);
+
+        (, uint256 deltaY, uint256 deltaL) =
+            abi.decode(deallocateData, (uint256, uint256, uint256));
 
         (uint256 postReserveX, uint256 postReserveY,) =
             solver.getReservesAndLiquidity(POOL_ID);
@@ -52,10 +51,11 @@ contract G3MDeallocateTest is G3MSetUp {
         uint256 preBalanceXDFMM = tokenX.balanceOf(address(dfmm));
         uint256 preBalanceYDFMM = tokenY.balanceOf(address(dfmm));
 
-        (uint256 deltaY, uint256 deltaLiquidity) =
-            solver.deallocateGivenDeltaX(POOL_ID, minDeltaX);
-        bytes memory data = abi.encode(minDeltaX, deltaY, deltaLiquidity);
-        dfmm.deallocate(POOL_ID, data);
+        bytes memory deallocateData =
+            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, minDeltaX);
+        (, uint256 deltaY,) =
+            abi.decode(deallocateData, (uint256, uint256, uint256));
+        dfmm.deallocate(POOL_ID, deallocateData);
 
         assertEq(preBalanceX + minDeltaX, tokenX.balanceOf(address(this)));
         assertEq(preBalanceY + deltaY, tokenY.balanceOf(address(this)));
@@ -66,13 +66,14 @@ contract G3MDeallocateTest is G3MSetUp {
     function test_G3M_deallocate_GivenY() public init {
         uint256 minDeltaY = 0.1 ether;
 
-        (uint256 minDeltaX, uint256 deltaLiquidity) =
-            solver.allocateGivenDeltaY(POOL_ID, minDeltaY);
+        bytes memory deallocateData =
+            solver.prepareAllocationDeltasGivenDeltaY(POOL_ID, minDeltaY);
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(POOL_ID);
+        (,, uint256 deltaLiquidity) =
+            abi.decode(deallocateData, (uint256, uint256, uint256));
 
-        bytes memory data = abi.encode(minDeltaX, minDeltaY, deltaLiquidity);
-        (uint256[] memory deltas) = dfmm.deallocate(POOL_ID, data);
+        (uint256[] memory deltas) = dfmm.deallocate(POOL_ID, deallocateData);
 
         (uint256[] memory adjustedReserves, uint256 adjustedLiquidity) =
             getReservesAndLiquidity(POOL_ID);
