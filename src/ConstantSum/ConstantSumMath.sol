@@ -25,11 +25,10 @@ function computeInitialPoolData(
 ) pure returns (bytes memory) {
     // The pool can be initialized with any non-negative amount of rx, and ry.
     // so we have to allow a user to pass an amount of both even if one is zero.
-    uint256 L = rx.mulWadDown(params.price) + ry;
     uint256[] memory reserves = new uint256[](2);
     reserves[0] = rx;
     reserves[1] = ry;
-    return abi.encode(reserves, L, params);
+    return abi.encode(reserves, params);
 }
 
 function computeDeltaLiquidity(

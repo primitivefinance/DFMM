@@ -27,7 +27,7 @@ contract LogNormalSetUp is SetUp {
         controller: address(this)
     });
 
-    uint256 defaultReserveX = ONE;
+    uint256 defaultReserveX = 100 ether;
     uint256 defaultReserveXDeep = ONE * 10_000_000;
 
     uint256 defaultPrice = ONE;

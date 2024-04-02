@@ -15,7 +15,7 @@ import {
     computeDeltaGivenDeltaLRoundDown,
     computeSwapDeltaLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
-import { ONE } from "src/lib/StrategyLib.sol";
+import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
 
 /**
  * @dev Parameterization of the GeometricMean curve.
@@ -122,7 +122,7 @@ contract NTokenGeometricMean is NTokenStrategy {
             state.reserves, state.totalLiquidity, getPoolParams(poolId)
         );
 
-        bool valid = invariant >= 0;
+        bool valid = invariant >= 0 && invariant <= EPSILON;
 
         return (valid, invariant, state.reserves, state.totalLiquidity);
     }
