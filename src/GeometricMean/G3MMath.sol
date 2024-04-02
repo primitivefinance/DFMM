@@ -199,7 +199,7 @@ function computeNextLiquidity(
         findRootLiquidity
     );
 
-    if (rootInput == 0) {
+    if (computeTradingFunction(rX, rY, rootInput, params) == 0) {
         L = rootInput;
     } else {
         L = lowerInput;
