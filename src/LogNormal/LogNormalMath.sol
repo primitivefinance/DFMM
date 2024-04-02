@@ -67,7 +67,7 @@ function computeHalfSigmaSquared(uint256 sigma) pure returns (uint256) {
  * @param rx The reserve of x.
  * @param S The price of X in Y, in WAD units.
  * @param params LogNormParameters of the Log Normal distribution.
- * @return L The reserve L
+ * @return L The liquidity given rx, S
  */
 function computeLGivenX(
     uint256 rx,
