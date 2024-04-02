@@ -121,15 +121,11 @@ function computeNextLiquidity(
     uint256[] memory reserves,
     NTokenGeometricMeanParams memory params
 ) pure returns (uint256 L) {
-    uint256 accumulator;
+    uint256 accumulator = ONE;
     for (uint256 i = 0; i < reserves.length; i++) {
         uint256 a =
             uint256(int256(reserves[i]).powWad(int256(params.weights[i])));
-        if (accumulator != 0) {
-            accumulator = accumulator.mulWadUp(a);
-        } else {
-            accumulator = a;
-        }
+        accumulator = accumulator.mulWadUp(a);
     }
     return accumulator;
 }
