@@ -59,11 +59,16 @@ function computeHalfSigmaSquared(uint256 sigma) pure returns (uint256) {
     return HALF.mulWadDown(sigma.mulWadUp(sigma));
 }
 
-/// @dev Computes reserves L given rx, S.
-/// @param rx The reserve of x.
-/// @param S The price of X in Y, in WAD units.
-/// @param params LogNormParameters of the Log Normal distribution.
-/// @return L The reserve L computed as L(x, s) = K * L_x(x, S) * Gaussian.cdf[d2(S, K, sigma, tau)]
+/**
+ * @dev Computes reserves L given rx, S.
+ *
+ * $$L_0 = \frac{x}{1-\Phi(d_1(S;\mu,\sigma))}$$
+ *
+ * @param rx The reserve of x.
+ * @param S The price of X in Y, in WAD units.
+ * @param params LogNormParameters of the Log Normal distribution.
+ * @return L The reserve L
+ */
 function computeLGivenX(
     uint256 rx,
     uint256 S,
