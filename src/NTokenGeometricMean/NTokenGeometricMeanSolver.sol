@@ -18,7 +18,6 @@ import {
     computeSwapDeltaLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
-import "forge-std/console2.sol";
 
 contract NTokenGeometricMeanSolver {
     using FixedPointMathLib for uint256;
