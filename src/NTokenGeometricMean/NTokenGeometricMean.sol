@@ -12,9 +12,10 @@ import {
 import {
     computeTradingFunction,
     computeDeltaGivenDeltaLRoundUp,
-    computeDeltaGivenDeltaLRoundDown
+    computeDeltaGivenDeltaLRoundDown,
+    computeSwapDeltaLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
-import { ONE } from "src/lib/StrategyLib.sol";
+import { ONE, EPSILON } from "src/lib/StrategyLib.sol";
 
 /**
  * @dev Parameterization of the GeometricMean curve.
@@ -69,7 +70,6 @@ contract NTokenGeometricMean is NTokenStrategy {
         int256 invariant;
         address controller;
         uint256 swapFee;
-        uint256 wX;
         uint256 totalLiquidity;
         uint256[] reserves;
         uint256[] weights;
@@ -81,7 +81,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         uint256 poolId,
         Pool calldata,
         bytes calldata data
-    ) external returns (bool, int256, uint256[] memory, uint256) {
+    ) external onlyDFMM returns (bool, int256, uint256[] memory, uint256) {
         InitState memory state;
 
         (
@@ -122,7 +122,7 @@ contract NTokenGeometricMean is NTokenStrategy {
             state.reserves, state.totalLiquidity, getPoolParams(poolId)
         );
 
-        bool valid = invariant >= 0;
+        bool valid = invariant >= 0 && invariant <= EPSILON;
 
         return (valid, invariant, state.reserves, state.totalLiquidity);
     }
@@ -133,7 +133,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         uint256 poolId,
         Pool calldata,
         bytes calldata data
-    ) external {
+    ) external onlyDFMM {
         if (sender != internalParams[poolId].controller) revert InvalidSender();
         UpdateCode updateCode = abi.decode(data, (UpdateCode));
 
@@ -249,5 +249,26 @@ contract NTokenGeometricMean is NTokenStrategy {
             }
             nextReserves[i] = reserveT - deltas[i];
         }
+    }
+
+    /// @inheritdoc NTokenStrategy
+    function _computeSwapDeltaLiquidity(
+        Pool memory pool,
+        bytes memory params,
+        uint256 tokenInIndex,
+        uint256,
+        uint256 amountIn,
+        uint256
+    ) internal pure override returns (uint256) {
+        NTokenGeometricMeanParams memory poolParams =
+            abi.decode(params, (NTokenGeometricMeanParams));
+
+        return computeSwapDeltaLiquidity(
+            amountIn,
+            pool.reserves[tokenInIndex],
+            pool.totalLiquidity,
+            poolParams.weights[tokenInIndex],
+            poolParams.swapFee
+        );
     }
 }
