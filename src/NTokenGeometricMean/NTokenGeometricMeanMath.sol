@@ -91,7 +91,7 @@ function computeAllocationDeltasGivenDeltaT(
         }
     }
 
-    uint256 deltaL = a.mulWadUp(totalLiquidity);
+    uint256 deltaL = a.mulWadDown(totalLiquidity);
 
     return (reserveDeltas, deltaL);
 }
