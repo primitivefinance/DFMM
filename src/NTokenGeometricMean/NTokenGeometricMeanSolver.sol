@@ -83,17 +83,14 @@ contract NTokenGeometricMeanSolver {
         state.inWeight = params.weights[tokenInIndex];
         state.outWeight = params.weights[tokenOutIndex];
 
-        state.fees = amountIn.mulWadUp(params.swapFee);
-        state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve)
-            .mulWadUp(state.fees).mulWadUp(state.inWeight);
         state.deltaLiquidity = computeSwapDeltaLiquidity(
             amountIn,
-            state.inReserve, 
+            state.inReserve,
             pool.totalLiquidity,
             state.inWeight,
             params.swapFee
         );
-        console2.log("deltaLiquidity: %d", state.deltaLiquidity);
+
         {
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 accumulator = FixedPointMathLib.WAD;
@@ -112,15 +109,11 @@ contract NTokenGeometricMeanSolver {
                     int256(state.inWeight)
                 )
             );
-            console2.log("accumulator: %d", accumulator);
             uint256 a = uint256(
                 int256(n.divWadUp(d.mulWadUp(accumulator))).powWad(
                     int256(FixedPointMathLib.WAD.divWadUp(state.outWeight))
                 )
             );
-
-            console2.log("a: %d", a);
-            console2.log("outReserve: %d", state.outReserve);
 
             state.amountOut = state.outReserve - a;
         }

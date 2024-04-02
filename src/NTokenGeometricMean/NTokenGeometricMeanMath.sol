@@ -55,6 +55,18 @@ function computeL(
     return accumulator;
 }
 
+function computePrice(
+    uint256 indexT,
+    uint256[] memory reserves,
+    NTokenGeometricMeanParams memory params
+) pure returns (uint256 price) {
+    uint256 n = reserves[indexT].divWadDown(params.weights[indexT]);
+    uint256 d = reserves[reserves.length - 1].divWadDown(
+        params.weights[reserves.length - 1]
+    );
+    price = n.divWadUp(d);
+}
+
 function computeReserveFromNumeraire(
     uint256 amountNumeraire,
     uint256 S,
@@ -129,7 +141,7 @@ function computeSwapDeltaLiquidity(
     uint256 weight,
     uint256 swapFee
 ) pure returns (uint256) {
-    return weight.mulWadDown(ONE - swapFee).mulWadDown(totalLiquidity).mulWadDown(
+    return weight.mulWadDown(swapFee).mulWadDown(totalLiquidity).mulWadDown(
         amountIn.divWadDown(reserve)
     );
 }

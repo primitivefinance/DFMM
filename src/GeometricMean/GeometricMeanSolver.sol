@@ -19,7 +19,8 @@ import {
     computeAllocationGivenDeltaY,
     computeDeallocationGivenDeltaX,
     computeDeallocationGivenDeltaY,
-    computePrice
+    computePrice,
+    computeSwapDeltaLiquidity
 } from "./G3MMath.sol";
 
 contract GeometricMeanSolver {
@@ -186,9 +187,14 @@ contract GeometricMeanSolver {
             state.outWeight = params.wX;
         }
 
-        state.fees = amountIn.mulWadUp(params.swapFee);
-        state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve)
-            .mulWadUp(state.fees).mulWadUp(state.inWeight);
+        state.deltaLiquidity = computeSwapDeltaLiquidity(
+            amountIn,
+            state.inReserve,
+            pool.totalLiquidity,
+            state.inWeight,
+            params.swapFee
+        );
+
         {
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 d = uint256(
