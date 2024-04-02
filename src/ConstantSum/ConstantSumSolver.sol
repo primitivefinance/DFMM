@@ -10,6 +10,10 @@ import {
     encodeControllerUpdate
 } from "./ConstantSumUtils.sol";
 import {
+    computeAllocationGivenX,
+    computeAllocationGivenY
+} from "src/lib/StrategyLib.sol";
+import {
     ONE,
     computeInitialPoolData,
     FixedPointMathLib,
@@ -46,6 +50,7 @@ contract ConstantSumSolver {
         uint256 deltaLiquidity;
     }
 
+    /// @notice used by kit
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
@@ -91,6 +96,7 @@ contract ConstantSumSolver {
         return (valid, state.amountOut, swapData);
     }
 
+    /// @notice used by kit
     function preparePriceUpdate(uint256 newPrice)
         public
         pure
@@ -99,6 +105,7 @@ contract ConstantSumSolver {
         return encodePriceUpdate(newPrice);
     }
 
+    /// @notice used by kit
     function prepareSwapFeeUpdate(uint256 newSwapFee)
         public
         pure
@@ -107,11 +114,59 @@ contract ConstantSumSolver {
         return encodeFeeUpdate(newSwapFee);
     }
 
+    /// @notice used by kit
     function prepareControllerUpdate(address newController)
         public
         pure
         returns (bytes memory)
     {
         return encodeControllerUpdate(newController);
+    }
+
+    function getReservesAndLiquidity(uint256 poolId)
+        public
+        view
+        returns (uint256[] memory, uint256)
+    {
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        return (pool.reserves, pool.totalLiquidity);
+    }
+
+    function getPoolParams(uint256 poolId)
+        public
+        view
+        returns (ConstantSumParams memory)
+    {
+        return abi.decode(
+            IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
+        );
+    }
+
+    function getPrice(
+        uint256 poolId,
+        uint256 rx,
+        uint256 L
+    ) public view returns (uint256 price) {
+        ConstantSumParams memory poolParams = getPoolParams(poolId);
+        return poolParams.price;
+    }
+
+    function prepareAllocateGivenDeltaX(
+        uint256 poolId,
+        uint256 deltaX
+    ) public view returns (bytes memory) {
+        (uint256[] memory reserves, uint256 liquidity) =
+            getReservesAndLiquidity(poolId);
+        (uint256 adjustedReserveX, uint256 adjustedLiquidity) =
+            computeAllocationGivenX(true, deltaX, reserves[0], liquidity);
+        uint256 approximatedPrice =
+            getPrice(poolId, adjustedReserveX, adjustedLiquidity);
+        // todo
+        uint256 adjustedReserveY = getNextReserveY(
+            poolId, adjustedReserveX, adjustedLiquidity, approximatedPrice
+        );
+        uint256 deltaY = adjustedReserveY - reserves[1];
+        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
+        return abi.encode(deltaY, deltaLiquidity);
     }
 }

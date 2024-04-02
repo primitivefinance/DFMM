@@ -59,6 +59,7 @@ contract LogNormalSolver {
         );
     }
 
+    /// @notice used by kit
     function prepareFeeUpdate(uint256 swapFee)
         external
         pure
@@ -67,6 +68,7 @@ contract LogNormalSolver {
         return encodeFeeUpdate(swapFee);
     }
 
+    /// @notice used by kit
     function prepareMeanUpdate(
         uint256 targetMean,
         uint256 targetTimestamp
@@ -74,6 +76,7 @@ contract LogNormalSolver {
         return encodeMeanUpdate(targetMean, targetTimestamp);
     }
 
+    /// @notice used by kit
     function prepareWidthUpdate(
         uint256 targetWidth,
         uint256 targetTimestamp
@@ -81,6 +84,7 @@ contract LogNormalSolver {
         return encodeWidthUpdate(targetWidth, targetTimestamp);
     }
 
+    /// @notice used by kit
     function prepareControllerUpdate(address controller)
         external
         pure
@@ -278,6 +282,7 @@ contract LogNormalSolver {
         uint256 fees;
     }
 
+    /// @notice used by kit
     /// @dev Estimates a swap's reserves and adjustments and returns its validity.
     function simulateSwap(
         uint256 poolId,
