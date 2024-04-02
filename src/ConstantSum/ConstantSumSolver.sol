@@ -142,31 +142,21 @@ contract ConstantSumSolver {
         );
     }
 
-    function getPrice(
-        uint256 poolId,
-        uint256 rx,
-        uint256 L
-    ) public view returns (uint256 price) {
-        ConstantSumParams memory poolParams = getPoolParams(poolId);
-        return poolParams.price;
-    }
-
-    function prepareAllocateGivenDeltaX(
+    // These are same for allocation and deallocation
+    // delta y is 0
+    function PrepareAllocationDeltaGivenDeltaX(
         uint256 poolId,
         uint256 deltaX
     ) public view returns (bytes memory) {
-        (uint256[] memory reserves, uint256 liquidity) =
-            getReservesAndLiquidity(poolId);
-        (uint256 adjustedReserveX, uint256 adjustedLiquidity) =
-            computeAllocationGivenX(true, deltaX, reserves[0], liquidity);
-        uint256 approximatedPrice =
-            getPrice(poolId, adjustedReserveX, adjustedLiquidity);
-        // todo
-        uint256 adjustedReserveY = getNextReserveY(
-            poolId, adjustedReserveX, adjustedLiquidity, approximatedPrice
-        );
-        uint256 deltaY = adjustedReserveY - reserves[1];
-        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
-        return abi.encode(deltaY, deltaLiquidity);
+        ConstantSumParams memory params = getPoolParams(poolId);
+        uint256 deltaL = deltaX.mulWadDown(params.price);
+        return abi.encode(deltaX, 0, deltaL);
+    }
+
+    function PrepareAllocationDeltaGivenDeltaY(
+        // uint256 poolId,
+        uint256 deltaY
+    ) public pure returns (bytes memory) {
+        return abi.encode(0, deltaY, deltaY);
     }
 }
