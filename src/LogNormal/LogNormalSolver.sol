@@ -106,10 +106,11 @@ contract LogNormalSolver {
         return computeInitialPoolData(rx, S, params);
     }
 
-    function allocateGivenDeltaX(
+    /// @notice used by kit
+    function prepareAllocateGivenDeltaX(
         uint256 poolId,
         uint256 deltaX
-    ) public view returns (uint256 deltaY, uint256 deltaLiquidity) {
+    ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
         (uint256 adjustedReserveX, uint256 adjustedLiquidity) =
@@ -119,14 +120,16 @@ contract LogNormalSolver {
         uint256 adjustedReserveY = getNextReserveY(
             poolId, adjustedReserveX, adjustedLiquidity, approximatedPrice
         );
-        deltaY = adjustedReserveY - reserves[1];
-        deltaLiquidity = adjustedLiquidity - liquidity;
+        uint256 deltaY = adjustedReserveY - reserves[1];
+        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
+        return abi.encode(deltaY, deltaLiquidity);
     }
 
-    function allocateGivenDeltaY(
+    /// @notice used by kit
+    function prepareAllocateGivenDeltaY(
         uint256 poolId,
         uint256 deltaY
-    ) public view returns (uint256 deltaX, uint256 deltaLiquidity) {
+    ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
         (uint256 adjustedReserveY, uint256 adjustedLiquidity) =
@@ -136,8 +139,47 @@ contract LogNormalSolver {
         uint256 adjustedReserveX = getNextReserveX(
             poolId, adjustedReserveY, adjustedLiquidity, approximatedPrice
         );
-        deltaX = adjustedReserveX - reserves[0];
-        deltaLiquidity = adjustedLiquidity - liquidity;
+        uint256 deltaX = adjustedReserveX - reserves[0];
+        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
+        return abi.encode(deltaX, deltaLiquidity);
+    }
+
+    /// @notice used by kit
+    function prepareDeallocateGivenDeltaX(
+        uint256 poolId,
+        uint256 deltaX
+    ) public view returns (bytes memory) {
+        (uint256[] memory reserves, uint256 liquidity) =
+            getReservesAndLiquidity(poolId);
+        (uint256 adjustedReserveX, uint256 adjustedLiquidity) =
+            computeAllocationGivenX(false, deltaX, reserves[0], liquidity);
+        uint256 approximatedPrice =
+            getPriceGivenXL(poolId, adjustedReserveX, adjustedLiquidity);
+        uint256 adjustedReserveY = getNextReserveY(
+            poolId, adjustedReserveX, adjustedLiquidity, approximatedPrice
+        );
+        uint256 deltaY = reserves[1] - adjustedReserveY;
+        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
+        return abi.encode(deltaY, deltaLiquidity);
+    }
+
+    /// @notice used by kit
+    function prepareDeallocateGivenDeltaY(
+        uint256 poolId,
+        uint256 deltaY
+    ) public view returns (bytes memory) {
+        (uint256[] memory reserves, uint256 liquidity) =
+            getReservesAndLiquidity(poolId);
+        (uint256 adjustedReserveY, uint256 adjustedLiquidity) =
+            computeAllocationGivenY(false, deltaY, reserves[1], liquidity);
+        uint256 approximatedPrice =
+            getPriceGivenYL(poolId, adjustedReserveY, adjustedLiquidity);
+        uint256 adjustedReserveX = getNextReserveX(
+            poolId, adjustedReserveY, adjustedLiquidity, approximatedPrice
+        );
+        uint256 deltaX = reserves[0] - adjustedReserveX;
+        uint256 deltaLiquidity = adjustedLiquidity - liquidity;
+        return abi.encode(deltaX, deltaLiquidity);
     }
 
     function allocateGivenX(
