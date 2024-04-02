@@ -42,33 +42,9 @@ function computeLGivenX(
     uint256 S,
     GeometricMeanParams memory params
 ) pure returns (uint256) {
-    int256 a = int256(params.wY.divWadUp(params.wX).mulWadUp(S));
+    int256 a = int256(params.wY.mulDivUp(S, params.wX));
     int256 b = a.powWad(int256(params.wY));
     return x.mulWadUp(uint256(b));
-}
-
-function computeLGivenY(
-    uint256 y,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return y.mulWadUp(params.wX).divWadUp(params.wY.mulWadUp(S));
-}
-
-function computeXGivenL(
-    uint256 L,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wX.mulWadUp(L).divWadUp(params.wY.mulWadUp(S));
-}
-
-function computeYGivenL(
-    uint256 L,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wY.mulWadUp(L).divWadUp(params.wX.mulWadUp(S));
 }
 
 function computeAllocationGivenDeltaX(
@@ -121,14 +97,6 @@ function computeY(
     GeometricMeanParams memory params
 ) pure returns (uint256) {
     return params.wY.divWadDown(params.wX).mulWadDown(S).mulWadDown(x);
-}
-
-function computeX(
-    uint256 y,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wX.divWadDown(params.wY.mulWadDown(S)).mulWadDown(y);
 }
 
 function computeL(
