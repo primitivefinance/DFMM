@@ -10,6 +10,9 @@ import "src/NTokenGeometricMean/NTokenGeometricMeanSolver.sol";
 import "src/interfaces/IDFMM.sol";
 import "src/DFMM.sol";
 
+import { computePrice } from
+    "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
+
 contract NTokenGeometricMeanTest is Test {
     using stdStorage for StdStorage;
     using FixedPointMathLib for uint256;
@@ -69,7 +72,7 @@ contract NTokenGeometricMeanTest is Test {
 
         NTokenGeometricMeanParams memory params = NTokenGeometricMeanParams({
             weights: weights,
-            swapFee: 0,
+            swapFee: TEST_SWAP_FEE,
             controller: address(this)
         });
 
@@ -91,7 +94,7 @@ contract NTokenGeometricMeanTest is Test {
     /// @dev Initializes a basic pool in dfmm.
     modifier basic() {
         vm.warp(0);
-        uint256 reserveNumeraire = 1 ether;
+        uint256 reserveNumeraire = 10 ether;
         uint256 price = ONE;
         uint256 w = 0.25 ether;
         uint256[] memory weights = new uint256[](4);
@@ -106,7 +109,7 @@ contract NTokenGeometricMeanTest is Test {
 
         NTokenGeometricMeanParams memory params = NTokenGeometricMeanParams({
             weights: weights,
-            swapFee: 0,
+            swapFee: TEST_SWAP_FEE,
             controller: address(this)
         });
 
@@ -129,7 +132,7 @@ contract NTokenGeometricMeanTest is Test {
     /// @dev Initializes a basic pool in dfmm.
     modifier basic_70_10_10_10() {
         vm.warp(0);
-        uint256 reserveNumeraire = 1 ether;
+        uint256 reserveNumeraire = 2 ether;
         uint256 price = ONE;
         uint256 w = 0.25 ether;
         uint256[] memory weights = new uint256[](4);
@@ -218,7 +221,7 @@ contract NTokenGeometricMeanTest is Test {
 
     function test_4_token_deallocate_given_delta_t() public basic {
         (uint256[] memory dReserves, uint256 dLiquidity) =
-            solver.getAllocationDeltasGivenDeltaT(POOL_ID, 1, 0.5 ether);
+            solver.getDeallocationDeltasGivenDeltaT(POOL_ID, 1, 0.5 ether);
 
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
@@ -245,8 +248,8 @@ contract NTokenGeometricMeanTest is Test {
         console2.log(postL);
     }
 
-    function test_4_token_simulate_swap() public basic {
-        uint256 amountIn = 0.1 ether;
+    function test_4_token_simulate_swap_uniform() public basic {
+        uint256 amountIn = 1 ether;
         uint256 tokenInIndex = 0;
         uint256 tokenOutIndex = 1;
 
@@ -254,7 +257,27 @@ contract NTokenGeometricMeanTest is Test {
             solver.simulateSwap(POOL_ID, tokenInIndex, tokenOutIndex, amountIn);
         console2.log("amountOut", amountOut);
         console2.log("valid", valid);
+
+        (uint256[] memory preReserves,) =
+            solver.getReservesAndLiquidity(POOL_ID);
+        NTokenGeometricMeanParams memory params = solver.getPoolParams(POOL_ID);
+
+        console2.log(
+            "price tOut", computePrice(tokenOutIndex, preReserves, params)
+        );
+        console2.log(
+            "price tIn", computePrice(tokenInIndex, preReserves, params)
+        );
+
         dfmm.swap(POOL_ID, address(this), data);
+        (uint256[] memory postReserves,) =
+            solver.getReservesAndLiquidity(POOL_ID);
+        console2.log(
+            "price tOut", computePrice(tokenOutIndex, postReserves, params)
+        );
+        console2.log(
+            "price tIn", computePrice(tokenInIndex, postReserves, params)
+        );
     }
 
     function test_4_token_compute_price() public basic {
@@ -312,7 +335,7 @@ contract NTokenGeometricMeanTest is Test {
         basic_70_10_10_10
     {
         (uint256[] memory dReserves, uint256 dLiquidity) =
-            solver.getAllocationDeltasGivenDeltaT(POOL_ID, 1, 0.2 ether);
+            solver.getDeallocationDeltasGivenDeltaT(POOL_ID, 1, 0.2 ether);
 
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
