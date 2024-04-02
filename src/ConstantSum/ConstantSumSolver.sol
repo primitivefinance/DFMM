@@ -13,7 +13,8 @@ import {
     ONE,
     computeInitialPoolData,
     FixedPointMathLib,
-    computeSwapDeltaLiquidity
+    computeSwapDeltaLiquidity,
+    computeDeltaLiquidity
 } from "./ConstantSumMath.sol";
 
 contract ConstantSumSolver {
@@ -115,11 +116,13 @@ contract ConstantSumSolver {
         return encodeControllerUpdate(newController);
     }
 
+    /// @notice Prepare the data for a allocate operation
     function prepareAllocationData(
-        uint256 rx,
-        uint256 ry,
-        uint256 L
+        uint256 deltaX,
+        uint256 deltaY,
+        uint256 price
     ) public pure returns (bytes memory) {
-        return abi.encode(Reserves(rx, ry, L));
+        uint256 deltaL = computeDeltaLiquidity(deltaX, deltaY, price);
+        return abi.encode(deltaX, deltaY, deltaL);
     }
 }

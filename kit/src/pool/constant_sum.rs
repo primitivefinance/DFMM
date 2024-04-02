@@ -1,4 +1,5 @@
 use bindings::{constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver};
+use futures_util::future::ok;
 
 use super::*;
 
@@ -57,24 +58,33 @@ impl PoolType for ConstantSumPool {
 
     async fn allocation_data(
         &self,
-        _pool_id: eU256,
+        pool_id: eU256,
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        let (_amount_x, _amount_y, _allocate) = match allocation_data.0 {
+        let (amount_x, amount_y, allocate) = match allocation_data.0 {
             AllocateOrDeallocate::Allocate => (allocation_data.1, allocation_data.2, true),
             AllocateOrDeallocate::Deallocate => (allocation_data.2, allocation_data.1, false),
         };
-        todo!() // TODO: This was removed from the solver,
-                // so need to think a little more about this
-                // let (valid, data) = self
-                //     .solver_contract
-                //     .simulate_allocate_or_deallocate(pool_id, allocate,
-                // amount_x, amount_y)     .call()
-                //     .await?;
-                // if valid {
-                //     Ok(data)
-                // } else {
-                //     anyhow::bail!("allocation was invalid!")
-                // }
+        let (price, _, _) = self
+            .strategy_contract
+            .internal_params(pool_id)
+            .call()
+            .await?;
+
+        let data = match allocate {
+            true => {
+                self.solver_contract
+                    .prepare_allocation_data(amount_x, amount_y, price)
+                    .call()
+                    .await?
+            }
+            false => {
+                self.solver_contract
+                    .prepare_deallocation_data(amount_x, amount_y, price)
+                    .call()
+                    .await?
+            }
+        };
+        Ok(data)
     }
 }
