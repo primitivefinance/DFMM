@@ -53,6 +53,15 @@ library DynamicParamLib {
         uint256 timeDelta = updateEnd - block.timestamp;
         int256 delta = int256(target) - int256(param.lastComputedValue);
         int256 deltaPerSecond = delta / int256(timeDelta);
+
+        int256 remainder = delta % int256(timeDelta);
+
+        if (remainder > 0) {
+            param.lastComputedValue += uint256(remainder);
+        } else {
+            param.lastComputedValue -= uint256(-remainder);
+        }
+
         param.updateEnd = updateEnd;
         param.updatePerSecond = deltaPerSecond;
     }
