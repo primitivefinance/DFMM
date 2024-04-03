@@ -1,4 +1,7 @@
-use bindings::{n_token_geometric_mean::NTokenGeometricMean, n_token_geometric_mean_solver::NTokenGeometricMeanSolver};
+use bindings::{
+    n_token_geometric_mean::NTokenGeometricMean,
+    n_token_geometric_mean_solver::NTokenGeometricMeanSolver,
+};
 use ethers::types::Address;
 
 use super::*;
