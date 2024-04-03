@@ -14,8 +14,8 @@ pub struct ConstantSumParameters {
 }
 
 pub enum ConstantSumAllocationData {
-    AmountX(eU256),
-    AmountY(eU256),
+    GivenX(eU256),
+    GivenY(eU256),
 }
 impl PoolType for ConstantSumPool {
     type UpdateParameters = ConstantSumParameters;
@@ -65,7 +65,7 @@ impl PoolType for ConstantSumPool {
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
         match allocation_data {
-            ConstantSumAllocationData::AmountX(amount_x) => {
+            ConstantSumAllocationData::GivenX(amount_x) => {
                 let data = self
                     .solver_contract
                     .prepare_allocation_delta_given_delta_x(pool_id, amount_x)
@@ -73,7 +73,7 @@ impl PoolType for ConstantSumPool {
                     .await?;
                 Ok(data)
             }
-            ConstantSumAllocationData::AmountY(amount_y) => {
+            ConstantSumAllocationData::GivenY(amount_y) => {
                 let data = self
                     .solver_contract
                     .prepare_allocation_delta_given_delta_y(amount_y)

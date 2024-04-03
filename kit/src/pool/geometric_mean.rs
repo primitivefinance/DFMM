@@ -22,8 +22,8 @@ pub enum UpdateParameters {
 }
 
 pub enum GeometricMeanAllocationData {
-    AllocateGivenX(eU256),
-    AllocateGivenY(eU256),
+    GivenX(eU256),
+    GivenY(eU256),
 }
 
 impl PoolType for GeometricMeanPool {
@@ -92,13 +92,13 @@ impl PoolType for GeometricMeanPool {
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
         let data = match allocation_data {
-            GeometricMeanAllocationData::AllocateGivenX(amount_x) => {
+            GeometricMeanAllocationData::GivenX(amount_x) => {
                 self.solver_contract
                     .prepare_allocation_deltas_given_delta_x(pool_id, amount_x)
                     .call()
                     .await?
             }
-            GeometricMeanAllocationData::AllocateGivenY(amount_y) => {
+            GeometricMeanAllocationData::GivenY(amount_y) => {
                 self.solver_contract
                     .prepare_allocation_deltas_given_delta_y(pool_id, amount_y)
                     .call()

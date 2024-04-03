@@ -48,6 +48,16 @@ pub struct Pool<P: PoolType> {
 }
 
 impl<P: PoolType> Pool<P> {
+    /// Performs a swap on the pool.
+    ///
+    /// # Arguments
+    ///
+    /// * `amount_in` - The amount of tokens to swap in.
+    /// * `token_in` - The type of token to swap in (either TokenX or TokenY).
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the swap is successful, otherwise returns an error.
     pub async fn swap(&self, amount_in: eU256, token_in: InputToken) -> Result<()> {
         let data = match token_in {
             InputToken::TokenX => {
