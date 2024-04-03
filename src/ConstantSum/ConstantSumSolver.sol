@@ -26,32 +26,52 @@ contract ConstantSumSolver is PairSolver {
 
     using FixedPointMathLib for uint256;
 
+    /// @dev Reserves struct to hold reserve amounts and liquidity
     struct Reserves {
-        uint256 rx;
-        uint256 ry;
-        uint256 L;
+        uint256 reserveX;
+        /// @dev Reserve amount of token X
+        uint256 reserveY;
+        /// @dev Reserve amount of token Y
+        uint256 liquidity;
     }
+    /// @dev Total liquidity
 
+    /// @dev Address of the strategy contract
     address public strategy;
 
+    /// @notice Constructor to set the strategy address
+    /// @param strategy_ Address of the strategy contract
     constructor(address strategy_) {
         strategy = strategy_;
     }
 
+    /// @notice Computes the initial pool data for a Constant Sum pool
+    /// @param reserveX The reserve amount of token X
+    /// @param reserveY The reserve amount of token Y
+    /// @param params The Constant Sum pool parameters
+    /// @return The initial pool data encoded as bytes
     function getInitialPoolData(
-        uint256 rx,
-        uint256 ry,
+        uint256 reserveX,
+        uint256 reserveY,
         ConstantSumParams memory params
     ) public pure returns (bytes memory) {
-        return computeInitialPoolData(rx, ry, params);
+        return computeInitialPoolData(reserveX, reserveY, params);
     }
 
+    /// @dev Struct to hold state variables for simulating a swap
     struct SimulateSwapState {
         uint256 amountOut;
         uint256 deltaLiquidity;
     }
 
-    /// @notice used by kit
+    /// @notice Simulates a swap in a Constant Sum pool
+    /// @dev Used by the kit to simulate a swap and check if it's valid
+    /// @param poolId The id of the pool to simulate the swap in
+    /// @param swapXIn Whether the swap is X in for Y out (true) or Y in for X out (false)
+    /// @param amountIn The amount of tokens to swap in
+    /// @return valid Whether the simulated swap is valid
+    /// @return amountOut The amount of tokens that would be received in the swap
+    /// @return swapData The encoded swap data that can be used to perform the actual swap
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
@@ -97,7 +117,10 @@ contract ConstantSumSolver is PairSolver {
         return (valid, state.amountOut, swapData);
     }
 
-    /// @notice used by kit
+    /// @notice Prepares the data for updating the price
+    /// @dev Used by the kit to update the price
+    /// @param newPrice The new price to set
+    /// @return The encoded data for updating the price
     function preparePriceUpdate(uint256 newPrice)
         public
         pure
@@ -106,7 +129,10 @@ contract ConstantSumSolver is PairSolver {
         return encodePriceUpdate(newPrice);
     }
 
-    /// @notice used by kit
+    /// @notice Prepares the data for updating the swap fee
+    /// @dev Used by the kit to update the swap fee
+    /// @param newSwapFee The new swap fee to set
+    /// @return The encoded data for updating the swap fee
     function prepareSwapFeeUpdate(uint256 newSwapFee)
         public
         pure
@@ -115,7 +141,10 @@ contract ConstantSumSolver is PairSolver {
         return encodeFeeUpdate(newSwapFee);
     }
 
-    /// @notice used by kit
+    /// @notice Prepares the data for updating the controller address
+    /// @dev Used by the kit to update the controller
+    /// @param newController The address of the new controller
+    /// @return The encoded data for updating the controller
     function prepareControllerUpdate(address newController)
         public
         pure
@@ -124,6 +153,9 @@ contract ConstantSumSolver is PairSolver {
         return encodeControllerUpdate(newController);
     }
 
+    /// @notice Gets the reserves and liquidity for a given pool
+    /// @param poolId The id of the pool
+    /// @return The reserve of token X, the reserve of token Y, and the total liquidity
     function getReservesAndLiquidity(uint256 poolId)
         public
         view
@@ -134,6 +166,9 @@ contract ConstantSumSolver is PairSolver {
         return (pool.reserves[0], pool.reserves[1], pool.totalLiquidity);
     }
 
+    /// @dev gets the pool params
+    /// @param poolId The pool id
+    /// @return params The pool params
     function getPoolParams(uint256 poolId)
         public
         view
@@ -144,9 +179,11 @@ contract ConstantSumSolver is PairSolver {
         );
     }
 
-    // These are same for allocation and deallocation
-    // delta y is 0
-    function PrepareAllocationDeltaGivenDeltaX(
+    /// @dev Computes the change in allocation given a change in X reserve
+    /// @param poolId The pool id
+    /// @param deltaX The change in X reserve
+    /// @return encodedAllocationDelta The encoded change in allocation
+    function prepareAllocationDeltaGivenDeltaX(
         uint256 poolId,
         uint256 deltaX
     ) public view returns (bytes memory) {
@@ -155,10 +192,14 @@ contract ConstantSumSolver is PairSolver {
         return abi.encode(deltaX, 0, deltaL);
     }
 
-    function PrepareAllocationDeltaGivenDeltaY(
-        // uint256 poolId,
-        uint256 deltaY
-    ) public pure returns (bytes memory) {
+    /// @dev Computes the change in allocation given a change in Y reserve
+    /// @param deltaY The change in Y reserve
+    /// @return encodedAllocationDelta The encoded change in allocation
+    function prepareAllocationDeltaGivenDeltaY(uint256 deltaY)
+        public
+        pure
+        returns (bytes memory)
+    {
         return abi.encode(0, deltaY, deltaY);
     }
 }

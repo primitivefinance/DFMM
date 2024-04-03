@@ -12,6 +12,13 @@ import "src/lib/StrategyLib.sol";
  * @author Primitive
  */
 abstract contract PairSolver {
+    /**
+     * @notice Prepares the allocation deltas given a change in reserve X.
+     * @dev This function calculates the changes in reserves and liquidity based on the change in reserve X.
+     * @param poolId The ID of the pool.
+     * @param deltaX The change in reserve X.
+     * @return The encoded allocation deltas.
+     */
     function prepareAllocationDeltasGivenDeltaX(
         uint256 poolId,
         uint256 deltaX
@@ -21,6 +28,13 @@ abstract contract PairSolver {
         return encodeAllocationDeltasGivenDeltaX(deltaX, rX, rY, liquidity);
     }
 
+    /**
+     * @notice Prepares the allocation deltas given a change in reserve Y.
+     * @dev This function calculates the changes in reserves and liquidity based on the change in reserve Y.
+     * @param poolId The ID of the pool.
+     * @param deltaY The change in reserve Y.
+     * @return The encoded allocation deltas.
+     */
     function prepareAllocationDeltasGivenDeltaY(
         uint256 poolId,
         uint256 deltaY
@@ -30,6 +44,13 @@ abstract contract PairSolver {
         return encodeAllocationDeltasGivenDeltaY(deltaY, rX, rY, liquidity);
     }
 
+    /**
+     * @notice Prepares the allocation deltas given a change in liquidity.
+     * @dev This function calculates the changes in reserves based on the change in liquidity.
+     * @param poolId The ID of the pool.
+     * @param deltaL The change in liquidity.
+     * @return The encoded allocation deltas.
+     */
     function prepareAllocationDeltasGivenDeltaL(
         uint256 poolId,
         uint256 deltaL
@@ -39,6 +60,12 @@ abstract contract PairSolver {
         return encodeAllocationDeltasGivenDeltaL(deltaL, rX, rY, liquidity);
     }
 
+    /**
+     * @notice Retrieves the reserves and liquidity for a given pool.
+     * @dev This function is virtual and should be overridden by the concrete implementation.
+     * @param poolId The ID of the pool.
+     * @return The reserve of token X, the reserve of token Y, and the total liquidity.
+     */
     function getReservesAndLiquidity(uint256 poolId)
         public
         view
