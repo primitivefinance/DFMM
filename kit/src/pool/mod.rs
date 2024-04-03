@@ -8,6 +8,7 @@ use crate::bindings::arbiter_token::ArbiterToken;
 pub mod constant_sum;
 pub mod geometric_mean;
 pub mod log_normal;
+pub mod n_token_geometric_mean;
 
 pub trait PoolType {
     type UpdateParameters;
