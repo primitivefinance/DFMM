@@ -61,7 +61,7 @@ impl<P: PoolType> Pool<P> {
                     .await?
             }
         };
-        self.dfmm.swap(self.id, data).send().await?.await?;
+        self.dfmm.swap(self.id, self.dfmm.address(), data).send().await?.await?;
         Ok(())
     }
 }
