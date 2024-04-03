@@ -1,4 +1,4 @@
-pub use i_strategy::*;
+pub use n_token_strategy::*;
 /// This module was auto-generated with ethers-rs Abigen.
 /// More information at: <https://github.com/gakonst/ethers-rs>
 #[allow(
@@ -9,7 +9,7 @@ pub use i_strategy::*;
     dead_code,
     non_camel_case_types
 )]
-pub mod i_strategy {
+pub mod n_token_strategy {
     pub use super::super::shared_types::*;
     #[allow(deprecated)]
     fn __abi() -> ::ethers::core::abi::Abi {
@@ -44,7 +44,7 @@ pub mod i_strategy {
                             ),
                         },],
                         outputs: ::std::vec![::ethers::core::abi::ethabi::Param {
-                            name: ::std::borrow::ToOwned::to_owned("params"),
+                            name: ::std::string::String::new(),
                             kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
                             internal_type: ::core::option::Option::Some(
                                 ::std::borrow::ToOwned::to_owned("bytes"),
@@ -261,7 +261,7 @@ pub mod i_strategy {
                         name: ::std::borrow::ToOwned::to_owned("validateAllocate"),
                         inputs: ::std::vec![
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("sender"),
+                                name: ::std::string::String::new(),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Address,
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("address"),
@@ -321,7 +321,7 @@ pub mod i_strategy {
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("deltas"),
+                                name: ::std::borrow::ToOwned::to_owned("tokenDeltas"),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Array(
                                     ::std::boxed::Box::new(
                                         ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
@@ -349,7 +349,7 @@ pub mod i_strategy {
                         name: ::std::borrow::ToOwned::to_owned("validateDeallocate"),
                         inputs: ::std::vec![
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("sender"),
+                                name: ::std::string::String::new(),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Address,
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("address"),
@@ -409,7 +409,7 @@ pub mod i_strategy {
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("deltas"),
+                                name: ::std::borrow::ToOwned::to_owned("tokenDeltas"),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Array(
                                     ::std::boxed::Box::new(
                                         ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
@@ -437,7 +437,7 @@ pub mod i_strategy {
                         name: ::std::borrow::ToOwned::to_owned("validateSwap"),
                         inputs: ::std::vec![
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("sender"),
+                                name: ::std::string::String::new(),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Address,
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("address"),
@@ -576,6 +576,13 @@ pub mod i_strategy {
                     },],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("InvalidTokenDeltas"),
+                    ::std::vec![::ethers::core::abi::ethabi::AbiError {
+                        name: ::std::borrow::ToOwned::to_owned("InvalidTokenDeltas"),
+                        inputs: ::std::vec![],
+                    },],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("InvalidUpdateCode"),
                     ::std::vec![::ethers::core::abi::ethabi::AbiError {
                         name: ::std::borrow::ToOwned::to_owned("InvalidUpdateCode"),
@@ -595,33 +602,33 @@ pub mod i_strategy {
         }
     }
     /// The parsed JSON ABI of the contract.
-    pub static ISTRATEGY_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
+    pub static NTOKENSTRATEGY_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
         ::ethers::contract::Lazy::new(__abi);
-    pub struct IStrategy<M>(::ethers::contract::Contract<M>);
-    impl<M> ::core::clone::Clone for IStrategy<M> {
+    pub struct NTokenStrategy<M>(::ethers::contract::Contract<M>);
+    impl<M> ::core::clone::Clone for NTokenStrategy<M> {
         fn clone(&self) -> Self {
             Self(::core::clone::Clone::clone(&self.0))
         }
     }
-    impl<M> ::core::ops::Deref for IStrategy<M> {
+    impl<M> ::core::ops::Deref for NTokenStrategy<M> {
         type Target = ::ethers::contract::Contract<M>;
         fn deref(&self) -> &Self::Target {
             &self.0
         }
     }
-    impl<M> ::core::ops::DerefMut for IStrategy<M> {
+    impl<M> ::core::ops::DerefMut for NTokenStrategy<M> {
         fn deref_mut(&mut self) -> &mut Self::Target {
             &mut self.0
         }
     }
-    impl<M> ::core::fmt::Debug for IStrategy<M> {
+    impl<M> ::core::fmt::Debug for NTokenStrategy<M> {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-            f.debug_tuple(::core::stringify!(IStrategy))
+            f.debug_tuple(::core::stringify!(NTokenStrategy))
                 .field(&self.address())
                 .finish()
         }
     }
-    impl<M: ::ethers::providers::Middleware> IStrategy<M> {
+    impl<M: ::ethers::providers::Middleware> NTokenStrategy<M> {
         /// Creates a new contract instance with the specified `ethers` client
         /// at `address`. The contract derefs to a `ethers::Contract`
         /// object.
@@ -631,7 +638,7 @@ pub mod i_strategy {
         ) -> Self {
             Self(::ethers::contract::Contract::new(
                 address.into(),
-                ISTRATEGY_ABI.clone(),
+                NTOKENSTRATEGY_ABI.clone(),
                 client,
             ))
         }
@@ -704,7 +711,7 @@ pub mod i_strategy {
         /// Calls the contract's `validateAllocate` (0x7c101244) function
         pub fn validate_allocate(
             &self,
-            sender: ::ethers::core::types::Address,
+            p0: ::ethers::core::types::Address,
             pool_id: ::ethers::core::types::U256,
             pool: Pool,
             data: ::ethers::core::types::Bytes,
@@ -718,13 +725,13 @@ pub mod i_strategy {
             ),
         > {
             self.0
-                .method_hash([124, 16, 18, 68], (sender, pool_id, pool, data))
+                .method_hash([124, 16, 18, 68], (p0, pool_id, pool, data))
                 .expect("method not found (this should never happen)")
         }
         /// Calls the contract's `validateDeallocate` (0x040d951e) function
         pub fn validate_deallocate(
             &self,
-            sender: ::ethers::core::types::Address,
+            p0: ::ethers::core::types::Address,
             pool_id: ::ethers::core::types::U256,
             pool: Pool,
             data: ::ethers::core::types::Bytes,
@@ -738,13 +745,13 @@ pub mod i_strategy {
             ),
         > {
             self.0
-                .method_hash([4, 13, 149, 30], (sender, pool_id, pool, data))
+                .method_hash([4, 13, 149, 30], (p0, pool_id, pool, data))
                 .expect("method not found (this should never happen)")
         }
         /// Calls the contract's `validateSwap` (0x75e6440f) function
         pub fn validate_swap(
             &self,
-            sender: ::ethers::core::types::Address,
+            p0: ::ethers::core::types::Address,
             pool_id: ::ethers::core::types::U256,
             pool: Pool,
             data: ::ethers::core::types::Bytes,
@@ -761,11 +768,13 @@ pub mod i_strategy {
             ),
         > {
             self.0
-                .method_hash([117, 230, 68, 15], (sender, pool_id, pool, data))
+                .method_hash([117, 230, 68, 15], (p0, pool_id, pool, data))
                 .expect("method not found (this should never happen)")
         }
     }
-    impl<M: ::ethers::providers::Middleware> From<::ethers::contract::Contract<M>> for IStrategy<M> {
+    impl<M: ::ethers::providers::Middleware> From<::ethers::contract::Contract<M>>
+        for NTokenStrategy<M>
+    {
         fn from(contract: ::ethers::contract::Contract<M>) -> Self {
             Self::new(contract.address(), contract.client())
         }
@@ -821,6 +830,22 @@ pub mod i_strategy {
     )]
     #[etherror(name = "InvalidSender", abi = "InvalidSender()")]
     pub struct InvalidSender;
+    /// Custom Error type `InvalidTokenDeltas` with signature
+    /// `InvalidTokenDeltas()` and selector `0xacfdc4d4`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    #[etherror(name = "InvalidTokenDeltas", abi = "InvalidTokenDeltas()")]
+    pub struct InvalidTokenDeltas;
     /// Custom Error type `InvalidUpdateCode` with signature
     /// `InvalidUpdateCode()` and selector `0x235d2b3d`
     #[derive(
@@ -864,17 +889,18 @@ pub mod i_strategy {
         Eq,
         Hash,
     )]
-    pub enum IStrategyErrors {
+    pub enum NTokenStrategyErrors {
         DeltaError(DeltaError),
         InvalidReservesLength(InvalidReservesLength),
         InvalidSender(InvalidSender),
+        InvalidTokenDeltas(InvalidTokenDeltas),
         InvalidUpdateCode(InvalidUpdateCode),
         NotDFMM(NotDFMM),
         /// The standard solidity revert string, with selector
         /// Error(string) -- 0x08c379a0
         RevertString(::std::string::String),
     }
-    impl ::ethers::core::abi::AbiDecode for IStrategyErrors {
+    impl ::ethers::core::abi::AbiDecode for NTokenStrategyErrors {
         fn decode(
             data: impl AsRef<[u8]>,
         ) -> ::core::result::Result<Self, ::ethers::core::abi::AbiError> {
@@ -895,6 +921,11 @@ pub mod i_strategy {
             if let Ok(decoded) = <InvalidSender as ::ethers::core::abi::AbiDecode>::decode(data) {
                 return Ok(Self::InvalidSender(decoded));
             }
+            if let Ok(decoded) =
+                <InvalidTokenDeltas as ::ethers::core::abi::AbiDecode>::decode(data)
+            {
+                return Ok(Self::InvalidTokenDeltas(decoded));
+            }
             if let Ok(decoded) = <InvalidUpdateCode as ::ethers::core::abi::AbiDecode>::decode(data)
             {
                 return Ok(Self::InvalidUpdateCode(decoded));
@@ -905,7 +936,7 @@ pub mod i_strategy {
             Err(::ethers::core::abi::Error::InvalidData.into())
         }
     }
-    impl ::ethers::core::abi::AbiEncode for IStrategyErrors {
+    impl ::ethers::core::abi::AbiEncode for NTokenStrategyErrors {
         fn encode(self) -> ::std::vec::Vec<u8> {
             match self {
                 Self::DeltaError(element) => ::ethers::core::abi::AbiEncode::encode(element),
@@ -913,13 +944,16 @@ pub mod i_strategy {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::InvalidSender(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::InvalidTokenDeltas(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::InvalidUpdateCode(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::NotDFMM(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::RevertString(s) => ::ethers::core::abi::AbiEncode::encode(s),
             }
         }
     }
-    impl ::ethers::contract::ContractRevert for IStrategyErrors {
+    impl ::ethers::contract::ContractRevert for NTokenStrategyErrors {
         fn valid_selector(selector: [u8; 4]) -> bool {
             match selector {
                 [0x08, 0xc3, 0x79, 0xa0] => true,
@@ -933,6 +967,11 @@ pub mod i_strategy {
                     true
                 }
                 _ if selector
+                    == <InvalidTokenDeltas as ::ethers::contract::EthError>::selector() =>
+                {
+                    true
+                }
+                _ if selector
                     == <InvalidUpdateCode as ::ethers::contract::EthError>::selector() =>
                 {
                     true
@@ -942,44 +981,50 @@ pub mod i_strategy {
             }
         }
     }
-    impl ::core::fmt::Display for IStrategyErrors {
+    impl ::core::fmt::Display for NTokenStrategyErrors {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
             match self {
                 Self::DeltaError(element) => ::core::fmt::Display::fmt(element, f),
                 Self::InvalidReservesLength(element) => ::core::fmt::Display::fmt(element, f),
                 Self::InvalidSender(element) => ::core::fmt::Display::fmt(element, f),
+                Self::InvalidTokenDeltas(element) => ::core::fmt::Display::fmt(element, f),
                 Self::InvalidUpdateCode(element) => ::core::fmt::Display::fmt(element, f),
                 Self::NotDFMM(element) => ::core::fmt::Display::fmt(element, f),
                 Self::RevertString(s) => ::core::fmt::Display::fmt(s, f),
             }
         }
     }
-    impl ::core::convert::From<::std::string::String> for IStrategyErrors {
+    impl ::core::convert::From<::std::string::String> for NTokenStrategyErrors {
         fn from(value: String) -> Self {
             Self::RevertString(value)
         }
     }
-    impl ::core::convert::From<DeltaError> for IStrategyErrors {
+    impl ::core::convert::From<DeltaError> for NTokenStrategyErrors {
         fn from(value: DeltaError) -> Self {
             Self::DeltaError(value)
         }
     }
-    impl ::core::convert::From<InvalidReservesLength> for IStrategyErrors {
+    impl ::core::convert::From<InvalidReservesLength> for NTokenStrategyErrors {
         fn from(value: InvalidReservesLength) -> Self {
             Self::InvalidReservesLength(value)
         }
     }
-    impl ::core::convert::From<InvalidSender> for IStrategyErrors {
+    impl ::core::convert::From<InvalidSender> for NTokenStrategyErrors {
         fn from(value: InvalidSender) -> Self {
             Self::InvalidSender(value)
         }
     }
-    impl ::core::convert::From<InvalidUpdateCode> for IStrategyErrors {
+    impl ::core::convert::From<InvalidTokenDeltas> for NTokenStrategyErrors {
+        fn from(value: InvalidTokenDeltas) -> Self {
+            Self::InvalidTokenDeltas(value)
+        }
+    }
+    impl ::core::convert::From<InvalidUpdateCode> for NTokenStrategyErrors {
         fn from(value: InvalidUpdateCode) -> Self {
             Self::InvalidUpdateCode(value)
         }
     }
-    impl ::core::convert::From<NotDFMM> for IStrategyErrors {
+    impl ::core::convert::From<NotDFMM> for NTokenStrategyErrors {
         fn from(value: NotDFMM) -> Self {
             Self::NotDFMM(value)
         }
@@ -1129,7 +1174,7 @@ pub mod i_strategy {
         abi = "validateAllocate(address,uint256,(address,address[],uint256[],uint256,address,address,uint256),bytes)"
     )]
     pub struct ValidateAllocateCall {
-        pub sender: ::ethers::core::types::Address,
+        pub p0: ::ethers::core::types::Address,
         pub pool_id: ::ethers::core::types::U256,
         pub pool: Pool,
         pub data: ::ethers::core::types::Bytes,
@@ -1155,7 +1200,7 @@ pub mod i_strategy {
         abi = "validateDeallocate(address,uint256,(address,address[],uint256[],uint256,address,address,uint256),bytes)"
     )]
     pub struct ValidateDeallocateCall {
-        pub sender: ::ethers::core::types::Address,
+        pub p0: ::ethers::core::types::Address,
         pub pool_id: ::ethers::core::types::U256,
         pub pool: Pool,
         pub data: ::ethers::core::types::Bytes,
@@ -1181,7 +1226,7 @@ pub mod i_strategy {
         abi = "validateSwap(address,uint256,(address,address[],uint256[],uint256,address,address,uint256),bytes)"
     )]
     pub struct ValidateSwapCall {
-        pub sender: ::ethers::core::types::Address,
+        pub p0: ::ethers::core::types::Address,
         pub pool_id: ::ethers::core::types::U256,
         pub pool: Pool,
         pub data: ::ethers::core::types::Bytes,
@@ -1197,7 +1242,7 @@ pub mod i_strategy {
         Eq,
         Hash,
     )]
-    pub enum IStrategyCalls {
+    pub enum NTokenStrategyCalls {
         Dfmm(DfmmCall),
         GetPoolParams(GetPoolParamsCall),
         Init(InitCall),
@@ -1208,7 +1253,7 @@ pub mod i_strategy {
         ValidateDeallocate(ValidateDeallocateCall),
         ValidateSwap(ValidateSwapCall),
     }
-    impl ::ethers::core::abi::AbiDecode for IStrategyCalls {
+    impl ::ethers::core::abi::AbiDecode for NTokenStrategyCalls {
         fn decode(
             data: impl AsRef<[u8]>,
         ) -> ::core::result::Result<Self, ::ethers::core::abi::AbiError> {
@@ -1251,7 +1296,7 @@ pub mod i_strategy {
             Err(::ethers::core::abi::Error::InvalidData.into())
         }
     }
-    impl ::ethers::core::abi::AbiEncode for IStrategyCalls {
+    impl ::ethers::core::abi::AbiEncode for NTokenStrategyCalls {
         fn encode(self) -> Vec<u8> {
             match self {
                 Self::Dfmm(element) => ::ethers::core::abi::AbiEncode::encode(element),
@@ -1268,7 +1313,7 @@ pub mod i_strategy {
             }
         }
     }
-    impl ::core::fmt::Display for IStrategyCalls {
+    impl ::core::fmt::Display for NTokenStrategyCalls {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
             match self {
                 Self::Dfmm(element) => ::core::fmt::Display::fmt(element, f),
@@ -1283,47 +1328,47 @@ pub mod i_strategy {
             }
         }
     }
-    impl ::core::convert::From<DfmmCall> for IStrategyCalls {
+    impl ::core::convert::From<DfmmCall> for NTokenStrategyCalls {
         fn from(value: DfmmCall) -> Self {
             Self::Dfmm(value)
         }
     }
-    impl ::core::convert::From<GetPoolParamsCall> for IStrategyCalls {
+    impl ::core::convert::From<GetPoolParamsCall> for NTokenStrategyCalls {
         fn from(value: GetPoolParamsCall) -> Self {
             Self::GetPoolParams(value)
         }
     }
-    impl ::core::convert::From<InitCall> for IStrategyCalls {
+    impl ::core::convert::From<InitCall> for NTokenStrategyCalls {
         fn from(value: InitCall) -> Self {
             Self::Init(value)
         }
     }
-    impl ::core::convert::From<NameCall> for IStrategyCalls {
+    impl ::core::convert::From<NameCall> for NTokenStrategyCalls {
         fn from(value: NameCall) -> Self {
             Self::Name(value)
         }
     }
-    impl ::core::convert::From<TradingFunctionCall> for IStrategyCalls {
+    impl ::core::convert::From<TradingFunctionCall> for NTokenStrategyCalls {
         fn from(value: TradingFunctionCall) -> Self {
             Self::TradingFunction(value)
         }
     }
-    impl ::core::convert::From<UpdateCall> for IStrategyCalls {
+    impl ::core::convert::From<UpdateCall> for NTokenStrategyCalls {
         fn from(value: UpdateCall) -> Self {
             Self::Update(value)
         }
     }
-    impl ::core::convert::From<ValidateAllocateCall> for IStrategyCalls {
+    impl ::core::convert::From<ValidateAllocateCall> for NTokenStrategyCalls {
         fn from(value: ValidateAllocateCall) -> Self {
             Self::ValidateAllocate(value)
         }
     }
-    impl ::core::convert::From<ValidateDeallocateCall> for IStrategyCalls {
+    impl ::core::convert::From<ValidateDeallocateCall> for NTokenStrategyCalls {
         fn from(value: ValidateDeallocateCall) -> Self {
             Self::ValidateDeallocate(value)
         }
     }
-    impl ::core::convert::From<ValidateSwapCall> for IStrategyCalls {
+    impl ::core::convert::From<ValidateSwapCall> for NTokenStrategyCalls {
         fn from(value: ValidateSwapCall) -> Self {
             Self::ValidateSwap(value)
         }
@@ -1357,9 +1402,7 @@ pub mod i_strategy {
         Eq,
         Hash,
     )]
-    pub struct GetPoolParamsReturn {
-        pub params: ::ethers::core::types::Bytes,
-    }
+    pub struct GetPoolParamsReturn(pub ::ethers::core::types::Bytes);
     /// Container type for all return fields from the `init` function with
     /// signature `init(address,uint256,(address,address[],uint256[],uint256,
     /// address,address,uint256),bytes)` and selector `0x4f17d913`
@@ -1431,7 +1474,7 @@ pub mod i_strategy {
     pub struct ValidateAllocateReturn {
         pub valid: bool,
         pub invariant: ::ethers::core::types::I256,
-        pub deltas: ::std::vec::Vec<::ethers::core::types::U256>,
+        pub token_deltas: ::std::vec::Vec<::ethers::core::types::U256>,
         pub delta_liquidity: ::ethers::core::types::U256,
     }
     /// Container type for all return fields from the `validateDeallocate`
@@ -1453,7 +1496,7 @@ pub mod i_strategy {
     pub struct ValidateDeallocateReturn {
         pub valid: bool,
         pub invariant: ::ethers::core::types::I256,
-        pub deltas: ::std::vec::Vec<::ethers::core::types::U256>,
+        pub token_deltas: ::std::vec::Vec<::ethers::core::types::U256>,
         pub delta_liquidity: ::ethers::core::types::U256,
     }
     /// Container type for all return fields from the `validateSwap` function
