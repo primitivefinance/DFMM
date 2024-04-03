@@ -102,6 +102,6 @@ impl PoolType for GeometricMeanPool {
         for i in data.0.iter() {
             deltas.push(ethers::abi::Token::Uint(*i));
         }
-        todo!("return the encoded deltas")
+        todo!("return the encoded deltas, need to know how many their are or else compile dies")
     }
 }
