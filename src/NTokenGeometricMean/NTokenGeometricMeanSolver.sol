@@ -14,7 +14,8 @@ import {
 import {
     computeAllocationDeltasGivenDeltaT,
     computeDeallocationDeltasGivenDeltaT,
-    computeNextLiquidity
+    computeNextLiquidity,
+    computeSwapDeltaLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
@@ -81,9 +82,14 @@ contract NTokenGeometricMeanSolver {
         state.inWeight = params.weights[tokenInIndex];
         state.outWeight = params.weights[tokenOutIndex];
 
-        state.fees = amountIn.mulWadUp(params.swapFee);
-        state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve)
-            .mulWadUp(state.fees).mulWadUp(state.inWeight);
+        state.deltaLiquidity = computeSwapDeltaLiquidity(
+            amountIn,
+            state.inReserve,
+            pool.totalLiquidity,
+            state.inWeight,
+            params.swapFee
+        );
+
         {
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 accumulator = FixedPointMathLib.WAD;
@@ -111,13 +117,8 @@ contract NTokenGeometricMeanSolver {
             state.amountOut = state.outReserve - a;
         }
 
-        bytes memory swapData = abi.encode(
-            tokenInIndex,
-            tokenOutIndex,
-            amountIn,
-            state.amountOut,
-            state.deltaLiquidity
-        );
+        bytes memory swapData =
+            abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut);
 
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData

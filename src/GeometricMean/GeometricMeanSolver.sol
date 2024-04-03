@@ -12,20 +12,15 @@ import {
 } from "./G3MUtils.sol";
 import {
     computeInitialPoolData,
-    computeL,
-    computePrice,
-    computeLGivenX,
-    computeY,
-    computeX,
-    computeLGivenY,
-    computeNextLiquidity,
     computeNextRx,
     computeNextRy,
     computeTradingFunction,
     computeAllocationGivenDeltaX,
     computeAllocationGivenDeltaY,
     computeDeallocationGivenDeltaX,
-    computeDeallocationGivenDeltaY
+    computeDeallocationGivenDeltaY,
+    computePrice,
+    computeSwapDeltaLiquidity
 } from "./G3MMath.sol";
 
 contract GeometricMeanSolver {
@@ -192,9 +187,14 @@ contract GeometricMeanSolver {
             state.outWeight = params.wX;
         }
 
-        state.fees = amountIn.mulWadUp(params.swapFee);
-        state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve)
-            .mulWadUp(state.fees).mulWadUp(state.inWeight);
+        state.deltaLiquidity = computeSwapDeltaLiquidity(
+            amountIn,
+            state.inReserve,
+            pool.totalLiquidity,
+            state.inWeight,
+            params.swapFee
+        );
+
         {
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 d = uint256(
@@ -211,13 +211,8 @@ contract GeometricMeanSolver {
             state.amountOut = state.outReserve - a;
         }
 
-        bytes memory swapData = abi.encode(
-            tokenInIndex,
-            tokenOutIndex,
-            amountIn,
-            state.amountOut,
-            state.deltaLiquidity
-        );
+        bytes memory swapData =
+            abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut);
 
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
