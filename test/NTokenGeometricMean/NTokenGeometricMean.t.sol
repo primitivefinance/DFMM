@@ -211,18 +211,20 @@ contract NTokenGeometricMeanTest is Test {
     }
 
     function test_4_token_allocate_given_delta_t() public basic {
-        (uint256[] memory dReserves, uint256 dLiquidity) =
+        (bytes memory byte_code) =
             solver.getAllocationDeltasGivenDeltaT(POOL_ID, 1, ONE);
-
+        (uint256[] memory dReserves, uint256 dLiquidity) =
+            abi.decode(byte_code, (uint256[], uint256));
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
         dfmm.allocate(POOL_ID, data);
     }
 
     function test_4_token_deallocate_given_delta_t() public basic {
-        (uint256[] memory dReserves, uint256 dLiquidity) =
+        (bytes memory byte_code) =
             solver.getDeallocationDeltasGivenDeltaT(POOL_ID, 1, 0.5 ether);
-
+        (uint256[] memory dReserves, uint256 dLiquidity) =
+            abi.decode(byte_code, (uint256[], uint256));
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
         dfmm.deallocate(POOL_ID, data);
@@ -317,8 +319,11 @@ contract NTokenGeometricMeanTest is Test {
         public
         basic_70_10_10_10
     {
-        (uint256[] memory dReserves, uint256 dLiquidity) =
+        (bytes memory byte_code) =
             solver.getAllocationDeltasGivenDeltaT(POOL_ID, 1, ONE);
+
+        (uint256[] memory dReserves, uint256 dLiquidity) =
+            abi.decode(byte_code, (uint256[], uint256));
 
         console2.log(dReserves[0]);
         console2.log(dReserves[1]);
@@ -334,8 +339,10 @@ contract NTokenGeometricMeanTest is Test {
         public
         basic_70_10_10_10
     {
-        (uint256[] memory dReserves, uint256 dLiquidity) =
+        (bytes memory byte_code) =
             solver.getDeallocationDeltasGivenDeltaT(POOL_ID, 1, 0.2 ether);
+        (uint256[] memory dReserves, uint256 dLiquidity) =
+            abi.decode(byte_code, (uint256[], uint256));
 
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
