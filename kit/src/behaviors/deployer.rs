@@ -11,6 +11,7 @@ use super::*;
 pub struct Deployer {}
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DeploymentData {
+    pub n_token_geometric_mean: Address,
     pub weth: Address,
     pub dfmm: Address,
     pub geometric_mean: Address,
@@ -67,7 +68,12 @@ impl Behavior<()> for Deployer {
             token_y.address()
         );
 
+        let n_token_geometric_mean = GeometricMean::deploy(client.clone(), dfmm.address())?
+            .send()
+            .await?;
+
         let deployment_data = DeploymentData {
+            n_token_geometric_mean: n_token_geometric_mean.address(),
             weth: weth.address(),
             dfmm: dfmm.address(),
             geometric_mean: geometric_mean.address(),
@@ -140,6 +146,10 @@ mod tests {
             assert_eq!(
                 Address::from_str("0xaeb166f1355c6254d01a54317ef8d4d21bfcb4b0").unwrap(),
                 parsed_data.constant_sum
+            );
+            assert_eq!(
+                Address::from_str("0xa4bb88cbfc92d86ae00842dcfa5a1ac32b0714b3").unwrap(),
+                parsed_data.n_token_geometric_mean
             );
         } else {
             panic!("No message received");
