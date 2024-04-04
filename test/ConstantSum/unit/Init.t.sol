@@ -103,6 +103,36 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         dfmm.init(initParams);
     }
 
+    function test_ConstantSum_init_RevertsWhenInvalidTokensLength() public {
+        ConstantSumParams memory params = ConstantSumParams({
+            price: 1 ether,
+            swapFee: TEST_SWAP_FEE,
+            controller: address(0)
+        });
+
+        uint256[] memory reserves = new uint256[](2);
+        reserves[0] = 1 ether;
+        reserves[1] = 1 ether;
+        bytes memory initData = abi.encode(reserves, params);
+
+        address[] memory tokens = new address[](3);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory initParams = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(constantSum),
+            tokens: tokens,
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        vm.expectRevert(IStrategy.InvalidReservesLength.selector);
+        dfmm.init(initParams);
+    }
+
     function _prepareInitParams(
         uint256 reserveX,
         uint256 reserveY,
