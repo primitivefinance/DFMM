@@ -8,32 +8,13 @@ import { ConstantSumSetUp } from "./SetUp.sol";
 contract ConstantSumInitTest is ConstantSumSetUp {
     function test_ConstantSum_init_InitializesPool() public {
         uint256 price = 1 ether;
-
-        ConstantSumParams memory params = ConstantSumParams({
-            price: price,
-            swapFee: TEST_SWAP_FEE,
-            controller: address(this)
-        });
-
         uint256 reserveX = 1 ether;
         uint256 reserveY = 1 ether;
+        address controller = address(this);
 
-        bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, params);
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(tokenX);
-        tokens[1] = address(tokenY);
-
-        InitParams memory initParams = InitParams({
-            name: "",
-            symbol: "",
-            strategy: address(constantSum),
-            tokens: tokens,
-            data: initData,
-            feeCollector: address(0),
-            controllerFee: 0
-        });
+        InitParams memory initParams = _prepareInitParams(
+            reserveX, reserveY, price, TEST_SWAP_FEE, controller
+        );
 
         (POOL_ID,,) = dfmm.init(initParams);
         Pool memory pool = dfmm.pools(POOL_ID);
@@ -42,72 +23,35 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         assertEq(pool.reserves[1], reserveY);
     }
 
-    function test_ConstantSum_init_StoresPoolParams() public {
-        uint256 price = 1 ether;
-
-        ConstantSumParams memory params = ConstantSumParams({
-            price: price,
-            swapFee: TEST_SWAP_FEE,
-            controller: address(this)
-        });
-
+    function test_ConstantSum_init_StoresPoolParams(
+        uint256 swapFee,
+        address controller
+    ) public {
         uint256 reserveX = 1 ether;
         uint256 reserveY = 1 ether;
+        uint256 price = 1 ether;
 
-        bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, params);
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(tokenX);
-        tokens[1] = address(tokenY);
-
-        InitParams memory initParams = InitParams({
-            name: "",
-            symbol: "",
-            strategy: address(constantSum),
-            tokens: tokens,
-            data: initData,
-            feeCollector: address(0),
-            controllerFee: 0
-        });
+        InitParams memory initParams =
+            _prepareInitParams(reserveX, reserveY, price, swapFee, controller);
 
         (POOL_ID,,) = dfmm.init(initParams);
         ConstantSumParams memory poolParams =
             abi.decode(constantSum.getPoolParams(POOL_ID), (ConstantSumParams));
 
         assertEq(poolParams.price, price);
-        assertEq(poolParams.swapFee, TEST_SWAP_FEE);
-        assertEq(poolParams.controller, address(this));
+        assertEq(poolParams.swapFee, swapFee);
+        assertEq(poolParams.controller, controller);
     }
 
     function test_ConstantSum_init_TransfersTokens() public {
         uint256 price = 1 ether;
-
-        ConstantSumParams memory params = ConstantSumParams({
-            price: price,
-            swapFee: TEST_SWAP_FEE,
-            controller: address(this)
-        });
-
         uint256 reserveX = 1 ether;
         uint256 reserveY = 1 ether;
+        address controller = address(this);
 
-        bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, params);
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(tokenX);
-        tokens[1] = address(tokenY);
-
-        InitParams memory initParams = InitParams({
-            name: "",
-            symbol: "",
-            strategy: address(constantSum),
-            tokens: tokens,
-            data: initData,
-            feeCollector: address(0),
-            controllerFee: 0
-        });
+        InitParams memory initParams = _prepareInitParams(
+            reserveX, reserveY, price, TEST_SWAP_FEE, controller
+        );
 
         uint256 dfmmPreTokenXBalance = tokenX.balanceOf(address(dfmm));
         uint256 dfmmPreTokenYBalance = tokenY.balanceOf(address(dfmm));
@@ -125,5 +69,38 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         assertEq(dfmmPreTokenYBalance + reserveY, dfmmPostTokenYBalance);
         assertEq(userPreTokenXBalance - reserveX, userPostTokenXBalance);
         assertEq(userPreTokenYBalance - reserveY, userPostTokenYBalance);
+    }
+
+    function test_ConstantSum_init_RevertsWhenInvalidReserves() public { }
+
+    function _prepareInitParams(
+        uint256 reserveX,
+        uint256 reserveY,
+        uint256 price,
+        uint256 swapFee,
+        address controller
+    ) private view returns (InitParams memory) {
+        ConstantSumParams memory params = ConstantSumParams({
+            price: price,
+            swapFee: swapFee,
+            controller: controller
+        });
+
+        bytes memory initData =
+            solver.getInitialPoolData(reserveX, reserveY, params);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        return InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(constantSum),
+            tokens: tokens,
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
     }
 }
