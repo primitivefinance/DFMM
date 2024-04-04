@@ -19,6 +19,7 @@ struct Pool {
     address liquidityToken;
     address feeCollector;
     uint256 controllerFee;
+    uint256 lastSwapTimestamp;
 }
 
 /**

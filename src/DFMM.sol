@@ -81,7 +81,8 @@ contract DFMM is IDFMM {
             totalLiquidity: 0,
             liquidityToken: address(liquidityToken),
             feeCollector: params.feeCollector,
-            controllerFee: params.controllerFee
+            controllerFee: params.controllerFee,
+            lastSwapTimestamp: block.timestamp
         });
 
         (
@@ -225,6 +226,8 @@ contract DFMM is IDFMM {
         bytes calldata callbackData
     ) external payable lock returns (address, address, uint256, uint256) {
         SwapState memory state;
+
+        _pools[poolId].lastSwapTimestamp = block.timestamp;
 
         (
             state.valid,
