@@ -7,6 +7,7 @@ import {
     encodePriceUpdate,
     encodeControllerUpdate
 } from "src/ConstantSum/ConstantSumUtils.sol";
+import { IStrategy } from "src/interfaces/IStrategy.sol";
 
 contract ConstantSumUpdateTest is ConstantSumSetUp {
     function test_ConstantSum_update_SetsSwapFee() public defaultPool {
@@ -31,5 +32,15 @@ contract ConstantSumUpdateTest is ConstantSumSetUp {
         ConstantSumParams memory poolParams =
             abi.decode(constantSum.getPoolParams(POOL_ID), (ConstantSumParams));
         assertEq(poolParams.controller, newController);
+    }
+
+    function test_ConstantSum_update_RevertsWhenInvalidSender()
+        public
+        defaultPool
+    {
+        address newController = address(this);
+        vm.prank(address(0xb0b));
+        vm.expectRevert(IStrategy.InvalidSender.selector);
+        dfmm.update(POOL_ID, encodeControllerUpdate(newController));
     }
 }
