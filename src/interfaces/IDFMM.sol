@@ -235,4 +235,8 @@ interface IDFMM {
     /// @notice Returns the pool parameters of pool `poolId`.
     /// @return pool A struct containing the pool parameters.
     function pools(uint256 poolId) external view returns (Pool memory pool);
+
+    /// @notice Returns the current nonce of DFMM.
+    /// @return nonce The current nonce of DFMM.
+    function nonce() external view returns (uint256);
 }

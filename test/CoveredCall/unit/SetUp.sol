@@ -7,6 +7,7 @@ import "test/utils/SetUp.sol";
 import { ONE } from "src/lib/StrategyLib.sol";
 import { YEAR } from "src/CoveredCall/CoveredCallMath.sol";
 import { InitParams } from "src/interfaces/IDFMM.sol";
+import "forge-std/console2.sol";
 
 contract CoveredCallSetUp is SetUp {
     CoveredCall coveredCall;
@@ -16,7 +17,7 @@ contract CoveredCallSetUp is SetUp {
 
     CoveredCallParams defaultParams = CoveredCallParams({
         mean: ONE,
-        width: ONE,
+        width: 0.1 ether,
         maturity: YEAR,
         swapFee: TEST_SWAP_FEE,
         timestamp: block.timestamp,

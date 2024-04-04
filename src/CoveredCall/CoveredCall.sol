@@ -17,6 +17,7 @@ import {
     decodeControllerUpdate
 } from "src/CoveredCall/CoveredCallUtils.sol";
 import { EPSILON } from "src/lib/StrategyLib.sol";
+import "forge-std/console2.sol";
 
 enum UpdateCode {
     Invalid,
@@ -52,6 +53,9 @@ error InvalidWidth();
 
 /// @dev Thrown when the maturity parameter is not later than the current block.timestamp.
 error InvalidMaturity();
+
+/// @dev Thrown when the computedL passed to swap does not satisfy the invariant check
+error InvalidComputedLiquidity(int256 invariant);
 
 uint256 constant MIN_WIDTH = 1;
 uint256 constant MAX_WIDTH = uint256(type(int256).max);
@@ -90,6 +94,7 @@ contract CoveredCall is PairStrategy {
         )
     {
         CoveredCallParams memory params;
+        params.timestamp = block.timestamp;
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, CoveredCallParams));
 
@@ -116,7 +121,7 @@ contract CoveredCall is PairStrategy {
         internalParams[poolId].controller = params.controller;
 
         invariant =
-            tradingFunction(reserves, totalLiquidity, getPoolParams(poolId));
+            tradingFunction(reserves, totalLiquidity, abi.encode(params));
         valid = invariant >= 0 && invariant <= EPSILON;
     }
 
@@ -177,9 +182,16 @@ contract CoveredCall is PairStrategy {
         )
     {
         bytes memory params = getPoolParams(poolId);
+        uint256 computedL;
+        (tokenInIndex, tokenOutIndex, amountIn, amountOut, computedL) =
+            abi.decode(data, (uint256, uint256, uint256, uint256, uint256));
 
-        (tokenInIndex, tokenOutIndex, amountIn, amountOut) =
-            abi.decode(data, (uint256, uint256, uint256, uint256));
+        int256 initialInvariant =
+            tradingFunction(pool.reserves, computedL, params);
+
+        if (initialInvariant <= 0) {
+            revert InvalidComputedLiquidity(initialInvariant);
+        }
 
         deltaLiquidity = _computeSwapDeltaLiquidity(
             pool, params, tokenInIndex, tokenOutIndex, amountIn, amountOut
@@ -188,13 +200,11 @@ contract CoveredCall is PairStrategy {
         pool.reserves[tokenInIndex] += amountIn;
         pool.reserves[tokenOutIndex] -= amountOut;
 
-        invariant = tradingFunction(
-            pool.reserves, pool.totalLiquidity + deltaLiquidity, params
-        );
+        invariant =
+            tradingFunction(pool.reserves, computedL + deltaLiquidity, params);
 
         valid = invariant >= 0;
     }
-
 
     /// @inheritdoc IStrategy
     function tradingFunction(
@@ -205,10 +215,7 @@ contract CoveredCall is PairStrategy {
         CoveredCallParams memory poolParams =
             abi.decode(params, (CoveredCallParams));
         return computeTradingFunction(
-            reserves[0],
-            reserves[1],
-            totalLiquidity,
-            poolParams
+            reserves[0], reserves[1], totalLiquidity, poolParams
         );
     }
 

@@ -28,8 +28,11 @@ import {
     computeAllocationGivenDeltaX,
     computeAllocationGivenDeltaY,
     computeDeallocationGivenDeltaX,
-    computeDeallocationGivenDeltaY
+    computeDeallocationGivenDeltaY,
+    YEAR,
+    ONE
 } from "src/CoveredCall/CoveredCallMath.sol";
+import "forge-std/console2.sol";
 
 contract CoveredCallSolver {
     using FixedPointMathLib for uint256;
@@ -61,11 +64,10 @@ contract CoveredCallSolver {
         );
     }
 
-    function getPoolParamsCustomTimestamp(uint256 poolId, uint256 timestamp)
-        public
-        view
-        returns (CoveredCallParams memory)
-    {
+    function getPoolParamsCustomTimestamp(
+        uint256 poolId,
+        uint256 timestamp
+    ) public view returns (CoveredCallParams memory) {
         CoveredCallParams memory params = getPoolParams(poolId);
         params.timestamp = timestamp;
         return params;
@@ -110,7 +112,9 @@ contract CoveredCallSolver {
     ) public view returns (uint256 deltaY, uint256 deltaLiquidity) {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
-        (deltaY, deltaLiquidity) = computeAllocationGivenDeltaX(deltaX, reserves[0], reserves[1], liquidity);
+        (deltaY, deltaLiquidity) = computeAllocationGivenDeltaX(
+            deltaX, reserves[0], reserves[1], liquidity
+        );
     }
 
     function allocateGivenDeltaY(
@@ -119,7 +123,9 @@ contract CoveredCallSolver {
     ) public view returns (uint256 deltaX, uint256 deltaLiquidity) {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
-        (deltaX, deltaLiquidity) = computeAllocationGivenDeltaY(deltaY, reserves[0], reserves[1], liquidity);
+        (deltaX, deltaLiquidity) = computeAllocationGivenDeltaY(
+            deltaY, reserves[0], reserves[1], liquidity
+        );
     }
 
     function deallocateGivenDeltaX(
@@ -128,7 +134,9 @@ contract CoveredCallSolver {
     ) public view returns (uint256 deltaY, uint256 deltaLiquidity) {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
-        (deltaY, deltaLiquidity) = computeDeallocationGivenDeltaX(deltaX, reserves[0], reserves[1], liquidity);
+        (deltaY, deltaLiquidity) = computeDeallocationGivenDeltaX(
+            deltaX, reserves[0], reserves[1], liquidity
+        );
     }
 
     function deallocateGivenDeltaY(
@@ -137,7 +145,9 @@ contract CoveredCallSolver {
     ) public view returns (uint256 deltaX, uint256 deltaLiquidity) {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
-        (deltaX, deltaLiquidity) = computeDeallocationGivenDeltaY(deltaY, reserves[0], reserves[1], liquidity);
+        (deltaX, deltaLiquidity) = computeDeallocationGivenDeltaY(
+            deltaY, reserves[0], reserves[1], liquidity
+        );
     }
 
     function getNextLiquidity(
@@ -146,7 +156,8 @@ contract CoveredCallSolver {
         uint256 ry,
         uint256 L
     ) public view returns (uint256) {
-        CoveredCallParams memory poolParams = getPoolParams(poolId);
+        CoveredCallParams memory poolParams =
+            getPoolParamsCustomTimestamp(poolId, block.timestamp);
 
         int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
         return computeNextLiquidity(rx, ry, invariant, L, poolParams);
@@ -158,7 +169,8 @@ contract CoveredCallSolver {
         uint256 L,
         uint256 S
     ) public view returns (uint256) {
-        CoveredCallParams memory poolParams = getPoolParams(poolId);
+        CoveredCallParams memory poolParams =
+            getPoolParamsCustomTimestamp(poolId, block.timestamp);
         uint256 approximatedRx = computeXGivenL(L, S, poolParams);
         int256 invariant =
             computeTradingFunction(approximatedRx, ry, L, poolParams);
@@ -171,7 +183,8 @@ contract CoveredCallSolver {
         uint256 L,
         uint256 S
     ) public view returns (uint256) {
-        CoveredCallParams memory poolParams = getPoolParams(poolId);
+        CoveredCallParams memory poolParams =
+            getPoolParamsCustomTimestamp(poolId, block.timestamp);
         uint256 approximatedRy = computeYGivenL(L, S, poolParams);
         int256 invariant =
             computeTradingFunction(rx, approximatedRy, L, poolParams);
@@ -193,14 +206,16 @@ contract CoveredCallSolver {
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
-        CoveredCallParams memory poolParams = getPoolParams(poolId);
+        CoveredCallParams memory poolParams =
+            getPoolParamsCustomTimestamp(poolId, block.timestamp);
 
         SimulateSwapState memory state;
 
+        uint256 startComputedL = getNextLiquidity(
+            poolId, preReserves[0], preReserves[1], preTotalLiquidity
+        );
         {
-            uint256 startComputedL = getNextLiquidity(
-                poolId, preReserves[0], preReserves[1], preTotalLiquidity
-            );
+            console2.log("startComputedL", startComputedL);
 
             if (swapXIn) {
                 state.deltaLiquidity = computeDeltaLXIn(
@@ -258,9 +273,11 @@ contract CoveredCallSolver {
         bytes memory swapData;
 
         if (swapXIn) {
-            swapData = abi.encode(0, 1, amountIn, state.amountOut);
+            swapData =
+                abi.encode(0, 1, amountIn, state.amountOut, startComputedL);
         } else {
-            swapData = abi.encode(1, 0, amountIn, state.amountOut);
+            swapData =
+                abi.encode(1, 0, amountIn, state.amountOut, startComputedL);
         }
 
         uint256 poolId = poolId;
@@ -280,7 +297,14 @@ contract CoveredCallSolver {
         uint256 ry,
         uint256 L
     ) public view returns (uint256 price) {
-        CoveredCallParams memory params = getPoolParams(poolId);
+        CoveredCallParams memory params =
+            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+        (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
+        console2.log("maturity", params.maturity);
+        console2.log("timestamp", params.timestamp);
+        console2.log("tau", ONE * (params.maturity - params.timestamp) / YEAR);
+        console2.log("rx", reserves[0]);
+        console2.log("ry", reserves[1]);
         price = computePriceGivenY(ry, L, params);
     }
 
@@ -289,7 +313,14 @@ contract CoveredCallSolver {
         uint256 rx,
         uint256 L
     ) public view returns (uint256 price) {
-        CoveredCallParams memory params = getPoolParams(poolId);
+        CoveredCallParams memory params =
+            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+        (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
+        console2.log("maturity", params.maturity);
+        console2.log("timestamp", params.timestamp);
+        console2.log("tau", ONE * (params.maturity - params.timestamp) / YEAR);
+        console2.log("rx", reserves[0]);
+        console2.log("ry", reserves[1]);
         price = computePriceGivenX(rx, L, params);
     }
 

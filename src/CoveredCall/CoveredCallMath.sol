@@ -8,13 +8,14 @@ import { CoveredCallParams } from "src/CoveredCall/CoveredCall.sol";
 import { Gaussian } from "solstat/Gaussian.sol";
 import { toUint } from "src/CoveredCall/CoveredCallUtils.sol";
 import { bisection } from "src/lib/BisectionLib.sol";
+import "forge-std/console2.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
 using SignedWadMathLib for int256;
 
 uint256 constant MAX_ITER = 128;
-uint256 constant YEAR = 31556952;
+uint256 constant YEAR = 31_536_000;
 
 function computeTradingFunction(
     uint256 rX,
@@ -47,9 +48,9 @@ function computeDeltaGivenDeltaLRoundDown(
 
 function computeLnSDivMean(
     uint256 S,
-    uint256 mean 
-) pure returns (int256 lnSDivK) {
-    lnSDivK = int256(S.divWadUp(mean)).lnWad();
+    uint256 mean
+) pure returns (int256 lnSDivMean) {
+    lnSDivMean = int256(S.divWadUp(mean)).lnWad();
 }
 
 /**
@@ -58,8 +59,11 @@ function computeLnSDivMean(
  * $$\frac{1}{2}\sigma^2$$
  *
  */
-function computeHalfSigmaTauSquared(uint256 sigma, uint256 tau) pure returns (uint256) {
-    uint256 innerTerm = sigma.mulWadUp(sigma).mulWadUp(tau);
+function computeHalfSigmaSquaredTau(
+    uint256 sigma,
+    uint256 tau
+) pure returns (uint256) {
+    uint256 innerTerm = sigma.mulWadDown(sigma).mulWadDown(tau);
     return HALF.mulWadDown(innerTerm);
 }
 
@@ -132,7 +136,7 @@ function computeD1(
 ) pure returns (int256 d1) {
     int256 lnSDivMean = computeLnSDivMean(S, params.mean);
     uint256 tau = ONE * (params.maturity - params.timestamp) / YEAR;
-    uint256 halfSigmaSquaredTau = computeHalfSigmaTauSquared(params.width, tau);
+    uint256 halfSigmaSquaredTau = computeHalfSigmaSquaredTau(params.width, tau);
     d1 = (lnSDivMean + int256(halfSigmaSquaredTau)).wadDiv(int256(params.width));
 }
 
@@ -147,7 +151,7 @@ function computeD2(
 ) pure returns (int256 d2) {
     int256 lnSDivMean = computeLnSDivMean(S, params.mean);
     uint256 tau = ONE * (params.maturity - params.timestamp) / YEAR;
-    uint256 halfSigmaSquaredTau = computeHalfSigmaTauSquared(params.width, tau);
+    uint256 halfSigmaSquaredTau = computeHalfSigmaSquaredTau(params.width, tau);
     d2 = (lnSDivMean - int256(halfSigmaSquaredTau)).wadDiv(int256(params.width));
 }
 
@@ -163,7 +167,7 @@ function computePriceGivenX(
     CoveredCallParams memory params
 ) pure returns (uint256) {
     uint256 tau = ONE * (params.maturity - params.timestamp) / YEAR;
-    uint256 a = computeHalfSigmaTauSquared(params.width, tau);
+    uint256 a = computeHalfSigmaSquaredTau(params.width, tau);
     // $$\Phi^{-1} (1 - \frac{x}{L})$$
     int256 b = Gaussian.ppf(int256(ONE - rX.divWadDown(L)));
 
@@ -180,7 +184,7 @@ function computePriceGivenY(
     CoveredCallParams memory params
 ) pure returns (uint256) {
     uint256 tau = ONE * (params.maturity - params.timestamp) / YEAR;
-    uint256 a = computeHalfSigmaTauSquared(params.width, tau);
+    uint256 a = computeHalfSigmaSquaredTau(params.width, tau);
 
     // $$\Phi^{-1} (\frac{y}{\mu L})$$
     int256 b = Gaussian.ppf(int256(rY.divWadDown(params.mean.mulWadDown(L))));
@@ -326,12 +330,7 @@ function computeNextLiquidity(
         }
     }
     (uint256 rootInput,, uint256 lowerInput) = bisection(
-        abi.encode(rX, rY, params),
-        lower,
-        upper,
-        1,
-        MAX_ITER,
-        findRootLiquidity
+        abi.encode(rX, rY, params), lower, upper, 1, MAX_ITER, findRootLiquidity
     );
 
     if (
@@ -378,12 +377,7 @@ function computeNextRx(
         }
     }
     (uint256 rootInput, uint256 upperInput,) = bisection(
-        abi.encode(rY, L, params),
-        lower,
-        upper,
-        0,
-        MAX_ITER,
-        findRootX
+        abi.encode(rY, L, params), lower, upper, 0, MAX_ITER, findRootX
     );
     // `upperInput` should be positive, so if root is < 0 return upperInput instead
     if (
@@ -428,12 +422,7 @@ function computeNextRy(
         }
     }
     (uint256 rootInput, uint256 upperInput,) = bisection(
-        abi.encode(rX, L, params),
-        lower,
-        upper,
-        0,
-        MAX_ITER,
-        findRootY
+        abi.encode(rX, L, params), lower, upper, 0, MAX_ITER, findRootY
     );
     // `upperInput` should be positive, so if root is < 0 return upperInput instead
     if (
@@ -443,5 +432,51 @@ function computeNextRy(
         rY = rootInput;
     } else {
         rY = upperInput;
+    }
+}
+
+function sqrt(uint256 x) pure returns (uint256 r) {
+    assembly ("memory-safe") {
+        // r = floor(log2(x))
+        r := shl(7, gt(x, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF))
+        let xx := shr(r, x)
+
+        let rr := shl(6, gt(x, 0xFFFFFFFFFFFFFFFF))
+        xx := shr(rr, xx)
+        r := or(r, rr)
+
+        rr := shl(5, gt(xx, 0xFFFFFFFF))
+        xx := shr(rr, xx)
+        r := or(r, rr)
+
+        rr := shl(4, gt(xx, 0xFFFF))
+        xx := shr(rr, xx)
+        r := or(r, rr)
+
+        rr := shl(3, gt(xx, 0xFF))
+        xx := shr(rr, xx)
+        r := or(r, rr)
+
+        rr := shl(2, gt(xx, 0x0F))
+        xx := shr(rr, xx)
+        r := or(r, rr)
+
+        rr := shl(1, gt(xx, 0x03))
+        xx := shr(rr, xx)
+        r := or(r, rr)
+
+        r := shl(shr(1, r), 1)
+
+        // Newton's method
+        r := shr(1, add(r, div(x, r)))
+        r := shr(1, add(r, div(x, r)))
+        r := shr(1, add(r, div(x, r)))
+        r := shr(1, add(r, div(x, r)))
+        r := shr(1, add(r, div(x, r)))
+        r := shr(1, add(r, div(x, r)))
+        r := shr(1, add(r, div(x, r)))
+
+        // r = min(r, x/r)
+        r := sub(r, gt(r, div(x, r)))
     }
 }
