@@ -15,7 +15,7 @@ contract ConstantSumSetUp is SetUp {
     ConstantSumParams defaultParams = ConstantSumParams({
         price: 2 ether,
         swapFee: TEST_SWAP_FEE,
-        controller: address(0)
+        controller: address(this)
     });
 
     ConstantSumParams zeroFeeParams = ConstantSumParams({

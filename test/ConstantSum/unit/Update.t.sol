@@ -10,7 +10,6 @@ import {
 
 contract ConstantSumUpdateTest is ConstantSumSetUp {
     function test_ConstantSum_update_SetsSwapFee() public defaultPool {
-        skip();
         uint256 newSwapFee = 0.004 ether;
         dfmm.update(POOL_ID, encodeFeeUpdate(newSwapFee));
         ConstantSumParams memory poolParams =
@@ -19,7 +18,6 @@ contract ConstantSumUpdateTest is ConstantSumSetUp {
     }
 
     function test_ConstantSum_update_SetsPrice() public defaultPool {
-        skip();
         uint256 newPrice = 3 ether;
         dfmm.update(POOL_ID, encodePriceUpdate(newPrice));
         ConstantSumParams memory poolParams =
@@ -28,7 +26,6 @@ contract ConstantSumUpdateTest is ConstantSumSetUp {
     }
 
     function test_ConstantSum_update_SetsController() public defaultPool {
-        skip();
         address newController = address(this);
         dfmm.update(POOL_ID, encodeControllerUpdate(newController));
         ConstantSumParams memory poolParams =
