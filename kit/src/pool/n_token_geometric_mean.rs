@@ -101,10 +101,6 @@ impl PoolType for GeometricMeanPool {
                     .await?
             }
         };
-        let mut deltas = Vec::new();
-        for i in data.0.iter() {
-            deltas.push(ethers::abi::Token::Uint(*i));
-        }
-        todo!("return the encoded deltas, need to know how many their are or else compile dies")
+        Ok(data)
     }
 }
