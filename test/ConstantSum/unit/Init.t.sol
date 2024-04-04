@@ -133,6 +133,12 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         dfmm.init(initParams);
     }
 
+    function test_ConstantSum_init_RevertsWhenCallerNotDFMM() public {
+        Pool memory pool;
+        vm.expectRevert(IStrategy.NotDFMM.selector);
+        constantSum.init(address(0), 0, pool, bytes(""));
+    }
+
     function _prepareInitParams(
         uint256 reserveX,
         uint256 reserveY,
