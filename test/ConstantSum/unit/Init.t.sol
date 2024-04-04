@@ -42,10 +42,7 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         assertEq(pool.reserves[1], reserveY);
     }
 
-    // This test doesn't pass because the `controller` param is not stored 
     function test_ConstantSum_init_StoresPoolParams() public {
-        skip();
-        
         uint256 price = 1 ether;
 
         ConstantSumParams memory params = ConstantSumParams({
