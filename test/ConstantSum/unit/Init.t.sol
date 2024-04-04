@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import { ConstantSum, ConstantSumParams } from "src/ConstantSum/ConstantSum.sol";
 import { Pool, InitParams } from "src/interfaces/IDFMM.sol";
+import { IStrategy } from "src/interfaces/IStrategy.sol";
 import { ConstantSumSetUp } from "./SetUp.sol";
 
 contract ConstantSumInitTest is ConstantSumSetUp {
@@ -71,7 +72,36 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         assertEq(userPreTokenYBalance - reserveY, userPostTokenYBalance);
     }
 
-    function test_ConstantSum_init_RevertsWhenInvalidReserves() public { }
+    function test_ConstantSum_init_RevertsWhenInvalidReserves() public {
+        ConstantSumParams memory params = ConstantSumParams({
+            price: 1 ether,
+            swapFee: TEST_SWAP_FEE,
+            controller: address(0)
+        });
+
+        uint256[] memory reserves = new uint256[](3);
+        reserves[0] = 1 ether;
+        reserves[1] = 1 ether;
+        reserves[2] = 1 ether;
+        bytes memory initData = abi.encode(reserves, params);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory initParams = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(constantSum),
+            tokens: tokens,
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        vm.expectRevert(IStrategy.InvalidReservesLength.selector);
+        dfmm.init(initParams);
+    }
 
     function _prepareInitParams(
         uint256 reserveX,
