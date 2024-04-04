@@ -5,7 +5,8 @@ import { ConstantSumSetUp, ConstantSumParams } from "./SetUp.sol";
 import {
     encodeFeeUpdate,
     encodePriceUpdate,
-    encodeControllerUpdate
+    encodeControllerUpdate,
+    UpdateCode
 } from "src/ConstantSum/ConstantSumUtils.sol";
 import { IStrategy } from "src/interfaces/IStrategy.sol";
 
@@ -42,5 +43,13 @@ contract ConstantSumUpdateTest is ConstantSumSetUp {
         vm.prank(address(0xb0b));
         vm.expectRevert(IStrategy.InvalidSender.selector);
         dfmm.update(POOL_ID, encodeControllerUpdate(newController));
+    }
+
+    function testFuzz_ConstantSum_update_RevertsWhenInvalidUpdateCode(
+        uint256 updateCode
+    ) public defaultPool {
+        vm.assume(updateCode > uint256(type(UpdateCode).max));
+        vm.expectRevert();
+        dfmm.update(POOL_ID, abi.encode(updateCode));
     }
 }
