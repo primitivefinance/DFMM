@@ -270,9 +270,7 @@ contract DFMM is IDFMM {
     // Internals
 
     /**
-     * @dev Transfers `amounts` of `tokens` from the sender to the contract. Note
-     * that if any ETH is present in the contract, it will be wrapped to WETH and
-     * used if sufficient. Any excess of ETH will be sent back to the sender.
+     * @dev Transfers `amounts` of `tokens` from the sender to the contract.
      * @param tokens An array of token addresses to transfer.
      * @param amounts An array of amounts to transfer expressed in WAD.
      */
@@ -306,8 +304,7 @@ contract DFMM is IDFMM {
     }
 
     /**
-     * @dev Transfers `amount of `token` from the contract to the recipient
-     * `to`. Note that WETH is automatically unwrapped to ETH.
+     * @dev Transfers `amount of `token` from the contract to the `to`.
      * @param token Address of the token to transfer.
      * @param to Address of the recipient.
      * @param amount Amount to transfer expressed in WAD.
