@@ -3,14 +3,12 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
-import { WETH } from "solmate/tokens/WETH.sol";
 import { DFMM, IDFMM, Pool, LPToken } from "src/DFMM.sol";
 
 contract SetUp is Test {
     DFMM dfmm;
     MockERC20 tokenX;
     MockERC20 tokenY;
-    WETH weth;
 
     uint256 public constant TEST_SWAP_FEE = 0.003 ether;
 
@@ -20,8 +18,7 @@ contract SetUp is Test {
         tokenX.mint(address(this), 10_000_000_000_000e18);
         tokenY.mint(address(this), 10_000_000_000_000e18);
 
-        weth = new WETH();
-        dfmm = new DFMM(address(weth));
+        dfmm = new DFMM();
 
         tokenX.approve(address(dfmm), type(uint256).max);
         tokenY.approve(address(dfmm), type(uint256).max);

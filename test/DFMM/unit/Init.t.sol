@@ -92,69 +92,6 @@ contract DFMMInit is DFMMSetUp, Script {
         }
     }
 
-    function test_DFMM_init_AcceptsWETH() public {
-        deal(address(weth), address(this), 1 ether);
-        weth.approve(address(dfmm), 1 ether);
-
-        uint256[] memory reserves = new uint256[](2);
-        reserves[0] = 1 ether;
-        reserves[1] = 1 ether;
-
-        bytes memory params =
-            abi.encode(true, int256(1 ether), reserves, uint256(1 ether));
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(weth);
-        tokens[1] = address(tokenY);
-
-        uint256 preWETHBalance = weth.balanceOf(address(this));
-
-        (POOL_ID,,) = dfmm.init(
-            InitParams({
-                name: "Default Pool",
-                symbol: "POOL",
-                strategy: address(strategy),
-                tokens: tokens,
-                data: params,
-                feeCollector: address(0),
-                controllerFee: 0
-            })
-        );
-
-        assertEq(weth.balanceOf(address(this)), preWETHBalance - 1 ether);
-    }
-
-    function test_DFMM_init_WrapsETH() public {
-        uint256[] memory reserves = new uint256[](2);
-        reserves[0] = 1 ether;
-        reserves[1] = 1 ether;
-
-        bytes memory params =
-            abi.encode(true, int256(1 ether), reserves, uint256(1 ether));
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(weth);
-        tokens[1] = address(tokenY);
-
-        uint256 preETHBalance = address(this).balance;
-
-        (POOL_ID,,) = dfmm.init{ value: 1 ether }(
-            InitParams({
-                name: "Default Pool",
-                symbol: "POOL",
-                strategy: address(strategy),
-                tokens: tokens,
-                data: params,
-                feeCollector: address(0),
-                controllerFee: 0
-            })
-        );
-
-        assertLe(address(this).balance, preETHBalance - 1 ether);
-        assertEq(address(dfmm).balance, 0);
-        assertEq(weth.balanceOf(address(dfmm)), 1 ether);
-    }
-
     function test_dfmm_init_EmitsInitEvent() public {
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
@@ -192,32 +129,6 @@ contract DFMMInit is DFMMSetUp, Script {
         LPToken lpToken = LPToken(pool.liquidityToken);
         assertEq(lpToken.balanceOf(address(this)), initialLiquidity - 1000);
         assertEq(lpToken.balanceOf(address(0)), 1000);
-    }
-
-    function test_DFMM_init_RevertsWhenETHIsInsufficient() public {
-        uint256[] memory reserves = new uint256[](2);
-        reserves[0] = 1 ether;
-        reserves[1] = 1 ether;
-
-        bytes memory params =
-            abi.encode(true, int256(1 ether), reserves, uint256(1 ether));
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(weth);
-        tokens[1] = address(tokenY);
-
-        vm.expectRevert("TRANSFER_FROM_FAILED");
-        (POOL_ID,,) = dfmm.init{ value: 0.5 ether }(
-            InitParams({
-                name: "Default Pool",
-                symbol: "POOL",
-                strategy: address(strategy),
-                tokens: tokens,
-                data: params,
-                feeCollector: address(0),
-                controllerFee: 0
-            })
-        );
     }
 
     function test_DFMM_init_RevertsWhenDecimalsTooLow() public {

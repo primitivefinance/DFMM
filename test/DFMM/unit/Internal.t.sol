@@ -6,7 +6,7 @@ import { DFMMSetUp, DFMM, IDFMM } from "./SetUp.sol";
 import { ERC20WithFees } from "test/utils/ERC20WithFees.sol";
 
 contract DFMMInternal is DFMM {
-    constructor(address weth_) DFMM(weth_) { }
+    constructor() DFMM() { }
 
     function transferFrom(
         address[] memory tokens,
@@ -27,55 +27,7 @@ contract DFMMInternalTest is DFMMSetUp {
 
     function setUp() public override {
         super.setUp();
-        dfmmInternal = new DFMMInternal(address(weth));
-    }
-
-    function test_DFMM_transferFrom_WrapsETH() public {
-        address[] memory tokens = new address[](1);
-        tokens[0] = address(weth);
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = 1 ether;
-        dfmmInternal.transferFrom{ value: amounts[0] }(tokens, amounts);
-        assertEq(weth.balanceOf(address(dfmmInternal)), amounts[0]);
-        assertEq(address(weth).balance, 1 ether);
-        assertEq(address(dfmmInternal).balance, 0);
-    }
-
-    function test_DFMM_transferFrom_RefundsExtraETH() public {
-        address[] memory tokens = new address[](1);
-        tokens[0] = address(weth);
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = 1 ether;
-        dfmmInternal.transferFrom{ value: amounts[0] * 2 }(tokens, amounts);
-        assertEq(weth.balanceOf(address(dfmmInternal)), amounts[0]);
-        assertEq(address(weth).balance, 1 ether);
-        assertEq(address(dfmmInternal).balance, 0);
-    }
-
-    function test_DFMM_transferFrom_UsesWETH() public {
-        address[] memory tokens = new address[](1);
-        tokens[0] = address(weth);
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = 1 ether;
-        weth.deposit{ value: amounts[0] }();
-        weth.approve(address(dfmmInternal), amounts[0]);
-        dfmmInternal.transferFrom(tokens, amounts);
-        assertEq(weth.balanceOf(address(dfmmInternal)), amounts[0]);
-        assertEq(address(weth).balance, amounts[0]);
-        assertEq(address(dfmmInternal).balance, 0);
-    }
-
-    function test_DFMM_transferFrom_UsesWETHAndRefunds() public {
-        address[] memory tokens = new address[](1);
-        tokens[0] = address(weth);
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = 1 ether;
-        weth.deposit{ value: amounts[0] }();
-        weth.approve(address(dfmmInternal), amounts[0]);
-        dfmmInternal.transferFrom{ value: amounts[0] - 1 }(tokens, amounts);
-        assertEq(weth.balanceOf(address(dfmmInternal)), amounts[0]);
-        assertEq(address(weth).balance, amounts[0]);
-        assertEq(address(dfmmInternal).balance, 0);
+        dfmmInternal = new DFMMInternal();
     }
 
     function testFuzz_DFMM_transferFrom_TransferTokens(uint256 amount) public {
@@ -133,17 +85,6 @@ contract DFMMInternalTest is DFMMSetUp {
         token.approve(address(dfmmInternal), amounts[0]);
         vm.expectRevert(IDFMM.InvalidTransfer.selector);
         dfmmInternal.transferFrom(tokens, amounts);
-    }
-
-    function test_DFMM_transfer_UnwrapsETH() public {
-        address to = address(this);
-        uint256 amount = 1 ether;
-        weth.deposit{ value: amount }();
-        uint256 preETHBalance = address(to).balance;
-        deal(address(weth), address(dfmmInternal), amount);
-        dfmmInternal.transfer(address(weth), to, amount);
-        assertEq(weth.balanceOf(address(dfmmInternal)), 0);
-        assertEq(address(this).balance, preETHBalance + amount);
     }
 
     function testFuzz_DFMM_transfer_TransferTokens(

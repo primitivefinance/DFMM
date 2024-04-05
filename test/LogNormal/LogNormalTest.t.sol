@@ -33,7 +33,7 @@ contract LogNormalTest is Test {
         MockERC20(tokenX).mint(address(this), 100_000_000 ether);
         MockERC20(tokenY).mint(address(this), 100_000_000 ether);
 
-        dfmm = new DFMM(address(0));
+        dfmm = new DFMM();
         logNormal = new LogNormal(address(dfmm));
         solver = new LogNormalSolver(address(logNormal));
         MockERC20(tokenX).approve(address(dfmm), type(uint256).max);

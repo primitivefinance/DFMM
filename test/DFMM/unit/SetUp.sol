@@ -45,30 +45,4 @@ contract DFMMSetUp is SetUp {
         (POOL_ID,,) = dfmm.init(getDefaultPoolParams(params));
         _;
     }
-
-    modifier initWETHPool() {
-        uint256[] memory reserves = new uint256[](2);
-        reserves[0] = 1 ether;
-        reserves[1] = 1 ether;
-
-        bytes memory params =
-            abi.encode(true, int256(1 ether), reserves, uint256(1 ether));
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(weth);
-        tokens[1] = address(tokenY);
-
-        (POOL_ID,,) = dfmm.init(
-            InitParams({
-                name: "Default Pool",
-                symbol: "POOL",
-                strategy: address(strategy),
-                tokens: tokens,
-                data: params,
-                feeCollector: address(0),
-                controllerFee: 0
-            })
-        );
-        _;
-    }
 }

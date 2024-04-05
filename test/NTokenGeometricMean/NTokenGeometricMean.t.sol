@@ -47,7 +47,7 @@ contract NTokenGeometricMeanTest is Test {
         MockERC20(tokenC).mint(address(this), 100_000_000e18);
         MockERC20(tokenD).mint(address(this), 100_000_000e18);
 
-        dfmm = new DFMM(address(0));
+        dfmm = new DFMM();
         g3m = new NTokenGeometricMean(address(dfmm));
         solver = new NTokenGeometricMeanSolver(address(g3m));
 

@@ -36,7 +36,7 @@ contract SetUp is Test {
         tokenY.mint(address(this), 100e18);
 
         weth = new WETH();
-        dfmm = new DFMM(address(weth));
+        dfmm = new DFMM();
         g3m = new GeometricMean(address(dfmm));
         solver = new GeometricMeanSolver(address(g3m));
 

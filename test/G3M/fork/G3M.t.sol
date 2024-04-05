@@ -42,7 +42,7 @@ contract G3MTestFork is Test {
         deal(address(weth), address(this), 1 ether);
         deal(address(dai), address(this), 10_000 ether);
 
-        dfmm = new DFMM(address(0));
+        dfmm = new DFMM();
         g3m = new GeometricMean(address(dfmm));
 
         usdc.approve(address(dfmm), type(uint256).max);
