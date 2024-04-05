@@ -180,7 +180,9 @@ function computePriceGivenX(
     int256 b = Gaussian.ppf(int256(ONE - rX.divWadDown(L)));
 
     // $$\exp(\Phi^{-1}  (1 - \frac{x}{L} ) \sigma  - \frac{1}{2} \sigma^2  )$$
-    int256 exp = (b.wadMul(int256(params.width)) - int256(a)).expWad();
+    int256 exp = (
+        b.wadMul(int256(computeSigmaSqrtTau(params.width, tau))) - int256(a)
+    ).expWad();
 
     // $$\mu \exp (\Phi^{-1}  (1 - \frac{x}{L} ) \sigma  - \frac{1}{2} \sigma^2  )$$
     return params.mean.mulWadUp(uint256(exp));
@@ -198,7 +200,9 @@ function computePriceGivenY(
     int256 b = Gaussian.ppf(int256(rY.divWadDown(params.mean.mulWadDown(L))));
 
     // $$\exp (\Phi^{-1} (\frac{y}{\mu L}) \sigma  + \frac{1}{2} \sigma^2  )$$
-    int256 exp = (b.wadMul(int256(params.width)) + int256(a)).expWad();
+    int256 exp = (
+        b.wadMul(int256(computeSigmaSqrtTau(params.width, tau))) + int256(a)
+    ).expWad();
 
     // $$\mu \exp (\Phi^{-1} (\frac{y}{\mu L}) \sigma  + \frac{1}{2} \sigma^2  )$$
     return params.mean.mulWadUp(uint256(exp));

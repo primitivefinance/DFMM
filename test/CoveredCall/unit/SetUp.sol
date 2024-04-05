@@ -24,6 +24,15 @@ contract CoveredCallSetUp is SetUp {
         controller: address(this)
     });
 
+    CoveredCallParams defaultParamsQuarterly = CoveredCallParams({
+        mean: ONE,
+        width: 0.1 ether,
+        maturity: YEAR / 4,
+        swapFee: TEST_SWAP_FEE,
+        timestamp: block.timestamp,
+        controller: address(this)
+    });
+
     CoveredCallParams defaultParamsFeeless = CoveredCallParams({
         mean: ONE,
         width: 0.00001 ether,
@@ -48,6 +57,10 @@ contract CoveredCallSetUp is SetUp {
     uint256 defaultPrice = ONE;
     bytes defaultInitialPoolData =
         computeInitialPoolData(defaultReserveX, defaultPrice, defaultParams);
+
+    bytes defaultInitialPoolDataQuarterly = computeInitialPoolData(
+        defaultReserveX, defaultPrice, defaultParamsQuarterly
+    );
 
     bytes defaultInitialPoolDataFeeless = computeInitialPoolData(
         defaultReserveX, defaultPrice, defaultParamsFeeless
@@ -98,6 +111,28 @@ contract CoveredCallSetUp is SetUp {
             strategy: address(coveredCall),
             tokens: tokens,
             data: defaultInitialPoolDataFeeless,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        (POOL_ID,,) = dfmm.init(defaultInitParams);
+
+        _;
+    }
+
+    modifier init_quarterly() {
+        vm.warp(0);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory defaultInitParams = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(coveredCall),
+            tokens: tokens,
+            data: defaultInitialPoolDataQuarterly,
             feeCollector: address(0),
             controllerFee: 0
         });
