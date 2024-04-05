@@ -147,7 +147,7 @@ contract ConstantSum is PairStrategy {
 
         deltaLiquidity =
             computeDeltaLiquidity(deltaX, deltaY, internalParams[poolId].price);
-        if (maxDeltaL > deltaLiquidity) revert InvalidDeltaLiquidity();
+        if (deltaLiquidity > maxDeltaL) revert InvalidDeltaLiquidity();
 
         deltas = new uint256[](2);
         deltas[0] = deltaX;
