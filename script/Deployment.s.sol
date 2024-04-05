@@ -12,7 +12,7 @@ contract DeploymentScript is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         WETH weth = new WETH();
-        DFMM dfmm = new DFMM(address(weth));
+        DFMM dfmm = new DFMM();
         // GeometricMean g3m = new GeometricMean(address(dfmm));
         // LogNormal logNormal = new LogNormal(address(dfmm));
 
