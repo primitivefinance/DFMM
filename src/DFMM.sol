@@ -313,10 +313,13 @@ contract DFMM is IDFMM {
             if (postBalance < preBalance + downscaledAmount) {
                 revert InvalidTransfer();
             }
-        }
 
-        if (address(this).balance > 0) {
-            SafeTransferLib.safeTransferETH(msg.sender, address(this).balance);
+            // Refund any excess native ether if the token is WETH.
+            if (token == weth && address(this).balance > 0) {
+                SafeTransferLib.safeTransferETH(
+                    msg.sender, address(this).balance
+                );
+            }
         }
     }
 
