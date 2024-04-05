@@ -299,12 +299,6 @@ contract CoveredCallSolver {
     ) public view returns (uint256 price) {
         CoveredCallParams memory params =
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
-        console2.log("maturity", params.maturity);
-        console2.log("timestamp", params.timestamp);
-        console2.log("tau", ONE * (params.maturity - params.timestamp) / YEAR);
-        console2.log("rx", reserves[0]);
-        console2.log("ry", reserves[1]);
         price = computePriceGivenY(ry, L, params);
     }
 
@@ -315,12 +309,6 @@ contract CoveredCallSolver {
     ) public view returns (uint256 price) {
         CoveredCallParams memory params =
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
-        console2.log("maturity", params.maturity);
-        console2.log("timestamp", params.timestamp);
-        console2.log("tau", ONE * (params.maturity - params.timestamp) / YEAR);
-        console2.log("rx", reserves[0]);
-        console2.log("ry", reserves[1]);
         price = computePriceGivenX(rx, L, params);
     }
 

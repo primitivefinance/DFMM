@@ -23,11 +23,19 @@ function computeTradingFunction(
     uint256 L,
     CoveredCallParams memory params
 ) pure returns (int256) {
-    int256 a = Gaussian.ppf(int256(rX.divWadDown(L)));
-    int256 b = Gaussian.ppf(int256(rY.divWadDown(L.mulWadUp(params.mean))));
-    uint256 tau = (ONE * (params.maturity - params.timestamp)) / YEAR;
+    int256 a = Gaussian.ppf(int256(rX.divWadUp(L)));
+    int256 b = Gaussian.ppf(int256(rY.divWadUp(L.mulWadUp(params.mean))));
+    uint256 tau = getTau(params);
     int256 c = int256(computeSigmaSqrtTau(params.width, tau));
     return a + b + c;
+}
+
+function getTau(CoveredCallParams memory params) pure returns (uint256) {
+    if (params.timestamp >= params.maturity) {
+        return 0;
+    } else {
+        return ONE * (params.maturity - params.timestamp) / YEAR;
+    }
 }
 
 function computeDeltaGivenDeltaLRoundUp(
@@ -72,7 +80,7 @@ function computeSigmaSqrtTau(
     uint256 tau
 ) pure returns (uint256 sigmaSqrtTau) {
     uint256 sqrtTau = FixedPointMathLib.sqrt(tau) * 10 ** 9;
-    sigmaSqrtTau = sigma.mulWadDown(sqrtTau);
+    sigmaSqrtTau = sigma.mulWadUp(sqrtTau);
 }
 
 /**
@@ -135,7 +143,7 @@ function computeD1(
     CoveredCallParams memory params
 ) pure returns (int256 d1) {
     int256 lnSDivMean = computeLnSDivMean(S, params.mean);
-    uint256 tau = ONE * (params.maturity - params.timestamp) / YEAR;
+    uint256 tau = getTau(params);
     uint256 halfSigmaSquaredTau = computeHalfSigmaSquaredTau(params.width, tau);
     d1 = (lnSDivMean + int256(halfSigmaSquaredTau)).wadDiv(int256(params.width));
 }
@@ -150,7 +158,7 @@ function computeD2(
     CoveredCallParams memory params
 ) pure returns (int256 d2) {
     int256 lnSDivMean = computeLnSDivMean(S, params.mean);
-    uint256 tau = ONE * (params.maturity - params.timestamp) / YEAR;
+    uint256 tau = getTau(params);
     uint256 halfSigmaSquaredTau = computeHalfSigmaSquaredTau(params.width, tau);
     d2 = (lnSDivMean - int256(halfSigmaSquaredTau)).wadDiv(int256(params.width));
 }
@@ -166,7 +174,7 @@ function computePriceGivenX(
     uint256 L,
     CoveredCallParams memory params
 ) pure returns (uint256) {
-    uint256 tau = ONE * (params.maturity - params.timestamp) / YEAR;
+    uint256 tau = getTau(params);
     uint256 a = computeHalfSigmaSquaredTau(params.width, tau);
     // $$\Phi^{-1} (1 - \frac{x}{L})$$
     int256 b = Gaussian.ppf(int256(ONE - rX.divWadDown(L)));
@@ -183,7 +191,7 @@ function computePriceGivenY(
     uint256 L,
     CoveredCallParams memory params
 ) pure returns (uint256) {
-    uint256 tau = ONE * (params.maturity - params.timestamp) / YEAR;
+    uint256 tau = getTau(params);
     uint256 a = computeHalfSigmaSquaredTau(params.width, tau);
 
     // $$\Phi^{-1} (\frac{y}{\mu L})$$

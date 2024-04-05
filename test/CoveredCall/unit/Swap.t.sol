@@ -34,20 +34,25 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         );
     }
 
-    function test_CoveredCall_swap_SwapsXforY_WarpToMaturity() public init {
-        vm.warp(365 days);
+    function test_CoveredCall_swap_SwapsXforY_WarpToMaturity()
+        public
+        init_no_fee
+    {
+        vm.warp(365.1 days);
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
 
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        uint256 amountIn = 99.6 ether;
+        uint256 amountIn = 99.9999999 ether;
         bool swapXForY = true;
 
         (bool valid, uint256 amountOut,, bytes memory payload) =
             solver.simulateSwap(POOL_ID, swapXForY, amountIn);
         assertEq(valid, true);
+
+        console2.log("out", amountOut);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), payload);
