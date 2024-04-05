@@ -116,9 +116,11 @@ contract DFMM is IDFMM {
                 revert InvalidTokenDecimals();
             }
 
-            for (uint256 j = i + 1; j < tokensLength; j++) {
-                if (token == params.tokens[j]) {
-                    revert InvalidDuplicateTokens();
+            unchecked {
+                for (uint256 j = i + 1; j < tokensLength; j++) {
+                    if (token == params.tokens[j]) {
+                        revert InvalidDuplicateTokens();
+                    }
                 }
             }
         }
