@@ -336,6 +336,7 @@ contract DFMM is IDFMM {
         } else {
             uint256 downscaledAmount =
                 downscaleDown(amount, computeScalingFactor(token));
+            if (downscaledAmount == 0) return;
             uint256 preBalance = ERC20(token).balanceOf(address(this));
             SafeTransferLib.safeTransfer(ERC20(token), to, downscaledAmount);
             uint256 postBalance = ERC20(token).balanceOf(address(this));
