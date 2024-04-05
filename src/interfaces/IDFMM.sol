@@ -224,9 +224,6 @@ interface IDFMM {
     /// @notice Address of the implementation of the LPToken contract.
     function lpTokenImplementation() external view returns (address);
 
-    /// @notice Address of the WETH contract.
-    function weth() external view returns (address);
-
     /// @notice Returns the pool parameters of pool `poolId`.
     /// @return pool A struct containing the pool parameters.
     function pools(uint256 poolId) external view returns (Pool memory pool);
