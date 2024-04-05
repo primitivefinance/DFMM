@@ -27,9 +27,6 @@ contract DFMM is IDFMM {
     /// @inheritdoc IDFMM
     address public immutable lpTokenImplementation;
 
-    /// @inheritdoc IDFMM
-    address public immutable weth;
-
     /// @dev Part of the reentrancy lock, 1 = unlocked, 2 = locked.
     uint256 private _locked = 1;
 
@@ -48,10 +45,8 @@ contract DFMM is IDFMM {
      * @dev The implementation of the LPToken contract is also
      * deployed at the same time. It'll be used later to deploy
      * new LPTokens using the [clone factory pattern](https://eips.ethereum.org/EIPS/eip-1167).
-     * @param weth_ The address of the WETH contract.
      */
-    constructor(address weth_) {
-        weth = weth_;
+    constructor() {
         lpTokenImplementation = address(new LPToken());
         LPToken(lpTokenImplementation).initialize("", "");
     }
@@ -295,13 +290,9 @@ contract DFMM is IDFMM {
                 downscaleUp(amount, computeScalingFactor(token));
             uint256 preBalance = ERC20(token).balanceOf(address(this));
 
-            if (token == weth && address(this).balance >= amount) {
-                WETH(payable(weth)).deposit{ value: amount }();
-            } else {
-                SafeTransferLib.safeTransferFrom(
-                    ERC20(token), msg.sender, address(this), downscaledAmount
-                );
-            }
+            SafeTransferLib.safeTransferFrom(
+                ERC20(token), msg.sender, address(this), downscaledAmount
+            );
 
             uint256 postBalance = ERC20(token).balanceOf(address(this));
             if (postBalance < preBalance + downscaledAmount) {
@@ -322,18 +313,13 @@ contract DFMM is IDFMM {
      * @param amount Amount to transfer expressed in WAD.
      */
     function _transfer(address token, address to, uint256 amount) internal {
-        if (token == weth) {
-            WETH(payable(weth)).withdraw(amount);
-            SafeTransferLib.safeTransferETH(to, amount);
-        } else {
-            uint256 downscaledAmount =
-                downscaleDown(amount, computeScalingFactor(token));
-            uint256 preBalance = ERC20(token).balanceOf(address(this));
-            SafeTransferLib.safeTransfer(ERC20(token), to, downscaledAmount);
-            uint256 postBalance = ERC20(token).balanceOf(address(this));
-            if (postBalance < preBalance - downscaledAmount) {
-                revert InvalidTransfer();
-            }
+        uint256 downscaledAmount =
+            downscaleDown(amount, computeScalingFactor(token));
+        uint256 preBalance = ERC20(token).balanceOf(address(this));
+        SafeTransferLib.safeTransfer(ERC20(token), to, downscaledAmount);
+        uint256 postBalance = ERC20(token).balanceOf(address(this));
+        if (postBalance < preBalance - downscaledAmount) {
+            revert InvalidTransfer();
         }
     }
 
