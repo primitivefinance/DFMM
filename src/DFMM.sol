@@ -44,11 +44,6 @@ contract DFMM is IDFMM {
         _locked = 1;
     }
 
-    /// @dev Only the WETH contract can send ETH to this contract.
-    receive() external payable {
-        if (msg.sender != weth) revert OnlyWETH();
-    }
-
     /**
      * @dev The implementation of the LPToken contract is also
      * deployed at the same time. It'll be used later to deploy
@@ -64,7 +59,6 @@ contract DFMM is IDFMM {
     /// @inheritdoc IDFMM
     function init(InitParams calldata params)
         external
-        payable
         lock
         returns (uint256, uint256[] memory, uint256)
     {
@@ -142,7 +136,7 @@ contract DFMM is IDFMM {
     function allocate(
         uint256 poolId,
         bytes calldata data
-    ) external payable lock returns (uint256[] memory) {
+    ) external lock returns (uint256[] memory) {
         (
             bool valid,
             int256 invariant,
@@ -217,7 +211,7 @@ contract DFMM is IDFMM {
         uint256 poolId,
         address recipient,
         bytes calldata data
-    ) external payable lock returns (address, address, uint256, uint256) {
+    ) external lock returns (address, address, uint256, uint256) {
         SwapState memory state;
 
         (
