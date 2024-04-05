@@ -14,8 +14,4 @@ contract DFMMConstructorTest is DFMMSetUp {
         assertEq(lpToken.symbol(), "");
         assertEq(lpToken.decimals(), 18);
     }
-
-    function test_DFMM_constructor_StoresWETHAddress() public {
-        assertEq(dfmm.weth(), address(weth));
-    }
 }
