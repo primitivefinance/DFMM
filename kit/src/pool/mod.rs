@@ -26,7 +26,7 @@ pub trait PoolType {
     async fn change_allocation_data(
         &self,
         pool_id: eU256,
-        allocation_date: Self::AllocationData,
+        allocation_data: Self::AllocationData,
     ) -> Result<Bytes>;
 }
 
@@ -77,6 +77,54 @@ impl<P: PoolType> Pool<P> {
             .send()
             .await?
             .await?;
+        Ok(())
+    }
+
+    /// Performs an allocation or deallocation on the pool.
+    ///
+    /// # Arguments
+    ///
+    /// * `action` - The type of action to perform (either Allocate or
+    ///   Deallocate).
+    /// * `allocation_data` - The allocation data to use for the action.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the allocation or deallocation is successful,
+    /// otherwise returns an error.
+    pub async fn allocate_or_deallocate(
+        &self,
+        action: AllocateOrDeallocate,
+        allocation_data: P::AllocationData,
+    ) -> Result<()> {
+        let data = self
+            .instance
+            .change_allocation_data(self.id, allocation_data)
+            .await?;
+        match action {
+            AllocateOrDeallocate::Allocate => {
+                self.dfmm.allocate(self.id, data).send().await?.await?
+            }
+            AllocateOrDeallocate::Deallocate => {
+                self.dfmm.deallocate(self.id, data).send().await?.await?
+            }
+        };
+        Ok(())
+    }
+
+    /// Updates the pool with new data.
+    ///
+    /// # Arguments
+    ///
+    /// * `new_data` - The new data to update the pool with.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` if the update is successful, otherwise returns an
+    /// error.
+    pub async fn update(&self, new_data: P::UpdateParameters) -> Result<()> {
+        let data = self.instance.update_data(new_data).await?;
+        self.dfmm.update(self.id, data).send().await?.await?;
         Ok(())
     }
 }
