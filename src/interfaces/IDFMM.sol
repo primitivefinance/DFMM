@@ -161,7 +161,6 @@ interface IDFMM {
      */
     function init(InitParams calldata params)
         external
-        payable
         returns (
             uint256 poolId,
             uint256[] memory reserves,
@@ -177,7 +176,7 @@ interface IDFMM {
     function allocate(
         uint256 poolId,
         bytes calldata data
-    ) external payable returns (uint256[] memory deltas);
+    ) external returns (uint256[] memory deltas);
 
     /**
      * @notice Deallocates liquidity from the pool `poolId`.
@@ -206,7 +205,6 @@ interface IDFMM {
         bytes calldata data
     )
         external
-        payable
         returns (
             address tokenIn,
             address tokenOut,
