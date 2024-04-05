@@ -14,12 +14,22 @@ contract CoveredCallSetUp is SetUp {
     CoveredCallSolver solver;
 
     uint256 public POOL_ID;
+    uint256 public constant FEE = 0.0001 ether;
 
     CoveredCallParams defaultParams = CoveredCallParams({
         mean: ONE,
         width: 0.1 ether,
         maturity: YEAR,
         swapFee: TEST_SWAP_FEE,
+        timestamp: block.timestamp,
+        controller: address(this)
+    });
+
+    CoveredCallParams defaultParamsMil = CoveredCallParams({
+        mean: ONE,
+        width: 0.1 ether,
+        maturity: YEAR / 2,
+        swapFee: 0,
         timestamp: block.timestamp,
         controller: address(this)
     });
@@ -52,11 +62,17 @@ contract CoveredCallSetUp is SetUp {
     });
 
     uint256 defaultReserveX = 100 ether;
+    uint256 defaultReserveXMil = 1_000_000 ether;
     uint256 defaultReserveXDeep = ONE * 10_000_000;
 
     uint256 defaultPrice = ONE;
+    uint256 defaultPricePoint9Rate = 0.84167999326 ether;
     bytes defaultInitialPoolData =
         computeInitialPoolData(defaultReserveX, defaultPrice, defaultParams);
+
+    bytes defaultInitialPoolDataMil = computeInitialPoolData(
+        defaultReserveXMil, defaultPricePoint9Rate, defaultParamsMil
+    );
 
     bytes defaultInitialPoolDataQuarterly = computeInitialPoolData(
         defaultReserveX, defaultPrice, defaultParamsQuarterly
@@ -89,6 +105,28 @@ contract CoveredCallSetUp is SetUp {
             strategy: address(coveredCall),
             tokens: tokens,
             data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        (POOL_ID,,) = dfmm.init(defaultInitParams);
+
+        _;
+    }
+
+    modifier init_mil() {
+        vm.warp(0);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory defaultInitParams = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(coveredCall),
+            tokens: tokens,
+            data: defaultInitialPoolDataMil,
             feeCollector: address(0),
             controllerFee: 0
         });

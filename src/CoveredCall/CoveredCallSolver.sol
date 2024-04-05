@@ -225,15 +225,20 @@ contract CoveredCallSolver {
                     preTotalLiquidity,
                     poolParams
                 );
+                console2.log("state.deltaLiquidity", state.deltaLiquidity);
 
                 endReserves.rx = preReserves[0] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
+                console2.log("endReserves.rx", endReserves.rx);
+                console2.log("endReserves.L", endReserves.L);
                 uint256 approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
+                console2.log("approxPrice", approxPrice);
 
                 endReserves.ry = getNextReserveY(
                     poolId, endReserves.rx, endReserves.L, approxPrice
                 );
+                console2.log("endReserves.ry", endReserves.ry);
 
                 require(
                     endReserves.ry < preReserves[1],
