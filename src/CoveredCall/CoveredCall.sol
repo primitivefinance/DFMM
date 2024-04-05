@@ -186,11 +186,11 @@ contract CoveredCall is PairStrategy {
         (tokenInIndex, tokenOutIndex, amountIn, amountOut, computedL) =
             abi.decode(data, (uint256, uint256, uint256, uint256, uint256));
 
-        int256 initialInvariant =
+        int256 computedInvariant =
             tradingFunction(pool.reserves, computedL, params);
 
-        if (initialInvariant <= 0) {
-            revert InvalidComputedLiquidity(initialInvariant);
+        if (computedInvariant <= 0 && computedInvariant <= EPSILON) {
+            revert InvalidComputedLiquidity(computedInvariant);
         }
 
         deltaLiquidity = _computeSwapDeltaLiquidity(
