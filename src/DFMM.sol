@@ -110,7 +110,7 @@ contract DFMM is IDFMM {
 
         for (uint256 i = 0; i < tokensLength; i++) {
             address token = params.tokens[i];
-            uint256 decimals = ERC20(params.tokens[i]).decimals();
+            uint256 decimals = ERC20(token).decimals();
 
             if (decimals > 18 || decimals < 6) {
                 revert InvalidTokenDecimals();
