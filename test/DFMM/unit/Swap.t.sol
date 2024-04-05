@@ -52,7 +52,8 @@ contract DFMMSwapTest is DFMMSetUp {
         dfmm.swap(
             POOL_ID,
             address(this),
-            abi.encode(true, 0, 0, 1, 1 ether, 1 ether, 1 ether)
+            abi.encode(true, 0, 0, 1, 1 ether, 1 ether, 1 ether),
+            ""
         );
         assertEq(token.balanceOf(address(this)), preBalance + feesInToken);
     }

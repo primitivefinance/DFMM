@@ -6,6 +6,7 @@ import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
 import { IStrategy } from "./interfaces/IStrategy.sol";
+import { ISwapCallback } from "./interfaces/ISwapCallback.sol";
 import {
     computeScalingFactor,
     downscaleDown,
@@ -216,7 +217,8 @@ contract DFMM is IDFMM {
     function swap(
         uint256 poolId,
         address recipient,
-        bytes calldata data
+        bytes calldata data,
+        bytes calldata callbackData
     ) external payable lock returns (address, address, uint256, uint256) {
         SwapState memory state;
 
@@ -254,9 +256,29 @@ contract DFMM is IDFMM {
         tokens[0] = tokenIn;
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = state.amountIn;
-        _transferFrom(tokens, amounts);
 
+        // Optimistically transfer the output tokens to the recipient.
         _transfer(tokenOut, recipient, state.amountOut);
+
+        // If the callbackData is empty, do a regular `_transferFrom()` call, as in the other operations.
+
+        if (callbackData.length == 0) {
+            _transferFrom(tokens, amounts);
+        } else {
+            // Otherwise, execute the callback and assert the input amount has been paid
+            // given the before and after balances of the input token.
+            uint256 balance = ERC20(tokenIn).balanceOf(address(this));
+            ISwapCallback(msg.sender).swapCallback(
+                tokenIn, tokenOut, state.amountIn, state.amountOut, callbackData
+            );
+
+            if (
+                ERC20(tokenIn).balanceOf(address(this))
+                    < balance + state.amountIn
+            ) {
+                revert InvalidTransfer();
+            }
+        }
 
         emit Swap(
             msg.sender,
