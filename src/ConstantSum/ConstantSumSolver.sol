@@ -59,7 +59,6 @@ contract ConstantSumSolver {
         SimulateSwapState memory state;
 
         if (swapXIn) {
-            computeSwapDeltaLiquidity(amountIn, poolParams, true);
             state.amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
                 ONE - poolParams.swapFee
             );
@@ -68,7 +67,6 @@ contract ConstantSumSolver {
                 revert NotEnoughLiquidity();
             }
         } else {
-            computeSwapDeltaLiquidity(amountIn, poolParams, false);
             state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
