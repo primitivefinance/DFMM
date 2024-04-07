@@ -110,15 +110,17 @@ contract DFMM is IDFMM {
 
         for (uint256 i = 0; i < tokensLength; i++) {
             address token = params.tokens[i];
-            uint256 decimals = ERC20(params.tokens[i]).decimals();
+            uint256 decimals = ERC20(token).decimals();
 
             if (decimals > 18 || decimals < 6) {
                 revert InvalidTokenDecimals();
             }
 
-            for (uint256 j = i + 1; j < tokensLength; j++) {
-                if (token == params.tokens[j]) {
-                    revert InvalidDuplicateTokens();
+            unchecked {
+                for (uint256 j = i + 1; j < tokensLength; j++) {
+                    if (token == params.tokens[j]) {
+                        revert InvalidDuplicateTokens();
+                    }
                 }
             }
         }
@@ -345,6 +347,7 @@ contract DFMM is IDFMM {
         } else {
             uint256 downscaledAmount =
                 downscaleDown(amount, computeScalingFactor(token));
+            if (downscaledAmount == 0) return;
             uint256 preBalance = ERC20(token).balanceOf(address(this));
             SafeTransferLib.safeTransfer(ERC20(token), to, downscaledAmount);
             uint256 postBalance = ERC20(token).balanceOf(address(this));
