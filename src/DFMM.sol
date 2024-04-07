@@ -283,9 +283,13 @@ contract DFMM is IDFMM {
     // Internals
 
     /**
-     * @dev Transfers `amounts` of `tokens` from the sender to the contract. Note
-     * that if any ETH is present in the contract, it will be wrapped to WETH and
-     * used if sufficient. Any excess of ETH will be sent back to the sender.
+     * @notice Transfers `amounts` of `tokens` from the sender to the contract.
+     * @dev Note that for pools with `WETH` as a token, the contract will accept
+     * full payments in native ether. If the contract receives more ether than
+     * the amount of `WETH` needed, the contract will refund the remaining ether.
+     * If the contract receives less ether than the amount of `WETH` needed, the
+     * contract will refund the native ether and request the full amount of `WETH`
+     * needed instead.
      * @param tokens An array of token addresses to transfer.
      * @param amounts An array of amounts to transfer expressed in WAD.
      */
@@ -303,7 +307,9 @@ contract DFMM is IDFMM {
                 downscaleUp(amount, computeScalingFactor(token));
             uint256 preBalance = ERC20(token).balanceOf(address(this));
 
-            if (token == weth && address(this).balance >= amount) {
+            // note: `msg.value` can be used safely in a loop because `weth` is a unique token,
+            // therefore we only enter this branch once.
+            if (token == weth && msg.value >= amount) {
                 WETH(payable(weth)).deposit{ value: amount }();
             } else {
                 SafeTransferLib.safeTransferFrom(
@@ -311,14 +317,19 @@ contract DFMM is IDFMM {
                 );
             }
 
+            // If not enough native ether was sent as payment
+            // or too much ether was sent,
+            // refund all the remaining ether back to the sender.
+            if (token == weth && msg.value != 0) {
+                SafeTransferLib.safeTransferETH(
+                    msg.sender, address(this).balance
+                );
+            }
+
             uint256 postBalance = ERC20(token).balanceOf(address(this));
             if (postBalance < preBalance + downscaledAmount) {
                 revert InvalidTransfer();
             }
-        }
-
-        if (address(this).balance > 0) {
-            SafeTransferLib.safeTransferETH(msg.sender, address(this).balance);
         }
     }
 
