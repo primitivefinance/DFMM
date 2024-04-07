@@ -18,7 +18,7 @@ function computeTradingFunction(
     uint256 a = uint256(int256(rX.divWadUp(L)).powWad(int256(params.wX)));
     uint256 b = uint256(int256(rY.divWadUp(L)).powWad(int256(params.wY)));
 
-    return int256(a.mulWadUp(b)) - int256(1 ether);
+    return int256(a.mulWadUp(b)) - int256(ONE);
 }
 
 function computeDeltaGivenDeltaLRoundUp(
