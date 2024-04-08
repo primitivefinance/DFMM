@@ -1,5 +1,4 @@
 use arbiter_bindings::bindings::weth::WETH;
-use arbiter_engine::messager::To;
 use bindings::{
     constant_sum::ConstantSum, dfmm::DFMM, geometric_mean::GeometricMean, log_normal::LogNormal,
 };
@@ -49,13 +48,13 @@ impl Behavior<()> for Deployer {
             .await?;
         trace!("ConstantSum deployed at {:?}", constant_sum.address());
 
-        let token_x = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
+        let token_x = ArbiterToken::deploy(
             client.clone(),
             ("Token X".to_owned(), "ARBX".to_owned(), 18u8),
         )?
         .send()
         .await?;
-        let token_y = arbiter_bindings::bindings::arbiter_token::ArbiterToken::deploy(
+        let token_y = ArbiterToken::deploy(
             client.clone(),
             ("Token Y".to_owned(), "ARBY".to_owned(), 18u8),
         )?
