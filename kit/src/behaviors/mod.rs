@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use arbiter_bindings::bindings::arbiter_token::ArbiterToken;
 use arbiter_engine::{
-    machine::{Behavior, CreateStateMachine, Engine, EventStream, StateMachine},
+    machine::{Behavior, ControlFlow, CreateStateMachine, Engine, EventStream, StateMachine},
     messager::{Message, Messager, To},
 };
 use arbiter_macros::Behaviors;
