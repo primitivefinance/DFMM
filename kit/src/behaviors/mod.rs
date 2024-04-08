@@ -16,9 +16,8 @@ pub mod deployer;
 pub mod token_admin;
 
 #[derive(Behaviors, Debug, Deserialize, Serialize)]
-pub enum Behaviors<Pool> 
-    where Pool: PoolType {
-    Allocate(InitialAllocation<Pool>),
+pub enum Behaviors<P> {
+    Allocate(InitialAllocation<P>),
     Deployer(Deployer),
     TokenAdmin(TokenAdmin),
 }
