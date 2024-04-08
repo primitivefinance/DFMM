@@ -134,23 +134,23 @@ contract G3MAllocateTest is G3MSetUp {
     }
 
     function test_G3M_allocate_ReceiveAppropriateLpTokens() public init_100 {
-      (, uint256 initialL) = getReservesAndLiquidity(POOL_ID);
-      Pool memory pool = dfmm.pools(POOL_ID);
-      LPToken liquidityToken = LPToken(pool.liquidityToken);
+        (, uint256 initialL) = getReservesAndLiquidity(POOL_ID);
+        Pool memory pool = dfmm.pools(POOL_ID);
+        LPToken liquidityToken = LPToken(pool.liquidityToken);
 
-      uint256 startBalance = liquidityToken.balanceOf(address(this));
+        uint256 startBalance = liquidityToken.balanceOf(address(this));
 
-      uint256 dyMax = 100 ether;
-      (uint256 dxMax, uint256 dL) = solver.allocateGivenDeltaY(POOL_ID, dyMax);
-      bytes memory data = abi.encode(dxMax, dyMax, dL);
+        uint256 dyMax = 100 ether;
+        (uint256 dxMax, uint256 dL) = solver.allocateGivenDeltaY(POOL_ID, dyMax);
+        bytes memory data = abi.encode(dxMax, dyMax, dL);
 
-      dfmm.allocate(POOL_ID, data);
+        dfmm.allocate(POOL_ID, data);
 
-      (, uint256 nextL) = getReservesAndLiquidity(POOL_ID);
-      uint256 endBalance = liquidityToken.balanceOf(address(this));
-      
-      // Add 1_000 wei to account for liquidity that was burnt on init
-      assertEq(startBalance + 1_000, initialL);
-      assertEq(endBalance + 1_000, nextL);
+        (, uint256 nextL) = getReservesAndLiquidity(POOL_ID);
+        uint256 endBalance = liquidityToken.balanceOf(address(this));
+
+        // Add 1_000 wei to account for liquidity that was burnt on init
+        assertEq(startBalance + 1000, initialL);
+        assertEq(endBalance + 1000, nextL);
     }
 }
