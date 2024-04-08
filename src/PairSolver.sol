@@ -2,7 +2,14 @@
 pragma solidity ^0.8.13;
 
 import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
-import "src/lib/StrategyLib.sol";
+import { 
+    computeDeltaXGivenDeltaY,
+    computeDeltaLGivenDeltaX,
+    computeDeltaLGivenDeltaY,
+    computeDeltaYGivenDeltaX,
+    computeDeltaXGivenDeltaL,
+    computeDeltaYGivenDeltaL
+} from "src/lib/StrategyLib.sol";
 
 /**
  * @title Pair strategy base contract for DFMM.
@@ -58,6 +65,39 @@ abstract contract PairSolver {
         (uint256 rX, uint256 rY, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
         return encodeAllocationDeltasGivenDeltaL(deltaL, rX, rY, liquidity);
+    }
+
+    function encodeAllocationDeltasGivenDeltaX(
+        uint256 deltaX,
+        uint256 reserveX,
+        uint256 reserveY,
+        uint256 liquidity
+    ) internal pure returns (bytes memory) {
+        uint256 deltaY = computeDeltaYGivenDeltaX(deltaX, reserveX, reserveY);
+        uint256 deltaL = computeDeltaLGivenDeltaX(deltaX, liquidity, reserveX);
+        return abi.encode(deltaX, deltaY, deltaL);
+    }
+
+    function encodeAllocationDeltasGivenDeltaY(
+        uint256 deltaY,
+        uint256 reserveX,
+        uint256 reserveY,
+        uint256 liquidity
+    ) internal pure returns (bytes memory) {
+        uint256 deltaX = computeDeltaXGivenDeltaY(deltaY, reserveX, reserveY);
+        uint256 deltaL = computeDeltaLGivenDeltaY(deltaY, liquidity, reserveY);
+        return abi.encode(deltaX, deltaY, deltaL);
+    }
+
+    function encodeAllocationDeltasGivenDeltaL(
+        uint256 deltaL,
+        uint256 reserveX,
+        uint256 reserveY,
+        uint256 liquidity
+    ) internal pure returns (bytes memory) {
+        uint256 deltaX = computeDeltaXGivenDeltaL(deltaL, reserveX, liquidity);
+        uint256 deltaY = computeDeltaYGivenDeltaL(deltaL, reserveY, liquidity);
+        return abi.encode(deltaX, deltaY, deltaL);
     }
 
     /**
