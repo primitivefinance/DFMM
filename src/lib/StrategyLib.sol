@@ -80,4 +80,3 @@ function computeDeltaYGivenDeltaL(
 ) pure returns (uint256 deltaX) {
     return reserveY.mulDivUp(deltaL, liquidity);
 }
-

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
-import { 
+import {
     computeDeltaXGivenDeltaY,
     computeDeltaLGivenDeltaX,
     computeDeltaLGivenDeltaY,
