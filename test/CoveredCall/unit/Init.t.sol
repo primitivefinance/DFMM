@@ -35,13 +35,15 @@ contract CoveredCallInitTest is CoveredCallSetUp {
             solver.getReservesAndLiquidity(POOL_ID);
         console2.log("rXinit", reserves[0]);
         console2.log("rYinit", reserves[1]);
-        // start at p =
         uint256 defaultPricePoin11Rate = 0.81162243324 ether;
         uint256 amountIn = 5000 ether;
         bool xIn = true;
 
         uint256 price = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
         console2.log("initial price", price);
+
+        int256 invariant = solver.getInvariant(POOL_ID);
+        console2.log("initial invariant", invariant);
 
         uint256 acc = 0;
         while (price > defaultPricePoin11Rate) {
@@ -50,7 +52,9 @@ contract CoveredCallInitTest is CoveredCallSetUp {
             (,,, price) = dfmm.swap(POOL_ID, address(this), data);
             (reserves, L) = solver.getReservesAndLiquidity(POOL_ID);
             price = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
+            invariant = solver.getInvariant(POOL_ID);
             acc += amountIn;
+            console2.log("invariant", invariant);
             console2.log("rX", reserves[0]);
             console2.log("rY", reserves[1]);
             console2.log("acc", acc);

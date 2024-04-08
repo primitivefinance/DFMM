@@ -326,4 +326,14 @@ contract CoveredCallSolver {
         (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
         price = computePriceGivenX(reserves[0], L, getPoolParams(poolId));
     }
+
+    function getInvariant(uint256 poolId) public view returns (int256) {
+        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
+        return computeTradingFunction(
+            reserves[0],
+            reserves[1],
+            L,
+            getPoolParams(poolId)
+        );
+    }
 }

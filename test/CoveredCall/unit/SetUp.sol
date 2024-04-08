@@ -132,6 +132,8 @@ contract CoveredCallSetUp is SetUp {
         });
 
         (POOL_ID,,) = dfmm.init(defaultInitParams);
+        int256 invariant = solver.getInvariant(POOL_ID);
+        console2.log("Invariant at init: {}", invariant);
 
         _;
     }
