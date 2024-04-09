@@ -5,6 +5,7 @@ import { CoveredCallParams, UpdateCode } from "src/CoveredCall/CoveredCall.sol";
 import {
     computeLGivenX,
     computeLGivenY,
+    computeXGivenL,
     computeYGivenL,
     computeTradingFunction,
     computeNextLiquidity

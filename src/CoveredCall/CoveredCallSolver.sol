@@ -112,7 +112,7 @@ contract CoveredCallSolver {
         uint256 S,
         CoveredCallParams memory params
     ) public pure returns (bytes memory) {
-        return computeInitialPoolDataGivenY(rx, S, params);
+        return computeInitialPoolDataGivenY(rY, S, params);
     }
 
     function allocateGivenDeltaX(

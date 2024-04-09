@@ -30,6 +30,46 @@ contract CoveredCallInitTest is CoveredCallSetUp {
         assertApproxEqAbs(priceGivenYL, ONE, 10);
     }
 
+    function testCoveredCall_init_given_y() public {
+        CoveredCallParams memory ccParams = CoveredCallParams({
+            mean: ONE,
+            width: 0.17 ether,
+            maturity: YEAR * 2,
+            swapFee: FEE,
+            timestamp: block.timestamp,
+            controller: address(this)
+        });
+
+        uint256 rY = 1_000_000 ether;
+        uint256 price = 0.84167999326 ether;
+
+        bytes memory poolData = solver.prepareInitialPoolDataGivenY(
+            rY, price, ccParams 
+        );
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory initParams = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(coveredCall),
+            tokens: tokens,
+            data: poolData,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        (POOL_ID,,) = dfmm.init(initParams);
+
+        (uint256[] memory reserves, uint256 L) =
+            solver.getReservesAndLiquidity(POOL_ID);
+
+        console2.log("rX", reserves[0]);
+        console2.log("rY", reserves[1]);
+    }
+
     function test_CoveredCall_init_capital_efficiency() public init_mil {
         (uint256[] memory reserves, uint256 L) =
             solver.getReservesAndLiquidity(POOL_ID);
@@ -39,7 +79,6 @@ contract CoveredCallInitTest is CoveredCallSetUp {
         uint256 maxRange = 0.69444444444 ether;
         uint256 amountIn = 5000 ether;
         bool xIn = true;
-
         uint256 price = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
         console2.log("initial price", price);
 

@@ -27,7 +27,7 @@ contract CoveredCallSetUp is SetUp {
 
     CoveredCallParams defaultParamsMil = CoveredCallParams({
         mean: ONE,
-        width: 0.17 ether,
+        width: 0.13 ether,
         maturity: YEAR * 2,
         swapFee: FEE,
         timestamp: block.timestamp,
@@ -70,7 +70,7 @@ contract CoveredCallSetUp is SetUp {
     bytes defaultInitialPoolData =
         computeInitialPoolData(defaultReserveX, defaultPrice, defaultParams);
 
-    bytes defaultInitialPoolDataMil = computeInitialPoolData(
+    bytes defaultInitialPoolDataMil = computeInitialPoolDataGivenY(
         defaultReserveXMil, defaultPricePoint9Rate, defaultParamsMil
     );
 
