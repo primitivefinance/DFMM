@@ -104,6 +104,17 @@ function computeLGivenX(
     L = rx.divWadUp(ONE - cdf);
 }
 
+function computeLGivenY(
+    uint256 ry,
+    uint256 S,
+    CoveredCallParams memory params
+) pure returns (uint256 L) {
+    int256 d2 = computeD2({ S: S, params: params });
+    uint256 cdf = toUint(Gaussian.cdf(d2));
+
+    L = ry.divWadUp(params.mean.mulWadUp(cdf));
+}
+
 /// @dev Computes reserves y given L(x, S).
 /// @return ry The reserve y computed as y(x, s) = K * L_x(x, S) * cdf[d2(S, K, sigma, tau)]
 function computeYGivenL(

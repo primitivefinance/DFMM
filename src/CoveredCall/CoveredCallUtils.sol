@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import { CoveredCallParams, UpdateCode } from "src/CoveredCall/CoveredCall.sol";
 import {
     computeLGivenX,
+    computeLGivenY,
     computeYGivenL,
     computeTradingFunction,
     computeNextLiquidity
@@ -46,8 +47,24 @@ function computeInitialPoolData(
     reserves[1] = ry;
     return abi.encode(reserves, L, params);
 }
-/// @dev Casts a positived signed integer to an unsigned integer, reverting if `x` is negative.
 
+function computeInitialPoolDataGivenY(
+    uint256 amountY,
+    uint256 initialPrice,
+    CoveredCallParams memory params
+) pure returns (bytes memory) {
+    uint256 L = computeLGivenY(amountY, initialPrice, params);
+    uint256 rX = computeXGivenL(L, initialPrice, params);
+    int256 invariant = computeTradingFunction(rX, amountY, L, params);
+    L = computeNextLiquidity(rX, amountY, invariant, L, params);
+    uint256[] memory reserves = new uint256[](2);
+    reserves[0] = rX;
+    reserves[1] = amountY;
+    return abi.encode(reserves, L, params);
+}
+
+
+/// @dev Casts a positived signed integer to an unsigned integer, reverting if `x` is negative.
 function toUint(int256 x) pure returns (uint256) {
     require(x >= 0, "toUint: negative");
     return uint256(x);

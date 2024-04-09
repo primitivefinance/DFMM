@@ -11,7 +11,8 @@ import {
 import {
     encodeFeeUpdate,
     encodeControllerUpdate,
-    computeInitialPoolData
+    computeInitialPoolData,
+    computeInitialPoolDataGivenY
 } from "src/CoveredCall/CoveredCallUtils.sol";
 import { CoveredCallParams } from "src/CoveredCall/CoveredCall.sol";
 import {
@@ -104,6 +105,14 @@ contract CoveredCallSolver {
         CoveredCallParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolData(rx, S, params);
+    }
+
+    function prepareInitialPoolDataGivenY(
+        uint256 rY,
+        uint256 S,
+        CoveredCallParams memory params
+    ) public pure returns (bytes memory) {
+        return computeInitialPoolDataGivenY(rx, S, params);
     }
 
     function allocateGivenDeltaX(
