@@ -27,7 +27,7 @@ contract CoveredCallSetUp is SetUp {
 
     CoveredCallParams defaultParamsMil = CoveredCallParams({
         mean: ONE,
-        width: 0.13 ether,
+        width: 0.05 ether,
         maturity: YEAR * 2,
         swapFee: FEE,
         timestamp: block.timestamp,

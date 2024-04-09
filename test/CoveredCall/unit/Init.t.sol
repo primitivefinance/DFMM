@@ -33,7 +33,7 @@ contract CoveredCallInitTest is CoveredCallSetUp {
     function testCoveredCall_init_given_y() public {
         CoveredCallParams memory ccParams = CoveredCallParams({
             mean: ONE,
-            width: 0.17 ether,
+            width: 0.1 ether,
             maturity: YEAR * 2,
             swapFee: FEE,
             timestamp: block.timestamp,
@@ -68,6 +68,8 @@ contract CoveredCallInitTest is CoveredCallSetUp {
 
         console2.log("rX", reserves[0]);
         console2.log("rY", reserves[1]);
+        uint256 postInitPrice = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
+        console2.log("initial price", postInitPrice);
     }
 
     function test_CoveredCall_init_capital_efficiency() public init_mil {
