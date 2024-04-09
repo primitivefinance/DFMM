@@ -14,7 +14,7 @@ pub trait PoolType {
     type UpdateParameters;
     type StrategyContract;
     type SolverContract;
-    type AllocationData;
+    type AllocationData: Send + Sync + 'static;
 
     #[allow(async_fn_in_trait)]
     async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
