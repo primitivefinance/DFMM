@@ -5,7 +5,8 @@ import {
     FixedPointMathLib,
     computeTradingFunction,
     computeSwapDeltaLiquidity,
-    computeDeltaLiquidity
+    computeDeltaLiquidityRoundDown,
+    computeDeltaLiquidityRoundUp
 } from "./ConstantSumMath.sol";
 import {
     decodePriceUpdate,
@@ -67,8 +68,9 @@ contract ConstantSum is PairStrategy {
         ConstantSumParams memory params;
 
         (reserves, params) = abi.decode(data, (uint256[], ConstantSumParams));
-        totalLiquidity =
-            computeDeltaLiquidity(reserves[0], reserves[1], params.price);
+        totalLiquidity = computeDeltaLiquidityRoundDown(
+            reserves[0], reserves[1], params.price
+        );
 
         if (pool.reserves.length != 2 || reserves.length != 2) {
             revert InvalidReservesLength();
@@ -106,8 +108,9 @@ contract ConstantSum is PairStrategy {
         (uint256 deltaX, uint256 deltaY, uint256 minDeltaL) =
             abi.decode(data, (uint256, uint256, uint256));
 
-        deltaLiquidity =
-            computeDeltaLiquidity(deltaX, deltaY, internalParams[poolId].price);
+        deltaLiquidity = computeDeltaLiquidityRoundDown(
+            deltaX, deltaY, internalParams[poolId].price
+        );
         if (deltaLiquidity < minDeltaL) revert InvalidDeltaLiquidity();
 
         deltas = new uint256[](2);
@@ -145,8 +148,9 @@ contract ConstantSum is PairStrategy {
         (uint256 deltaX, uint256 deltaY, uint256 maxDeltaL) =
             abi.decode(data, (uint256, uint256, uint256));
 
-        deltaLiquidity =
-            computeDeltaLiquidity(deltaX, deltaY, internalParams[poolId].price);
+        deltaLiquidity = computeDeltaLiquidityRoundUp(
+            deltaX, deltaY, internalParams[poolId].price
+        );
         if (deltaLiquidity > maxDeltaL) revert InvalidDeltaLiquidity();
 
         deltas = new uint256[](2);
