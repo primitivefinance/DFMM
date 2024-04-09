@@ -137,7 +137,7 @@ function computeSwapDeltaLiquidity(
     uint256 weight,
     uint256 swapFee
 ) pure returns (uint256) {
-    return weight.mulWadDown(swapFee).mulWadDown(totalLiquidity).mulWadDown(
-        amountIn.divWadDown(reserve)
+    return weight.mulWadUp(swapFee).mulWadUp(totalLiquidity).mulWadUp(
+        amountIn.divWadUp(reserve)
     );
 }
