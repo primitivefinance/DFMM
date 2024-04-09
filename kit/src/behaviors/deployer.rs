@@ -22,11 +22,12 @@ pub struct DeploymentData {
 
 #[async_trait::async_trait]
 impl Behavior<()> for Deployer {
+    type Processor = ();
     async fn startup(
         &mut self,
         client: Arc<ArbiterMiddleware>,
         messager: Messager,
-    ) -> Result<Option<EventStream<()>>> {
+    ) -> Result<Option<(Self::Processor, EventStream<()>)>> {
         let weth = WETH::deploy(client.clone(), ())?.send().await?;
         trace!("WETH deployed at {:?}", weth.address());
 
