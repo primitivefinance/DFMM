@@ -31,12 +31,20 @@ function computeInitialPoolData(
     return abi.encode(reserves, params);
 }
 
-function computeDeltaLiquidity(
+function computeDeltaLiquidityRoundUp(
     uint256 deltaX,
     uint256 deltaY,
     uint256 price
 ) pure returns (uint256) {
     return price.mulWadUp(deltaX) + deltaY;
+}
+
+function computeDeltaLiquidityRoundDown(
+    uint256 deltaX,
+    uint256 deltaY,
+    uint256 price
+) pure returns (uint256) {
+    return price.mulWadDown(deltaX) + deltaY;
 }
 
 function computeSwapDeltaLiquidity(
