@@ -204,6 +204,7 @@ contract CoveredCall is PairStrategy {
             tradingFunction(pool.reserves, computedL + deltaLiquidity, params);
 
         valid = invariant >= 0;
+        //valid = invariant >= 0 && invariant <= EPSILON;
     }
 
     /// @inheritdoc IStrategy

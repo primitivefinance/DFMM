@@ -14,7 +14,7 @@ contract CoveredCallSetUp is SetUp {
     CoveredCallSolver solver;
 
     uint256 public POOL_ID;
-    uint256 public constant FEE = 0.0001 ether;
+    uint256 public constant FEE = 0.00001 ether;
 
     CoveredCallParams defaultParams = CoveredCallParams({
         mean: ONE,
@@ -27,9 +27,9 @@ contract CoveredCallSetUp is SetUp {
 
     CoveredCallParams defaultParamsMil = CoveredCallParams({
         mean: ONE,
-        width: 0.1 ether,
-        maturity: YEAR / 2,
-        swapFee: 0,
+        width: 0.17 ether,
+        maturity: YEAR * 2,
+        swapFee: FEE,
         timestamp: block.timestamp,
         controller: address(this)
     });

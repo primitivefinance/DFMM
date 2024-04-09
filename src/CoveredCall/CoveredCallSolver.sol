@@ -289,6 +289,7 @@ contract CoveredCallSolver {
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
+
         return (
             valid,
             state.amountOut,
