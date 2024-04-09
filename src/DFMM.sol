@@ -208,6 +208,8 @@ contract DFMM is IDFMM {
         int256 invariant;
         uint256 tokenInIndex;
         uint256 tokenOutIndex;
+        address tokenIn;
+        address tokenOut;
         uint256 amountIn;
         uint256 amountOut;
         uint256 deltaLiquidity;
@@ -249,16 +251,16 @@ contract DFMM is IDFMM {
         _pools[poolId].reserves[state.tokenInIndex] += state.amountIn;
         _pools[poolId].reserves[state.tokenOutIndex] -= state.amountOut;
 
-        address tokenIn = _pools[poolId].tokens[state.tokenInIndex];
-        address tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
+        state.tokenIn = _pools[poolId].tokens[state.tokenInIndex];
+        state.tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
         address[] memory tokens = new address[](1);
-        tokens[0] = tokenIn;
+        tokens[0] = state.tokenIn;
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = state.amountIn;
 
         // Optimistically transfer the output tokens to the recipient.
-        _transfer(tokenOut, recipient, state.amountOut);
+        _transfer(state.tokenOut, recipient, state.amountOut);
 
         // If the callbackData is empty, do a regular `_transferFrom()` call, as in the other operations.
 
@@ -267,13 +269,17 @@ contract DFMM is IDFMM {
         } else {
             // Otherwise, execute the callback and assert the input amount has been paid
             // given the before and after balances of the input token.
-            uint256 balance = ERC20(tokenIn).balanceOf(address(this));
+            uint256 balance = ERC20(state.tokenIn).balanceOf(address(this));
             ISwapCallback(msg.sender).swapCallback(
-                tokenIn, tokenOut, state.amountIn, state.amountOut, callbackData
+                state.tokenIn,
+                state.tokenOut,
+                state.amountIn,
+                state.amountOut,
+                callbackData
             );
 
             if (
-                ERC20(tokenIn).balanceOf(address(this))
+                ERC20(state.tokenIn).balanceOf(address(this))
                     < balance + state.amountIn
             ) {
                 revert InvalidTransfer();
@@ -284,13 +290,13 @@ contract DFMM is IDFMM {
             msg.sender,
             poolId,
             recipient,
-            tokenIn,
-            tokenOut,
+            state.tokenIn,
+            state.tokenOut,
             state.amountIn,
             state.amountOut
         );
 
-        return (tokenIn, tokenOut, state.amountIn, state.amountOut);
+        return (state.tokenIn, state.tokenOut, state.amountIn, state.amountOut);
     }
 
     /// @inheritdoc IDFMM
