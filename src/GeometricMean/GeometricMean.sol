@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
-import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
+import { Strategy, IStrategy } from "src/Strategy.sol";
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
 import { Pool } from "src/interfaces/IDFMM.sol";
 import {
@@ -37,7 +37,7 @@ enum UpdateCode {
 /**
  * @notice Geometric Mean Market Maker.
  */
-contract GeometricMean is PairStrategy {
+contract GeometricMean is Strategy {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using DynamicParamLib for DynamicParam;
@@ -54,7 +54,7 @@ contract GeometricMean is PairStrategy {
     mapping(uint256 => InternalParams) public internalParams;
 
     /// @param dfmm_ Address of the DFMM contract.
-    constructor(address dfmm_) PairStrategy(dfmm_) { }
+    constructor(address dfmm_) Strategy(dfmm_) { }
 
     /// @dev Thrown if the weight of X is greater than 1 (in WAD).
     error InvalidWeightX();
@@ -170,39 +170,7 @@ contract GeometricMean is PairStrategy {
         );
     }
 
-    /// @inheritdoc PairStrategy
-    function _computeAllocateDeltasGivenDeltaL(
-        uint256 deltaLiquidity,
-        Pool memory pool,
-        bytes memory
-    ) internal pure override returns (uint256[] memory deltas) {
-        deltas = new uint256[](2);
-        deltas[0] = computeDeltaGivenDeltaLRoundUp(
-            pool.reserves[0], deltaLiquidity, pool.totalLiquidity
-        );
-
-        deltas[1] = computeDeltaGivenDeltaLRoundUp(
-            pool.reserves[1], deltaLiquidity, pool.totalLiquidity
-        );
-    }
-
-    /// @inheritdoc PairStrategy
-    function _computeDeallocateDeltasGivenDeltaL(
-        uint256 deltaLiquidity,
-        Pool memory pool,
-        bytes memory
-    ) internal pure override returns (uint256[] memory deltas) {
-        deltas = new uint256[](2);
-        deltas[0] = computeDeltaGivenDeltaLRoundDown(
-            pool.reserves[0], deltaLiquidity, pool.totalLiquidity
-        );
-
-        deltas[1] = computeDeltaGivenDeltaLRoundDown(
-            pool.reserves[1], deltaLiquidity, pool.totalLiquidity
-        );
-    }
-
-    /// @inheritdoc PairStrategy
+    /// @inheritdoc Strategy
     function _computeSwapDeltaLiquidity(
         Pool memory pool,
         bytes memory params,

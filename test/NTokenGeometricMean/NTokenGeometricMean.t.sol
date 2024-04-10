@@ -190,6 +190,29 @@ contract NTokenGeometricMeanTest is Test {
         return deltas;
     }
 
+    /// @dev `forge test --match-test test_4_token_single_sided_allocate -vvv`
+    function test_4_token_single_sided_allocate() public basic {
+        // Find the deltas of an equal proportion of 1 ether of each token. Also get the array.
+        (uint256[] memory amounts, uint256 dLiquidity) =
+            solver.getAllocationDeltasGivenDeltaT(POOL_ID, 0, ONE);
+
+        console.log(amounts[0], dLiquidity);
+
+        // Reset the arrays so that we only have the first token with a non-zero value.
+        // And reset it to be about 5x amount of each per token amount computed originally.
+        for (uint256 i = 0; i < amounts.length; i++) {
+            if (i != 0) {
+                amounts[i] = 0;
+            } else {
+                amounts[i] = 5 ether; // ~5x the amount per 1 of the other tokens because weight is 0.25.
+            }
+        }
+
+        bytes memory data = abi.encode(amounts, dLiquidity);
+
+        dfmm.allocate(POOL_ID, data);
+    }
+
     function test_4_token_allocate_basic() public basic {
         uint256 maxTokenDelta = 100e18;
         uint256[] memory maxDeltas = createTokenDeltas(maxTokenDelta);

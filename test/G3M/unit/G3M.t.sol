@@ -88,8 +88,12 @@ contract SetUp is Test {
         uint256 deltaLiquidity = computeLGivenX(maxDeltaX, S, params);
         uint256 maxDeltaY = computeY(maxDeltaX, S, params);
 
-        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
-        (uint256[] memory deltas) = dfmm.allocate(POOL_ID, data);
+        uint256[] memory deltas = new uint256[](pool.reserves.length);
+        deltas[0] = maxDeltaX;
+        deltas[1] = maxDeltaY;
+
+        bytes memory data = abi.encode(deltas, deltaLiquidity);
+        (deltas) = dfmm.allocate(POOL_ID, data);
     }
 
     function test_G3M2_deallocate() public {
@@ -108,9 +112,12 @@ contract SetUp is Test {
         uint256 deltaLiquidity = computeLGivenX(minDeltaX, S, params);
         uint256 minDeltaY = computeY(minDeltaX, S, params);
 
-        bytes memory data =
-            abi.encode(minDeltaX - 1, minDeltaY - 1, deltaLiquidity);
-        (uint256[] memory deltas) = dfmm.deallocate(POOL_ID, data);
+        uint256[] memory deltas = new uint256[](pool.reserves.length);
+        deltas[0] = minDeltaX - 1;
+        deltas[1] = minDeltaY - 1;
+
+        bytes memory data = abi.encode(deltas, deltaLiquidity);
+        (deltas) = dfmm.deallocate(POOL_ID, data);
     }
 
     function getPoolLiquidityToken(uint256 poolId)

@@ -18,7 +18,14 @@ contract G3MDeallocateTest is G3MSetUp {
 
         (, uint256 preTotalLiquidity) = getReservesAndLiquidity(POOL_ID);
 
-        bytes memory data = abi.encode(minDeltaX, deltaY, deltaLiquidity);
+        (uint256[] memory reserves, uint256 liquidity) =
+            getReservesAndLiquidity(POOL_ID);
+
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = minDeltaX;
+        deltas[1] = deltaY;
+
+        bytes memory data = abi.encode(deltas, deltaLiquidity);
         dfmm.deallocate(POOL_ID, data);
 
         (, uint256 postTotalLiquidity) = getReservesAndLiquidity(POOL_ID);
@@ -36,7 +43,15 @@ contract G3MDeallocateTest is G3MSetUp {
 
         (uint256 deltaY, uint256 deltaLiquidity) =
             solver.deallocateGivenDeltaX(POOL_ID, minDeltaX);
-        bytes memory data = abi.encode(minDeltaX, deltaY, deltaLiquidity);
+
+        (uint256[] memory reserves, uint256 liquidity) =
+            getReservesAndLiquidity(POOL_ID);
+
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = minDeltaX;
+        deltas[1] = deltaY;
+
+        bytes memory data = abi.encode(deltas, deltaLiquidity);
         dfmm.deallocate(POOL_ID, data);
 
         (uint256 postReserveX, uint256 postReserveY,) =
@@ -54,7 +69,15 @@ contract G3MDeallocateTest is G3MSetUp {
 
         (uint256 deltaY, uint256 deltaLiquidity) =
             solver.deallocateGivenDeltaX(POOL_ID, minDeltaX);
-        bytes memory data = abi.encode(minDeltaX, deltaY, deltaLiquidity);
+
+        (uint256[] memory reserves, uint256 liquidity) =
+            getReservesAndLiquidity(POOL_ID);
+
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = minDeltaX;
+        deltas[1] = deltaY;
+
+        bytes memory data = abi.encode(deltas, deltaLiquidity);
         dfmm.deallocate(POOL_ID, data);
 
         assertEq(preBalanceX + minDeltaX, tokenX.balanceOf(address(this)));
@@ -71,8 +94,12 @@ contract G3MDeallocateTest is G3MSetUp {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(POOL_ID);
 
-        bytes memory data = abi.encode(minDeltaX, minDeltaY, deltaLiquidity);
-        (uint256[] memory deltas) = dfmm.deallocate(POOL_ID, data);
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = minDeltaX;
+        deltas[1] = minDeltaY;
+
+        bytes memory data = abi.encode(deltas, deltaLiquidity);
+        (deltas) = dfmm.deallocate(POOL_ID, data);
 
         (uint256[] memory adjustedReserves, uint256 adjustedLiquidity) =
             getReservesAndLiquidity(POOL_ID);
