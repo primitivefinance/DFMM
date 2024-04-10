@@ -94,9 +94,11 @@ contract CoveredCall is PairStrategy {
         )
     {
         CoveredCallParams memory params;
-        params.timestamp = block.timestamp;
+
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, CoveredCallParams));
+
+        params.timestamp = block.timestamp;
 
         if (params.mean < MIN_WIDTH || params.mean > MAX_MEAN) {
             revert InvalidMean();
