@@ -2,12 +2,14 @@
 pragma solidity >=0.5.0;
 
 interface ISwapCallback {
-    /// @notice              Triggered when swapping tokens in DFMM.
-    /// @param  tokenIn      Token to swap from
-    /// @param  tokenOut     Token to swap to
-    /// @param  amountIn     Amount of tokenIn to swap
-    /// @param  amountOut    Amount of tokenOut received
-    /// @param  data         Calldata passed on swap function call
+    /**
+     * @notice Triggered when swapping tokens in DFMM.
+     * @param tokenIn Token to swap from.
+     * @param tokenOut Token to swap to.
+     * @param amountIn Amount of tokenIn to swap (in WAD units).
+     * @param amountOut Amount of tokenOut received (in WAD units).
+     * @param data Calldata passed on swap function call.
+     */
     function swapCallback(
         address tokenIn,
         address tokenOut,
