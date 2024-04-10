@@ -53,15 +53,29 @@ contract LogNormalAllocateTest is LogNormalSetUp {
         (uint256[] memory reserves, uint256 liquidity) =
             solver.getReservesAndLiquidity(POOL_ID);
 
-        uint256 deltaLiquidity =
-            computeDeltaLGivenDeltaX(deltaX, liquidity, reserves[0]);
-        uint256 deltaYMax =
-            computeDeltaYGivenDeltaL(deltaLiquidity, liquidity, reserves[1]);
-        uint256 price = solver.internalPrice(POOL_ID);
+        console2.log("X", reserves[0]);
+        console2.log("Y", reserves[1]);
+        console2.log("L", liquidity);
+
+        uint256 estimatedL = solver.getNextLiquidity(
+            POOL_ID, reserves[0] + deltaX, reserves[1], liquidity
+        );
+        uint256 deltaLiquidity = estimatedL - liquidity;
+
+        bool swapXForY = true;
+
+        (bool valid, uint256 amountOut,, bytes memory payload) =
+            solver.simulateSwap(POOL_ID, swapXForY, deltaX);
+
+        console2.log("Amount out: ", amountOut);
 
         uint256[] memory deltas = new uint256[](reserves.length);
-        deltas[0] = deltaX + deltaYMax * 1 ether / price + 100_000_000_000_000; // Need to put the 'value' of the other token into the single side. This is a very rough hacky guess.
+        deltas[0] = deltaX;
         deltas[1] = 0;
+
+        console2.log("X", reserves[0] + deltas[0]);
+        console2.log("Y", reserves[1] + deltas[1]);
+        console2.log("L", liquidity + deltaLiquidity);
 
         console2.log(
             "Pool reserves before allocation: ", reserves[0], reserves[1]
@@ -85,6 +99,76 @@ contract LogNormalAllocateTest is LogNormalSetUp {
             postReserves[1] - reserves[1],
             postLiquidity - liquidity
         );
+    }
+
+    function logPoolState() public view {
+        (uint256[] memory reserves, uint256 liquidity) =
+            solver.getReservesAndLiquidity(POOL_ID);
+
+        console2.log("X", reserves[0]);
+        console2.log("Y", reserves[1]);
+        console2.log("L", liquidity);
+    }
+
+    function test_LogNormal_single_sided_allocate_deallocate() public init {
+        uint256 deltaX = 0.1 ether;
+
+        (uint256[] memory reserves, uint256 liquidity) =
+            solver.getReservesAndLiquidity(POOL_ID);
+
+        uint256 estimatedL = solver.getNextLiquidity(
+            POOL_ID, reserves[0] + deltaX, reserves[1], liquidity
+        );
+        uint256 deltaLiquidity = estimatedL - liquidity;
+
+        bool swapXForY = true;
+
+        (bool valid, uint256 amountOut,, bytes memory payload) =
+            solver.simulateSwap(POOL_ID, swapXForY, deltaX);
+
+        console2.log("Estimated delta y given delta x: ", amountOut);
+
+        uint256 estimatedLiquidityPayment = computeDeltaLXIn(
+            deltaX,
+            reserves[0],
+            reserves[1],
+            liquidity,
+            solver.getPoolParams(POOL_ID)
+        );
+        console2.log("Estimated liquidity payment: ", estimatedLiquidityPayment);
+
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = deltaX;
+        deltas[1] = 0;
+
+        logPoolState();
+
+        console2.log("Allocate x");
+
+        bytes memory data = abi.encode(deltas, deltaLiquidity);
+        dfmm.allocate(POOL_ID, data);
+
+        (uint256[] memory postReserves, uint256 postLiquidity) =
+            solver.getReservesAndLiquidity(POOL_ID);
+
+        logPoolState();
+
+        deltas[0] = 0;
+        deltas[1] = amountOut * 1 ether / (1 ether + TEST_SWAP_FEE); // try to get the amount out excluding the swap fee
+
+        estimatedL = solver.getNextLiquidity(
+            POOL_ID, postReserves[0], postReserves[1] - deltas[1], postLiquidity
+        );
+        deltaLiquidity = postLiquidity - estimatedL;
+
+        console2.log("Deallocate y");
+
+        data = abi.encode(deltas, deltaLiquidity);
+        dfmm.deallocate(POOL_ID, data);
+
+        (postReserves, postLiquidity) = solver.getReservesAndLiquidity(POOL_ID);
+
+        logPoolState();
     }
 
     function test_LogNormal_allocate_GivenX() public init {
