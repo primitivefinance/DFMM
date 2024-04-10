@@ -1,6 +1,10 @@
+> Version: `v0.3.0`
+
 # DFMM
 
 This repository contains the smart contracts source code for the DFMM protocol. 
+
+
 
 ## What is DFMM?
 
