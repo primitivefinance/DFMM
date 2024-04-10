@@ -1,5 +1,5 @@
 use super::*;
-use crate::pool::{Pool, PoolConfigurer, PoolType};
+use crate::pool::{Pool, PoolType};
 use arbiter_engine::machine::{Behavior, Configuration, Processing, Processor, State};
 
 // Idea: Let's make a behavior that has two states:
@@ -17,7 +17,7 @@ pub struct PoolCreator<S: State> {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PoolConfig<P: PoolType> {
     pub params: P::PoolParameters,
-    pub initial_allocation_data: P::InitialAllocationData,
+    pub initial_allocation_data: P::InitializationData,
     pub token_list: Vec<eAddress>,
 }
 
@@ -34,8 +34,8 @@ where
     type Processor = PoolCreator<Processing<PoolProcessor<P>>>;
     async fn startup(
         &mut self,
-        client: Arc<ArbiterMiddleware>,
-        messager: Messager,
+        _client: Arc<ArbiterMiddleware>,
+        _messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<E>)>> {
         todo!()
     }
@@ -47,7 +47,7 @@ where
     P: PoolType + Send + Sync + 'static,
     E: Send + Sync + 'static,
 {
-    async fn process(&mut self, event: E) -> Result<ControlFlow> {
-        todo!()
+    async fn process(&mut self, _event: E) -> Result<ControlFlow> {
+        Ok(ControlFlow::Halt)
     }
 }

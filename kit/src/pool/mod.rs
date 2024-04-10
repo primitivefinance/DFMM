@@ -5,11 +5,10 @@
 
 use arbiter_core::middleware::ArbiterMiddleware;
 use ethers::types::Bytes;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
-use self::bindings::dfmm::DFMM;
 use super::*;
-use crate::bindings::arbiter_token::ArbiterToken;
+use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
 
 pub mod constant_sum;
 // pub mod geometric_mean;
@@ -21,12 +20,12 @@ pub mod constant_sum;
 // 1. The parameters of the pool which, for example, are like the `mean` and `width` of the `LogNormal` pool. (Strategy specific since other pools might have different params like `ConstantSum` has `price`)
 // 2. Initial allocation data, which consists of, for example, a `price` and an amount of `token_x` for the `LogNormal` pool. (Strategy specific since other pools like `ConstantSum` may not have the same needs)
 // 3. Base configuration which ALL pools share as part of their parameterization which is the `swap_fee`, `controller` and the `controller_fee`. Every type of strategy needs these.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct InitData<P: PoolType> {
-    pub params: P::PoolParameters,
-    pub initial_allocation_data: P::InitialAllocationData,
-    pub base_config: BaseParameters,
-}
+// #[derive(Clone, Debug, Serialize, Deserialize)]
+// pub struct InitData<P: PoolType> {
+//     pub params: P::PoolParameters,
+//     pub initial_allocation_data: P::InitialAllocationData,
+//     pub base_config: BaseParameters,
+// }
 
 // Notes:
 // These are the things that all strategies need to have to be initialized (and potentially updated).
@@ -37,32 +36,16 @@ pub struct BaseParameters {
     pub controller_fee: eU256,
 }
 
-// TODO: I don't think we need this anymore!
-// Notes:
-// This trait provides the interface for people to construct pools from a `Configuration` state since all of this should be `Serialize` and `Deserialize`.
-// This stuff ultimately will be what's used to deploy a `Pool<P: PoolType>` which will hold onto actual instances of contracts (whereas this just holds config data).
-pub trait PoolConfigurer: Clone + std::fmt::Debug + 'static {
-    type PoolParameters: Clone
-        + std::fmt::Debug
-        + Serialize
-        + for<'de> Deserialize<'de>
-        + Send
-        + Sync
-        + 'static;
-    type InitialAllocationData: Clone
-        + std::fmt::Debug
-        + Serialize
-        + for<'de> Deserialize<'de>
-        + Send
-        + Sync
-        + 'static;
-}
+// TODO: We could do something like this so we can have `create_pool` done generically
+// pub trait StrategySolver {
+//     fn get_initial_pool_data ..
+// }
 
 // Notes:
-// Everything from the above now gets collapsed (or inherited) as the associated `Parameters` type of the `PoolType`. E
 // All the other types will be specific to each pool/strategy type since those will be specific contracts
 pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
-    // type Parameters: PoolConfigurer;
+    // This trait provides the interface for people to construct pools from a `Configuration` state since all of this should be `Serialize` and `Deserialize`.
+    // This stuff ultimately will be what's used to deploy a `Pool<P: PoolType>` which will hold onto actual instances of contracts (whereas this just holds config data).
     type PoolParameters: Clone
         + std::fmt::Debug
         + Serialize
@@ -70,13 +53,14 @@ pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
         + Send
         + Sync
         + 'static;
-    type InitialAllocationData: Clone
+    type InitializationData: Clone
         + std::fmt::Debug
         + Serialize
         + for<'de> Deserialize<'de>
         + Send
         + Sync
         + 'static;
+    // ~~ These are the contracts that are used to interact with the pool. ~~
     type StrategyContract;
     type SolverContract;
     type AllocationData: Send + Sync + 'static;
@@ -84,23 +68,12 @@ pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
     #[allow(async_fn_in_trait)]
     async fn create_pool(
         &self,
+        init_data: Self::InitializationData,
+        token_list: Vec<ArbiterToken<ArbiterMiddleware>>,
+        strategy_contract: Self::StrategyContract,
+        solver_contract: Self::SolverContract,
         dfmm: DFMM<ArbiterMiddleware>,
-        init_data: InitData<Self>,
-    ) -> Result<Pool<Self>> {
-        todo!()
-        // TODO: There is a blanket implementation that we can do here.
-        // we might be able to use the solver to encode this.
-        //  THIS IS FROM THE BINDINGS FOR THE DFMM CONTRACT, WE NEED THE INPUT TO `dfmm.init(_)` to be of this type.
-        // pub struct InitParams {
-        //     pub name: ::std::string::String,
-        //     pub symbol: ::std::string::String,
-        //     pub strategy: ::ethers::core::types::Address,
-        //     pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
-        //     pub data: ::ethers::core::types::Bytes,
-        //     pub fee_collector: ::ethers::core::types::Address,
-        //     pub controller_fee: ::ethers::core::types::U256,
-        // }
-    }
+    ) -> Result<Pool<Self>>;
 
     #[allow(async_fn_in_trait)]
     async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;

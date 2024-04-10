@@ -1,4 +1,8 @@
-use bindings::{constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver};
+use bindings::{
+    constant_sum::ConstantSum,
+    constant_sum_solver::{ConstantSumParams, ConstantSumSolver},
+    shared_types::InitParams,
+};
 
 use super::*;
 
@@ -6,29 +10,86 @@ use super::*;
 pub struct ConstantSumPool {
     pub strategy_contract: ConstantSum<ArbiterMiddleware>,
     pub solver_contract: ConstantSumSolver<ArbiterMiddleware>,
-    pub parameters: ConstantSumParameters,
+    pub parameters: ConstantSumParams,
 }
 
+// Configuration for the pool
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ConstantSumParameters {
-    pub price: eU256,
-}
-
-impl PoolConfigurer for ConstantSumParameters {
-    type PoolParameters = Self;
-    type InitialAllocationData = Bytes;
+pub struct ConstantSumInitData {
+    pub name: String,
+    pub symbol: String,
+    pub reserve_x: eU256,
+    pub reserve_y: eU256,
+    pub token_x_name: String,
+    pub token_y_name: String,
+    pub params: ConstantSumParams,
 }
 
 pub enum ConstantSumAllocationData {
     GivenX(eU256),
     GivenY(eU256),
 }
+
+// pub struct Pool {
+//     pub strategy: ::ethers::core::types::Address,
+//     pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
+//     pub reserves: ::std::vec::Vec<::ethers::core::types::U256>,
+//     pub total_liquidity: ::ethers::core::types::U256,
+//     pub liquidity_token: ::ethers::core::types::Address,
+//     pub fee_collector: ::ethers::core::types::Address,
+//     pub controller_fee: ::ethers::core::types::U256,
+// }
+
 impl PoolType for ConstantSumPool {
-    type PoolParameters = ConstantSumParameters;
-    type InitialAllocationData = Bytes;
+    type PoolParameters = ConstantSumParams;
+    type InitializationData = ConstantSumInitData;
     type StrategyContract = ConstantSum<ArbiterMiddleware>;
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = ConstantSumAllocationData;
+
+    async fn create_pool(
+        &self,
+        init_data: Self::InitializationData,
+        token_list: Vec<ArbiterToken<ArbiterMiddleware>>,
+        strategy_contract: Self::StrategyContract,
+        solver_contract: Self::SolverContract,
+        dfmm: DFMM<ArbiterMiddleware>,
+    ) -> Result<Pool<Self>> {
+        let init_bytes = solver_contract
+            .get_initial_pool_data(
+                init_data.reserve_x,
+                init_data.reserve_y,
+                init_data.params.clone(),
+            )
+            .call()
+            .await?;
+        let init_params = InitParams {
+            name: init_data.name,
+            symbol: init_data.symbol,
+            strategy: strategy_contract.address(),
+            tokens: token_list.iter().map(|tok| tok.address()).collect(),
+            data: init_bytes,
+            fee_collector: eAddress::zero(),
+            controller_fee: 0.into(),
+        };
+
+        let (id, _reserves, _total_liquidity) = dfmm.init(init_params.clone()).call().await?;
+        dfmm.init(init_params).send().await?;
+
+        let instance = ConstantSumPool {
+            strategy_contract,
+            solver_contract,
+            parameters: init_data.params,
+        };
+
+        Ok(Pool {
+            id,
+            dfmm,
+            instance,
+            token_x: token_list[0].clone(),
+            token_y: token_list[1].clone(),
+        })
+    }
 
     async fn swap_data(
         &self,
