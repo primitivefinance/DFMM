@@ -64,7 +64,6 @@ function computeInitialPoolDataGivenY(
     return abi.encode(reserves, L, params);
 }
 
-
 /// @dev Casts a positived signed integer to an unsigned integer, reverting if `x` is negative.
 function toUint(int256 x) pure returns (uint256) {
     require(x >= 0, "toUint: negative");
