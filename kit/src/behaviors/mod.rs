@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use arbiter_bindings::bindings::arbiter_token::ArbiterToken;
+use bindings::arbiter_token::ArbiterToken;
 use arbiter_engine::{
     machine::{Behavior, Configuration, ControlFlow, EventStream},
     messager::{Messager, To},

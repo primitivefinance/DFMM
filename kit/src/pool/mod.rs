@@ -3,9 +3,13 @@
 // What this means is that `PoolType` itself has to be `Deserialize`able and this is kinda tough to work with.
 // ---->>> The reason why is because we can't `Deserialize` contract objects themselves because that's just not possible.
 
+use std::sync::Arc;
+
 use arbiter_core::middleware::ArbiterMiddleware;
 use ethers::types::Bytes;
 use serde::{Deserialize, Serialize};
+
+use self::behaviors::deployer::DeploymentData;
 
 use super::*;
 use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
@@ -67,7 +71,6 @@ pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
 
     #[allow(async_fn_in_trait)]
     async fn create_pool(
-        &self,
         init_data: Self::InitializationData,
         token_list: Vec<ArbiterToken<ArbiterMiddleware>>,
         strategy_contract: Self::StrategyContract,
@@ -87,6 +90,8 @@ pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
         pool_id: eU256,
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes>;
+
+    fn get_contracts(deployment: &DeploymentData, client: Arc<ArbiterMiddleware>) -> (Self::StrategyContract, Self::SolverContract);
 }
 
 pub enum UpdateParameters<P: PoolType> {

@@ -1,8 +1,13 @@
+use std::sync::Arc;
+
 use bindings::{
     constant_sum::ConstantSum,
     constant_sum_solver::{ConstantSumParams, ConstantSumSolver},
     shared_types::InitParams,
 };
+use ethers::etherscan::Client;
+
+use self::behaviors::deployer::DeploymentData;
 
 use super::*;
 
@@ -48,8 +53,11 @@ impl PoolType for ConstantSumPool {
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = ConstantSumAllocationData;
 
+    fn get_contracts(deployment: &DeploymentData, client: Arc<ArbiterMiddleware>) -> (Self::StrategyContract, Self::SolverContract) {
+        (ConstantSum::new(deployment.constant_sum, client.clone()), ConstantSumSolver::new(deployment.constant_sum_solver, client))
+    }
+
     async fn create_pool(
-        &self,
         init_data: Self::InitializationData,
         token_list: Vec<ArbiterToken<ArbiterMiddleware>>,
         strategy_contract: Self::StrategyContract,
