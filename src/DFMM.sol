@@ -268,8 +268,6 @@ contract DFMM is IDFMM {
         } else {
             // Otherwise, execute the callback and assert the input amount has been paid
             // given the before and after balances of the input token.
-            uint256 downscaledAmount =
-                downscaleUp(state.amountIn, computeScalingFactor(state.tokenIn));
             uint256 preBalance = ERC20(state.tokenIn).balanceOf(address(this));
 
             ISwapCallback(msg.sender).swapCallback(
@@ -280,6 +278,8 @@ contract DFMM is IDFMM {
                 callbackData
             );
 
+            uint256 downscaledAmount =
+                downscaleUp(state.amountIn, computeScalingFactor(state.tokenIn));
             uint256 postBalance = ERC20(state.tokenIn).balanceOf(address(this));
             if (postBalance < preBalance + downscaledAmount) {
                 revert InvalidTransfer();
