@@ -195,6 +195,7 @@ interface IDFMM {
      * @param poolId Id of the pool to swap tokens into.
      * @param recipient Address receiving the output tokens.
      * @param data An array of bytes used by the strategy contract.
+     * @param callbackData An array of bytes used in the callback function.
      * @return tokenIn Address of the token being sent.
      * @return tokenOut Address of the token being received.
      * @return amountIn Amount of token sent by the swapper.
@@ -203,7 +204,8 @@ interface IDFMM {
     function swap(
         uint256 poolId,
         address recipient,
-        bytes calldata data
+        bytes calldata data,
+        bytes calldata callbackData
     )
         external
         payable
