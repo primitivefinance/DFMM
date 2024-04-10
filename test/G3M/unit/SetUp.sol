@@ -32,7 +32,7 @@ contract G3MSetUp is SetUp {
     );
 
     bytes default100InitialPoolData = computeInitialPoolData(
-      defaultReserveX * 100, defaultStrikePrice, defaultParams
+        defaultReserveX * 100, defaultStrikePrice, defaultParams
     );
 
     function setUp() public override {
@@ -64,7 +64,7 @@ contract G3MSetUp is SetUp {
     }
 
     modifier init_100() {
-      address[] memory tokens = new address[](2);
+        address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
