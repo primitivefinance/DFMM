@@ -41,11 +41,6 @@ contract ConstantSumSolver {
         return computeInitialPoolData(rx, ry, params);
     }
 
-    struct SimulateSwapState {
-        uint256 amountOut;
-        uint256 deltaLiquidity;
-    }
-
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
@@ -56,23 +51,21 @@ contract ConstantSumSolver {
             IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
         );
 
-        SimulateSwapState memory state;
+        uint256 amountOut;
 
         if (swapXIn) {
-            computeSwapDeltaLiquidity(amountIn, poolParams, true);
-            state.amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
+            amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
                 ONE - poolParams.swapFee
             );
 
-            if (pool.reserves[1] < state.amountOut) {
+            if (pool.reserves[1] < amountOut) {
                 revert NotEnoughLiquidity();
             }
         } else {
-            computeSwapDeltaLiquidity(amountIn, poolParams, false);
-            state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
+            amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
-            if (pool.reserves[0] < state.amountOut) {
+            if (pool.reserves[0] < amountOut) {
                 revert NotEnoughLiquidity();
             }
         }
@@ -80,15 +73,15 @@ contract ConstantSumSolver {
         bytes memory swapData;
 
         if (swapXIn) {
-            swapData = abi.encode(0, 1, amountIn, state.amountOut);
+            swapData = abi.encode(0, 1, amountIn, amountOut);
         } else {
-            swapData = abi.encode(1, 0, amountIn, state.amountOut);
+            swapData = abi.encode(1, 0, amountIn, amountOut);
         }
 
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
-        return (valid, state.amountOut, swapData);
+        return (valid, amountOut, swapData);
     }
 
     function preparePriceUpdate(uint256 newPrice)

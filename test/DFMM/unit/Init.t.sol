@@ -17,6 +17,9 @@ contract DFMMInit is DFMMSetUp, Script {
     bytes defaultData =
         abi.encode(valid, initialInvariant, defaultReserves, initialLiquidity);
 
+    /// @notice for handling ether refunds
+    receive() external payable { }
+
     function test_DFMM_init_StoresStrategyInitialReservesAndLiquidity()
         public
     {
