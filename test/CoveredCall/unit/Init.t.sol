@@ -43,9 +43,8 @@ contract CoveredCallInitTest is CoveredCallSetUp {
         uint256 rY = 1_000_000 ether;
         uint256 price = 0.84167999326 ether;
 
-        bytes memory poolData = solver.prepareInitialPoolDataGivenY(
-            rY, price, ccParams 
-        );
+        bytes memory poolData =
+            solver.prepareInitialPoolDataGivenY(rY, price, ccParams);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
@@ -100,7 +99,10 @@ contract CoveredCallInitTest is CoveredCallSetUp {
             console2.log("rY", reserves[1]);
             console2.log("acc", acc);
             console2.log("price post swap", price);
-            console2.log("price gt defaultPricePoin11Rate", price > defaultPricePoin11Rate);
+            console2.log(
+                "price gt defaultPricePoin11Rate",
+                price > defaultPricePoin11Rate
+            );
         }
     }
 }
