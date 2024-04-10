@@ -23,7 +23,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         assertEq(valid, true);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), payload);
+            dfmm.swap(POOL_ID, address(this), payload, "");
         assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
         assertEq(
             tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - outputAmount
@@ -55,7 +55,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         console2.log("out", amountOut);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), payload);
+            dfmm.swap(POOL_ID, address(this), payload, "");
         assertEq(tokenX.balanceOf(address(dfmm)), preDfmmBalanceX + inputAmount);
         assertEq(
             tokenY.balanceOf(address(dfmm)), preDfmmBalanceY - outputAmount
@@ -80,7 +80,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
             solver.simulateSwap(POOL_ID, swapXForY, amountIn);
         assertEq(valid, true);
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), payload);
+            dfmm.swap(POOL_ID, address(this), payload, "");
 
         assertEq(tokenY.balanceOf(address(dfmm)), preDfmmBalanceY + inputAmount);
         assertEq(
@@ -127,7 +127,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
             abi.encode(1, 0, amountIn, amountOut, deltaLiquidity);
 
         vm.expectRevert();
-        dfmm.swap(POOL_ID, address(this), payload);
+        dfmm.swap(POOL_ID, address(this), payload, "");
     }
 
     function test_CoveredCall_swap_ChargesCorrectFeesYIn() public deep {
@@ -138,7 +138,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
             solver.simulateSwap(POOL_ID, swapXForY, amountIn);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), payload);
+            dfmm.swap(POOL_ID, address(this), payload, "");
 
         console2.log(inputAmount);
         console2.log(outputAmount);
@@ -152,7 +152,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
             solver.simulateSwap(POOL_ID, swapXForY, amountIn);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), payload);
+            dfmm.swap(POOL_ID, address(this), payload, "");
 
         console2.log(inputAmount);
         console2.log(outputAmount);

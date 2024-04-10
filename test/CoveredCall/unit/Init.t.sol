@@ -79,7 +79,7 @@ contract CoveredCallInitTest is CoveredCallSetUp {
             (reserves, L) = solver.getReservesAndLiquidity(POOL_ID);
             (,,, bytes memory data) =
                 solver.simulateSwap(POOL_ID, xIn, amountIn);
-            dfmm.swap(POOL_ID, address(this), data);
+            dfmm.swap(POOL_ID, address(this), data, "");
             price = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
             invariant = solver.getInvariant(POOL_ID);
             acc += amountIn;
