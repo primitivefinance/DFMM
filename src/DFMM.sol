@@ -263,13 +263,15 @@ contract DFMM is IDFMM {
         _transfer(state.tokenOut, recipient, state.amountOut);
 
         // If the callbackData is empty, do a regular `_transferFrom()` call, as in the other operations.
-
         if (callbackData.length == 0) {
             _transferFrom(tokens, amounts);
         } else {
             // Otherwise, execute the callback and assert the input amount has been paid
             // given the before and after balances of the input token.
-            uint256 balance = ERC20(state.tokenIn).balanceOf(address(this));
+            uint256 downscaledAmount =
+                downscaleUp(state.amountIn, computeScalingFactor(state.tokenIn));
+            uint256 preBalance = ERC20(state.tokenIn).balanceOf(address(this));
+
             ISwapCallback(msg.sender).swapCallback(
                 state.tokenIn,
                 state.tokenOut,
@@ -278,10 +280,8 @@ contract DFMM is IDFMM {
                 callbackData
             );
 
-            if (
-                ERC20(state.tokenIn).balanceOf(address(this))
-                    < balance + state.amountIn
-            ) {
+            uint256 postBalance = ERC20(state.tokenIn).balanceOf(address(this));
+            if (postBalance < preBalance + downscaledAmount) {
                 revert InvalidTransfer();
             }
         }
