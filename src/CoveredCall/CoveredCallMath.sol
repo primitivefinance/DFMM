@@ -153,11 +153,18 @@ function computeD1(
     uint256 S,
     CoveredCallParams memory params
 ) pure returns (int256 d1) {
-    int256 lnSDivMean = computeLnSDivMean(S, params.mean);
     uint256 tau = computeTau(params);
-    uint256 halfSigmaSquaredTau = computeHalfSigmaSquaredTau(params.width, tau);
-    uint256 sigmaSqrtTau = computeSigmaSqrtTau(params.width, tau);
-    d1 = (lnSDivMean + int256(halfSigmaSquaredTau)).wadDiv(int256(sigmaSqrtTau));
+    if (tau == 0) {
+        d1 = 0;
+    } else {
+        int256 lnSDivMean = computeLnSDivMean(S, params.mean);
+        uint256 halfSigmaSquaredTau =
+            computeHalfSigmaSquaredTau(params.width, tau);
+        uint256 sigmaSqrtTau = computeSigmaSqrtTau(params.width, tau);
+        d1 = (lnSDivMean + int256(halfSigmaSquaredTau)).wadDiv(
+            int256(sigmaSqrtTau)
+        );
+    }
 }
 
 /// @dev Computes the d2 parameter for the Black-Scholes formula.
@@ -169,11 +176,18 @@ function computeD2(
     uint256 S,
     CoveredCallParams memory params
 ) pure returns (int256 d2) {
-    int256 lnSDivMean = computeLnSDivMean(S, params.mean);
     uint256 tau = computeTau(params);
-    uint256 halfSigmaSquaredTau = computeHalfSigmaSquaredTau(params.width, tau);
-    uint256 sigmaSqrtTau = computeSigmaSqrtTau(params.width, tau);
-    d2 = (lnSDivMean - int256(halfSigmaSquaredTau)).wadDiv(int256(sigmaSqrtTau));
+    if (tau == 0) {
+        d2 = 0;
+    } else {
+        int256 lnSDivMean = computeLnSDivMean(S, params.mean);
+        uint256 halfSigmaSquaredTau =
+            computeHalfSigmaSquaredTau(params.width, tau);
+        uint256 sigmaSqrtTau = computeSigmaSqrtTau(params.width, tau);
+        d2 = (lnSDivMean - int256(halfSigmaSquaredTau)).wadDiv(
+            int256(sigmaSqrtTau)
+        );
+    }
 }
 
 /**

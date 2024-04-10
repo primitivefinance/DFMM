@@ -4,6 +4,7 @@ pragma solidity 0.8.22;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { IStrategy } from "src/interfaces/IStrategy.sol";
 import { Pool, IDFMM } from "src/interfaces/IDFMM.sol";
+import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
 import {
     computeAllocationGivenX,
     computeAllocationGivenY
@@ -38,6 +39,7 @@ import "forge-std/console2.sol";
 contract CoveredCallSolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
+    using SignedWadMathLib for int256;
 
     /// @dev Structure to hold reserve information
     struct Reserves {
@@ -194,9 +196,15 @@ contract CoveredCallSolver {
     ) public view returns (uint256) {
         CoveredCallParams memory poolParams =
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
+        console2.log("got here!");
+        // int256 d2 = computeD2(S, poolParams);
+        // console2.log("d2", d2);
         uint256 approximatedRy = computeYGivenL(L, S, poolParams);
+        console2.log("got here2!");
+        console2.log("approximatedRy", approximatedRy);
         int256 invariant =
             computeTradingFunction(rx, approximatedRy, L, poolParams);
+        console2.log("invariant", invariant);
         return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
     }
 

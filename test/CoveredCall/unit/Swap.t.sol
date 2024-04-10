@@ -38,7 +38,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         public
         init_no_fee
     {
-        vm.warp(365.1 days);
+        vm.warp(370 days);
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
 

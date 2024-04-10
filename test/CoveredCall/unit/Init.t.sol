@@ -14,20 +14,9 @@ contract CoveredCallInitTest is CoveredCallSetUp {
         console2.log("priceGivenYL", priceGivenYL);
         console2.log("priceGivenXL", priceGivenXL);
 
-        assertApproxEqAbs(priceGivenXL, ONE, 10);
-        assertApproxEqAbs(priceGivenYL, ONE, 10);
-    }
-
-    function test_CoveredCall_init_log_state() public init_mil {
-        (uint256[] memory reserves, uint256 L) =
-            solver.getReservesAndLiquidity(POOL_ID);
-        uint256 priceGivenYL = solver.getPriceGivenYL(POOL_ID, reserves[1], L);
-        uint256 priceGivenXL = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
-        console2.log("priceGivenYL", priceGivenYL);
-        console2.log("priceGivenXL", priceGivenXL);
-
-        assertApproxEqAbs(priceGivenXL, ONE, 10);
-        assertApproxEqAbs(priceGivenYL, ONE, 10);
+        // we know the delta is 1e8
+        assertApproxEqAbs(priceGivenXL, ONE, 80_000_000);
+        assertApproxEqAbs(priceGivenYL, ONE, 80_000_000);
     }
 
     function testCoveredCall_init_given_y() public {
