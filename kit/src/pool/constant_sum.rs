@@ -46,6 +46,7 @@ pub enum ConstantSumAllocationData {
 //     pub controller_fee: ::ethers::core::types::U256,
 // }
 
+#[async_trait::async_trait]
 impl PoolType for ConstantSumPool {
     type PoolParameters = ConstantSumParams;
     type InitializationData = ConstantSumInitData;
@@ -53,8 +54,14 @@ impl PoolType for ConstantSumPool {
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = ConstantSumAllocationData;
 
-    fn get_contracts(deployment: &DeploymentData, client: Arc<ArbiterMiddleware>) -> (Self::StrategyContract, Self::SolverContract) {
-        (ConstantSum::new(deployment.constant_sum, client.clone()), ConstantSumSolver::new(deployment.constant_sum_solver, client))
+    fn get_contracts(
+        deployment: &DeploymentData,
+        client: Arc<ArbiterMiddleware>,
+    ) -> (Self::StrategyContract, Self::SolverContract) {
+        (
+            ConstantSum::new(deployment.constant_sum, client.clone()),
+            ConstantSumSolver::new(deployment.constant_sum_solver, client),
+        )
     }
 
     async fn create_pool(

@@ -47,6 +47,7 @@ pub struct BaseParameters {
 
 // Notes:
 // All the other types will be specific to each pool/strategy type since those will be specific contracts
+#[async_trait::async_trait]
 pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
     // This trait provides the interface for people to construct pools from a `Configuration` state since all of this should be `Serialize` and `Deserialize`.
     // This stuff ultimately will be what's used to deploy a `Pool<P: PoolType>` which will hold onto actual instances of contracts (whereas this just holds config data).
@@ -78,20 +79,20 @@ pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
         dfmm: DFMM<ArbiterMiddleware>,
     ) -> Result<Pool<Self>>;
 
-    #[allow(async_fn_in_trait)]
     async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
     /// Change Parameters
-    #[allow(async_fn_in_trait)]
     async fn update_data(&self, new_data: Self::PoolParameters) -> Result<Bytes>;
     /// Change Allocation Date
-    #[allow(async_fn_in_trait)]
     async fn change_allocation_data(
         &self,
         pool_id: eU256,
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes>;
 
-    fn get_contracts(deployment: &DeploymentData, client: Arc<ArbiterMiddleware>) -> (Self::StrategyContract, Self::SolverContract);
+    fn get_contracts(
+        deployment: &DeploymentData,
+        client: Arc<ArbiterMiddleware>,
+    ) -> (Self::StrategyContract, Self::SolverContract);
 }
 
 pub enum UpdateParameters<P: PoolType> {
