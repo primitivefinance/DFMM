@@ -8,6 +8,7 @@ use super::*;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Deployer {}
+
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DeploymentData {
     pub n_token_geometric_mean: Address,

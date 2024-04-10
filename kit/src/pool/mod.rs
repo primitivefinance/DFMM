@@ -3,11 +3,9 @@
 // What this means is that `PoolType` itself has to be `Deserialize`able and this is kinda tough to work with.
 // ---->>> The reason why is because we can't `Deserialize` contract objects themselves because that's just not possible.
 
-
-
 use arbiter_core::middleware::ArbiterMiddleware;
 use ethers::types::Bytes;
-use serde::{Serialize, Deserialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use self::bindings::dfmm::DFMM;
 use super::*;
@@ -40,18 +38,28 @@ pub struct BaseParameters {
 }
 
 // Notes:
-// This trait provides the interface for people to construct pools from a `Configuration` state since all of this should be `Serialize` and `Deserialize`. 
+// This trait provides the interface for people to construct pools from a `Configuration` state since all of this should be `Serialize` and `Deserialize`.
 // This stuff ultimately will be what's used to deploy a `Pool<P: PoolType>` which will hold onto actual instances of contracts (whereas this just holds config data).
-pub trait PoolConfigurer: Clone + std::fmt::Debug + Serialize + for<'de>Deserialize<'de> + 'static {
-    type PoolParameters: Clone + std::fmt::Debug + Serialize + for<'de>Deserialize<'de> + Send + Sync + 'static;
-    type InitialAllocationData: Clone + std::fmt::Debug + Serialize + for<'de>Deserialize<'de> + Send + Sync + 'static;
+pub trait PoolConfigurer: Clone + std::fmt::Debug + 'static {
+    type PoolParameters: Clone
+        + std::fmt::Debug
+        + Serialize
+        + for<'de> Deserialize<'de>
+        + Send
+        + Sync
+        + 'static;
+    type InitialAllocationData: Clone
+        + std::fmt::Debug
+        + Serialize
+        + for<'de> Deserialize<'de>
+        + Send
+        + Sync
+        + 'static;
 }
-
-
 
 // Notes:
 // Everything from the above now gets collapsed (or inherited) as the associated `Parameters` type of the `PoolType`. E
-// All the other types will be specific to each pool/strategy type since those will be specific contracts 
+// All the other types will be specific to each pool/strategy type since those will be specific contracts
 pub trait PoolType: Sized {
     type Parameters: PoolConfigurer;
     type StrategyContract;
@@ -68,15 +76,15 @@ pub trait PoolType: Sized {
         // TODO: There is a blanket implementation that we can do here.
         // we might be able to use the solver to encode this.
         //  THIS IS FROM THE BINDINGS FOR THE DFMM CONTRACT, WE NEED THE INPUT TO `dfmm.init(_)` to be of this type.
-// pub struct InitParams {
-//     pub name: ::std::string::String,
-//     pub symbol: ::std::string::String,
-//     pub strategy: ::ethers::core::types::Address,
-//     pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
-//     pub data: ::ethers::core::types::Bytes,
-//     pub fee_collector: ::ethers::core::types::Address,
-//     pub controller_fee: ::ethers::core::types::U256,
-// }
+        // pub struct InitParams {
+        //     pub name: ::std::string::String,
+        //     pub symbol: ::std::string::String,
+        //     pub strategy: ::ethers::core::types::Address,
+        //     pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
+        //     pub data: ::ethers::core::types::Bytes,
+        //     pub fee_collector: ::ethers::core::types::Address,
+        //     pub controller_fee: ::ethers::core::types::U256,
+        // }
     }
 
     #[allow(async_fn_in_trait)]
@@ -96,17 +104,17 @@ pub trait PoolType: Sized {
 pub enum UpdateParameters<P: PoolType> {
     PoolParameters(P::Parameters),
     Controller(eAddress),
-    Fee(eU256)
+    Fee(eU256),
 }
 
-// Notes: 
+// Notes:
 // This is used in the `swap_data` function of the poolType trait to determine which token to swap in.
 pub enum InputToken {
     TokenX,
     TokenY,
 }
 
-// Notes: 
+// Notes:
 // This is used in the `change_allocation_data` function of the Pool to determine whether to allocate or deallocate.
 pub enum AllocateOrDeallocate {
     Allocate,

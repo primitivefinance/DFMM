@@ -2,14 +2,20 @@ use std::sync::Arc;
 
 use arbiter_bindings::bindings::arbiter_token::ArbiterToken;
 use arbiter_engine::{
-    machine::{Behavior, Configuration, ControlFlow, CreateStateMachine, Engine, EventStream, StateMachine},
+    machine::{
+        Behavior, Configuration, ControlFlow, CreateStateMachine, Engine, EventStream, StateMachine,
+    },
     messager::{Message, Messager, To},
 };
 use arbiter_macros::Behaviors;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use self::{
-     creator::{PoolConfig, PoolCreator}, deployer::Deployer, pool::{PoolConfigurer, PoolType} //token_admin::TokenAdmin,allocate::InitialAllocation,
+    creator::{PoolConfig, PoolCreator},
+    deployer::Deployer,
+    // bindings::idfmm::LogNormalParams, // TODO: We might want to just use these if we can.
+    pool::log_normal::LogNormalParams,
+    pool::{PoolConfigurer, PoolType}, //token_admin::TokenAdmin,allocate::InitialAllocation,
 };
 use super::*;
 
@@ -19,11 +25,10 @@ pub mod deployer;
 pub mod creator;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub enum Behaviors<P: PoolConfigurer> {
-    Creator(PoolCreator<Configuration<PoolConfig<P>>>),
+pub enum Behaviors<PC: PoolConfigurer> {
+    Creator(PoolCreator<Configuration<PoolConfig<PC>>>),
     Deployer(Deployer),
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenData {
