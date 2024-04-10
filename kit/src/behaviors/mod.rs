@@ -14,7 +14,7 @@ use self::{
     creator::{PoolConfig, PoolCreator},
     deployer::Deployer,
     // bindings::idfmm::LogNormalParams, // TODO: We might want to just use these if we can.
-    pool::log_normal::LogNormalParams,
+    // pool::log_normal::LogNormalParams,
     pool::{PoolConfigurer, PoolType}, //token_admin::TokenAdmin,allocate::InitialAllocation,
 };
 use super::*;
@@ -25,7 +25,7 @@ pub mod deployer;
 pub mod creator;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub enum Behaviors<PC: PoolConfigurer> {
+pub enum Behaviors<PC: PoolType> {
     Creator(PoolCreator<Configuration<PoolConfig<PC>>>),
     Deployer(Deployer),
 }

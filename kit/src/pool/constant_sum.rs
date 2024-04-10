@@ -2,6 +2,7 @@ use bindings::{constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver
 
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct ConstantSumPool {
     pub strategy_contract: ConstantSum<ArbiterMiddleware>,
     pub solver_contract: ConstantSumSolver<ArbiterMiddleware>,
@@ -23,7 +24,8 @@ pub enum ConstantSumAllocationData {
     GivenY(eU256),
 }
 impl PoolType for ConstantSumPool {
-    type Parameters = ConstantSumParameters;
+    type PoolParameters = ConstantSumParameters;
+    type InitialAllocationData = Bytes;
     type StrategyContract = ConstantSum<ArbiterMiddleware>;
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = ConstantSumAllocationData;
@@ -55,7 +57,7 @@ impl PoolType for ConstantSumPool {
         }
     }
 
-    async fn update_data(&self, parameters: Self::Parameters) -> Result<Bytes> {
+    async fn update_data(&self, parameters: Self::PoolParameters) -> Result<Bytes> {
         let price_update_data = self
             .solver_contract
             .prepare_price_update(parameters.price)

@@ -12,9 +12,9 @@ use super::*;
 use crate::bindings::arbiter_token::ArbiterToken;
 
 pub mod constant_sum;
-pub mod geometric_mean;
-pub mod log_normal;
-pub mod n_token_geometric_mean;
+// pub mod geometric_mean;
+// pub mod log_normal;
+// pub mod n_token_geometric_mean;
 
 // Notes:
 // `InitData` is something that all pools need  in order to be created. This consists of:
@@ -22,7 +22,7 @@ pub mod n_token_geometric_mean;
 // 2. Initial allocation data, which consists of, for example, a `price` and an amount of `token_x` for the `LogNormal` pool. (Strategy specific since other pools like `ConstantSum` may not have the same needs)
 // 3. Base configuration which ALL pools share as part of their parameterization which is the `swap_fee`, `controller` and the `controller_fee`. Every type of strategy needs these.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct InitData<P: PoolConfigurer> {
+pub struct InitData<P: PoolType> {
     pub params: P::PoolParameters,
     pub initial_allocation_data: P::InitialAllocationData,
     pub base_config: BaseParameters,
@@ -37,6 +37,7 @@ pub struct BaseParameters {
     pub controller_fee: eU256,
 }
 
+// TODO: I don't think we need this anymore!
 // Notes:
 // This trait provides the interface for people to construct pools from a `Configuration` state since all of this should be `Serialize` and `Deserialize`.
 // This stuff ultimately will be what's used to deploy a `Pool<P: PoolType>` which will hold onto actual instances of contracts (whereas this just holds config data).
@@ -60,8 +61,22 @@ pub trait PoolConfigurer: Clone + std::fmt::Debug + 'static {
 // Notes:
 // Everything from the above now gets collapsed (or inherited) as the associated `Parameters` type of the `PoolType`. E
 // All the other types will be specific to each pool/strategy type since those will be specific contracts
-pub trait PoolType: Sized {
-    type Parameters: PoolConfigurer;
+pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
+    // type Parameters: PoolConfigurer;
+    type PoolParameters: Clone
+        + std::fmt::Debug
+        + Serialize
+        + for<'de> Deserialize<'de>
+        + Send
+        + Sync
+        + 'static;
+    type InitialAllocationData: Clone
+        + std::fmt::Debug
+        + Serialize
+        + for<'de> Deserialize<'de>
+        + Send
+        + Sync
+        + 'static;
     type StrategyContract;
     type SolverContract;
     type AllocationData: Send + Sync + 'static;
@@ -70,7 +85,7 @@ pub trait PoolType: Sized {
     async fn create_pool(
         &self,
         dfmm: DFMM<ArbiterMiddleware>,
-        init_data: InitData<Self::Parameters>,
+        init_data: InitData<Self>,
     ) -> Result<Pool<Self>> {
         todo!()
         // TODO: There is a blanket implementation that we can do here.
@@ -91,7 +106,7 @@ pub trait PoolType: Sized {
     async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
     /// Change Parameters
     #[allow(async_fn_in_trait)]
-    async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes>;
+    async fn update_data(&self, new_data: Self::PoolParameters) -> Result<Bytes>;
     /// Change Allocation Date
     #[allow(async_fn_in_trait)]
     async fn change_allocation_data(
@@ -102,7 +117,7 @@ pub trait PoolType: Sized {
 }
 
 pub enum UpdateParameters<P: PoolType> {
-    PoolParameters(P::Parameters),
+    PoolParameters(P::PoolParameters),
     Controller(eAddress),
     Fee(eU256),
 }
@@ -203,7 +218,7 @@ impl<P: PoolType> Pool<P> {
     ///
     /// Returns `Ok(())` if the update is successful, otherwise returns an
     /// error.
-    pub async fn update(&self, new_data: P::Parameters) -> Result<()> {
+    pub async fn update(&self, new_data: P::PoolParameters) -> Result<()> {
         let data = self.instance.update_data(new_data).await?;
         self.dfmm.update(self.id, data).send().await?.await?;
         Ok(())

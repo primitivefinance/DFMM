@@ -15,7 +15,7 @@ pub struct PoolCreator<S: State> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct PoolConfig<P: PoolConfigurer> {
+pub struct PoolConfig<P: PoolType> {
     pub params: P::PoolParameters,
     pub initial_allocation_data: P::InitialAllocationData,
     pub token_list: Vec<eAddress>,
@@ -25,29 +25,29 @@ pub struct PoolProcessor<P: PoolType> {
     pub pool: Pool<P>,
 }
 
-// #[async_trait::async_trait]
-// impl<P, E> Behavior<E> for PoolCreator<Configuration<PoolConfig<<P as PoolType>::Parameters>>>
-// where
-//     P: PoolType,
-//     E: Send + Sync + 'static,
-// {
-//     type Processor = (); //PoolCreator<Processing<PoolProcessor<P>>>;
-//     async fn startup(
-//         &mut self,
-//         client: Arc<ArbiterMiddleware>,
-//         messager: Messager,
-//     ) -> Result<Option<(Self::Processor, EventStream<E>)>> {
-//         todo!()
-//     }
-// }
+#[async_trait::async_trait]
+impl<P, E> Behavior<E> for PoolCreator<Configuration<PoolConfig<P>>>
+where
+    P: PoolType + Send + Sync + 'static,
+    E: Send + Sync + 'static,
+{
+    type Processor = PoolCreator<Processing<PoolProcessor<P>>>;
+    async fn startup(
+        &mut self,
+        client: Arc<ArbiterMiddleware>,
+        messager: Messager,
+    ) -> Result<Option<(Self::Processor, EventStream<E>)>> {
+        todo!()
+    }
+}
 
-// #[async_trait::async_trait]
-// impl<P, E> Processor<E> for PoolCreator<Processing<PoolProcessor<P>>>
-// where
-//     P: PoolType + Send + Sync + 'static,
-//     E: Send + Sync + 'static,
-// {
-//     async fn process(&mut self, event: E) -> Result<ControlFlow> {
-//         todo!()
-//     }
-// }
+#[async_trait::async_trait]
+impl<P, E> Processor<E> for PoolCreator<Processing<PoolProcessor<P>>>
+where
+    P: PoolType + Send + Sync + 'static,
+    E: Send + Sync + 'static,
+{
+    async fn process(&mut self, event: E) -> Result<ControlFlow> {
+        todo!()
+    }
+}
