@@ -30,6 +30,7 @@ pub enum ConstantSumAllocationData {
     GivenY(eU256),
 }
 
+// TODO: It's worth thinking about what this is since we have our own "Pool" struct
 // pub struct Pool {
 //     pub strategy: ::ethers::core::types::Address,
 //     pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
