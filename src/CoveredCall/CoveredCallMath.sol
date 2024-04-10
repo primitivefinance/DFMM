@@ -136,9 +136,8 @@ function computeXGivenL(
     CoveredCallParams memory params
 ) pure returns (uint256 rx) {
     int256 d1 = computeD1({ S: S, params: params });
-    int256 cdf = Gaussian.cdf(d1);
-    uint256 unsignedCdf = toUint(cdf);
-    rx = L.mulWadUp(ONE - unsignedCdf);
+    uint256 cdf = toUint(Gaussian.cdf(d1));
+    rx = L.mulWadUp(ONE - cdf);
 }
 
 /**
@@ -394,7 +393,7 @@ function computeNextRx(
     int256 computedInvariant = invariant;
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
-            upper = upper.mulDivUp(1001, 1000);
+            upper = upper.mulDivUp(101, 100);
             upper = upper > L ? L : upper;
             computedInvariant = computeTradingFunction({
                 rX: upper,
@@ -405,7 +404,7 @@ function computeNextRx(
         }
     } else {
         while (computedInvariant > 0) {
-            lower = lower.mulDivDown(999, 1000);
+            lower = lower.mulDivDown(99, 100);
             lower = lower > L ? L : lower;
             computedInvariant = computeTradingFunction({
                 rX: lower,
@@ -441,7 +440,7 @@ function computeNextRy(
     int256 computedInvariant = invariant;
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
-            upper = upper.mulDivUp(1001, 1000);
+            upper = upper.mulDivUp(101, 100);
             computedInvariant = computeTradingFunction({
                 rX: rX,
                 rY: upper,
@@ -451,7 +450,7 @@ function computeNextRy(
         }
     } else {
         while (computedInvariant > 0) {
-            lower = lower.mulDivDown(999, 1000);
+            lower = lower.mulDivDown(99, 100);
             computedInvariant = computeTradingFunction({
                 rX: rX,
                 rY: lower,
@@ -471,51 +470,5 @@ function computeNextRy(
         rY = rootInput;
     } else {
         rY = upperInput;
-    }
-}
-
-function sqrt(uint256 x) pure returns (uint256 r) {
-    assembly ("memory-safe") {
-        // r = floor(log2(x))
-        r := shl(7, gt(x, 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF))
-        let xx := shr(r, x)
-
-        let rr := shl(6, gt(x, 0xFFFFFFFFFFFFFFFF))
-        xx := shr(rr, xx)
-        r := or(r, rr)
-
-        rr := shl(5, gt(xx, 0xFFFFFFFF))
-        xx := shr(rr, xx)
-        r := or(r, rr)
-
-        rr := shl(4, gt(xx, 0xFFFF))
-        xx := shr(rr, xx)
-        r := or(r, rr)
-
-        rr := shl(3, gt(xx, 0xFF))
-        xx := shr(rr, xx)
-        r := or(r, rr)
-
-        rr := shl(2, gt(xx, 0x0F))
-        xx := shr(rr, xx)
-        r := or(r, rr)
-
-        rr := shl(1, gt(xx, 0x03))
-        xx := shr(rr, xx)
-        r := or(r, rr)
-
-        r := shl(shr(1, r), 1)
-
-        // Newton's method
-        r := shr(1, add(r, div(x, r)))
-        r := shr(1, add(r, div(x, r)))
-        r := shr(1, add(r, div(x, r)))
-        r := shr(1, add(r, div(x, r)))
-        r := shr(1, add(r, div(x, r)))
-        r := shr(1, add(r, div(x, r)))
-        r := shr(1, add(r, div(x, r)))
-
-        // r = min(r, x/r)
-        r := sub(r, gt(r, div(x, r)))
     }
 }

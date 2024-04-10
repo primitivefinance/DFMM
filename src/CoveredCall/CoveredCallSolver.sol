@@ -196,15 +196,9 @@ contract CoveredCallSolver {
     ) public view returns (uint256) {
         CoveredCallParams memory poolParams =
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        console2.log("got here!");
-        // int256 d2 = computeD2(S, poolParams);
-        // console2.log("d2", d2);
         uint256 approximatedRy = computeYGivenL(L, S, poolParams);
-        console2.log("got here2!");
-        console2.log("approximatedRy", approximatedRy);
         int256 invariant =
             computeTradingFunction(rx, approximatedRy, L, poolParams);
-        console2.log("invariant", invariant);
         return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
     }
 
