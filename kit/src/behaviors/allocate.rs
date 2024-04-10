@@ -1,24 +1,25 @@
-use std::marker::PhantomData;
+// use std::marker::PhantomData;
 
-use arbiter_core::events::stream_event;
-use arbiter_engine::machine::{Configuration, ControlFlow, Processing, Processor, State};
+// use arbiter_core::events::stream_event;
+// use arbiter_engine::machine::{Configuration, ControlFlow, Processing, Processor, State};
 
-use self::{
-    pool::PoolType,
-    token_admin::{MintRequest, TokenAdminQuery},
-};
-use super::*;
+// use self::{
+//     pool::PoolType,
+//     token_admin::{MintRequest, TokenAdminQuery},
+// };
+// use super::*;
 
 // Notes:
 // * The point of this function is to have the event piped to it from the
 //   behavior/processor and this just dictates how, based on some event, we want
 //   to change the allocation we have (or will have) in a pool.
-trait AllocationType<P, E>
-where
-    P: PoolType,
-{
-    fn change_allocation_amount(&self, event: E) -> Option<P::AllocationData>;
-}
+// trait AllocationType<P, E>
+// where
+//     P: PoolType,
+//     E: Send + 'static,
+// {
+//     fn change_allocation_amount(&self, event: E) -> Option<P::AllocationData>;
+// }
 
 // Notes:
 // * The idea here is that the `ChangeAllocation` is generic over everything it
@@ -49,99 +50,102 @@ where
 // Configuration>` since this should be Deserializable.
 //
 // Some more notes:
-#[derive(Debug, Serialize, Deserialize)]
-struct ChangeAllocation<A, P, E, S>
-where
-    A: AllocationType<P, E>,
-    P: PoolType,
-    S: State,
-{
-    // APES LOL
-    _phantom_a: PhantomData<A>,
-    _phantom_p: PhantomData<P>,
-    _phantom_e: PhantomData<E>,
-    pub data: S::Data,
-}
+// #[derive(Debug, Serialize, Deserialize)]
+// struct ChangeAllocation<A, P, E, S>
+// where
+//     A: AllocationType<P, E>,
+//     P: PoolType,
+//     E: Send + 'static,
+//     S: State,
+// {
+//     // APES LOL
+//     _phantom_a: PhantomData<A>,
+//     _phantom_p: PhantomData<P>,
+//     _phantom_e: PhantomData<E>,
+//     pub data: S::Data,
+// }
 
-// This `ChangeAllocationStructData` will be the `D` in `S == Processing<D>`
-pub struct ChangeAllocationStructData<A, P, E>
-where
-    A: AllocationType<P, E>,
-    P: PoolType,
-{
-    pub client: Arc<ArbiterMiddleware>,
-    pub pool: P,
-    pub allocation_data: P::AllocationData,
-    pub allocation_type: A,
-    _phantom: PhantomData<E>,
-}
+// // This `ChangeAllocationStructData` will be the `D` in `S == Processing<D>`
+// pub struct ChangeAllocationStructData<A, P, E>
+// where
+//     A: AllocationType<P, E>,
+//     P: PoolType,
+//     E: Send + 'static,
+// {
+//     pub client: Arc<ArbiterMiddleware>,
+//     pub pool: P,
+//     pub allocation_data: P::AllocationData,
+//     pub allocation_type: A,
+//     _phantom: PhantomData<E>,
+// }
 
-impl<A, P, E, S> AllocationType<P, E> for ChangeAllocation<A, P, E, S>
-where
-    A: AllocationType<P, E>,
-    P: PoolType,
-    S: State,
-{
-    fn change_allocation_amount(&self, event: E) -> Option<P::AllocationData> {
-        None
-    }
-}
+// impl<A, P, E, S> AllocationType<P, E> for ChangeAllocation<A, P, E, S>
+// where
+//     A: AllocationType<P, E>,
+//     P: PoolType,
+//     E: Send + 'static,
+//     S: State,
+// {
+//     fn change_allocation_amount(&self, event: E) -> Option<P::AllocationData> {
+//         None
+//     }
+// }
 
-#[derive(Debug)]
-pub struct InitialAllocation<P: PoolType> {
-    /// The initial amount of token X.
-    pub initial_x: eU256,
-    /// The initial Price
-    pub initial_price: eU256,
-    /// Initial Parameters
-    pub initial_parameters: P::AllocationData,
-    /// The tokens to allocate
-    pub tokens: (
-        ArbiterToken<ArbiterMiddleware>,
-        ArbiterToken<ArbiterMiddleware>,
-    ),
-    /// The tokens to request.
-    pub token_data: TokenData,
-    /// The agent ID to request tokens to.
-    pub request_to: String,
-    /// Client to have an address to receive token mint to and check balance
-    // #[serde(skip)]
-    pub client: Option<Arc<ArbiterMiddleware>>,
-    /// The messaging layer for the token requester.
-    // #[serde(skip)]
-    pub messager: Option<Messager>,
-}
+// #[derive(Debug)]
+// pub struct InitialAllocation<P: PoolType> {
+//     /// The initial amount of token X.
+//     pub initial_x: eU256,
+//     /// The initial Price
+//     pub initial_price: eU256,
+//     /// Initial Parameters
+//     pub initial_parameters: P::AllocationData,
+//     /// The tokens to allocate
+//     pub tokens: (
+//         ArbiterToken<ArbiterMiddleware>,
+//         ArbiterToken<ArbiterMiddleware>,
+//     ),
+//     /// The tokens to request.
+//     pub token_data: TokenData,
+//     /// The agent ID to request tokens to.
+//     pub request_to: String,
+//     /// Client to have an address to receive token mint to and check balance
+//     // #[serde(skip)]
+//     pub client: Option<Arc<ArbiterMiddleware>>,
+//     /// The messaging layer for the token requester.
+//     // #[serde(skip)]
+//     pub messager: Option<Messager>,
+// }
 
-#[allow(unused_variables)]
-#[async_trait::async_trait]
-impl<A, P, E> Behavior<E> for ChangeAllocation<A, P, E, Configuration>
-where
-    A: AllocationType<P, E> + std::fmt::Debug + Send + Sync + 'static,
-    P: PoolType + std::fmt::Debug + Send + Sync + 'static,
-    E: std::fmt::Debug + Send + Sync + 'static,
-{
-    type Processor = ChangeAllocation<A, P, E, Processing<ChangeAllocationStructData<A, P, E>>>;
-    async fn startup(
-        &mut self,
-        client: Arc<ArbiterMiddleware>,
-        messager: Messager,
-    ) -> Result<Option<(Self::Processor, EventStream<E>)>> {
-        todo!();
-    }
-}
+// #[allow(unused_variables)]
+// #[async_trait::async_trait]
+// impl<A, P, E> Behavior<E> for ChangeAllocation<A, P, E, Configuration>
+// where
+//     A: AllocationType<P, E> + std::fmt::Debug + Send + Sync + 'static,
+//     P: PoolType + std::fmt::Debug + Send + Sync + 'static,
+//     E: std::fmt::Debug + Send + Sync + 'static,
+// {
+//     type Processor = ChangeAllocation<A, P, E, Processing<ChangeAllocationStructData<A, P, E>>>;
+//     async fn startup(
+//         &mut self,
+//         client: Arc<ArbiterMiddleware>,
+//         messager: Messager,
+//     ) -> Result<Option<(Self::Processor, EventStream<E>)>> {
+//         todo!();
+//     }
+// }
 
-#[async_trait::async_trait]
-impl<A, P, E> Processor<E>
-    for ChangeAllocation<A, P, E, Processing<ChangeAllocationStructData<A, P, E>>>
-where
-    A: AllocationType<P, E>,
-    P: PoolType,
-    E: Send + 'static,
-{
-    async fn process(&mut self, event: E) -> Result<ControlFlow> {
-        Ok(ControlFlow::Halt)
-    }
-}
+// #[async_trait::async_trait]
+// impl<A, P, E> Processor<E>
+//     for ChangeAllocation<A, P, E, Processing<ChangeAllocationStructData<A, P, E>>>
+// where
+//     A: AllocationType<P, E>,
+//     P: PoolType,
+//     E: Send + 'static,
+// {
+//     async fn process(&mut self, event: E) -> Result<ControlFlow> {
+//         Ok(ControlFlow::Halt)
+//     }
+// }
 
 // #[allow(unused_variables)]
 // #[async_trait::async_trait]

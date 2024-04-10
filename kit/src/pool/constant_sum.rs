@@ -8,9 +8,14 @@ pub struct ConstantSumPool {
     pub parameters: ConstantSumParameters,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ConstantSumParameters {
     pub price: eU256,
-    pub swap_fee: eU256,
+}
+
+impl PoolConfigurer for ConstantSumParameters {
+    type PoolParameters = Self;
+    type InitialAllocationData = Bytes;
 }
 
 pub enum ConstantSumAllocationData {
@@ -18,7 +23,7 @@ pub enum ConstantSumAllocationData {
     GivenY(eU256),
 }
 impl PoolType for ConstantSumPool {
-    type UpdateParameters = ConstantSumParameters;
+    type Parameters = ConstantSumParameters;
     type StrategyContract = ConstantSum<ArbiterMiddleware>;
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = ConstantSumAllocationData;
@@ -50,7 +55,7 @@ impl PoolType for ConstantSumPool {
         }
     }
 
-    async fn update_data(&self, parameters: Self::UpdateParameters) -> Result<Bytes> {
+    async fn update_data(&self, parameters: Self::Parameters) -> Result<Bytes> {
         let price_update_data = self
             .solver_contract
             .prepare_price_update(parameters.price)

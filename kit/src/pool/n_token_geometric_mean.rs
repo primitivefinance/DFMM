@@ -12,9 +12,15 @@ pub struct GeometricMeanPool {
     pub parameters: NTokenGeometricMeanParameters,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct NTokenGeometricMeanParameters {
-    pub swap_fee: eU256,
-    pub update_parameters: UpdateParameters,
+    pub target_timestamp: eU256,
+    pub target_weights: Vec<eU256>,
+}
+
+impl PoolConfigurer for NTokenGeometricMeanParameters {
+    type PoolParameters = Self;
+    type InitialAllocationData = Bytes;
 }
 
 pub enum UpdateParameters {
@@ -29,7 +35,7 @@ pub enum GeometricMeanAllocationData {
 }
 
 impl PoolType for GeometricMeanPool {
-    type UpdateParameters = NTokenGeometricMeanParameters;
+    type Parameters = NTokenGeometricMeanParameters;
     type StrategyContract = NTokenGeometricMean<ArbiterMiddleware>;
     type SolverContract = NTokenGeometricMeanSolver<ArbiterMiddleware>;
     type AllocationData = GeometricMeanAllocationData;
@@ -61,25 +67,26 @@ impl PoolType for GeometricMeanPool {
         }
     }
 
-    async fn update_data(&self, new_data: Self::UpdateParameters) -> Result<Bytes> {
-        let data = match new_data.update_parameters {
-            UpdateParameters::SwapFee(fee) => {
-                self.solver_contract.prepare_fee_update(fee).call().await?
-            }
-            UpdateParameters::TargetWeights(weights, target_timestamp) => {
-                self.solver_contract
-                    .prepare_weights_update(weights, target_timestamp)
-                    .call()
-                    .await?
-            }
-            UpdateParameters::TargetController(controller) => {
-                self.solver_contract
-                    .prepare_controller_update(controller)
-                    .call()
-                    .await?
-            }
-        };
-        Ok(data)
+    async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes> {
+        // let data = match new_data.update_parameters {
+        //     UpdateParameters::SwapFee(fee) => {
+        //         self.solver_contract.prepare_fee_update(fee).call().await?
+        //     }
+        //     UpdateParameters::TargetWeights(weights, target_timestamp) => {
+        //         self.solver_contract
+        //             .prepare_weights_update(weights, target_timestamp)
+        //             .call()
+        //             .await?
+        //     }
+        //     UpdateParameters::TargetController(controller) => {
+        //         self.solver_contract
+        //             .prepare_controller_update(controller)
+        //             .call()
+        //             .await?
+        //     }
+        // };
+        // Ok(data)
+        todo!()
     }
 
     async fn change_allocation_data(
