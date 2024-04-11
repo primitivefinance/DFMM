@@ -10,10 +10,11 @@ use std::sync::Arc;
 use arbiter_core::middleware::ArbiterMiddleware;
 use ethers::types::Bytes;
 use serde::{Deserialize, Serialize};
+use tracing::debug;
 
 use self::behaviors::deployer::DeploymentData;
 use super::*;
-use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
+use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM, shared_types::InitParams};
 
 pub mod constant_sum;
 // pub mod geometric_mean;
@@ -92,6 +93,8 @@ pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
         dfmm: DFMM<ArbiterMiddleware>,
     ) -> Result<Pool<Self>>;
 
+    async fn init_data(&self, init_data: Self::InitializationData) -> Result<Bytes>;
+
     async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
     /// Change Parameters
     async fn update_data(&self, new_data: Self::PoolParameters) -> Result<Bytes>;
@@ -139,6 +142,50 @@ pub struct Pool<P: PoolType> {
 }
 
 impl<P: PoolType> Pool<P> {
+    // TODO: Finish this, it need a `prepare init bytes` as part of the poolType
+    // trait to work async fn create_pool(&self,
+    //     init_data: P::InitializationData,
+    //     token_list: Vec<ArbiterToken<ArbiterMiddleware>>,
+    //     strategy_contract: P::StrategyContract,
+    //     solver_contract: P::SolverContract,
+    //     dfmm: DFMM<ArbiterMiddleware>,
+    // ) -> Result<Pool<P>> {
+    //     let init_bytes = self.instance.init_data(init_data).await?;
+
+    //     let tokens: Vec<eAddress> = token_list.iter().map(|tok|
+    // tok.address()).collect();     assert!(tokens.len() == 2, "Token list must
+    // contain exactly two distinct tokens.");     assert!(tokens[0] !=
+    // tokens[1], "Token list contains duplicate tokens.");
+
+    //     let init_params = InitParams {
+    //         name: init_data.name,
+    //         symbol: init_data.symbol,
+    //         strategy: strategy_contract.address(),
+    //         tokens,
+    //         data: init_bytes,
+    //         fee_collector: eAddress::zero(),
+    //         controller_fee: eU256::zero(),
+    //     };
+
+    //     let thing = dfmm.init(init_params.clone()).send().await?.await?.unwrap();
+    //     let thing1 = thing.status.unwrap();
+    //     debug!("tx succeeded with status {}", thing1);
+
+    //     // how do i make this part generic?
+    //     let instance = ConstantSumPool {
+    //         strategy_contract,
+    //         solver_contract,
+    //         parameters: init_data.params,
+    //     };
+
+    //     Ok(Pool {
+    //         id: eU256::one(),
+    //         dfmm,
+    //         instance,
+    //         token_x: token_list[0].clone(),
+    //         token_y: token_list[1].clone(),
+    //     })
+    // }
     /// Performs a swap on the pool.
     ///
     /// # Arguments

@@ -1,4 +1,7 @@
-use arbiter_engine::machine::{Behavior, Configuration, Processing, Processor, State};
+use arbiter_engine::{
+    machine::{Behavior, Configuration, Processing, Processor, State},
+    universe,
+};
 use bindings::dfmm::DFMM;
 use futures_util::StreamExt;
 use serde::de::DeserializeOwned;
@@ -6,7 +9,8 @@ use tracing::debug;
 
 use super::*;
 use crate::{
-    behaviors::deployer::DeploymentData,
+    behaviors::{deployer::DeploymentData, token_admin::TokenAdminQuery},
+    bindings::dfmm,
     pool::{Pool, PoolType},
 };
 
@@ -41,6 +45,8 @@ pub struct PoolProcessor<P: PoolType> {
 impl<P> Behavior<()> for PoolCreator<Configuration<PoolConfig<P>>>
 where
     P: PoolType + Send + Sync + 'static,
+    P::StrategyContract: Send,
+    P::SolverContract: Send,
 {
     // type Processor = PoolCreator<Processing<PoolProcessor<P>>>;
     type Processor = ();
@@ -49,7 +55,7 @@ where
         client: Arc<ArbiterMiddleware>,
         messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<()>)>> {
-        let mut stream = messager.stream()?;
+        let mut stream = messager.clone().stream()?;
         let res = stream.next().await.unwrap();
         let data: String = serde_json::from_str(&res.data).expect(
             "Failed to
@@ -60,10 +66,54 @@ deserialize message data",
 token data",
         );
 
-        let token_x = ArbiterToken::new(parsed_data.token_x, client.clone());
-        let token_y = ArbiterToken::new(parsed_data.token_y, client.clone());
+        let _ = messager
+            .send(
+                To::Agent("token_admin_agent".to_owned()),
+                TokenAdminQuery::GetAssetUniverse,
+            )
+            .await?;
+        let res = stream.next().await.unwrap();
+        let universe: Vec<(TokenData, eAddress)> =
+            serde_json::from_str(&res.data).expect("failed to serde");
+
+        let token_x = ArbiterToken::new(universe[0].clone().1, client.clone());
+        let token_y = ArbiterToken::new(universe[1].clone().1, client.clone());
+
+        let mint_x = MintRequest {
+            token: universe[0].clone().0.name,
+            mint_to: client.address(),
+            mint_amount: 100_000_000_000,
+        };
+
+        let mint_y = MintRequest {
+            token: universe[1].clone().0.name,
+            mint_to: client.address(),
+            mint_amount: 100_000_000_000,
+        };
+
+        let _ = messager
+            .send(To::Agent("token_admin_agent".to_owned()), mint_x)
+            .await?;
+        let _ = messager
+            .send(To::Agent("token_admin_agent".to_owned()), mint_y)
+            .await?;
+
         let (strategy_contract, solver_contract) = P::get_contracts(&parsed_data, client.clone());
         let dfmm = DFMM::new(parsed_data.dfmm, client);
+
+        let _ = token_x
+            .clone()
+            .approve(dfmm.address(), MAX)
+            .send()
+            .await?
+            .await?;
+        let _ = token_y
+            .clone()
+            .approve(dfmm.address(), MAX)
+            .send()
+            .await?
+            .await?;
+
         let init_data = self.data.initial_allocation_data.clone();
         debug!("Got to before pool deployment");
         let pool = P::create_pool(
@@ -119,34 +169,19 @@ mod test {
 
         let mut world = World::new("test");
 
-        let agent = Agent::builder("token_admin_agent");
-        let creator = Agent::builder("pool_creator_agent");
-        let pool_creator = PoolCreator::<Configuration<PoolConfig<ConstantSumPool>>> {
-            data: PoolConfig {
-                params: ConstantSumParams {
-                    price: WAD,
-                    swap_fee: 0.into(),
-                    controller: eAddress::random(),
-                },
-                initial_allocation_data: ConstantSumInitData {
-                    name: "Test Pool".to_string(),
-                    symbol: "TP".to_string(),
-                    reserve_x: WAD,
-                    reserve_y: WAD,
-                    token_x_name: "Token X".to_string(),
-                    token_y_name: "Token Y".to_string(),
-                    params: ConstantSumParams {
-                        price: WAD,
-                        swap_fee: 10000.into(),
-                        controller: Address::zero(),
-                    },
-                },
-                token_list: vec![Address::zero(), Address::zero()],
-            },
-        };
-        world.add_agent(creator.with_behavior(pool_creator));
-
+        // deployer
+        let agent = Agent::builder("deployer");
         world.add_agent(agent.with_behavior(Deployer {}));
+
+        // Token Admin
+        let token_admin_config = default_admin_config();
+        let token_admin = Agent::builder("token_admin_agent");
+        world.add_agent(token_admin.with_behavior(token_admin_config));
+
+        // Pool Creator
+        let creator = Agent::builder("pool_creator_agent");
+        let pool_creator_config = default_creator_config();
+        world.add_agent(creator.with_behavior(pool_creator_config));
 
         world.run().await.unwrap();
     }

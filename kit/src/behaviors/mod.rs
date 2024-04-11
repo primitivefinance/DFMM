@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use arbiter_engine::{
+    agent::Agent,
     machine::{Behavior, Configuration, ControlFlow, EventStream},
     messager::{Messager, To},
 };
@@ -9,9 +10,13 @@ use bindings::arbiter_token::ArbiterToken;
 use serde::{Deserialize, Serialize};
 
 use self::{
+    bindings::constant_sum_solver::ConstantSumParams,
     creator::{PoolConfig, PoolCreator},
     deployer::Deployer,
-    pool::PoolType,
+    pool::{
+        constant_sum::{ConstantSumInitData, ConstantSumPool},
+        PoolType,
+    },
     token_admin::{TokenAdmin, TokenAdminConfig}, /* token_admin::TokenAdmin,
                                                   * allocate::InitialAllocation, */
 };
@@ -34,5 +39,48 @@ pub struct TokenData {
     pub name: String,
     pub symbol: String,
     pub decimals: u8,
-    pub address: Option<eAddress>,
+}
+
+pub(crate) fn default_admin_config() -> TokenAdmin<Configuration<TokenAdminConfig>> {
+    let token1 = TokenData {
+        name: "US Dollar Coin".to_owned(),
+        symbol: "USDC".to_owned(),
+        decimals: 18,
+    };
+
+    let token2 = TokenData {
+        name: "ShibaInuObamaSonic Coin".to_owned(),
+        symbol: "SIOS".to_owned(),
+        decimals: 18,
+    };
+    let config = TokenAdminConfig {
+        token_data: vec![token1, token2],
+    };
+    TokenAdmin::<Configuration<TokenAdminConfig>> { data: config }
+}
+
+pub(crate) fn default_creator_config() -> PoolCreator<Configuration<PoolConfig<ConstantSumPool>>> {
+    PoolCreator::<Configuration<PoolConfig<ConstantSumPool>>> {
+        data: PoolConfig {
+            params: ConstantSumParams {
+                price: WAD,
+                swap_fee: 0.into(),
+                controller: eAddress::random(),
+            },
+            initial_allocation_data: ConstantSumInitData {
+                name: "Test Pool".to_string(),
+                symbol: "TP".to_string(),
+                reserve_x: WAD,
+                reserve_y: WAD,
+                token_x_name: "Token X".to_string(),
+                token_y_name: "Token Y".to_string(),
+                params: ConstantSumParams {
+                    price: WAD,
+                    swap_fee: 10000.into(),
+                    controller: eAddress::zero(),
+                },
+            },
+            token_list: vec![eAddress::zero(), eAddress::zero()],
+        },
+    }
 }

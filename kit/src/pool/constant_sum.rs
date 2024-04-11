@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use anyhow::Ok;
 use bindings::{
     constant_sum::ConstantSum,
     constant_sum_solver::{ConstantSumParams, ConstantSumSolver},
@@ -62,6 +63,19 @@ impl PoolType for ConstantSumPool {
             ConstantSum::new(deployment.constant_sum, client.clone()),
             ConstantSumSolver::new(deployment.constant_sum_solver, client),
         )
+    }
+
+    async fn init_data(&self, init_data: Self::InitializationData) -> Result<Bytes> {
+        let init_bytes = self
+            .solver_contract
+            .get_initial_pool_data(
+                init_data.reserve_x,
+                init_data.reserve_y,
+                init_data.params.clone(),
+            )
+            .call()
+            .await?;
+        Ok(init_bytes)
     }
 
     async fn create_pool(

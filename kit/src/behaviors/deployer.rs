@@ -19,8 +19,6 @@ pub struct DeploymentData {
     pub log_normal: Address,
     pub constant_sum: Address,
     pub constant_sum_solver: Address,
-    pub token_x: Address,
-    pub token_y: Address,
 }
 
 #[async_trait::async_trait]
@@ -52,25 +50,6 @@ impl Behavior<()> for Deployer {
             .await?;
         trace!("ConstantSum deployed at {:?}", constant_sum.address());
 
-        let token_x = ArbiterToken::deploy(
-            client.clone(),
-            ("Token X".to_owned(), "ARBX".to_owned(), 18u8),
-        )?
-        .send()
-        .await?;
-        let token_y = ArbiterToken::deploy(
-            client.clone(),
-            ("Token Y".to_owned(), "ARBY".to_owned(), 18u8),
-        )?
-        .send()
-        .await?;
-
-        trace!(
-            "Tokens deployed at {:?} and {:?}",
-            token_x.address(),
-            token_y.address()
-        );
-
         let n_token_geometric_mean = GeometricMean::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
@@ -78,10 +57,6 @@ impl Behavior<()> for Deployer {
         let cs_solver = ConstantSumSolver::deploy(client.clone(), constant_sum.address())?
             .send()
             .await?;
-
-        // do aprovals to DFMM contract mint tokens to creator agent
-        token_y.approve(dfmm.address(), MAX).send().await?.await?;
-        token_x.approve(dfmm.address(), MAX).send().await?.await?;
 
         let deployment_data = DeploymentData {
             n_token_geometric_mean: n_token_geometric_mean.address(),
@@ -91,8 +66,6 @@ impl Behavior<()> for Deployer {
             log_normal: log_normal.address(),
             constant_sum: constant_sum.address(),
             constant_sum_solver: cs_solver.address(),
-            token_x: token_x.address(),
-            token_y: token_y.address(),
         };
 
         messager

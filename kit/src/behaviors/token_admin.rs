@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
+use anyhow::Ok;
 use arbiter_engine::{
-    errors::ArbiterEngineError,
     machine::{Processing, Processor, State},
     messager::Message,
 };
 use ethers::utils::parse_ether;
+use tracing::debug;
 
 use super::*;
 
@@ -19,7 +20,7 @@ pub struct TokenAdminProcessing {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
     pub tokens: HashMap<String, ArbiterToken<ArbiterMiddleware>>,
-    pub token_data: HashMap<String, TokenData>,
+    pub token_data: HashMap<String, (TokenData, eAddress)>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -30,14 +31,11 @@ pub(crate) struct TokenAdmin<S: State> {
 impl TokenAdmin<Processing<TokenAdminProcessing>> {
     async fn reply_token_data(&self, token_name: String, to: String) {
         let token_data = self.data.token_data.get(&token_name).unwrap();
-        self.data.messager.send(To::Agent(to), token_data).await;
+        let _ = self.data.messager.send(To::Agent(to), token_data).await;
     }
     async fn reply_address_of(&self, token_name: String, to: String) {
-        let token_data = self.data.token_data.get(&token_name).unwrap();
-        self.data
-            .messager
-            .send(To::Agent(to), token_data.address)
-            .await;
+        let (_, token_address) = self.data.token_data.get(&token_name).unwrap();
+        let _ = self.data.messager.send(To::Agent(to), token_address).await;
     }
 
     async fn reply_get_asset_universe(&self, to: String) {
@@ -46,12 +44,12 @@ impl TokenAdmin<Processing<TokenAdminProcessing>> {
             .token_data
             .values()
             .cloned()
-            .collect::<Vec<TokenData>>();
+            .collect::<Vec<(TokenData, eAddress)>>();
 
-        self.data.messager.send(To::Agent(to), asset_universe).await;
+        let _ = self.data.messager.send(To::Agent(to), asset_universe).await;
     }
 
-    async fn reply_mint_request(&self, mint_request: MintRequest, to: String) {
+    async fn reply_mint_request(&self, mint_request: MintRequest, _to: String) {
         let token = self.data.tokens.get(&mint_request.token).unwrap();
         token
             .mint(
@@ -71,6 +69,7 @@ pub enum TokenAdminQuery {
     MintRequest(MintRequest),
     GetAssetUniverse,
     GetTokenData(String),
+    NoOp,
 }
 // Result<Option<(Self::Processor, EventStream<E>)
 #[async_trait::async_trait]
@@ -97,9 +96,13 @@ impl Behavior<Message> for TokenAdmin<Configuration<TokenAdminConfig>> {
             .send()
             .await
             .unwrap();
-            token_data_hashmap.insert(token_data.name.clone(), token_data.clone());
+            token_data_hashmap.insert(
+                token_data.name.clone(),
+                (token_data.clone(), token.address()),
+            );
             tokens.insert(token_data.name.clone(), token.clone());
         }
+        debug!("Tokens deployed!");
 
         let process = Self::Processor {
             data: TokenAdminProcessing {
@@ -117,7 +120,8 @@ impl Behavior<Message> for TokenAdmin<Configuration<TokenAdminConfig>> {
 #[async_trait::async_trait]
 impl Processor<Message> for TokenAdmin<Processing<TokenAdminProcessing>> {
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-        let query: TokenAdminQuery = serde_json::from_str(&event.data).unwrap();
+        let query: TokenAdminQuery =
+            serde_json::from_str(&event.data).unwrap_or(TokenAdminQuery::NoOp);
         match query {
             TokenAdminQuery::AddressOf(token_name) => {
                 self.reply_address_of(token_name, event.from).await;
@@ -129,9 +133,43 @@ impl Processor<Message> for TokenAdmin<Processing<TokenAdminProcessing>> {
                 self.reply_get_asset_universe(event.from).await;
             }
             TokenAdminQuery::GetTokenData(token_name) => {
-                self.reply_token_data(token_name, event.from).await
+                self.reply_token_data(token_name, event.from).await;
             }
+            TokenAdminQuery::NoOp => {}
         }
         Ok(ControlFlow::Continue)
+    }
+}
+
+mod test {
+    use std::{str::FromStr, sync::WaitTimeoutResult};
+
+    use arbiter_engine::{agent::Agent, world::World};
+    use ethers::types::Address;
+    use futures_util::StreamExt;
+    use tracing::{level_filters::LevelFilter, Level};
+    use tracing_subscriber::FmtSubscriber;
+
+    use self::{
+        bindings::{constant_sum_solver::ConstantSumParams, usdc::USDC},
+        pool::constant_sum::{ConstantSumInitData, ConstantSumPool},
+    };
+    use super::*;
+    use crate::behaviors::behaviors::TokenAdmin;
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    async fn token_admin_behavior_test() {
+        let subscriber = FmtSubscriber::builder()
+            .with_max_level(Level::DEBUG)
+            .pretty()
+            .finish();
+        tracing::subscriber::set_global_default(subscriber).unwrap();
+
+        let mut world = World::new("test");
+        let agent = Agent::builder("token_admin_agent");
+        let token_admin_behavior = default_admin_config();
+        world.add_agent(agent.with_behavior(token_admin_behavior));
+
+        world.run().await.unwrap();
     }
 }
