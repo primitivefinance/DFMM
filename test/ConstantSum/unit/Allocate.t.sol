@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { ConstantSumSetUp } from "./SetUp.sol";
 import {
-    computeDeltaLiquidity,
+    computeDeltaLiquidityRoundDown,
     ConstantSumParams
 } from "src/ConstantSum/ConstantSumMath.sol";
 
@@ -15,7 +15,8 @@ contract ConstantSumAllocateTest is ConstantSumSetUp {
         ConstantSumParams memory params =
             abi.decode(constantSum.getPoolParams(POOL_ID), (ConstantSumParams));
 
-        uint256 deltaL = computeDeltaLiquidity(deltaX, deltaY, params.price);
+        uint256 deltaL =
+            computeDeltaLiquidityRoundDown(deltaX, deltaY, params.price);
         dfmm.allocate(POOL_ID, abi.encode(deltaX, deltaY, deltaL));
     }
 }
