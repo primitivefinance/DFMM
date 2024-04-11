@@ -142,21 +142,24 @@ pub struct Pool<P: PoolType> {
 }
 
 impl<P: PoolType> Pool<P> {
-    // TODO: Finish this, it need a `prepare init bytes` as part of the poolType
-    // trait to work async fn create_pool(&self,
+    // TODO: Finish this
+    // async fn create_pool(
     //     init_data: P::InitializationData,
     //     token_list: Vec<ArbiterToken<ArbiterMiddleware>>,
     //     strategy_contract: P::StrategyContract,
     //     solver_contract: P::SolverContract,
     //     dfmm: DFMM<ArbiterMiddleware>,
+    //     instance: P,
     // ) -> Result<Pool<P>> {
-    //     let init_bytes = self.instance.init_data(init_data).await?;
+    //     // maybe we make a trait bound for the solver contract
+    //     let init_bytes = solver_contract.init_data;
 
     //     let tokens: Vec<eAddress> = token_list.iter().map(|tok|
     // tok.address()).collect();     assert!(tokens.len() == 2, "Token list must
     // contain exactly two distinct tokens.");     assert!(tokens[0] !=
     // tokens[1], "Token list contains duplicate tokens.");
 
+    //     // maybe we pass in name and symbol?
     //     let init_params = InitParams {
     //         name: init_data.name,
     //         symbol: init_data.symbol,
@@ -170,13 +173,6 @@ impl<P: PoolType> Pool<P> {
     //     let thing = dfmm.init(init_params.clone()).send().await?.await?.unwrap();
     //     let thing1 = thing.status.unwrap();
     //     debug!("tx succeeded with status {}", thing1);
-
-    //     // how do i make this part generic?
-    //     let instance = ConstantSumPool {
-    //         strategy_contract,
-    //         solver_contract,
-    //         parameters: init_data.params,
-    //     };
 
     //     Ok(Pool {
     //         id: eU256::one(),
