@@ -17,7 +17,7 @@ function computeTradingFunction(
     uint256 accumulator = ONE;
     for (uint256 i = 0; i < reserves.length; i++) {
         uint256 a = uint256(
-            int256(reserves[i].divWadDown(L)).powWad(int256(params.weights[i]))
+            int256(reserves[i].divWadUp(L)).powWad(int256(params.weights[i]))
         );
         accumulator = accumulator.mulWadUp(a);
     }
@@ -30,7 +30,7 @@ function computeDeltaGivenDeltaLRoundUp(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadUp(deltaLiquidity.divWadUp(totalLiquidity));
+    return reserve.mulDivUp(deltaLiquidity, totalLiquidity);
 }
 
 function computeDeltaGivenDeltaLRoundDown(
@@ -38,7 +38,7 @@ function computeDeltaGivenDeltaLRoundDown(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
+    return reserve.mulDivDown(deltaLiquidity, totalLiquidity);
 }
 
 function computeL(
@@ -137,7 +137,7 @@ function computeSwapDeltaLiquidity(
     uint256 weight,
     uint256 swapFee
 ) pure returns (uint256) {
-    return weight.mulWadDown(swapFee).mulWadDown(totalLiquidity).mulWadDown(
-        amountIn.divWadDown(reserve)
+    return weight.mulWadUp(swapFee).mulWadUp(totalLiquidity).mulWadUp(
+        amountIn.divWadUp(reserve)
     );
 }
