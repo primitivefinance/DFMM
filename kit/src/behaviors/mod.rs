@@ -1,31 +1,32 @@
 use std::sync::Arc;
 
-use bindings::arbiter_token::ArbiterToken;
 use arbiter_engine::{
     machine::{Behavior, Configuration, ControlFlow, EventStream},
     messager::{Messager, To},
 };
 use arbiter_macros::Behaviors;
+use bindings::arbiter_token::ArbiterToken;
 use serde::{Deserialize, Serialize};
 
 use self::{
     creator::{PoolConfig, PoolCreator},
     deployer::Deployer,
-    // bindings::idfmm::LogNormalParams, // TODO: We might want to just use these if we can.
-    // pool::log_normal::LogNormalParams,
-    pool::PoolType, //token_admin::TokenAdmin,allocate::InitialAllocation,
+    pool::PoolType,
+    token_admin::{TokenAdmin, TokenAdminConfig}, /* token_admin::TokenAdmin,
+                                                  * allocate::InitialAllocation, */
 };
 use super::*;
 
 // pub mod allocate;
-pub mod deployer;
-// pub mod token_admin;
 pub mod creator;
+pub mod deployer;
+pub mod token_admin;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Behaviors<P: PoolType> {
     Creator(PoolCreator<Configuration<PoolConfig<P>>>),
     Deployer(Deployer),
+    TokenAdmin(TokenAdmin<Configuration<TokenAdminConfig>>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

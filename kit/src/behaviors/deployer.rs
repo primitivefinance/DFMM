@@ -1,6 +1,7 @@
 use arbiter_bindings::bindings::weth::WETH;
 use bindings::{
-    constant_sum::ConstantSum, dfmm::DFMM, geometric_mean::GeometricMean, log_normal::LogNormal, constant_sum_solver::ConstantSumSolver
+    constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver, dfmm::DFMM,
+    geometric_mean::GeometricMean, log_normal::LogNormal,
 };
 use ethers::types::Address;
 
@@ -78,6 +79,10 @@ impl Behavior<()> for Deployer {
             .send()
             .await?;
 
+        // do aprovals to DFMM contract mint tokens to creator agent
+        token_y.approve(dfmm.address(), MAX).send().await?.await?;
+        token_x.approve(dfmm.address(), MAX).send().await?.await?;
+
         let deployment_data = DeploymentData {
             n_token_geometric_mean: n_token_geometric_mean.address(),
             weth: weth.address(),
@@ -120,51 +125,49 @@ mod tests {
         world.add_agent(agent.with_behavior(Deployer {}));
 
         world.run().await.unwrap();
-        let mut stream = messager.stream().expect("Failed to get messager
-stream");
+        let mut stream = messager.stream().expect(
+            "Failed to get messager
+stream",
+        );
 
         if let Some(res) = stream.next().await {
             let token_res_data = &res.data;
             println!("{}", token_res_data);
 
-            let data: String =
-                serde_json::from_str(token_res_data).expect("Failed to
-deserialize message data");
+            let data: String = serde_json::from_str(token_res_data).expect(
+                "Failed to
+deserialize message data",
+            );
 
-            let parsed_data: DeploymentData =
-                serde_json::from_str(&data).expect("Failed to deserialize
-token data");
+            let parsed_data: DeploymentData = serde_json::from_str(&data).expect(
+                "Failed to deserialize
+token data",
+            );
 
             println!("{:?}", parsed_data);
 
             assert_eq!(
-
-Address::from_str("0xb00efcb70090a21d46660adf95a16ec69623f694").unwrap(),
+                Address::from_str("0xb00efcb70090a21d46660adf95a16ec69623f694").unwrap(),
                 parsed_data.weth
             );
             assert_eq!(
-
-Address::from_str("0x27781b40bd019ccb1dcb0c809135db71222e9353").unwrap(),
+                Address::from_str("0x27781b40bd019ccb1dcb0c809135db71222e9353").unwrap(),
                 parsed_data.dfmm
             );
             assert_eq!(
-
-Address::from_str("0x6e0035324097bfc66442e2d3f37ef378fb3750b2").unwrap(),
+                Address::from_str("0x6e0035324097bfc66442e2d3f37ef378fb3750b2").unwrap(),
                 parsed_data.geometric_mean
             );
             assert_eq!(
-
-Address::from_str("0x4be050270d209ef9f0c0435736c731767486279f").unwrap(),
+                Address::from_str("0x4be050270d209ef9f0c0435736c731767486279f").unwrap(),
                 parsed_data.log_normal
             );
             assert_eq!(
-
-Address::from_str("0xaeb166f1355c6254d01a54317ef8d4d21bfcb4b0").unwrap(),
+                Address::from_str("0xaeb166f1355c6254d01a54317ef8d4d21bfcb4b0").unwrap(),
                 parsed_data.constant_sum
             );
             assert_eq!(
-
-Address::from_str("0xa4bb88cbfc92d86ae00842dcfa5a1ac32b0714b3").unwrap(),
+                Address::from_str("0xa4bb88cbfc92d86ae00842dcfa5a1ac32b0714b3").unwrap(),
                 parsed_data.n_token_geometric_mean
             );
         } else {

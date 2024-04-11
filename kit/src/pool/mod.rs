@@ -1,7 +1,9 @@
 // Notes:
-// Idea is that we want to be able to configure behaviors that depend on the `PoolType` generic from the config.toml.
-// What this means is that `PoolType` itself has to be `Deserialize`able and this is kinda tough to work with.
-// ---->>> The reason why is because we can't `Deserialize` contract objects themselves because that's just not possible.
+// Idea is that we want to be able to configure behaviors that depend on the
+// `PoolType` generic from the config.toml. What this means is that `PoolType`
+// itself has to be `Deserialize`able and this is kinda tough to work with.
+// ---->>> The reason why is because we can't `Deserialize` contract objects
+// themselves because that's just not possible.
 
 use std::sync::Arc;
 
@@ -10,7 +12,6 @@ use ethers::types::Bytes;
 use serde::{Deserialize, Serialize};
 
 use self::behaviors::deployer::DeploymentData;
-
 use super::*;
 use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
 
@@ -20,10 +21,17 @@ pub mod constant_sum;
 // pub mod n_token_geometric_mean;
 
 // Notes:
-// `InitData` is something that all pools need  in order to be created. This consists of:
-// 1. The parameters of the pool which, for example, are like the `mean` and `width` of the `LogNormal` pool. (Strategy specific since other pools might have different params like `ConstantSum` has `price`)
-// 2. Initial allocation data, which consists of, for example, a `price` and an amount of `token_x` for the `LogNormal` pool. (Strategy specific since other pools like `ConstantSum` may not have the same needs)
-// 3. Base configuration which ALL pools share as part of their parameterization which is the `swap_fee`, `controller` and the `controller_fee`. Every type of strategy needs these.
+// `InitData` is something that all pools need  in order to be created. This
+// consists of:
+// 1. The parameters of the pool which, for example, are like the `mean` and
+//    `width` of the `LogNormal` pool. (Strategy specific since other pools
+//    might have different params like `ConstantSum` has `price`)
+// 2. Initial allocation data, which consists of, for example, a `price` and an
+//    amount of `token_x` for the `LogNormal` pool. (Strategy specific since
+//    other pools like `ConstantSum` may not have the same needs)
+// 3. Base configuration which ALL pools share as part of their parameterization
+//    which is the `swap_fee`, `controller` and the `controller_fee`. Every type
+//    of strategy needs these.
 // #[derive(Clone, Debug, Serialize, Deserialize)]
 // pub struct InitData<P: PoolType> {
 //     pub params: P::PoolParameters,
@@ -32,7 +40,8 @@ pub mod constant_sum;
 // }
 
 // Notes:
-// These are the things that all strategies need to have to be initialized (and potentially updated).
+// These are the things that all strategies need to have to be initialized (and
+// potentially updated).
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BaseParameters {
     pub swap_fee: eU256,
@@ -40,17 +49,21 @@ pub struct BaseParameters {
     pub controller_fee: eU256,
 }
 
-// TODO: We could do something like this so we can have `create_pool` done generically
-// pub trait StrategySolver {
+// TODO: We could do something like this so we can have `create_pool` done
+// generically pub trait StrategySolver {
 //     fn get_initial_pool_data ..
 // }
 
 // Notes:
-// All the other types will be specific to each pool/strategy type since those will be specific contracts
+// All the other types will be specific to each pool/strategy type since those
+// will be specific contracts
 #[async_trait::async_trait]
 pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
-    // This trait provides the interface for people to construct pools from a `Configuration` state since all of this should be `Serialize` and `Deserialize`.
-    // This stuff ultimately will be what's used to deploy a `Pool<P: PoolType>` which will hold onto actual instances of contracts (whereas this just holds config data).
+    // This trait provides the interface for people to construct pools from a
+    // `Configuration` state since all of this should be `Serialize` and
+    // `Deserialize`. This stuff ultimately will be what's used to deploy a
+    // `Pool<P: PoolType>` which will hold onto actual instances of contracts
+    // (whereas this just holds config data).
     type PoolParameters: Clone
         + std::fmt::Debug
         + Serialize
@@ -102,14 +115,16 @@ pub enum UpdateParameters<P: PoolType> {
 }
 
 // Notes:
-// This is used in the `swap_data` function of the poolType trait to determine which token to swap in.
+// This is used in the `swap_data` function of the poolType trait to determine
+// which token to swap in.
 pub enum InputToken {
     TokenX,
     TokenY,
 }
 
 // Notes:
-// This is used in the `change_allocation_data` function of the Pool to determine whether to allocate or deallocate.
+// This is used in the `change_allocation_data` function of the Pool to
+// determine whether to allocate or deallocate.
 pub enum AllocateOrDeallocate {
     Allocate,
     Deallocate,

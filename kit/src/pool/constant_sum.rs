@@ -6,9 +6,9 @@ use bindings::{
     shared_types::InitParams,
 };
 use ethers::etherscan::Client;
+use tracing::{debug, info};
 
 use self::behaviors::deployer::DeploymentData;
-
 use super::*;
 
 #[derive(Clone, Debug)]
@@ -35,8 +35,8 @@ pub enum ConstantSumAllocationData {
     GivenY(eU256),
 }
 
-// TODO: It's worth thinking about what this is since we have our own "Pool" struct
-// pub struct Pool {
+// TODO: It's worth thinking about what this is since we have our own "Pool"
+// struct pub struct Pool {
 //     pub strategy: ::ethers::core::types::Address,
 //     pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
 //     pub reserves: ::std::vec::Vec<::ethers::core::types::U256>,
@@ -79,18 +79,26 @@ impl PoolType for ConstantSumPool {
             )
             .call()
             .await?;
+        debug!("Got init bytes {}", init_bytes);
+
+        let tokens: Vec<eAddress> = token_list.iter().map(|tok| tok.address()).collect();
+        assert!(tokens.len() == 2);
+        assert!(tokens[0] != tokens[1]);
         let init_params = InitParams {
             name: init_data.name,
             symbol: init_data.symbol,
             strategy: strategy_contract.address(),
-            tokens: token_list.iter().map(|tok| tok.address()).collect(),
+            tokens,
             data: init_bytes,
             fee_collector: eAddress::zero(),
-            controller_fee: 0.into(),
+            controller_fee: eU256::zero(),
         };
-
-        let (id, _reserves, _total_liquidity) = dfmm.init(init_params.clone()).call().await?;
-        dfmm.init(init_params).send().await?;
+        // let (id, _reserves, _total_liquidity) =
+        // dfmm.init(init_params.clone()).send().await?;
+        let thing = dfmm.init(init_params.clone()).send().await?.await?.unwrap();
+        let thing1 = thing.status.unwrap();
+        debug!("tx succeeded with status {}", thing1);
+        // debug!("got pool id {}", id);
 
         let instance = ConstantSumPool {
             strategy_contract,
@@ -99,7 +107,7 @@ impl PoolType for ConstantSumPool {
         };
 
         Ok(Pool {
-            id,
+            id: eU256::one(),
             dfmm,
             instance,
             token_x: token_list[0].clone(),
