@@ -191,7 +191,9 @@ contract CoveredCall is PairStrategy {
         int256 computedInvariant =
             tradingFunction(pool.reserves, computedL, params);
 
-        if (computedInvariant <= 0 && computedInvariant <= EPSILON) {
+        console2.log("Computed Invariant: {}", computedInvariant);
+
+        if (computedInvariant < 0 || computedInvariant > EPSILON) {
             revert InvalidComputedLiquidity(computedInvariant);
         }
 

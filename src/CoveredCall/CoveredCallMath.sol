@@ -14,7 +14,7 @@ using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
 using SignedWadMathLib for int256;
 
-uint256 constant MAX_ITER = 128;
+uint256 constant MAX_ITER = 256;
 uint256 constant YEAR = 31_536_000;
 
 function computeTradingFunction(
@@ -393,7 +393,7 @@ function computeNextRx(
     int256 computedInvariant = invariant;
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
-            upper = upper.mulDivUp(101, 100);
+            upper = upper.mulDivUp(1001, 1000);
             upper = upper > L ? L : upper;
             computedInvariant = computeTradingFunction({
                 rX: upper,
@@ -404,7 +404,7 @@ function computeNextRx(
         }
     } else {
         while (computedInvariant > 0) {
-            lower = lower.mulDivDown(99, 100);
+            lower = lower.mulDivDown(999, 1000);
             lower = lower > L ? L : lower;
             computedInvariant = computeTradingFunction({
                 rX: lower,
@@ -440,7 +440,7 @@ function computeNextRy(
     int256 computedInvariant = invariant;
     if (computedInvariant < 0) {
         while (computedInvariant < 0) {
-            upper = upper.mulDivUp(101, 100);
+            upper = upper.mulDivUp(1001, 1000);
             computedInvariant = computeTradingFunction({
                 rX: rX,
                 rY: upper,
@@ -450,7 +450,7 @@ function computeNextRy(
         }
     } else {
         while (computedInvariant > 0) {
-            lower = lower.mulDivDown(99, 100);
+            lower = lower.mulDivDown(999, 1000);
             computedInvariant = computeTradingFunction({
                 rX: rX,
                 rY: lower,
