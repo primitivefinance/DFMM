@@ -16,75 +16,12 @@ contract CoveredCallSetUp is SetUp {
     uint256 public POOL_ID;
     uint256 public constant FEE = 0.00001 ether;
 
-    CoveredCallParams defaultParams = CoveredCallParams({
-        mean: ONE,
-        width: 0.1 ether,
-        maturity: YEAR,
-        swapFee: TEST_SWAP_FEE,
-        timestamp: block.timestamp,
-        controller: address(this)
-    });
-
-    CoveredCallParams defaultParamsMil = CoveredCallParams({
-        mean: ONE,
-        width: 0.05 ether,
-        maturity: YEAR * 2,
-        swapFee: FEE,
-        timestamp: block.timestamp,
-        controller: address(this)
-    });
-
-    CoveredCallParams defaultParamsQuarterly = CoveredCallParams({
-        mean: ONE,
-        width: 0.1 ether,
-        maturity: YEAR / 4,
-        swapFee: TEST_SWAP_FEE,
-        timestamp: block.timestamp,
-        controller: address(this)
-    });
-
-    CoveredCallParams defaultParamsFeeless = CoveredCallParams({
-        mean: ONE,
-        width: 0.00001 ether,
-        maturity: YEAR,
-        swapFee: 0,
-        timestamp: block.timestamp,
-        controller: address(this)
-    });
-
-    CoveredCallParams defaultParamsDeep = CoveredCallParams({
-        mean: ONE,
-        width: 0.25 ether,
-        maturity: YEAR,
-        swapFee: TEST_SWAP_FEE,
-        timestamp: block.timestamp,
-        controller: address(this)
-    });
-
     uint256 defaultReserveX = 100 ether;
     uint256 defaultReserveXMil = 1_000_000 ether;
     uint256 defaultReserveXDeep = ONE * 10_000_000;
 
     uint256 defaultPrice = ONE;
     uint256 defaultPricePoint9Rate = 0.84167999326 ether;
-    bytes defaultInitialPoolData =
-        computeInitialPoolData(defaultReserveX, defaultPrice, defaultParams);
-
-    bytes defaultInitialPoolDataMil = computeInitialPoolDataGivenY(
-        defaultReserveXMil, defaultPricePoint9Rate, defaultParamsMil
-    );
-
-    bytes defaultInitialPoolDataQuarterly = computeInitialPoolData(
-        defaultReserveX, defaultPrice, defaultParamsQuarterly
-    );
-
-    bytes defaultInitialPoolDataFeeless = computeInitialPoolData(
-        defaultReserveX, defaultPrice, defaultParamsFeeless
-    );
-
-    bytes defaultInitialPoolDataDeep = computeInitialPoolData(
-        defaultReserveXDeep, defaultPrice, defaultParamsDeep
-    );
 
     function setUp() public override {
         SetUp.setUp();
@@ -99,12 +36,25 @@ contract CoveredCallSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
+        CoveredCallParams memory defaultParams = CoveredCallParams({
+            mean: ONE,
+            width: 0.1 ether,
+            maturity: YEAR,
+            swapFee: TEST_SWAP_FEE,
+            timestamp: block.timestamp,
+            controller: address(this)
+        });
+
+        bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
+            defaultReserveX, defaultPrice, defaultParams
+        );
+
         InitParams memory defaultInitParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(coveredCall),
             tokens: tokens,
-            data: defaultInitialPoolData,
+            data: initialPoolData,
             feeCollector: address(0),
             controllerFee: 0
         });
@@ -121,12 +71,25 @@ contract CoveredCallSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
+        CoveredCallParams memory defaultParamsMil = CoveredCallParams({
+            mean: ONE,
+            width: 0.05 ether,
+            maturity: YEAR * 2,
+            swapFee: FEE,
+            timestamp: block.timestamp,
+            controller: address(this)
+        });
+
+        bytes memory initialPoolData = solver.getInitialPoolDataGivenY(
+            defaultReserveXMil, defaultPricePoint9Rate, defaultParamsMil
+        );
+
         InitParams memory defaultInitParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(coveredCall),
             tokens: tokens,
-            data: defaultInitialPoolDataMil,
+            data: initialPoolData,
             feeCollector: address(0),
             controllerFee: 0
         });
@@ -145,12 +108,25 @@ contract CoveredCallSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
+        CoveredCallParams memory defaultParamsFeeless = CoveredCallParams({
+            mean: ONE,
+            width: 0.00001 ether,
+            maturity: YEAR,
+            swapFee: 0,
+            timestamp: block.timestamp,
+            controller: address(this)
+        });
+
+        bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
+            defaultReserveX, defaultPrice, defaultParamsFeeless
+        );
+
         InitParams memory defaultInitParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(coveredCall),
             tokens: tokens,
-            data: defaultInitialPoolDataFeeless,
+            data: initialPoolData,
             feeCollector: address(0),
             controllerFee: 0
         });
@@ -167,12 +143,25 @@ contract CoveredCallSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
+        CoveredCallParams memory defaultParamsQuarterly = CoveredCallParams({
+            mean: ONE,
+            width: 0.1 ether,
+            maturity: YEAR / 4,
+            swapFee: TEST_SWAP_FEE,
+            timestamp: block.timestamp,
+            controller: address(this)
+        });
+
+        bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
+            defaultReserveX, defaultPrice, defaultParamsQuarterly
+        );
+
         InitParams memory defaultInitParams = InitParams({
             name: "",
             symbol: "",
             strategy: address(coveredCall),
             tokens: tokens,
-            data: defaultInitialPoolDataQuarterly,
+            data: initialPoolData,
             feeCollector: address(0),
             controllerFee: 0
         });
@@ -189,12 +178,25 @@ contract CoveredCallSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
+        CoveredCallParams memory defaultParamsDeep = CoveredCallParams({
+            mean: ONE,
+            width: 0.25 ether,
+            maturity: YEAR,
+            swapFee: TEST_SWAP_FEE,
+            timestamp: block.timestamp,
+            controller: address(this)
+        });
+
+        bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
+            defaultReserveXDeep, defaultPrice, defaultParamsDeep
+        );
+
         InitParams memory defaultInitParamsDeep = InitParams({
             name: "",
             symbol: "",
             strategy: address(coveredCall),
             tokens: tokens,
-            data: defaultInitialPoolDataDeep,
+            data: initialPoolData,
             feeCollector: address(0),
             controllerFee: 0
         });

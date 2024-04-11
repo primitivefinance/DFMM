@@ -101,12 +101,20 @@ contract CoveredCallSolver {
         return (pool.reserves, pool.totalLiquidity);
     }
 
-    function getInitialPoolData(
-        uint256 rx,
+    function getInitialPoolDataGivenX(
+        uint256 rX,
         uint256 S,
         CoveredCallParams memory params
     ) public pure returns (bytes memory) {
-        return computeInitialPoolData(rx, S, params);
+        return computeInitialPoolData(rX, S, params);
+    }
+
+    function getInitialPoolDataGivenY(
+        uint256 rY,
+        uint256 S,
+        CoveredCallParams memory params
+    ) public pure returns (bytes memory) {
+        return computeInitialPoolDataGivenY(rY, S, params);
     }
 
     function prepareInitialPoolDataGivenY(
