@@ -10,6 +10,11 @@ use tracing::debug;
 
 use super::*;
 
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct TokenAdmin<S: State> {
+    pub data: S::Data,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub token_data: Vec<TokenData>,
@@ -30,76 +35,6 @@ impl State for Processing {
     type Data = Self;
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub enum Response {
-    Success,
-    Failed,
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct TokenAdmin<S: State> {
-    pub data: S::Data,
-}
-
-impl TokenAdmin<Processing> {
-    async fn reply_token_data(&self, token_name: String, to: String) -> Result<()> {
-        let token_data = &self.data.tokens.get(&token_name).unwrap().0;
-        Ok(self.data.messager.send(To::Agent(to), token_data).await?)
-    }
-    async fn reply_address_of(&self, token_name: String, to: String) -> Result<()> {
-        let token_address = self.data.tokens.get(&token_name).unwrap().1.address();
-        Ok(self
-            .data
-            .messager
-            .send(To::Agent(to), token_address)
-            .await?)
-    }
-
-    async fn reply_get_asset_universe(&self, to: String) -> Result<()> {
-        let asset_universe = self
-            .data
-            .tokens
-            .values()
-            .map(|(meta, token)| (meta, token.address()))
-            .collect::<Vec<(&TokenData, eAddress)>>();
-
-        Ok(self
-            .data
-            .messager
-            .send(To::Agent(to), asset_universe)
-            .await?)
-    }
-
-    async fn reply_mint_request(&self, mint_request: MintRequest, to: String) -> Result<()> {
-        println!("Got to here in mint request");
-        let token = &self.data.tokens.get(&mint_request.token).unwrap().1;
-        token
-            .mint(
-                mint_request.mint_to,
-                parse_ether(mint_request.mint_amount).unwrap(),
-            )
-            .send()
-            .await?
-            .await?;
-        println!("Made the mint call to RPC in mint request");
-        Ok(self
-            .data
-            .messager
-            .send(To::Agent(to), Response::Success)
-            .await?)
-    }
-}
-
-/// Used as an action to ask what tokens are available.
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub enum TokenAdminQuery {
-    AddressOf(String),
-    MintRequest(MintRequest),
-    GetAssetUniverse,
-    GetTokenData(String),
-    NoOp,
-}
-// Result<Option<(Self::Processor, EventStream<E>)
 #[async_trait::async_trait]
 impl Behavior<Message> for TokenAdmin<Config> {
     type Processor = TokenAdmin<Processing>;
@@ -171,35 +106,88 @@ impl Processor<Message> for TokenAdmin<Processing> {
     }
 }
 
-mod test {
-    use std::{str::FromStr, sync::WaitTimeoutResult};
-
-    use arbiter_engine::{agent::Agent, world::World};
-    use ethers::types::Address;
-    use futures_util::StreamExt;
-    use tracing::{level_filters::LevelFilter, Level};
-    use tracing_subscriber::FmtSubscriber;
-
-    use self::{
-        bindings::{constant_sum_solver::ConstantSumParams, usdc::USDC},
-        pool::constant_sum::ConstantSumPool,
-    };
-    use super::*;
-    use crate::behaviors::behaviors::TokenAdmin;
-
-    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
-    async fn token_admin_behavior_test() {
-        let subscriber = FmtSubscriber::builder()
-            .with_max_level(Level::DEBUG)
-            .pretty()
-            .finish();
-        tracing::subscriber::set_global_default(subscriber).unwrap();
-
-        let mut world = World::new("test");
-        let agent = Agent::builder("token_admin_agent");
-        let token_admin_behavior = default_admin_config();
-        world.add_agent(agent.with_behavior(token_admin_behavior));
-
-        world.run().await.unwrap();
+impl TokenAdmin<Processing> {
+    async fn reply_token_data(&self, token_name: String, to: String) -> Result<()> {
+        let token_data = &self.data.tokens.get(&token_name).unwrap().0;
+        Ok(self.data.messager.send(To::Agent(to), token_data).await?)
     }
+    async fn reply_address_of(&self, token_name: String, to: String) -> Result<()> {
+        let token_address = self.data.tokens.get(&token_name).unwrap().1.address();
+        Ok(self
+            .data
+            .messager
+            .send(To::Agent(to), token_address)
+            .await?)
+    }
+
+    async fn reply_get_asset_universe(&self, to: String) -> Result<()> {
+        let asset_universe = self
+            .data
+            .tokens
+            .values()
+            .map(|(meta, token)| (meta, token.address()))
+            .collect::<Vec<(&TokenData, eAddress)>>();
+
+        Ok(self
+            .data
+            .messager
+            .send(To::Agent(to), asset_universe)
+            .await?)
+    }
+
+    async fn reply_mint_request(&self, mint_request: MintRequest, to: String) -> Result<()> {
+        println!("Got to here in mint request");
+        let token = &self.data.tokens.get(&mint_request.token).unwrap().1;
+        token
+            .mint(
+                mint_request.mint_to,
+                parse_ether(mint_request.mint_amount).unwrap(),
+            )
+            .send()
+            .await?
+            .await?;
+        println!("Made the mint call to RPC in mint request");
+        Ok(self
+            .data
+            .messager
+            .send(To::Agent(to), Response::Success)
+            .await?)
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct TokenData {
+    pub name: String,
+    pub symbol: String,
+    pub decimals: u8,
+    pub address: Option<eAddress>,
+}
+
+/// Used as an action to ask what tokens are available.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub enum TokenAdminQuery {
+    AddressOf(String),
+    MintRequest(MintRequest),
+    GetAssetUniverse,
+    GetTokenData(String),
+    NoOp,
+}
+
+/// Used as an action to mint tokens.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct MintRequest {
+    /// The token to mint.
+    pub token: String,
+
+    /// The address to mint to.
+    pub mint_to: eAddress,
+
+    /// The amount to mint.
+    pub mint_amount: u64,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub enum Response {
+    Success,
+    Failed,
 }

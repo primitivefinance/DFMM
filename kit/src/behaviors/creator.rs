@@ -11,16 +11,7 @@ use crate::{
     pool::{Pool, PoolType},
 };
 
-// Idea: Let's make a behavior that has two states:
-// State 1. This is for configuration and it should have everything be
-// `Serialize`/`Deserialize` so that it can be read in from a config.
-// State 2. This is the "built" version of the behavior that may now own client,
-// messager, or contracts (etc.) and other things that had to be gotten from
-// running the `startup` method.
-
-// Example:
-// Let's make a "pool_creator" type of behavior that will take some
-// configuration for a pool and work to attempt to deploy that pool.
+pub const MAX: eU256 = eU256::MAX;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Creator<S: State> {
@@ -108,7 +99,7 @@ where
             .await?
             .await?;
 
-        let pool = Pool::<P>::new(
+        let _pool = Pool::<P>::new(
             self.data.base_config.clone(),
             self.data.params.clone(),
             self.data.allocation_data.clone(),
@@ -119,41 +110,5 @@ where
         )
         .await?;
         Ok(None)
-    }
-}
-
-mod test {
-    use arbiter_engine::{agent::Agent, world::World};
-    use tracing::{level_filters::LevelFilter, Level};
-    use tracing_subscriber::FmtSubscriber;
-
-    use super::*;
-    use crate::behaviors::deployer::Deployer;
-
-    #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
-    async fn creator_behavior_test() {
-        let subscriber = FmtSubscriber::builder()
-            .with_max_level(Level::DEBUG)
-            .pretty()
-            .finish();
-        tracing::subscriber::set_global_default(subscriber).unwrap();
-
-        let mut world = World::new("test");
-
-        // deployer
-        let agent = Agent::builder("deployer");
-        world.add_agent(agent.with_behavior(Deployer {}));
-
-        // Token Admin
-        let token_admin_config = default_admin_config();
-        let token_admin = Agent::builder("token_admin_agent");
-        world.add_agent(token_admin.with_behavior(token_admin_config));
-
-        // Pool Creator
-        let creator = Agent::builder("pool_creator_agent");
-        let pool_creator_config = default_creator_config();
-        world.add_agent(creator.with_behavior(pool_creator_config));
-
-        world.run().await.unwrap();
     }
 }

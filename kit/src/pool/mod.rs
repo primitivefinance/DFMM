@@ -165,7 +165,7 @@ impl<P: PoolType> Pool<P> {
             controller_fee: eU256::zero(),
         };
 
-        let (id, _reserves, _total_liquidty) = dfmm.init(init_params.clone()).call().await?;
+        let (id, _reserves, _total_liquidity) = dfmm.init(init_params.clone()).call().await?;
         dfmm.init(init_params).send().await?.await?;
         let pool: shared_types::Pool = dfmm.pools(id).call().await?;
         let instance = P::create_instance(strategy_contract, solver_contract, params);
@@ -181,6 +181,7 @@ impl<P: PoolType> Pool<P> {
         info!("Pool created!\n {:#?}", pool);
         Ok(pool)
     }
+
     /// Performs a swap on the pool.
     ///
     /// # Arguments

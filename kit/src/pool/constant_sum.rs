@@ -116,8 +116,8 @@ impl PoolType for ConstantSumPool {
 
     async fn change_allocation_data(
         &self,
-        pool_id: eU256,
-        allocation_data: Self::AllocationData,
+        _pool_id: eU256,
+        _allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
         todo!()
         // match allocation_data {
