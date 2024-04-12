@@ -14,7 +14,7 @@ use self::{
     creator::Creator,
     deployer::Deployer,
     pool::{
-        constant_sum::{ConstantSumInitData, ConstantSumPool},
+        constant_sum::{ConstantSumConfig, ConstantSumPool},
         PoolType,
     },
     token_admin::TokenAdmin,
@@ -66,7 +66,7 @@ pub(crate) fn default_creator_config() -> Creator<creator::Config<ConstantSumPoo
                 swap_fee: 0.into(),
                 controller: eAddress::random(),
             },
-            initial_allocation_data: ConstantSumInitData {
+            init_config: ConstantSumConfig {
                 name: "Test Pool".to_string(),
                 symbol: "TP".to_string(),
                 reserve_x: WAD,

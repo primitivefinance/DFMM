@@ -181,7 +181,7 @@ mod test {
 
     use self::{
         bindings::{constant_sum_solver::ConstantSumParams, usdc::USDC},
-        pool::constant_sum::{ConstantSumInitData, ConstantSumPool},
+        pool::constant_sum::{ConstantSumConfig, ConstantSumPool},
     };
     use super::*;
     use crate::behaviors::behaviors::TokenAdmin;

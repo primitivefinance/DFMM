@@ -8,11 +8,14 @@
 use std::sync::Arc;
 
 use arbiter_core::middleware::ArbiterMiddleware;
-use ethers::types::Bytes;
+use ethers::{core::abi::AbiType, types::Bytes};
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 
-use self::behaviors::deployer::DeploymentData;
+use self::{
+    behaviors::deployer::DeploymentData,
+    bindings::{erc20::ERC20, shared_types},
+};
 use super::*;
 use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM, shared_types::InitParams};
 
@@ -55,24 +58,24 @@ pub struct BaseParameters {
 //     fn get_initial_pool_data ..
 // }
 
+pub trait PoolConfig:
+    Clone + std::fmt::Debug + Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static
+{
+    fn get_init_params(&self) -> InitParams;
+}
+
 // Notes:
 // All the other types will be specific to each pool/strategy type since those
 // will be specific contracts
 #[async_trait::async_trait]
-pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
+pub trait PoolType: Clone + std::fmt::Debug + 'static {
     // This trait provides the interface for people to construct pools from a
     // `Configuration` state since all of this should be `Serialize` and
     // `Deserialize`. This stuff ultimately will be what's used to deploy a
     // `Pool<P: PoolType>` which will hold onto actual instances of contracts
     // (whereas this just holds config data).
+    type InitConfig: PoolConfig;
     type PoolParameters: Clone
-        + std::fmt::Debug
-        + Serialize
-        + for<'de> Deserialize<'de>
-        + Send
-        + Sync
-        + 'static;
-    type InitializationData: Clone
         + std::fmt::Debug
         + Serialize
         + for<'de> Deserialize<'de>
@@ -83,17 +86,6 @@ pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
     type StrategyContract;
     type SolverContract;
     type AllocationData: Send + Sync + 'static;
-
-    #[allow(async_fn_in_trait)]
-    async fn create_pool(
-        init_data: Self::InitializationData,
-        token_list: Vec<ArbiterToken<ArbiterMiddleware>>,
-        strategy_contract: Self::StrategyContract,
-        solver_contract: Self::SolverContract,
-        dfmm: DFMM<ArbiterMiddleware>,
-    ) -> Result<Pool<Self>>;
-
-    async fn init_data(&self, init_data: Self::InitializationData) -> Result<Bytes>;
 
     async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
     /// Change Parameters
@@ -109,6 +101,19 @@ pub trait PoolType: Sized + Clone + std::fmt::Debug + 'static {
         deployment: &DeploymentData,
         client: Arc<ArbiterMiddleware>,
     ) -> (Self::StrategyContract, Self::SolverContract);
+
+    fn get_strategy_address(strategy_contract: Self::StrategyContract) -> eAddress;
+
+    async fn get_init_bytes(
+        init_config: Self::InitConfig,
+        solver_contract: Self::SolverContract,
+    ) -> Result<Bytes>;
+
+    fn create_instance(
+        strategy_contract: Self::StrategyContract,
+        solver_contract: Self::SolverContract,
+        parameters: Self::PoolParameters,
+    ) -> Self;
 }
 
 pub enum UpdateParameters<P: PoolType> {
@@ -137,51 +142,32 @@ pub struct Pool<P: PoolType> {
     pub id: eU256,
     pub dfmm: DFMM<ArbiterMiddleware>,
     pub instance: P,
-    pub token_x: ArbiterToken<ArbiterMiddleware>,
-    pub token_y: ArbiterToken<ArbiterMiddleware>,
+    pub tokens: Vec<ArbiterToken<ArbiterMiddleware>>,
+    pub liquidity_token: ERC20<ArbiterMiddleware>,
 }
 
 impl<P: PoolType> Pool<P> {
-    // TODO: Finish this
-    // async fn create_pool(
-    //     init_data: P::InitializationData,
-    //     token_list: Vec<ArbiterToken<ArbiterMiddleware>>,
-    //     strategy_contract: P::StrategyContract,
-    //     solver_contract: P::SolverContract,
-    //     dfmm: DFMM<ArbiterMiddleware>,
-    //     instance: P,
-    // ) -> Result<Pool<P>> {
-    //     // maybe we make a trait bound for the solver contract
-    //     let init_bytes = solver_contract.init_data;
-
-    //     let tokens: Vec<eAddress> = token_list.iter().map(|tok|
-    // tok.address()).collect();     assert!(tokens.len() == 2, "Token list must
-    // contain exactly two distinct tokens.");     assert!(tokens[0] !=
-    // tokens[1], "Token list contains duplicate tokens.");
-
-    //     // maybe we pass in name and symbol?
-    //     let init_params = InitParams {
-    //         name: init_data.name,
-    //         symbol: init_data.symbol,
-    //         strategy: strategy_contract.address(),
-    //         tokens,
-    //         data: init_bytes,
-    //         fee_collector: eAddress::zero(),
-    //         controller_fee: eU256::zero(),
-    //     };
-
-    //     let thing = dfmm.init(init_params.clone()).send().await?.await?.unwrap();
-    //     let thing1 = thing.status.unwrap();
-    //     debug!("tx succeeded with status {}", thing1);
-
-    //     Ok(Pool {
-    //         id: eU256::one(),
-    //         dfmm,
-    //         instance,
-    //         token_x: token_list[0].clone(),
-    //         token_y: token_list[1].clone(),
-    //     })
-    // }
+    pub async fn new(
+        init_params: InitParams,
+        parameters: P::PoolParameters,
+        strategy_contract: P::StrategyContract,
+        solver_contract: P::SolverContract,
+        dfmm: DFMM<ArbiterMiddleware>,
+        tokens: Vec<ArbiterToken<ArbiterMiddleware>>,
+    ) -> Result<Self> {
+        let (id, _reserves, _total_liquidty) = dfmm.init(init_params.clone()).call().await?;
+        dfmm.init(init_params).send().await?.await?;
+        let pool: shared_types::Pool = dfmm.pools(id).call().await?;
+        let instance = P::create_instance(strategy_contract, solver_contract, parameters);
+        let client = dfmm.client();
+        Ok(Self {
+            id,
+            dfmm,
+            instance,
+            tokens,
+            liquidity_token: ERC20::new(pool.liquidity_token, client),
+        })
+    }
     /// Performs a swap on the pool.
     ///
     /// # Arguments

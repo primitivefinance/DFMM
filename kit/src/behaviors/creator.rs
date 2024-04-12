@@ -3,13 +3,16 @@ use bindings::dfmm::DFMM;
 
 use tracing::debug;
 
+use self::pool::PoolConfig;
+
 use super::*;
 use crate::{
     behaviors::{
         deployer::DeploymentData,
         token_admin::{Response, TokenAdminQuery},
     },
-    pool::PoolType,
+    bindings::idfmm::InitParams,
+    pool::{Pool, PoolType},
 };
 
 // Idea: Let's make a behavior that has two states:
@@ -30,9 +33,25 @@ pub struct Creator<S: State> {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config<P: PoolType> {
+    pub name: String,
+    pub symbol: String,
     pub params: P::PoolParameters,
-    pub initial_allocation_data: P::InitializationData,
+    pub init_config: P::InitConfig,
     pub token_list: Vec<eAddress>,
+}
+
+impl<P: PoolType> PoolConfig for Config<P> {
+    fn get_init_params(&self) -> InitParams {
+        InitParams {
+            name: self.name.clone(),
+            symbol: self.symbol.clone(),
+            strategy: todo!(),
+            tokens: self.token_list.clone(),
+            data: todo!(),
+            fee_collector: todo!(),
+            controller_fee: todo!(),
+        }
+    }
 }
 
 impl<P: PoolType> State for Config<P> {
@@ -108,9 +127,18 @@ where
             .await?
             .await?;
 
-        let init_data = self.data.initial_allocation_data.clone();
-        let pool = P::create_pool(
-            init_data,
+        let init_params = InitParams {
+            name: self.data.init_config.name,
+            symbol: todo!(),
+            strategy: todo!(),
+            tokens: todo!(),
+            data: todo!(),
+            fee_collector: todo!(),
+            controller_fee: todo!(),
+        };
+
+        let pool = Pool::new(
+            self.data.init_config,
             vec![token_x, token_y],
             strategy_contract,
             solver_contract,
