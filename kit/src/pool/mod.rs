@@ -8,9 +8,8 @@
 use std::sync::Arc;
 
 use arbiter_core::middleware::ArbiterMiddleware;
-use ethers::{core::abi::AbiType, types::Bytes};
+use ethers::types::Bytes;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
 
 use self::{
     behaviors::deployer::DeploymentData,
@@ -47,22 +46,11 @@ pub mod constant_sum;
 // These are the things that all strategies need to have to be initialized (and
 // potentially updated).
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct BaseParameters {
+pub struct BaseConfig {
+    pub name: String,
+    pub symbol: String,
     pub swap_fee: eU256,
-    pub controller: eAddress,
     pub controller_fee: eU256,
-}
-
-// TODO: We could do something like this so we can have `create_pool` done
-// generically pub trait StrategySolver {
-//     fn get_initial_pool_data ..
-// }
-
-pub trait PoolConfig:
-    Clone + std::fmt::Debug + Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static
-{
-    fn get_init_params(&self, strategy: eAddress, tokens: Vec<eAddress>, data: Bytes)
-        -> InitParams;
 }
 
 // Notes:
@@ -75,8 +63,7 @@ pub trait PoolType: Clone + std::fmt::Debug + 'static {
     // `Deserialize`. This stuff ultimately will be what's used to deploy a
     // `Pool<P: PoolType>` which will hold onto actual instances of contracts
     // (whereas this just holds config data).
-    type InitConfig: PoolConfig;
-    type PoolParameters: Clone
+    type Parameters: Clone
         + std::fmt::Debug
         + Serialize
         + for<'de> Deserialize<'de>
@@ -86,11 +73,17 @@ pub trait PoolType: Clone + std::fmt::Debug + 'static {
     // ~~ These are the contracts that are used to interact with the pool. ~~
     type StrategyContract;
     type SolverContract;
-    type AllocationData: Send + Sync + 'static;
+    type AllocationData: Clone
+        + std::fmt::Debug
+        + Serialize
+        + for<'de> Deserialize<'de>
+        + Send
+        + Sync
+        + 'static;
 
     async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
     /// Change Parameters
-    async fn update_data(&self, new_data: Self::PoolParameters) -> Result<Bytes>;
+    async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes>;
     /// Change Allocation Date
     async fn change_allocation_data(
         &self,
@@ -103,22 +96,24 @@ pub trait PoolType: Clone + std::fmt::Debug + 'static {
         client: Arc<ArbiterMiddleware>,
     ) -> (Self::StrategyContract, Self::SolverContract);
 
-    fn get_strategy_address(strategy_contract: Self::StrategyContract) -> eAddress;
+    fn get_strategy_address(strategy_contract: &Self::StrategyContract) -> eAddress;
 
-    async fn get_init_bytes(
-        init_config: Self::InitConfig,
-        solver_contract: Self::SolverContract,
+    async fn get_init_data(
+        base_config: &BaseConfig,
+        params: &Self::Parameters,
+        allocation_data: &Self::AllocationData,
+        solver_contract: &Self::SolverContract,
     ) -> Result<Bytes>;
 
     fn create_instance(
         strategy_contract: Self::StrategyContract,
         solver_contract: Self::SolverContract,
-        parameters: Self::PoolParameters,
+        parameters: Self::Parameters,
     ) -> Self;
 }
 
 pub enum UpdateParameters<P: PoolType> {
-    PoolParameters(P::PoolParameters),
+    PoolParameters(P::Parameters),
     Controller(eAddress),
     Fee(eU256),
 }
@@ -139,6 +134,7 @@ pub enum AllocateOrDeallocate {
     Deallocate,
 }
 
+#[derive(Debug)]
 pub struct Pool<P: PoolType> {
     pub id: eU256,
     pub dfmm: DFMM<ArbiterMiddleware>,
@@ -149,25 +145,41 @@ pub struct Pool<P: PoolType> {
 
 impl<P: PoolType> Pool<P> {
     pub async fn new(
-        init_params: InitParams,
-        parameters: P::PoolParameters,
+        base_config: BaseConfig,
+        params: P::Parameters,
+        allocation_data: P::AllocationData,
         strategy_contract: P::StrategyContract,
         solver_contract: P::SolverContract,
         dfmm: DFMM<ArbiterMiddleware>,
         tokens: Vec<ArbiterToken<ArbiterMiddleware>>,
     ) -> Result<Self> {
+        let data =
+            P::get_init_data(&base_config, &params, &allocation_data, &solver_contract).await?;
+        let init_params = InitParams {
+            name: base_config.name,
+            symbol: base_config.symbol,
+            strategy: P::get_strategy_address(&strategy_contract),
+            tokens: tokens.iter().map(|t| t.address()).collect(),
+            data,
+            fee_collector: eAddress::zero(),
+            controller_fee: eU256::zero(),
+        };
+
         let (id, _reserves, _total_liquidty) = dfmm.init(init_params.clone()).call().await?;
         dfmm.init(init_params).send().await?.await?;
         let pool: shared_types::Pool = dfmm.pools(id).call().await?;
-        let instance = P::create_instance(strategy_contract, solver_contract, parameters);
+        let instance = P::create_instance(strategy_contract, solver_contract, params);
         let client = dfmm.client();
-        Ok(Self {
+
+        let pool = Self {
             id,
             dfmm,
             instance,
             tokens,
             liquidity_token: ERC20::new(pool.liquidity_token, client),
-        })
+        };
+        info!("Pool created!\n {:#?}", pool);
+        Ok(pool)
     }
     /// Performs a swap on the pool.
     ///
@@ -242,7 +254,7 @@ impl<P: PoolType> Pool<P> {
     ///
     /// Returns `Ok(())` if the update is successful, otherwise returns an
     /// error.
-    pub async fn update(&self, new_data: P::PoolParameters) -> Result<()> {
+    pub async fn update(&self, new_data: P::Parameters) -> Result<()> {
         let data = self.instance.update_data(new_data).await?;
         self.dfmm.update(self.id, data).send().await?.await?;
         Ok(())

@@ -1,15 +1,13 @@
 use arbiter_engine::machine::{Behavior, State};
 use bindings::dfmm::DFMM;
-use tracing::debug;
 
-use self::pool::PoolConfig;
+use self::pool::BaseConfig;
 use super::*;
 use crate::{
     behaviors::{
         deployer::DeploymentData,
         token_admin::{Response, TokenAdminQuery},
     },
-    bindings::idfmm::InitParams,
     pool::{Pool, PoolType},
 };
 
@@ -31,25 +29,10 @@ pub struct Creator<S: State> {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config<P: PoolType> {
-    pub name: String,
-    pub symbol: String,
-    pub params: P::PoolParameters,
-    pub init_config: P::InitConfig,
-    pub token_list: Vec<eAddress>,
-}
-
-impl<P: PoolType> PoolConfig for Config<P> {
-    fn get_init_params(&self) -> InitParams {
-        InitParams {
-            name: self.name.clone(),
-            symbol: self.symbol.clone(),
-            strategy: todo!(),
-            tokens: self.token_list.clone(),
-            data: todo!(),
-            fee_collector: todo!(),
-            controller_fee: todo!(),
-        }
-    }
+    pub base_config: BaseConfig,
+    pub params: P::Parameters,
+    pub allocation_data: P::AllocationData,
+    pub token_list: Vec<String>,
 }
 
 impl<P: PoolType> State for Config<P> {
@@ -125,25 +108,16 @@ where
             .await?
             .await?;
 
-        // let init_bytes = solver_contract
-        //     .get_initial_pool_data(
-        //         &self.data.init_config.reserve_x,
-        //         &self.data.init_config.reserve_y,
-        //         &self.data.init_config.params.clone(),
-        //     )
-        //     .call()
-        //     .await?;
-        let params = P::InitConfig::get_init_params(
-            &self.data.init_config,
-            deployment_data.constant_sum,
-            vec![token_x.address(), token_y.address()], todo!()
-        );
-
-        let pool = dfmm.init(params).send().await?.await?.unwrap();
-        debug!(
-            "Pool created with status {:?}, (1 means success)",
-            pool.status
-        );
+        let pool = Pool::<P>::new(
+            self.data.base_config.clone(),
+            self.data.params.clone(),
+            self.data.allocation_data.clone(),
+            strategy_contract,
+            solver_contract,
+            dfmm,
+            vec![token_x, token_y],
+        )
+        .await?;
         Ok(None)
     }
 }

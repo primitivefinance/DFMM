@@ -1,14 +1,8 @@
 use std::sync::Arc;
 
-use anyhow::Ok;
-use bindings::{
-    constant_sum::ConstantSum,
-    constant_sum_solver::{ConstantSumParams, ConstantSumSolver},
-    shared_types::InitParams,
-};
-use tracing::{debug, info};
+use bindings::{constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver};
 
-use self::behaviors::deployer::DeploymentData;
+use self::{behaviors::deployer::DeploymentData, bindings::constant_sum_solver};
 use super::*;
 
 #[derive(Clone, Debug)]
@@ -18,64 +12,20 @@ pub struct ConstantSumPool {
     pub parameters: ConstantSumParams,
 }
 
-// Configuration for the pool
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct ConstantSumConfig {
-    pub name: String,
-    pub symbol: String,
+pub struct ConstantSumParams {
+    pub price: eU256,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ConstantSumAllocationData {
     pub reserve_x: eU256,
     pub reserve_y: eU256,
-    pub token_x_name: String,
-    pub token_y_name: String,
-    pub params: ConstantSumParams,
-}
-
-// pub struct InitParams {
-//     pub name: ::std::string::String,
-//     pub symbol: ::std::string::String,
-//     pub strategy: ::ethers::core::types::Address,
-//     pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
-//     pub data: ::ethers::core::types::Bytes,
-//     pub fee_collector: ::ethers::core::types::Address,
-//     pub controller_fee: ::ethers::core::types::U256,
-// }
-impl PoolConfig for ConstantSumConfig {
-    fn get_init_params(
-        &self,
-        strategy: eAddress,
-        tokens: Vec<eAddress>,
-        data: Bytes,
-    ) -> InitParams {
-
-        // let init_bytes = solver_contract
-        //     .get_initial_pool_data(
-        //         self.reserve_x,
-        //         self.reserve_y,
-        //         self.params.clone(),
-        //     )
-        //     .call()
-        //     .await?;
-        InitParams {
-            name: self.name.clone(),
-            symbol: self.symbol.clone(),
-            strategy,
-            tokens,
-            data,
-            fee_collector: self.params.controller,
-            controller_fee: self.params.swap_fee,
-        }
-    }
-}
-
-pub enum ConstantSumAllocationData {
-    GivenX(eU256),
-    GivenY(eU256),
 }
 
 #[async_trait::async_trait]
 impl PoolType for ConstantSumPool {
-    type InitConfig = ConstantSumConfig;
-    type PoolParameters = ConstantSumParams;
+    type Parameters = ConstantSumParams;
     type StrategyContract = ConstantSum<ArbiterMiddleware>;
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
     type AllocationData = ConstantSumAllocationData;
@@ -90,29 +40,36 @@ impl PoolType for ConstantSumPool {
         )
     }
 
-    async fn get_init_bytes(
-        init_config: Self::InitConfig,
-        solver_contract: Self::SolverContract,
+    async fn get_init_data(
+        base_config: &BaseConfig,
+        params: &Self::Parameters,
+        allocation_data: &Self::AllocationData,
+        solver_contract: &Self::SolverContract,
     ) -> Result<Bytes> {
+        let constant_sum_params = constant_sum_solver::ConstantSumParams {
+            price: params.price,
+            swap_fee: base_config.swap_fee,
+            controller: eAddress::random(),
+        };
         let init_bytes = solver_contract
             .get_initial_pool_data(
-                init_config.reserve_x,
-                init_config.reserve_y,
-                init_config.params.clone(),
+                allocation_data.reserve_x,
+                allocation_data.reserve_y,
+                constant_sum_params,
             )
             .call()
             .await?;
         Ok(init_bytes)
     }
 
-    fn get_strategy_address(strategy_contract: Self::StrategyContract) -> eAddress {
+    fn get_strategy_address(strategy_contract: &Self::StrategyContract) -> eAddress {
         strategy_contract.address()
     }
 
     fn create_instance(
         strategy_contract: Self::StrategyContract,
         solver_contract: Self::SolverContract,
-        parameters: Self::PoolParameters,
+        parameters: Self::Parameters,
     ) -> Self {
         Self {
             strategy_contract,
@@ -148,7 +105,7 @@ impl PoolType for ConstantSumPool {
         }
     }
 
-    async fn update_data(&self, parameters: Self::PoolParameters) -> Result<Bytes> {
+    async fn update_data(&self, parameters: Self::Parameters) -> Result<Bytes> {
         let price_update_data = self
             .solver_contract
             .prepare_price_update(parameters.price)
@@ -162,23 +119,24 @@ impl PoolType for ConstantSumPool {
         pool_id: eU256,
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        match allocation_data {
-            ConstantSumAllocationData::GivenX(amount_x) => {
-                let data = self
-                    .solver_contract
-                    .prepare_allocation_delta_given_delta_x(pool_id, amount_x)
-                    .call()
-                    .await?;
-                Ok(data)
-            }
-            ConstantSumAllocationData::GivenY(amount_y) => {
-                let data = self
-                    .solver_contract
-                    .prepare_allocation_delta_given_delta_y(amount_y)
-                    .call()
-                    .await?;
-                Ok(data)
-            }
-        }
+        todo!()
+        // match allocation_data {
+        //     ConstantSumAllocationData::GivenX(amount_x) => {
+        //         let data = self
+        //             .solver_contract
+        //             .prepare_allocation_delta_given_delta_x(pool_id, amount_x)
+        //             .call()
+        //             .await?;
+        //         Ok(data)
+        //     }
+        //     ConstantSumAllocationData::GivenY(amount_y) => {
+        //         let data = self
+        //             .solver_contract
+        //             .prepare_allocation_delta_given_delta_y(amount_y)
+        //             .call()
+        //             .await?;
+        //         Ok(data)
+        //     }
+        // }
     }
 }

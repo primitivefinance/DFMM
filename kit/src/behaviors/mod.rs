@@ -1,21 +1,18 @@
 use std::sync::Arc;
 
 use arbiter_engine::{
-    agent::Agent,
-    machine::{Behavior, Configuration, ControlFlow, EventStream},
+    machine::{Behavior, ControlFlow, EventStream},
     messager::{Messager, To},
 };
 use arbiter_macros::Behaviors;
 use bindings::arbiter_token::ArbiterToken;
-use serde::{Deserialize, Serialize};
 
 use self::{
-    bindings::constant_sum_solver::ConstantSumParams,
     creator::Creator,
     deployer::Deployer,
     pool::{
-        constant_sum::{ConstantSumConfig, ConstantSumPool},
-        PoolType,
+        constant_sum::{ConstantSumAllocationData, ConstantSumParams, ConstantSumPool},
+        BaseConfig, PoolType,
     },
     token_admin::TokenAdmin,
 };
@@ -61,27 +58,18 @@ pub(crate) fn default_admin_config() -> TokenAdmin<token_admin::Config> {
 pub(crate) fn default_creator_config() -> Creator<creator::Config<ConstantSumPool>> {
     Creator::<creator::Config<ConstantSumPool>> {
         data: creator::Config {
-            params: ConstantSumParams {
-                price: WAD,
-                swap_fee: 0.into(),
-                controller: eAddress::random(),
-            },
-            init_config: ConstantSumConfig {
+            params: ConstantSumParams { price: WAD },
+            token_list: vec!["Token X".to_string(), "Token Y".to_string()],
+            base_config: BaseConfig {
                 name: "Test Pool".to_string(),
                 symbol: "TP".to_string(),
+                swap_fee: 10000.into(),
+                controller_fee: 0.into(),
+            },
+            allocation_data: ConstantSumAllocationData {
                 reserve_x: WAD,
                 reserve_y: WAD,
-                token_x_name: "Token X".to_string(),
-                token_y_name: "Token Y".to_string(),
-                params: ConstantSumParams {
-                    price: WAD,
-                    swap_fee: 10000.into(),
-                    controller: eAddress::zero(),
-                },
             },
-            token_list: vec![eAddress::zero(), eAddress::zero()],
-            name: todo!(),
-            symbol: todo!(),
         },
     }
 }

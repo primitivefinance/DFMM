@@ -6,7 +6,7 @@ use anyhow::Result;
 use arbiter_core::middleware::ArbiterMiddleware;
 use ethers::types::{Address as eAddress, U256 as eU256};
 use serde::{Deserialize, Serialize};
-use tracing::{error, trace, warn};
+use tracing::{error, info, trace, warn};
 
 pub const WAD: eU256 = eU256([1_000_000_000_000_000_000, 0, 0, 0]);
 pub const MAX: eU256 = eU256::MAX;
