@@ -143,7 +143,8 @@ impl Behavior<Message> for TokenAdmin<Config> {
     }
 }
 
-// TODO: We could make this a `MessageDecode<T>` stream to make life a little easier. Would be nice to add this in arbiter_engine.
+// TODO: We could make this a `MessageDecode<T>` stream to make life a little
+// easier. Would be nice to add this in arbiter_engine.
 #[async_trait::async_trait]
 impl Processor<Message> for TokenAdmin<Processing> {
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {

@@ -30,6 +30,43 @@ pub struct ConstantSumConfig {
     pub params: ConstantSumParams,
 }
 
+// pub struct InitParams {
+//     pub name: ::std::string::String,
+//     pub symbol: ::std::string::String,
+//     pub strategy: ::ethers::core::types::Address,
+//     pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
+//     pub data: ::ethers::core::types::Bytes,
+//     pub fee_collector: ::ethers::core::types::Address,
+//     pub controller_fee: ::ethers::core::types::U256,
+// }
+impl PoolConfig for ConstantSumConfig {
+    fn get_init_params(
+        &self,
+        strategy: eAddress,
+        tokens: Vec<eAddress>,
+        data: Bytes,
+    ) -> InitParams {
+
+        // let init_bytes = solver_contract
+        //     .get_initial_pool_data(
+        //         self.reserve_x,
+        //         self.reserve_y,
+        //         self.params.clone(),
+        //     )
+        //     .call()
+        //     .await?;
+        InitParams {
+            name: self.name.clone(),
+            symbol: self.symbol.clone(),
+            strategy,
+            tokens,
+            data,
+            fee_collector: self.params.controller,
+            controller_fee: self.params.swap_fee,
+        }
+    }
+}
+
 pub enum ConstantSumAllocationData {
     GivenX(eU256),
     GivenY(eU256),

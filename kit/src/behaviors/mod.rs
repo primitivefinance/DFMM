@@ -80,6 +80,8 @@ pub(crate) fn default_creator_config() -> Creator<creator::Config<ConstantSumPoo
                 },
             },
             token_list: vec![eAddress::zero(), eAddress::zero()],
+            name: todo!(),
+            symbol: todo!(),
         },
     }
 }

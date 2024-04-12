@@ -61,7 +61,8 @@ pub struct BaseParameters {
 pub trait PoolConfig:
     Clone + std::fmt::Debug + Serialize + for<'de> Deserialize<'de> + Send + Sync + 'static
 {
-    fn get_init_params(&self) -> InitParams;
+    fn get_init_params(&self, strategy: eAddress, tokens: Vec<eAddress>, data: Bytes)
+        -> InitParams;
 }
 
 // Notes:

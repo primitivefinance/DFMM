@@ -1,10 +1,8 @@
 use arbiter_engine::machine::{Behavior, State};
 use bindings::dfmm::DFMM;
-
 use tracing::debug;
 
 use self::pool::PoolConfig;
-
 use super::*;
 use crate::{
     behaviors::{
@@ -127,25 +125,25 @@ where
             .await?
             .await?;
 
-        let init_params = InitParams {
-            name: self.data.init_config.name,
-            symbol: todo!(),
-            strategy: todo!(),
-            tokens: todo!(),
-            data: todo!(),
-            fee_collector: todo!(),
-            controller_fee: todo!(),
-        };
+        // let init_bytes = solver_contract
+        //     .get_initial_pool_data(
+        //         &self.data.init_config.reserve_x,
+        //         &self.data.init_config.reserve_y,
+        //         &self.data.init_config.params.clone(),
+        //     )
+        //     .call()
+        //     .await?;
+        let params = P::InitConfig::get_init_params(
+            &self.data.init_config,
+            deployment_data.constant_sum,
+            vec![token_x.address(), token_y.address()], todo!()
+        );
 
-        let pool = Pool::new(
-            self.data.init_config,
-            vec![token_x, token_y],
-            strategy_contract,
-            solver_contract,
-            dfmm,
-        )
-        .await?;
-        debug!("Pool created at {:?}", pool.id);
+        let pool = dfmm.init(params).send().await?.await?.unwrap();
+        debug!(
+            "Pool created with status {:?}, (1 means success)",
+            pool.status
+        );
         Ok(None)
     }
 }
