@@ -68,9 +68,7 @@ impl Behavior<()> for Deployer {
             constant_sum_solver: cs_solver.address(),
         };
 
-        messager
-            .send(To::All, serde_json::to_string(&deployment_data)?)
-            .await?;
+        messager.send(To::All, deployment_data).await?;
         Ok(None)
     }
 }

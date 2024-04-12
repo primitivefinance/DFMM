@@ -11,14 +11,13 @@ use serde::{Deserialize, Serialize};
 
 use self::{
     bindings::constant_sum_solver::ConstantSumParams,
-    creator::{PoolConfig, PoolCreator},
+    creator::Creator,
     deployer::Deployer,
     pool::{
         constant_sum::{ConstantSumInitData, ConstantSumPool},
         PoolType,
     },
-    token_admin::{TokenAdmin, TokenAdminConfig}, /* token_admin::TokenAdmin,
-                                                  * allocate::InitialAllocation, */
+    token_admin::TokenAdmin,
 };
 use super::*;
 
@@ -29,9 +28,9 @@ pub mod token_admin;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Behaviors<P: PoolType> {
-    Creator(PoolCreator<Configuration<PoolConfig<P>>>),
+    Creator(Creator<creator::Config<P>>),
     Deployer(Deployer),
-    TokenAdmin(TokenAdmin<Configuration<TokenAdminConfig>>),
+    TokenAdmin(TokenAdmin<token_admin::Config>),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -41,7 +40,7 @@ pub struct TokenData {
     pub decimals: u8,
 }
 
-pub(crate) fn default_admin_config() -> TokenAdmin<Configuration<TokenAdminConfig>> {
+pub(crate) fn default_admin_config() -> TokenAdmin<token_admin::Config> {
     let token1 = TokenData {
         name: "US Dollar Coin".to_owned(),
         symbol: "USDC".to_owned(),
@@ -53,15 +52,15 @@ pub(crate) fn default_admin_config() -> TokenAdmin<Configuration<TokenAdminConfi
         symbol: "SIOS".to_owned(),
         decimals: 18,
     };
-    let config = TokenAdminConfig {
+    let config = token_admin::Config {
         token_data: vec![token1, token2],
     };
-    TokenAdmin::<Configuration<TokenAdminConfig>> { data: config }
+    TokenAdmin::<token_admin::Config> { data: config }
 }
 
-pub(crate) fn default_creator_config() -> PoolCreator<Configuration<PoolConfig<ConstantSumPool>>> {
-    PoolCreator::<Configuration<PoolConfig<ConstantSumPool>>> {
-        data: PoolConfig {
+pub(crate) fn default_creator_config() -> Creator<creator::Config<ConstantSumPool>> {
+    Creator::<creator::Config<ConstantSumPool>> {
+        data: creator::Config {
             params: ConstantSumParams {
                 price: WAD,
                 swap_fee: 0.into(),

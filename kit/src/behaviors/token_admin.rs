@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::Ok;
 use arbiter_engine::{
-    machine::{Processing, Processor, State},
+    machine::{Processor, State},
     messager::Message,
 };
 use ethers::utils::parse_ether;
@@ -11,15 +11,23 @@ use tracing::debug;
 use super::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TokenAdminConfig {
+pub struct Config {
     pub token_data: Vec<TokenData>,
 }
 
+impl State for Config {
+    type Data = Self;
+}
+
 #[derive(Debug, Clone)]
-pub struct TokenAdminProcessing {
+pub struct Processing {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
     pub tokens: HashMap<String, (TokenData, ArbiterToken<ArbiterMiddleware>)>,
+}
+
+impl State for Processing {
+    type Data = Self;
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -29,31 +37,41 @@ pub enum Response {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub(crate) struct TokenAdmin<S: State> {
+pub struct TokenAdmin<S: State> {
     pub data: S::Data,
 }
 
-impl TokenAdmin<Processing<TokenAdminProcessing>> {
-    async fn reply_token_data(&self, token_name: String, to: String) {
+impl TokenAdmin<Processing> {
+    async fn reply_token_data(&self, token_name: String, to: String) -> Result<()> {
         let token_data = &self.data.tokens.get(&token_name).unwrap().0;
-        let _ = self.data.messager.send(To::Agent(to), token_data).await;
+        Ok(self.data.messager.send(To::Agent(to), token_data).await?)
     }
-    async fn reply_address_of(&self, token_name: String, to: String) {
+    async fn reply_address_of(&self, token_name: String, to: String) -> Result<()> {
         let token_address = self.data.tokens.get(&token_name).unwrap().1.address();
-        let _ = self.data.messager.send(To::Agent(to), token_address).await;
+        Ok(self
+            .data
+            .messager
+            .send(To::Agent(to), token_address)
+            .await?)
     }
 
-    async fn reply_get_asset_universe(&self, to: String) {
+    async fn reply_get_asset_universe(&self, to: String) -> Result<()> {
         let asset_universe = self
             .data
             .tokens
-            .values().map(|(meta, token)| (meta, token.address()))
+            .values()
+            .map(|(meta, token)| (meta, token.address()))
             .collect::<Vec<(&TokenData, eAddress)>>();
 
-        let _ = self.data.messager.send(To::Agent(to), asset_universe).await;
+        Ok(self
+            .data
+            .messager
+            .send(To::Agent(to), asset_universe)
+            .await?)
     }
 
-    async fn reply_mint_request(&self, mint_request: MintRequest, to: String) {
+    async fn reply_mint_request(&self, mint_request: MintRequest, to: String) -> Result<()> {
+        println!("Got to here in mint request");
         let token = &self.data.tokens.get(&mint_request.token).unwrap().1;
         token
             .mint(
@@ -61,9 +79,14 @@ impl TokenAdmin<Processing<TokenAdminProcessing>> {
                 parse_ether(mint_request.mint_amount).unwrap(),
             )
             .send()
-            .await
-            .unwrap();
-        let _ = self.data.messager.send(To::Agent(to), Response::Success).await.unwrap();
+            .await?
+            .await?;
+        println!("Made the mint call to RPC in mint request");
+        Ok(self
+            .data
+            .messager
+            .send(To::Agent(to), Response::Success)
+            .await?)
     }
 }
 
@@ -78,8 +101,8 @@ pub enum TokenAdminQuery {
 }
 // Result<Option<(Self::Processor, EventStream<E>)
 #[async_trait::async_trait]
-impl Behavior<Message> for TokenAdmin<Configuration<TokenAdminConfig>> {
-    type Processor = TokenAdmin<Processing<TokenAdminProcessing>>;
+impl Behavior<Message> for TokenAdmin<Config> {
+    type Processor = TokenAdmin<Processing>;
     async fn startup(
         &mut self,
         client: Arc<ArbiterMiddleware>,
@@ -109,7 +132,7 @@ impl Behavior<Message> for TokenAdmin<Configuration<TokenAdminConfig>> {
         debug!("Tokens deployed!");
 
         let process = Self::Processor {
-            data: TokenAdminProcessing {
+            data: Processing {
                 messager,
                 client,
                 tokens,
@@ -120,25 +143,28 @@ impl Behavior<Message> for TokenAdmin<Configuration<TokenAdminConfig>> {
     }
 }
 
+// TODO: We could make this a `MessageDecode<T>` stream to make life a little easier. Would be nice to add this in arbiter_engine.
 #[async_trait::async_trait]
-impl Processor<Message> for TokenAdmin<Processing<TokenAdminProcessing>> {
+impl Processor<Message> for TokenAdmin<Processing> {
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
         let query: TokenAdminQuery =
             serde_json::from_str(&event.data).unwrap_or(TokenAdminQuery::NoOp);
         match query {
             TokenAdminQuery::AddressOf(token_name) => {
-                self.reply_address_of(token_name, event.from).await;
+                self.reply_address_of(token_name, event.from).await?;
             }
             TokenAdminQuery::MintRequest(mint_request) => {
-                self.reply_mint_request(mint_request, event.from).await;
+                self.reply_mint_request(mint_request, event.from).await?;
             }
             TokenAdminQuery::GetAssetUniverse => {
-                self.reply_get_asset_universe(event.from).await;
+                self.reply_get_asset_universe(event.from).await?;
             }
             TokenAdminQuery::GetTokenData(token_name) => {
-                self.reply_token_data(token_name, event.from).await;
+                self.reply_token_data(token_name, event.from).await?;
             }
-            TokenAdminQuery::NoOp => {}
+            TokenAdminQuery::NoOp => {
+                debug!("NoOp");
+            }
         }
         Ok(ControlFlow::Continue)
     }
