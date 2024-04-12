@@ -12,10 +12,10 @@ pub struct Deployer {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DeploymentData {
-    pub n_token_geometric_mean: Address,
     pub weth: Address,
     pub dfmm: Address,
     pub geometric_mean: Address,
+    pub n_token_geometric_mean: Address,
     pub log_normal: Address,
     pub constant_sum: Address,
     pub constant_sum_solver: Address,

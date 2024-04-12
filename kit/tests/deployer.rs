@@ -6,8 +6,9 @@ use std::str::FromStr;
 use tracing::info;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
-async fn creator_behavior_test() {
+async fn run_deployer() {
     log();
+
     let mut world = World::new("test");
     let mut messager = world.messager.clone();
 

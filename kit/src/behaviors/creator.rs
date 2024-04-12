@@ -15,6 +15,7 @@ pub const MAX: eU256 = eU256::MAX;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Creator<S: State> {
+    pub token_admin: String,
     pub data: S::Data,
 }
 
@@ -43,62 +44,53 @@ where
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<()>)>> {
-        // Receive the `DeploymentData` from the `Deployer` agent.
+        // Receive the `DeploymentData` from the `Deployer` agent and use it to get the contracts.
         let deployment_data = messager.get_next::<DeploymentData>().await?.data;
-
-        // Get all the tokens from the `TokenAdmin` agent.
-        let token_admin = "token_admin_agent".to_owned();
-        messager
-            .send(
-                To::Agent(token_admin.clone()),
-                TokenAdminQuery::GetAssetUniverse,
-            )
-            .await?;
-        let universe = messager
-            .get_next::<Vec<(TokenData, eAddress)>>()
-            .await?
-            .data;
-        let token_x = ArbiterToken::new(universe[0].clone().1, client.clone());
-        let token_y = ArbiterToken::new(universe[1].clone().1, client.clone());
-
-        // Get the `TokenAdmin` to mint us enough tokens to create the pool.
-        let mint_x = TokenAdminQuery::MintRequest(MintRequest {
-            token: universe[0].clone().0.name,
-            mint_to: client.address(),
-            mint_amount: 100_000_000_000,
-        });
-        let mint_y = TokenAdminQuery::MintRequest(MintRequest {
-            token: universe[1].clone().0.name,
-            mint_to: client.address(),
-            mint_amount: 100_000_000_000,
-        });
-        messager
-            .send(To::Agent(token_admin.clone()), mint_x)
-            .await?;
-        messager.send(To::Agent(token_admin), mint_y).await?;
-        let mint_x_response = messager.get_next::<Response>().await?.data;
-        let mint_y_response = messager.get_next::<Response>().await?.data;
-        assert_eq!(mint_x_response, Response::Success);
-        assert_eq!(mint_y_response, Response::Success);
-
-        // Go to deploy the pool.
         let (strategy_contract, solver_contract) =
             P::get_contracts(&deployment_data, client.clone());
-        let dfmm = DFMM::new(deployment_data.dfmm, client);
+        let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
 
-        token_x
-            .clone()
-            .approve(dfmm.address(), MAX)
-            .send()
-            .await?
-            .await?;
-        token_y
-            .clone()
-            .approve(dfmm.address(), MAX)
-            .send()
-            .await?
-            .await?;
+        // Get the intended tokens for the pool and do approvals.
+        let mut tokens = Vec::new();
+        for tkn in self.data.token_list.drain(..) {
+            messager
+                .send(
+                    To::Agent(self.token_admin.clone()),
+                    TokenAdminQuery::AddressOf(tkn.clone()),
+                )
+                .await
+                .unwrap();
+            let token = ArbiterToken::new(
+                messager.get_next::<eAddress>().await.unwrap().data,
+                client.clone(),
+            );
+            messager
+                .send(
+                    To::Agent(self.token_admin.clone()),
+                    TokenAdminQuery::MintRequest(MintRequest {
+                        token: tkn,
+                        mint_to: client.address(),
+                        mint_amount: 100_000_000_000,
+                    }),
+                )
+                .await
+                .unwrap();
+            assert_eq!(
+                messager.get_next::<Response>().await.unwrap().data,
+                Response::Success
+            );
+            token
+                .approve(dfmm.address(), MAX)
+                .send()
+                .await
+                .unwrap()
+                .await
+                .unwrap();
 
+            tokens.push(token);
+        }
+
+        // Create the pool.
         let _pool = Pool::<P>::new(
             self.data.base_config.clone(),
             self.data.params.clone(),
@@ -106,7 +98,7 @@ where
             strategy_contract,
             solver_contract,
             dfmm,
-            vec![token_x, token_y],
+            tokens,
         )
         .await?;
         Ok(None)

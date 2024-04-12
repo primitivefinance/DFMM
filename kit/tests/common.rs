@@ -16,46 +16,61 @@ use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
 pub const WAD: eU256 = eU256([1_000_000_000_000_000_000, 0, 0, 0]);
+pub const DEPLOYER: &str = "deployer";
+pub const TOKEN_ADMIN: &str = "token_admin";
+pub const CREATOR: &str = "creator";
+
+pub const TOKEN_X_NAME: &str = "Token X";
+pub const TOKEN_X_SYMBOL: &str = "TKNX";
+pub const TOKEN_X_DECIMALS: u8 = 18;
+
+pub const TOKEN_Y_NAME: &str = "Token Y";
+pub const TOKEN_Y_SYMBOL: &str = "TKNY";
+pub const TOKEN_Y_DECIMALS: u8 = 18;
 
 pub fn log() {
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::DEBUG)
-        .pretty()
-        .finish();
-    tracing::subscriber::set_global_default(subscriber).unwrap();
+    tracing::subscriber::set_global_default(
+        FmtSubscriber::builder()
+            .with_max_level(Level::DEBUG)
+            .pretty()
+            .finish(),
+    )
+    .unwrap();
 }
 
 pub fn spawn_deployer(world: &mut World) {
-    let behavior = Deployer {};
-    world.add_agent(Agent::builder("deployer").with_behavior(behavior));
+    world.add_agent(Agent::builder(DEPLOYER).with_behavior(Deployer {}));
 }
 
 pub fn spawn_token_admin(world: &mut World) {
-    let token1 = TokenData {
-        name: "US Dollar Coin".to_owned(),
-        symbol: "USDC".to_owned(),
-        decimals: 18,
+    let token_x = TokenData {
+        name: TOKEN_X_NAME.to_owned(),
+        symbol: TOKEN_X_SYMBOL.to_owned(),
+        decimals: TOKEN_X_DECIMALS,
         address: None,
     };
-
-    let token2 = TokenData {
-        name: "ShibaInuObamaSonic Coin".to_owned(),
-        symbol: "SIOS".to_owned(),
-        decimals: 18,
+    let token_y = TokenData {
+        name: TOKEN_Y_NAME.to_owned(),
+        symbol: TOKEN_Y_SYMBOL.to_owned(),
+        decimals: TOKEN_Y_DECIMALS,
         address: None,
     };
-    let config = token_admin::Config {
-        token_data: vec![token1, token2],
+    let data = token_admin::Config {
+        token_data: vec![token_x, token_y],
     };
-    let behavior = TokenAdmin::<token_admin::Config> { data: config };
-    world.add_agent(Agent::builder("token_admin").with_behavior(behavior));
+    world.add_agent(
+        Agent::builder(TOKEN_ADMIN).with_behavior(TokenAdmin::<token_admin::Config> { data }),
+    );
 }
 
 pub fn spawn_creator(world: &mut World) {
-    let behavior = Creator::<creator::Config<ConstantSumPool>> {
+    world.add_agent(Agent::builder(CREATOR).with_behavior(Creator::<
+        creator::Config<ConstantSumPool>,
+    > {
+        token_admin: TOKEN_ADMIN.to_owned(),
         data: creator::Config {
             params: ConstantSumParams { price: WAD },
-            token_list: vec!["Token X".to_string(), "Token Y".to_string()],
+            token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
             base_config: BaseConfig {
                 name: "Test Pool".to_string(),
                 symbol: "TP".to_string(),
@@ -67,6 +82,5 @@ pub fn spawn_creator(world: &mut World) {
                 reserve_y: WAD,
             },
         },
-    };
-    world.add_agent(Agent::builder("creator").with_behavior(behavior));
+    }));
 }
