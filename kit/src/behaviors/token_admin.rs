@@ -19,8 +19,13 @@ pub struct TokenAdminConfig {
 pub struct TokenAdminProcessing {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
-    pub tokens: HashMap<String, ArbiterToken<ArbiterMiddleware>>,
-    pub token_data: HashMap<String, (TokenData, eAddress)>,
+    pub tokens: HashMap<String, (TokenData, ArbiterToken<ArbiterMiddleware>)>,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub enum Response {
+    Success,
+    Failed,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -30,27 +35,26 @@ pub(crate) struct TokenAdmin<S: State> {
 
 impl TokenAdmin<Processing<TokenAdminProcessing>> {
     async fn reply_token_data(&self, token_name: String, to: String) {
-        let token_data = self.data.token_data.get(&token_name).unwrap();
+        let token_data = &self.data.tokens.get(&token_name).unwrap().0;
         let _ = self.data.messager.send(To::Agent(to), token_data).await;
     }
     async fn reply_address_of(&self, token_name: String, to: String) {
-        let (_, token_address) = self.data.token_data.get(&token_name).unwrap();
+        let token_address = self.data.tokens.get(&token_name).unwrap().1.address();
         let _ = self.data.messager.send(To::Agent(to), token_address).await;
     }
 
     async fn reply_get_asset_universe(&self, to: String) {
         let asset_universe = self
             .data
-            .token_data
-            .values()
-            .cloned()
-            .collect::<Vec<(TokenData, eAddress)>>();
+            .tokens
+            .values().map(|(meta, token)| (meta, token.address()))
+            .collect::<Vec<(&TokenData, eAddress)>>();
 
         let _ = self.data.messager.send(To::Agent(to), asset_universe).await;
     }
 
-    async fn reply_mint_request(&self, mint_request: MintRequest, _to: String) {
-        let token = self.data.tokens.get(&mint_request.token).unwrap();
+    async fn reply_mint_request(&self, mint_request: MintRequest, to: String) {
+        let token = &self.data.tokens.get(&mint_request.token).unwrap().1;
         token
             .mint(
                 mint_request.mint_to,
@@ -59,6 +63,7 @@ impl TokenAdmin<Processing<TokenAdminProcessing>> {
             .send()
             .await
             .unwrap();
+        let _ = self.data.messager.send(To::Agent(to), Response::Success).await.unwrap();
     }
 }
 
@@ -83,7 +88,6 @@ impl Behavior<Message> for TokenAdmin<Configuration<TokenAdminConfig>> {
         let mut tokens = HashMap::new();
         let mut token_data_hashmap = HashMap::new();
         for token_data in &self.data.token_data.clone() {
-            // let mut token_data = token_data.clone();
             let token = ArbiterToken::deploy(
                 client.clone(),
                 (
@@ -100,7 +104,7 @@ impl Behavior<Message> for TokenAdmin<Configuration<TokenAdminConfig>> {
                 token_data.name.clone(),
                 (token_data.clone(), token.address()),
             );
-            tokens.insert(token_data.name.clone(), token.clone());
+            tokens.insert(token_data.name.clone(), (token_data.clone(), token));
         }
         debug!("Tokens deployed!");
 
@@ -109,7 +113,6 @@ impl Behavior<Message> for TokenAdmin<Configuration<TokenAdminConfig>> {
                 messager,
                 client,
                 tokens,
-                token_data: token_data_hashmap,
             },
         };
         let stream = process.data.messager.clone().stream()?;

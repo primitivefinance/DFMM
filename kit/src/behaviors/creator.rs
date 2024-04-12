@@ -9,7 +9,7 @@ use tracing::debug;
 
 use super::*;
 use crate::{
-    behaviors::{deployer::DeploymentData, token_admin::TokenAdminQuery},
+    behaviors::{deployer::DeploymentData, token_admin::{Response, TokenAdminQuery}},
     bindings::dfmm,
     pool::{Pool, PoolType},
 };
@@ -53,9 +53,9 @@ where
     async fn startup(
         &mut self,
         client: Arc<ArbiterMiddleware>,
-        messager: Messager,
+        mut messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<()>)>> {
-        let mut stream = messager.clone().stream()?;
+        let mut stream = messager.clone().stream().unwrap();
         let res = stream.next().await.unwrap();
         let data: String = serde_json::from_str(&res.data).expect(
             "Failed to
@@ -97,6 +97,21 @@ token data",
         let _ = messager
             .send(To::Agent("token_admin_agent".to_owned()), mint_y)
             .await?;
+        /// These work ^^
+
+        let res0 = stream.next().await.unwrap();
+        let res1 = stream.next().await.unwrap();
+        let res0: Response =
+        serde_json::from_str(&res0.data).expect("failed to serde");
+        let res1: Response =
+        serde_json::from_str(&res1.data).expect("failed to serde");
+
+        debug!("Mints res0 {:?}", res0);
+        debug!("Mints res1 {:?}", res1);
+
+        assert_eq!(res0, Response::Success);
+        assert_eq!(res1, Response::Success);
+        //
 
         let (strategy_contract, solver_contract) = P::get_contracts(&parsed_data, client.clone());
         let dfmm = DFMM::new(parsed_data.dfmm, client);
@@ -159,7 +174,7 @@ mod test {
         Behaviors::Creator,
     };
 
-    #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+    #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
     async fn deployer_behavior_test() {
         let subscriber = FmtSubscriber::builder()
             .with_max_level(Level::DEBUG)
