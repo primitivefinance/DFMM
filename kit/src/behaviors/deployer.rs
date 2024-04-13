@@ -68,6 +68,8 @@ impl Behavior<()> for Deployer {
             constant_sum_solver: cs_solver.address(),
         };
 
+        debug!("Deployments completed: {:#?}", deployment_data);
+
         messager.send(To::All, deployment_data).await?;
         Ok(None)
     }

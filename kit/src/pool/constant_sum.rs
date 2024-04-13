@@ -12,12 +12,12 @@ pub struct ConstantSumPool {
     pub parameters: ConstantSumParams,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct ConstantSumParams {
     pub price: eU256,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct ConstantSumAllocationData {
     pub reserve_x: eU256,
     pub reserve_y: eU256,

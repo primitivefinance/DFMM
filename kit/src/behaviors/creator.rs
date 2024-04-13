@@ -91,7 +91,7 @@ where
         }
 
         // Create the pool.
-        let _pool = Pool::<P>::new(
+        let pool = Pool::<P>::new(
             self.data.base_config.clone(),
             self.data.params.clone(),
             self.data.allocation_data.clone(),
@@ -101,6 +101,22 @@ where
             tokens,
         )
         .await?;
+
+        debug!("Pool created!\n {:#?}", pool);
+
+        let pool_creation = PoolCreation::<P> {
+            id: pool.id,
+            params: self.data.params.clone(),
+            allocation_data: self.data.allocation_data.clone(),
+        };
+        messager.send(To::All, pool_creation).await.unwrap();
         Ok(None)
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+pub struct PoolCreation<P: PoolType> {
+    pub id: eU256,
+    pub params: P::Parameters,
+    pub allocation_data: P::AllocationData,
 }

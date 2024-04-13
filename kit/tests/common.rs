@@ -28,6 +28,10 @@ pub const TOKEN_Y_NAME: &str = "Token Y";
 pub const TOKEN_Y_SYMBOL: &str = "TKNY";
 pub const TOKEN_Y_DECIMALS: u8 = 18;
 
+pub const PRICE: eU256 = WAD;
+pub const RESERVE_X: eU256 = WAD;
+pub const RESERVE_Y: eU256 = WAD;
+
 pub fn log() {
     tracing::subscriber::set_global_default(
         FmtSubscriber::builder()
@@ -69,7 +73,7 @@ pub fn spawn_creator(world: &mut World) {
     > {
         token_admin: TOKEN_ADMIN.to_owned(),
         data: creator::Config {
-            params: ConstantSumParams { price: WAD },
+            params: ConstantSumParams { price: PRICE },
             token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
             base_config: BaseConfig {
                 name: "Test Pool".to_string(),
@@ -78,8 +82,8 @@ pub fn spawn_creator(world: &mut World) {
                 controller_fee: 0.into(),
             },
             allocation_data: ConstantSumAllocationData {
-                reserve_x: WAD,
-                reserve_y: WAD,
+                reserve_x: RESERVE_X,
+                reserve_y: RESERVE_Y,
             },
         },
     }));

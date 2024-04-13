@@ -6,7 +6,6 @@ use arbiter_engine::{
     messager::Message,
 };
 use ethers::utils::parse_ether;
-use tracing::debug;
 
 use super::*;
 
@@ -44,7 +43,6 @@ impl Behavior<Message> for TokenAdmin<Config> {
         messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<Message>)>> {
         let mut tokens = HashMap::new();
-        let mut token_data_hashmap = HashMap::new();
         for token_data in &self.data.token_data.clone() {
             let token = ArbiterToken::deploy(
                 client.clone(),
@@ -58,10 +56,6 @@ impl Behavior<Message> for TokenAdmin<Config> {
             .send()
             .await
             .unwrap();
-            token_data_hashmap.insert(
-                token_data.name.clone(),
-                (token_data.clone(), token.address()),
-            );
             tokens.insert(token_data.name.clone(), (token_data.clone(), token));
         }
         debug!("Tokens deployed!");
@@ -73,6 +67,7 @@ impl Behavior<Message> for TokenAdmin<Config> {
                 tokens,
             },
         };
+
         let stream = process.data.messager.clone().stream()?;
         Ok(Some((process, stream)))
     }
