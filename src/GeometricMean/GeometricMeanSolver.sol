@@ -161,10 +161,16 @@ contract GeometricMeanSolver is ISolver {
     }
 
     /// @dev Computes the internal price using this strategie's slot parameters.
-    function getPrice(uint256 poolId) public view returns (uint256 price) {
+    function getPrice(
+        uint256 poolId,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex
+    ) public view returns (uint256 price) {
         GeometricMeanParams memory params = getPoolParams(poolId);
         (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
-        price = computePrice(reserves[0], reserves[1], params);
+        price = computePrice(
+            reserves[tokenInIndex], reserves[tokenOutIndex], params
+        );
     }
 
     function getReservesAndLiquidity(uint256 poolId)
