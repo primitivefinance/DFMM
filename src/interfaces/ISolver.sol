@@ -3,20 +3,20 @@ pragma solidity ^0.8.13;
 
 interface ISolver {
     function prepareInit(
-        uint256[] memory reserves,
+        bytes calldata params,
         bytes calldata poolParams
     ) external view returns (bytes memory);
 
     function prepareAllocation(
         uint256 poolId,
         uint256 tokenIndex,
-        uint256 amount
+        uint256 delta
     ) external view returns (bytes memory);
 
     function prepareDeallocation(
         uint256 poolId,
         uint256 tokenIndex,
-        uint256 amount
+        uint256 delta
     ) external view returns (bytes memory);
 
     function prepareSwap(
