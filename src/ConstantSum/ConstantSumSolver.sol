@@ -19,9 +19,9 @@ import {
     FixedPointMathLib,
     computeSwapDeltaLiquidity
 } from "./ConstantSumMath.sol";
-import { PairSolver } from "src/PairSolver.sol";
+import { ISolver, InvalidTokenIndex } from "src/interfaces/ISolver.sol";
 
-contract ConstantSumSolver is PairSolver {
+contract ConstantSumSolver is ISolver {
     error NotEnoughLiquidity();
 
     using FixedPointMathLib for uint256;
@@ -58,17 +58,44 @@ contract ConstantSumSolver is PairSolver {
         return computeInitialPoolData(reserveX, reserveY, params);
     }
 
-    /// @notice Simulates a swap in a Constant Sum pool
-    /// @dev Used by the kit to simulate a swap and check if it's valid
-    /// @param poolId The id of the pool to simulate the swap in
-    /// @param swapXIn Whether the swap is X in for Y out (true) or Y in for X out (false)
-    /// @param amountIn The amount of tokens to swap in
-    /// @return valid Whether the simulated swap is valid
-    /// @return amountOut The amount of tokens that would be received in the swap
-    /// @return swapData The encoded swap data that can be used to perform the actual swap
-    function simulateSwap(
+    function prepareInit(
+        bytes calldata params,
+        bytes calldata poolParams
+    ) public pure returns (bytes memory) {
+        (uint256 reserveX, uint256 reserveY) =
+            abi.decode(params, (uint256, uint256));
+        return getInitialPoolData(
+            reserveX, reserveY, abi.decode(poolParams, (ConstantSumParams))
+        );
+    }
+
+    function prepareAllocation(
         uint256 poolId,
-        bool swapXIn,
+        uint256 tokenIndex,
+        uint256 delta
+    ) external view returns (bytes memory) {
+        ConstantSumParams memory params = getPoolParams(poolId);
+
+        if (tokenIndex == 0) {
+            uint256 deltaL = delta.mulWadDown(params.price);
+            return abi.encode(delta, 0, deltaL);
+        } else if (tokenIndex == 1) {
+            return abi.encode(0, delta, delta);
+        } else {
+            revert InvalidTokenIndex();
+        }
+    }
+
+    function prepareDeallocation(
+        uint256 poolId,
+        uint256 tokenIndex,
+        uint256 delta
+    ) external view returns (bytes memory) { }
+
+    function prepareSwap(
+        uint256 poolId,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
         Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
@@ -78,7 +105,7 @@ contract ConstantSumSolver is PairSolver {
 
         uint256 amountOut;
 
-        if (swapXIn) {
+        if (tokenInIndex == 0) {
             amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
                 ONE - poolParams.swapFee
             );
@@ -97,7 +124,7 @@ contract ConstantSumSolver is PairSolver {
 
         bytes memory swapData;
 
-        if (swapXIn) {
+        if (tokenInIndex == 0) {
             swapData = abi.encode(0, 1, amountIn, amountOut);
         } else {
             swapData = abi.encode(1, 0, amountIn, amountOut);
@@ -152,10 +179,10 @@ contract ConstantSumSolver is PairSolver {
         public
         view
         override
-        returns (uint256, uint256, uint256)
+        returns (uint256[] memory, uint256)
     {
         Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
-        return (pool.reserves[0], pool.reserves[1], pool.totalLiquidity);
+        return (pool.reserves, pool.totalLiquidity);
     }
 
     /// @dev gets the pool params
@@ -171,27 +198,10 @@ contract ConstantSumSolver is PairSolver {
         );
     }
 
-    /// @dev Computes the change in allocation given a change in X reserve
-    /// @param poolId The pool id
-    /// @param deltaX The change in X reserve
-    /// @return encodedAllocationDelta The encoded change in allocation
-    function prepareAllocationDeltaGivenDeltaX(
-        uint256 poolId,
-        uint256 deltaX
-    ) public view returns (bytes memory) {
-        ConstantSumParams memory params = getPoolParams(poolId);
-        uint256 deltaL = deltaX.mulWadDown(params.price);
-        return abi.encode(deltaX, 0, deltaL);
-    }
-
-    /// @dev Computes the change in allocation given a change in Y reserve
-    /// @param deltaY The change in Y reserve
-    /// @return encodedAllocationDelta The encoded change in allocation
-    function prepareAllocationDeltaGivenDeltaY(uint256 deltaY)
-        public
-        pure
-        returns (bytes memory)
-    {
-        return abi.encode(0, deltaY, deltaY);
-    }
+    function getPrice(uint256 poolId)
+        external
+        view
+        override
+        returns (uint256)
+    { }
 }
