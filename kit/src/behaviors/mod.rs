@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use arbiter_engine::{
-    machine::{Behavior, State, ControlFlow, EventStream, Processor},
-    messager::{Messager, To, Message},
+    machine::{Behavior, ControlFlow, EventStream, Processor, State},
+    messager::{Message, Messager, To},
 };
 #[allow(unused)]
 use arbiter_macros::Behaviors;
@@ -17,8 +17,8 @@ pub const MAX: eU256 = eU256::MAX;
 // pub mod allocate;
 pub mod creator;
 pub mod deployer;
-pub mod token_admin;
 pub mod swap;
+pub mod token_admin;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Behaviors<P: PoolType> {

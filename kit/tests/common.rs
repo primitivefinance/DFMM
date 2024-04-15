@@ -7,6 +7,7 @@ use dfmm_kit::{
     },
     pool::{
         constant_sum::{ConstantSumAllocationData, ConstantSumParams, ConstantSumPool},
+        geometric_mean::{GeometricMeanAllocationData, GeometricMeanParams, GeometricMeanPool},
         BaseConfig,
     },
     TokenData,
@@ -31,6 +32,8 @@ pub const TOKEN_Y_DECIMALS: u8 = 18;
 pub const PRICE: eU256 = WAD;
 pub const RESERVE_X: eU256 = WAD;
 pub const RESERVE_Y: eU256 = WAD;
+
+pub const TARGET_TIMESTAMP: eU256 = WAD;
 
 pub fn log() {
     tracing::subscriber::set_global_default(
@@ -67,7 +70,7 @@ pub fn spawn_token_admin(world: &mut World) {
     );
 }
 
-pub fn spawn_creator(world: &mut World) {
+pub fn spawn_constant_sum_creator(world: &mut World) {
     world.add_agent(Agent::builder(CREATOR).with_behavior(Creator::<
         creator::Config<ConstantSumPool>,
     > {
@@ -78,13 +81,38 @@ pub fn spawn_creator(world: &mut World) {
             base_config: BaseConfig {
                 name: "Test Pool".to_string(),
                 symbol: "TP".to_string(),
-                swap_fee: 10000.into(),
+                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
                 controller_fee: 0.into(),
             },
             allocation_data: ConstantSumAllocationData {
                 reserve_x: RESERVE_X,
                 reserve_y: RESERVE_Y,
             },
+        },
+    }));
+}
+
+pub fn spawn_geometric_mean_creator(world: &mut World) {
+    world.add_agent(Agent::builder(CREATOR).with_behavior(Creator::<
+        creator::Config<GeometricMeanPool>,
+    > {
+        token_admin: TOKEN_ADMIN.to_owned(),
+        data: creator::Config {
+            params: GeometricMeanParams {
+                target_weight_y: ethers::utils::parse_ether(0.5).unwrap(),
+                target_weight_x: ethers::utils::parse_ether(0.5).unwrap(),
+            },
+            base_config: BaseConfig {
+                name: "Test Pool".to_string(),
+                symbol: "TP".to_string(),
+                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+                controller_fee: 0.into(),
+            },
+            allocation_data: GeometricMeanAllocationData {
+                amount_x: RESERVE_X,
+                price: WAD,
+            },
+            token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
         },
     }));
 }

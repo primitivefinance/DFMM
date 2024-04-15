@@ -3,14 +3,9 @@ use bindings::dfmm::DFMM;
 use self::pool::BaseConfig;
 use super::*;
 use crate::{
-    behaviors::{
-        deployer::DeploymentData,
-        token_admin::Response,
-    },
+    behaviors::{deployer::DeploymentData, token_admin::Response},
     pool::Pool,
 };
-
-pub const MAX: eU256 = eU256::MAX;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Creator<S: State> {
@@ -89,7 +84,7 @@ where
 
             tokens.push(token);
         }
-
+        debug!("creating pool...");
         // Create the pool.
         let pool = Pool::<P>::new(
             self.data.base_config.clone(),

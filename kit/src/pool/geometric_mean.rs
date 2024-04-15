@@ -1,23 +1,20 @@
 use bindings::{geometric_mean::GeometricMean, geometric_mean_solver::GeometricMeanSolver};
 use ethers::types::Address;
 
+use self::bindings::geometric_mean_solver;
 use super::*;
 
+#[derive(Clone, Debug)]
 pub struct GeometricMeanPool {
     pub strategy_contract: GeometricMean<ArbiterMiddleware>,
     pub solver_contract: GeometricMeanSolver<ArbiterMiddleware>,
-    pub parameters: GeometricMeanParameters,
+    pub parameters: GeometricMeanParams,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct GeometricMeanParameters {
-    pub target_timestamp: eU256,
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+pub struct GeometricMeanParams {
+    pub target_weight_y: eU256,
     pub target_weight_x: eU256,
-}
-
-impl PoolConfigurer for GeometricMeanParameters {
-    type PoolParameters = Self;
-    type InitialAllocationData = Bytes;
 }
 
 pub enum UpdateParameters {
@@ -27,13 +24,15 @@ pub enum UpdateParameters {
     TargetWeightX(eU256),
 }
 
-pub enum GeometricMeanAllocationData {
-    GivenX(eU256),
-    GivenY(eU256),
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+pub struct GeometricMeanAllocationData {
+    pub amount_x: eU256,
+    pub price: eU256,
 }
 
+#[async_trait::async_trait]
 impl PoolType for GeometricMeanPool {
-    type Parameters = GeometricMeanParameters;
+    type Parameters = GeometricMeanParams;
     type StrategyContract = GeometricMean<ArbiterMiddleware>;
     type SolverContract = GeometricMeanSolver<ArbiterMiddleware>;
     type AllocationData = GeometricMeanAllocationData;
@@ -65,7 +64,7 @@ impl PoolType for GeometricMeanPool {
         }
     }
 
-    async fn update_data(&self, new_data: Self::Parameters) -> Result<Bytes> {
+    async fn update_data(&self, _new_data: Self::Parameters) -> Result<Bytes> {
         // let data = match new_data.update_parameters {
         //     UpdateParameters::SwapFee(fee) => {
         //         self.solver_contract.prepare_fee_update(fee).call().await?
@@ -95,23 +94,64 @@ impl PoolType for GeometricMeanPool {
 
     async fn change_allocation_data(
         &self,
-        pool_id: eU256,
-        allocation_data: Self::AllocationData,
+        _pool_id: eU256,
+        _allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        let data = match allocation_data {
-            GeometricMeanAllocationData::GivenX(amount_x) => {
-                self.solver_contract
-                    .prepare_allocation_deltas_given_delta_x(pool_id, amount_x)
-                    .call()
-                    .await?
-            }
-            GeometricMeanAllocationData::GivenY(amount_y) => {
-                self.solver_contract
-                    .prepare_allocation_deltas_given_delta_y(pool_id, amount_y)
-                    .call()
-                    .await?
-            }
+        todo!()
+    }
+
+    fn get_contracts(
+        deployment: &DeploymentData,
+        client: Arc<ArbiterMiddleware>,
+    ) -> (Self::StrategyContract, Self::SolverContract) {
+        (
+            GeometricMean::new(deployment.geometric_mean, client.clone()),
+            GeometricMeanSolver::new(deployment.geometric_mean, client),
+        )
+    }
+
+    fn get_strategy_address(strategy_contract: &Self::StrategyContract) -> eAddress {
+        strategy_contract.address()
+    }
+
+    async fn get_init_data(
+        base_config: &BaseConfig,
+        params: &Self::Parameters,
+        allocation_data: &Self::AllocationData,
+        solver_contract: &Self::SolverContract,
+    ) -> Result<Bytes> {
+        let geometric_mean_params = geometric_mean_solver::GeometricMeanParams {
+            w_x: params.target_weight_x,
+            w_y: params.target_weight_y,
+            swap_fee: base_config.swap_fee,
+            controller: eAddress::zero(),
         };
-        Ok(data)
+
+        debug!(
+            "Encoding g3m init data: amount: {:?}, price: {:?}, g3m params: {:?}",
+            allocation_data.amount_x, allocation_data.price, geometric_mean_params
+        );
+        let init_bytes = solver_contract
+            .get_initial_pool_data(
+                allocation_data.amount_x,
+                allocation_data.price,
+                geometric_mean_params,
+            )
+            .call()
+            .await?;
+        debug!("Encoded g3m init data: {:?}", init_bytes);
+        Ok(init_bytes)
+    }
+
+    fn create_instance(
+        strategy_contract: Self::StrategyContract,
+        solver_contract: Self::SolverContract,
+        parameters: Self::Parameters,
+    ) -> Self {
+        Self {
+            strategy_contract,
+            solver_contract,
+            parameters,
+        }
     }
 }

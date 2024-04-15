@@ -1,9 +1,6 @@
-use crate::behaviors::token_admin::Response;
-
-use super::*;
-
 use self::{bindings::dfmm::DFMM, deployer::DeploymentData, pool::BaseConfig};
-
+use super::*;
+use crate::behaviors::token_admin::Response;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Swap<S: State> {
@@ -17,7 +14,6 @@ pub struct SwapProcessing {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
 }
-
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config<P: PoolType> {
@@ -51,7 +47,7 @@ where
         // Receive the `DeploymentData` from the `Deployer` agent and use it to get the
         // contracts.
         let deployment_data = messager.get_next::<DeploymentData>().await?.data;
-        let (strategy_contract, solver_contract) =
+        let (_strategy_contract, _solver_contract) =
             P::get_contracts(&deployment_data, client.clone());
         let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
 
@@ -97,10 +93,7 @@ where
 
         let process = Self::Processor {
             token_admin: self.token_admin.clone(),
-            data: SwapProcessing {
-                messager,
-                client,
-            },
+            data: SwapProcessing { messager, client },
         };
 
         let stream = process.data.messager.clone().stream()?;
@@ -111,7 +104,7 @@ where
 #[async_trait::async_trait]
 impl Processor<Message> for Swap<SwapProcessing> {
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-        let query: TokenAdminQuery =
+        let _query: TokenAdminQuery =
             serde_json::from_str(&event.data).unwrap_or(TokenAdminQuery::NoOp);
         Ok(ControlFlow::Continue)
     }

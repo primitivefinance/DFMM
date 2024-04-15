@@ -47,7 +47,7 @@ impl PoolType for ConstantSumPool {
         let constant_sum_params = constant_sum_solver::ConstantSumParams {
             price: params.price,
             swap_fee: base_config.swap_fee,
-            controller: eAddress::random(),
+            controller: eAddress::zero(),
         };
         let init_bytes = solver_contract
             .get_initial_pool_data(

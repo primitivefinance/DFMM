@@ -19,7 +19,7 @@ use super::*;
 use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM, shared_types::InitParams};
 
 pub mod constant_sum;
-// pub mod geometric_mean;
+pub mod geometric_mean;
 // pub mod log_normal;
 // pub mod n_token_geometric_mean;
 
@@ -155,6 +155,7 @@ impl<P: PoolType> Pool<P> {
     ) -> Result<Self> {
         let data =
             P::get_init_data(&base_config, &params, &allocation_data, &solver_contract).await?;
+        debug!("Got init data {:?}", data);
         let init_params = InitParams {
             name: base_config.name,
             symbol: base_config.symbol,

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-
 use anyhow::Ok;
 use ethers::utils::parse_ether;
 
@@ -128,7 +127,6 @@ impl TokenAdmin<Processing> {
     }
 
     async fn reply_mint_request(&self, mint_request: MintRequest, to: String) -> Result<()> {
-        println!("Got to here in mint request");
         let token = &self.data.tokens.get(&mint_request.token).unwrap().1;
         token
             .mint(
@@ -138,7 +136,7 @@ impl TokenAdmin<Processing> {
             .send()
             .await?
             .await?;
-        println!("Made the mint call to RPC in mint request");
+        debug!("Made the mint call to RPC in mint request");
         Ok(self
             .data
             .messager
