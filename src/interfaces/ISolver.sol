@@ -28,7 +28,11 @@ interface ISolver {
         uint256 amountIn
     ) external view returns (bool, uint256, bytes memory);
 
-    function getPrice(uint256 poolId) external view returns (uint256);
+    function getPrice(
+        uint256 poolId,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex
+    ) external view returns (uint256);
 
     function getReservesAndLiquidity(uint256 poolId)
         external
