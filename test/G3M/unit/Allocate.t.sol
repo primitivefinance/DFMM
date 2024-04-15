@@ -12,9 +12,9 @@ contract G3MAllocateTest is G3MSetUp {
         uint256 maxDeltaX = 0.1 ether;
 
         bytes memory allocateData =
-            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
+            solver.prepareAllocation(POOL_ID, maxDeltaX, 0);
         (uint256[] memory reserves, uint256 liquidity) =
-            getReservesAndLiquidity(POOL_ID);
+            solver.getReservesAndLiquidity(POOL_ID);
         (, uint256 maxDeltaY, uint256 deltaLiquidity) =
             abi.decode(allocateData, (uint256, uint256, uint256));
 
@@ -41,7 +41,7 @@ contract G3MAllocateTest is G3MSetUp {
         uint256 maxDeltaX = 10_000 ether;
 
         bytes memory allocateData =
-            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
+            solver.prepareAllocation(POOL_ID, maxDeltaX, 0);
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(POOL_ID);
         (, uint256 maxDeltaY, uint256 deltaLiquidity) =
@@ -70,7 +70,7 @@ contract G3MAllocateTest is G3MSetUp {
         uint256 maxDeltaX = 0.1 ether;
 
         bytes memory allocateData =
-            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
+            solver.prepareAllocation(POOL_ID, maxDeltaX, 0);
         (, uint256 maxDeltaY, uint256 deltaLiquidity) =
             abi.decode(allocateData, (uint256, uint256, uint256));
 
@@ -87,7 +87,7 @@ contract G3MAllocateTest is G3MSetUp {
         uint256 maxDeltaX = 0.1 ether;
 
         bytes memory allocateData =
-            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
+            solver.prepareAllocation(POOL_ID, maxDeltaX, 0);
         (, uint256 maxDeltaY, uint256 deltaLiquidity) =
             abi.decode(allocateData, (uint256, uint256, uint256));
 
@@ -100,7 +100,7 @@ contract G3MAllocateTest is G3MSetUp {
         uint256 maxDeltaX = 0.1 ether;
 
         bytes memory allocateData =
-            solver.prepareAllocationDeltasGivenDeltaX(POOL_ID, maxDeltaX);
+            solver.prepareAllocation(POOL_ID, maxDeltaX, 0);
         (, uint256 maxDeltaY, uint256 deltaLiquidity) =
             abi.decode(allocateData, (uint256, uint256, uint256));
 
@@ -113,7 +113,7 @@ contract G3MAllocateTest is G3MSetUp {
         uint256 maxDeltaY = 0.1 ether;
 
         bytes memory allocateData =
-            solver.prepareAllocationDeltasGivenDeltaY(POOL_ID, maxDeltaY);
+            solver.prepareAllocation(POOL_ID, maxDeltaY, 1);
         (uint256 maxDeltaX,, uint256 deltaLiquidity) =
             abi.decode(allocateData, (uint256, uint256, uint256));
         (uint256[] memory reserves, uint256 liquidity) =
@@ -151,8 +151,7 @@ contract G3MAllocateTest is G3MSetUp {
         uint256 startBalance = liquidityToken.balanceOf(address(this));
 
         uint256 dyMax = 100 ether;
-        bytes memory allocateData =
-            solver.prepareAllocationDeltasGivenDeltaY(POOL_ID, dyMax);
+        bytes memory allocateData = solver.prepareAllocation(POOL_ID, dyMax, 1);
         (uint256 maxDeltaX,, uint256 deltaLiquidity) =
             abi.decode(allocateData, (uint256, uint256, uint256));
         bytes memory data = abi.encode(maxDeltaX, dyMax, deltaLiquidity);
