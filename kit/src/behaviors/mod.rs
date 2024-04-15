@@ -12,10 +12,13 @@ pub use token_admin::{MintRequest, TokenAdminQuery};
 use self::{creator::Creator, deployer::Deployer, pool::PoolType, token_admin::TokenAdmin};
 use super::*;
 
+pub const MAX: eU256 = eU256::MAX;
+
 // pub mod allocate;
 pub mod creator;
 pub mod deployer;
 pub mod token_admin;
+pub mod swap;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Behaviors<P: PoolType> {
