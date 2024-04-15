@@ -26,14 +26,6 @@ contract ConstantSumSolver is ISolver {
 
     using FixedPointMathLib for uint256;
 
-    /// @dev Reserves struct to hold reserve amounts and liquidity
-    struct Reserves {
-        uint256 reserveX;
-        /// @dev Reserve amount of token X
-        uint256 reserveY;
-        /// @dev Reserve amount of token Y
-        uint256 liquidity;
-    }
     /// @dev Total liquidity
 
     /// @dev Address of the strategy contract
