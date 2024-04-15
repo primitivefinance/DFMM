@@ -190,10 +190,11 @@ contract ConstantSumSolver is ISolver {
         );
     }
 
-    function getPrice(uint256 poolId)
-        external
-        view
-        override
-        returns (uint256)
-    { }
+    function getPrice(
+        uint256 poolId,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex
+    ) external view override returns (uint256) {
+        // TODO: Does it make sense to return a price here since it's a parameter.
+    }
 }
