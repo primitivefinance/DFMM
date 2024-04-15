@@ -18,8 +18,9 @@ import {
     computeSwapDeltaLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
+import { ISolver } from "src/interfaces/ISolver.sol";
 
-contract NTokenGeometricMeanSolver {
+contract NTokenGeometricMeanSolver is ISolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
@@ -66,7 +67,7 @@ contract NTokenGeometricMeanSolver {
         uint256 fees;
     }
 
-    function simulateSwap(
+    function prepareSwap(
         uint256 poolId,
         uint256 tokenInIndex,
         uint256 tokenOutIndex,
@@ -161,6 +162,19 @@ contract NTokenGeometricMeanSolver {
         price = a.mulWadDown(b);
     }
 
+    function prepareInit(
+        bytes calldata params,
+        bytes calldata poolParams
+    ) external pure returns (bytes memory) {
+        (uint256 numeraireAmount, uint256[] memory prices) =
+            abi.decode(params, (uint256, uint256[]));
+        return computeInitialPoolData(
+            numeraireAmount,
+            prices,
+            abi.decode(poolParams, (NTokenGeometricMeanParams))
+        );
+    }
+
     function getInitialPoolData(
         uint256 numeraireAmount,
         uint256[] memory prices,
@@ -169,31 +183,33 @@ contract NTokenGeometricMeanSolver {
         return computeInitialPoolData(numeraireAmount, prices, params);
     }
 
-    function getAllocationDeltasGivenDeltaT(
+    function prepareAllocation(
         uint256 poolId,
-        uint256 indexT,
-        uint256 deltaT
+        uint256 tokenIndex,
+        uint256 delta
     ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 totalLiquidity) =
             getReservesAndLiquidity(poolId);
-        (uint256[] memory deltaTokens, uint256 deltaLiquidity) = computeAllocationDeltasGivenDeltaT(
-            deltaT, indexT, reserves, totalLiquidity
+        (uint256[] memory deltaTokens, uint256 deltaLiquidity) =
+        computeAllocationDeltasGivenDeltaT(
+            delta, tokenIndex, reserves, totalLiquidity
         );
 
         return abi.encode(deltaTokens, deltaLiquidity);
     }
 
-    function getDeallocationDeltasGivenDeltaT(
+    function prepareDeallocation(
         uint256 poolId,
-        uint256 indexT,
-        uint256 deltaT
+        uint256 tokenIndex,
+        uint256 delta
     ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 totalLiquidity) =
             getReservesAndLiquidity(poolId);
-        (uint256[] memory deltaTokens, uint256 deltaLiquidity) = computeDeallocationDeltasGivenDeltaT(
-            deltaT, indexT, reserves, totalLiquidity
+        (uint256[] memory deltaTokens, uint256 deltaLiquidity) =
+        computeDeallocationDeltasGivenDeltaT(
+            delta, tokenIndex, reserves, totalLiquidity
         );
-        
+
         return abi.encode(deltaTokens, deltaLiquidity);
     }
 
@@ -201,4 +217,11 @@ contract NTokenGeometricMeanSolver {
         (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
         return computeNextLiquidity(reserves, getPoolParams(poolId));
     }
+
+    function getPrice(uint256 poolId)
+        external
+        view
+        override
+        returns (uint256)
+    { }
 }
