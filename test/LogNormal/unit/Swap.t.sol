@@ -16,10 +16,9 @@ contract LogNormalSwapTest is LogNormalSetUp {
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
         uint256 amountIn = 0.1 ether;
-        bool swapXForY = true;
 
-        (bool valid, uint256 amountOut,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (bool valid, uint256 amountOut, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
         assertEq(valid, true);
 
         console.log("amountOut:", amountOut);
@@ -44,10 +43,9 @@ contract LogNormalSwapTest is LogNormalSetUp {
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
         uint256 amountIn = 0.1 ether;
-        bool swapXForY = false;
 
-        (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (bool valid,, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 1, 0, amountIn);
         assertEq(valid, true);
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), payload);
@@ -67,16 +65,17 @@ contract LogNormalSwapTest is LogNormalSetUp {
     function test_LogNormal_swap_RevertsIfInvariantNegative() public init {
         uint256 amountIn = 0.23 ether;
 
-        (uint256 rX, uint256 rY, uint256 preTotalLiquidity) =
+        (uint256[] memory reserves, uint256 preTotalLiquidity) =
             solver.getReservesAndLiquidity(POOL_ID);
 
         LogNormalParams memory poolParams = solver.getPoolParams(POOL_ID);
-        uint256 startL =
-            solver.getNextLiquidity(POOL_ID, rX, rY, preTotalLiquidity);
+        uint256 startL = solver.getNextLiquidity(
+            POOL_ID, reserves[0], reserves[1], preTotalLiquidity
+        );
         uint256 deltaLiquidity =
             amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.mean);
 
-        uint256 ry = rY + amountIn;
+        uint256 ry = reserves[1] + amountIn;
         uint256 L = startL + deltaLiquidity;
         uint256 approxPrice = solver.getPriceGivenYL(POOL_ID, ry, L);
 
@@ -90,7 +89,7 @@ contract LogNormalSwapTest is LogNormalSetUp {
 
         console2.log(invariant);
 
-        uint256 amountOut = rX - rx;
+        uint256 amountOut = reserves[0] - rx;
 
         bytes memory payload =
             abi.encode(1, 0, amountIn, amountOut, deltaLiquidity);
@@ -101,10 +100,9 @@ contract LogNormalSwapTest is LogNormalSetUp {
 
     function test_LogNormal_swap_ChargesCorrectFeesYIn() public deep {
         uint256 amountIn = 1 ether;
-        bool swapXForY = false;
 
-        (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (bool valid,, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 1, 0, amountIn);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), payload);
@@ -115,10 +113,9 @@ contract LogNormalSwapTest is LogNormalSetUp {
 
     function test_LogNormal_swap_ChargesCorrectFeesXIn() public deep {
         uint256 amountIn = 1 ether;
-        bool swapXForY = true;
 
-        (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (bool valid,, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), payload);

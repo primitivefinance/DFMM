@@ -163,29 +163,25 @@ contract LogNormalTest is Test {
     */
 
     function test_ln_swap_x_in() public basic {
-        bool xIn = true;
         uint256 amountIn = 0.1 ether;
-        (,,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, xIn, amountIn);
+        (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 0, 1, amountIn);
 
         dfmm.swap(POOL_ID, address(this), swapData);
     }
 
     function test_ln_swap_y_in() public basic {
-        bool xIn = false;
         uint256 amountIn = 0.1 ether;
-        (,,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, xIn, amountIn);
+        (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 1, 0, amountIn);
 
         dfmm.swap(POOL_ID, address(this), swapData);
     }
 
     // todo: write assertApproxEq
     function test_price_formulas() public basic {
-        (uint256 rX, uint256 rY, uint256 L) =
+        (uint256[] memory reserves, uint256 L) =
             solver.getReservesAndLiquidity(POOL_ID);
-        uint256 priceGivenX = solver.getPriceGivenXL(POOL_ID, rX, L);
-        uint256 priceGivenY = solver.getPriceGivenYL(POOL_ID, rY, L);
+        uint256 priceGivenX = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
+        uint256 priceGivenY = solver.getPriceGivenYL(POOL_ID, reserves[1], L);
         assertApproxEqAbs(priceGivenY, priceGivenX, 100);
     }
 

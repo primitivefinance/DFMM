@@ -42,10 +42,10 @@ contract LogNormalInitTest is LogNormalSetUp {
     }
 
     function test_LogNormal_init_ReturnsPriceOfOne() public init {
-        (uint256 rX, uint256 rY, uint256 L) =
+        (uint256[] memory reserves, uint256 L) =
             solver.getReservesAndLiquidity(POOL_ID);
-        uint256 priceGivenYL = solver.getPriceGivenYL(POOL_ID, rY, L);
-        uint256 priceGivenXL = solver.getPriceGivenXL(POOL_ID, rX, L);
+        uint256 priceGivenYL = solver.getPriceGivenYL(POOL_ID, reserves[1], L);
+        uint256 priceGivenXL = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
 
         assertApproxEqAbs(priceGivenXL, ONE, 10);
         assertApproxEqAbs(priceGivenYL, ONE, 10);
