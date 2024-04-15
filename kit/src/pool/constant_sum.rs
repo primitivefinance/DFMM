@@ -1,8 +1,6 @@
-use std::sync::Arc;
-
 use bindings::{constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver};
 
-use self::{behaviors::deployer::DeploymentData, bindings::constant_sum_solver};
+use self::bindings::constant_sum_solver;
 use super::*;
 
 #[derive(Clone, Debug)]
@@ -124,8 +122,8 @@ impl PoolType for ConstantSumPool {
         //     ConstantSumAllocationData::GivenX(amount_x) => {
         //         let data = self
         //             .solver_contract
-        //             .prepare_allocation_delta_given_delta_x(pool_id, amount_x)
-        //             .call()
+        //             .prepare_allocation_delta_given_delta_x(pool_id,
+        // amount_x)             .call()
         //             .await?;
         //         Ok(data)
         //     }

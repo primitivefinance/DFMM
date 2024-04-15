@@ -1,8 +1,9 @@
 include!("common.rs");
 
+use std::str::FromStr;
+
 use dfmm_kit::behaviors::deployer::DeploymentData;
 use ethers::types::Address as eAddress;
-use std::str::FromStr;
 use tracing::info;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]

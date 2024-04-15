@@ -1,4 +1,3 @@
-use arbiter_engine::machine::{Behavior, State};
 use bindings::dfmm::DFMM;
 
 use self::pool::BaseConfig;
@@ -6,9 +5,9 @@ use super::*;
 use crate::{
     behaviors::{
         deployer::DeploymentData,
-        token_admin::{Response, TokenAdminQuery},
+        token_admin::Response,
     },
-    pool::{Pool, PoolType},
+    pool::Pool,
 };
 
 pub const MAX: eU256 = eU256::MAX;
@@ -44,7 +43,8 @@ where
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<()>)>> {
-        // Receive the `DeploymentData` from the `Deployer` agent and use it to get the contracts.
+        // Receive the `DeploymentData` from the `Deployer` agent and use it to get the
+        // contracts.
         let deployment_data = messager.get_next::<DeploymentData>().await?.data;
         let (strategy_contract, solver_contract) =
             P::get_contracts(&deployment_data, client.clone());
