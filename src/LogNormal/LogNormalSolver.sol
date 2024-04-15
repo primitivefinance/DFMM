@@ -24,9 +24,13 @@ import {
     computeDeltaLXIn,
     computeDeltaLYIn
 } from "src/LogNormal/LogNormalMath.sol";
-import { PairSolver } from "src/PairSolver.sol";
+import { ISolver, InvalidTokenIndex } from "src/interfaces/ISolver.sol";
+import {
+    encodeAllocationDeltasGivenDeltaX,
+    encodeAllocationDeltasGivenDeltaY
+} from "src/lib/StrategyLib.sol";
 
-contract LogNormalSolver is PairSolver {
+contract LogNormalSolver is ISolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
@@ -44,6 +48,64 @@ contract LogNormalSolver is PairSolver {
 
     constructor(address _strategy) {
         strategy = _strategy;
+    }
+
+    function prepareInit(
+        bytes calldata params,
+        bytes calldata poolParams
+    ) external pure returns (bytes memory) {
+        (uint256 reserveX, uint256 S) = abi.decode(params, (uint256, uint256));
+        return computeInitialPoolData(
+            reserveX, S, abi.decode(poolParams, (LogNormalParams))
+        );
+    }
+
+    function prepareAllocation(
+        uint256 poolId,
+        uint256 tokenIndex,
+        uint256 delta
+    ) external view override returns (bytes memory) {
+        (uint256[] memory reserves, uint256 liquidity) =
+            getReservesAndLiquidity(poolId);
+        if (tokenIndex == 0) {
+            return encodeAllocationDeltasGivenDeltaX(
+                delta, reserves[0], reserves[1], liquidity
+            );
+        } else if (tokenIndex == 1) {
+            return encodeAllocationDeltasGivenDeltaY(
+                delta, reserves[0], reserves[1], liquidity
+            );
+        } else {
+            revert InvalidTokenIndex();
+        }
+    }
+
+    function prepareDeallocation(
+        uint256 poolId,
+        uint256 tokenIndex,
+        uint256 delta
+    ) external view override returns (bytes memory) {
+        (uint256[] memory reserves, uint256 liquidity) =
+            getReservesAndLiquidity(poolId);
+        if (tokenIndex == 0) {
+            return encodeAllocationDeltasGivenDeltaX(
+                delta, reserves[0], reserves[1], liquidity
+            );
+        } else if (tokenIndex == 1) {
+            return encodeAllocationDeltasGivenDeltaY(
+                delta, reserves[0], reserves[1], liquidity
+            );
+        } else {
+            revert InvalidTokenIndex();
+        }
+    }
+
+    function getInitialPoolData(
+        uint256 rx,
+        uint256 S,
+        LogNormalParams memory params
+    ) public pure returns (bytes memory) {
+        return computeInitialPoolData(rx, S, params);
     }
 
     function getPoolParams(uint256 poolId)
@@ -94,18 +156,10 @@ contract LogNormalSolver is PairSolver {
         public
         view
         override
-        returns (uint256, uint256, uint256)
+        returns (uint256[] memory reserves, uint256)
     {
         Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
-        return (pool.reserves[0], pool.reserves[1], pool.totalLiquidity);
-    }
-
-    function getInitialPoolData(
-        uint256 rx,
-        uint256 S,
-        LogNormalParams memory params
-    ) public pure returns (bytes memory) {
-        return computeInitialPoolData(rx, S, params);
+        return (pool.reserves, pool.totalLiquidity);
     }
 
     function getNextLiquidity(
@@ -154,13 +208,14 @@ contract LogNormalSolver is PairSolver {
 
     /// @notice used by kit
     /// @dev Estimates a swap's reserves and adjustments and returns its validity.
-    function simulateSwap(
+    function prepareSwap(
         uint256 poolId,
-        bool swapXIn,
+        uint256 tokenIndexIn,
+        uint256 tokenIndexOut,
         uint256 amountIn
-    ) public view returns (bool, uint256, uint256, bytes memory) {
+    ) public view returns (bool, uint256, bytes memory) {
         Reserves memory endReserves;
-        (uint256 preReserveX, uint256 preReserveY, uint256 preTotalLiquidity) =
+        (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
         LogNormalParams memory poolParams = getPoolParams(poolId);
 
@@ -168,19 +223,19 @@ contract LogNormalSolver is PairSolver {
 
         {
             uint256 startComputedL = getNextLiquidity(
-                poolId, preReserveX, preReserveY, preTotalLiquidity
+                poolId, preReserves[0], preReserves[1], preTotalLiquidity
             );
 
-            if (swapXIn) {
+            if (tokenIndexIn == 0) {
                 state.deltaLiquidity = computeDeltaLXIn(
                     amountIn,
-                    preReserveX,
-                    preReserveY,
+                    preReserves[0],
+                    preReserves[1],
                     preTotalLiquidity,
                     poolParams
                 );
 
-                endReserves.rx = preReserveX + amountIn;
+                endReserves.rx = preReserves[0] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
@@ -190,20 +245,20 @@ contract LogNormalSolver is PairSolver {
                 );
 
                 require(
-                    endReserves.ry < preReserveY,
+                    endReserves.ry < preReserves[1],
                     "invalid swap: y reserve increased!"
                 );
-                state.amountOut = preReserveY - endReserves.ry;
+                state.amountOut = preReserves[1] - endReserves.ry;
             } else {
                 state.deltaLiquidity = computeDeltaLYIn(
                     amountIn,
-                    preReserveX,
-                    preReserveY,
+                    preReserves[0],
+                    preReserves[1],
                     preTotalLiquidity,
                     poolParams
                 );
 
-                endReserves.ry = preReserveY + amountIn;
+                endReserves.ry = preReserves[1] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
@@ -213,10 +268,10 @@ contract LogNormalSolver is PairSolver {
                 );
 
                 require(
-                    endReserves.rx < preReserveX,
+                    endReserves.rx < preReserves[0],
                     "invalid swap: x reserve increased!"
                 );
-                state.amountOut = preReserveX - endReserves.rx;
+                state.amountOut = preReserves[0] - endReserves.rx;
             }
         }
 
@@ -228,7 +283,7 @@ contract LogNormalSolver is PairSolver {
 
         bytes memory swapData;
 
-        if (swapXIn) {
+        if (tokenIndexIn == 0) {
             swapData = abi.encode(0, 1, amountIn, state.amountOut);
         } else {
             swapData = abi.encode(1, 0, amountIn, state.amountOut);
@@ -238,12 +293,7 @@ contract LogNormalSolver is PairSolver {
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
-        return (
-            valid,
-            state.amountOut,
-            computePriceGivenX(endReserves.rx, endReserves.L, poolParams),
-            swapData
-        );
+        return (valid, state.amountOut, swapData);
     }
 
     function getPriceGivenYL(
@@ -263,12 +313,8 @@ contract LogNormalSolver is PairSolver {
     }
 
     /// @dev Computes the internal price using this strategie's slot parameters.
-    function internalPrice(uint256 poolId)
-        public
-        view
-        returns (uint256 price)
-    {
-        (uint256 preReserveX,, uint256 L) = getReservesAndLiquidity(poolId);
-        price = computePriceGivenX(preReserveX, L, getPoolParams(poolId));
+    function getPrice(uint256 poolId) public view returns (uint256 price) {
+        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
+        price = computePriceGivenX(reserves[0], L, getPoolParams(poolId));
     }
 }
