@@ -1,7 +1,6 @@
 use std::{marker::PhantomData, pin::Pin};
 
 use arbiter_core::events::stream_event;
-use ethers::abi::Item;
 use futures_util::{Stream, StreamExt};
 
 use self::{
@@ -9,6 +8,7 @@ use self::{
     creator::PoolCreation,
     deployer::DeploymentData,
     pool::{BaseConfig, InputToken, Pool},
+    updatoor::UpdatoorQuerry,
 };
 use super::*;
 use crate::behaviors::token_admin::Response;
@@ -17,6 +17,7 @@ use crate::behaviors::token_admin::Response;
 pub struct Swap<S: State, T: SwapType<E>, E> {
     // to get tokens on start up
     pub token_admin: String,
+    pub updatoor: String,
     pub data: S::Data,
     pub swap_type: T,
     _phantom_e: PhantomData<E>,
@@ -30,7 +31,7 @@ pub struct SwapProcessing<P: PoolType> {
 }
 
 pub trait SwapType<E>: std::fmt::Debug + Serialize + Clone {
-    fn compute_swap_amount() -> (eU256, InputToken);
+    fn compute_swap_amount(event: E) -> (eU256, InputToken);
     fn get_stream(&self) -> Pin<Box<dyn Stream<Item = E> + Send + Sync>>;
 }
 
@@ -74,10 +75,10 @@ where
         let (strategy_contract, solver_contract) =
             P::get_contracts(&deployment_data, client.clone());
         let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
-        let mut init_event_steream = stream_event(dfmm.init_filter());
+        let mut init_event_stream = stream_event(dfmm.init_filter());
 
         // Get the intended tokens for the pool and do approvals.
-        let mut tokens = Vec::new();
+        let mut tokens: Vec<ArbiterToken<ArbiterMiddleware>> = Vec::new();
         for tkn in self.data.token_list.drain(..) {
             messager
                 .send(
@@ -117,11 +118,20 @@ where
         }
 
         // Note: Would be nice to get one of these note both?
-        let init_event = init_event_steream.next().await.unwrap();
+        let init_event = init_event_stream.next().await.unwrap();
         let pool_creation = messager.get_next::<PoolCreation<P>>().await?.data;
         let lp_token = ERC20::new(init_event.lp_token, client.clone());
         let instance = P::create_instance(strategy_contract, solver_contract, pool_creation.params);
 
+        // ask for first price udpate
+        messager
+            .send(
+                To::Agent(self.updatoor.to_owned()),
+                UpdatoorQuerry::UpdateMeDaddy,
+            )
+            .await?;
+
+        // build pool for processor and stream
         let pool = Pool::<P> {
             id: pool_creation.id,
             dfmm,
@@ -132,6 +142,7 @@ where
 
         let process = Self::Processor {
             token_admin: self.token_admin.clone(),
+            updatoor: self.updatoor.clone(),
             data: SwapProcessing {
                 messager,
                 client,
@@ -154,10 +165,8 @@ where
     E: Send + Sync + 'static,
 {
     async fn process(&mut self, event: E) -> Result<ControlFlow> {
-        // todo, swap only on the right event trigger
-        let (swap_amount, input) = T::compute_swap_amount();
-        let swap = self.data.pool.swap(swap_amount, input).await?;
-
+        let (swap_amount, input) = T::compute_swap_amount(event);
+        self.data.pool.swap(swap_amount, input).await?;
         Ok(ControlFlow::Continue)
     }
 }

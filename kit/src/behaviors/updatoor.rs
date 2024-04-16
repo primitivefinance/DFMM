@@ -1,15 +1,11 @@
-use std::marker::PhantomData;
-
-use anyhow::Ok;
 use arbiter_core::events::stream_event;
 use bindings::dfmm::DFMM;
-use ethers::contract::stream;
 use futures_util::StreamExt;
 
 use self::pool::BaseConfig;
 use super::*;
 use crate::{
-    behaviors::{creator::PoolCreation, deployer::DeploymentData, token_admin::Response},
+    behaviors::{creator::PoolCreation, deployer::DeploymentData},
     bindings::erc20::ERC20,
     pool::Pool,
 };
@@ -75,7 +71,7 @@ where
 
         // Get the intended tokens for the pool and do approvals.
         let mut tokens: Vec<ArbiterToken<ArbiterMiddleware>> = Vec::new();
-        for tkn in self.data.token_list.drain(..) {
+        for _ in self.data.token_list.drain(..) {
             let token = ArbiterToken::new(
                 messager.get_next::<eAddress>().await.unwrap().data,
                 client.clone(),
@@ -109,15 +105,19 @@ where
 impl<P> Processor<Message> for Updatoor<ProcessingUpdates<P>>
 where
     P: PoolType + Send + Sync,
-    // E: std::fmt::Debug + Send + Sync + 'static,
 {
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
         let msg: UpdatoorQuerry = serde_json::from_str(&event.data).unwrap_or(UpdatoorQuerry::NoOp);
 
         match msg {
-            UpdatoorQuerry::Update => {
+            UpdatoorQuerry::UpdateMeDaddy => {
                 let params = self.data.pool_params.pop().unwrap();
                 self.data.pool.update(params).await?;
+                let _ = self
+                    .data
+                    .messager
+                    .send(To::Agent(event.from), UpdatoorResponse::PriceUpdated)
+                    .await?;
             }
 
             UpdatoorQuerry::NoOp => {
@@ -132,5 +132,10 @@ where
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum UpdatoorQuerry {
     NoOp,
-    Update,
+    UpdateMeDaddy,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum UpdatoorResponse {
+    PriceUpdated,
 }

@@ -1,6 +1,6 @@
 use bindings::{constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver};
 
-use self::bindings::constant_sum_solver::{self, ConstantSumParams};
+use self::bindings::constant_sum_solver::ConstantSumParams;
 use super::*;
 
 #[derive(Clone, Debug)]
@@ -34,7 +34,6 @@ impl PoolType for ConstantSumPool {
     }
 
     async fn get_init_data(
-        base_config: &BaseConfig,
         params: Self::Parameters,
         allocation_data: &Self::AllocationData,
         solver_contract: &Self::SolverContract,

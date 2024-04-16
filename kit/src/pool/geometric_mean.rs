@@ -4,7 +4,6 @@ use bindings::{
 };
 use ethers::types::Address;
 
-use self::bindings::geometric_mean_solver;
 use super::*;
 
 #[derive(Clone, Debug)]
@@ -112,7 +111,6 @@ impl PoolType for GeometricMeanPool {
     }
 
     async fn get_init_data(
-        base_config: &BaseConfig,
         params: Self::Parameters,
         allocation_data: &Self::AllocationData,
         solver_contract: &Self::SolverContract,

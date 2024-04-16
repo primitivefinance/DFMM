@@ -100,7 +100,6 @@ pub trait PoolType: Clone + std::fmt::Debug + 'static {
     fn get_strategy_address(strategy_contract: &Self::StrategyContract) -> eAddress;
 
     async fn get_init_data(
-        base_config: &BaseConfig,
         params: Self::Parameters,
         allocation_data: &Self::AllocationData,
         solver_contract: &Self::SolverContract,
@@ -164,13 +163,7 @@ impl<P: PoolType> Pool<P> {
         dfmm: DFMM<ArbiterMiddleware>,
         tokens: Vec<ArbiterToken<ArbiterMiddleware>>,
     ) -> Result<Self> {
-        let data = P::get_init_data(
-            &base_config,
-            params.clone(),
-            &allocation_data,
-            &solver_contract,
-        )
-        .await?;
+        let data = P::get_init_data(params.clone(), &allocation_data, &solver_contract).await?;
         debug!("Got init data {:?}", data);
         let init_params = InitParams {
             name: base_config.name,
