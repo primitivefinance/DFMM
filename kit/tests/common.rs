@@ -75,10 +75,10 @@ pub fn spawn_token_admin(world: &mut World) {
 
 pub fn spawn_constant_sum_creator(world: &mut World) {
     world.add_agent(Agent::builder(CREATOR).with_behavior(Creator::<
-        creator::Config<ConstantSumPool>,
+        creator::CreatorConfig<ConstantSumPool>,
     > {
         token_admin: TOKEN_ADMIN.to_owned(),
-        data: creator::Config {
+        data: creator::CreatorConfig {
             params: ConstantSumParams {
                 price: PRICE,
                 swap_fee: ethers::utils::parse_ether(0.003).unwrap(),

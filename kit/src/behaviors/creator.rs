@@ -14,19 +14,19 @@ pub struct Creator<S: State> {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Config<P: PoolType> {
+pub struct CreatorConfig<P: PoolType> {
     pub base_config: BaseConfig,
     pub params: P::Parameters,
     pub allocation_data: P::AllocationData,
     pub token_list: Vec<String>,
 }
 
-impl<P: PoolType> State for Config<P> {
+impl<P: PoolType> State for CreatorConfig<P> {
     type Data = Self;
 }
 
 #[async_trait::async_trait]
-impl<P> Behavior<()> for Creator<Config<P>>
+impl<P> Behavior<()> for Creator<CreatorConfig<P>>
 where
     P: PoolType + Send + Sync + 'static,
     P::StrategyContract: Send,

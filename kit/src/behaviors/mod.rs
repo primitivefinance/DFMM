@@ -19,10 +19,11 @@ pub mod creator;
 pub mod deployer;
 pub mod swap;
 pub mod token_admin;
+pub mod updatoor;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Behaviors<P: PoolType> {
-    Creator(Creator<creator::Config<P>>),
+    Creator(Creator<creator::CreatorConfig<P>>),
     Deployer(Deployer),
     TokenAdmin(TokenAdmin<token_admin::Config>),
 }
