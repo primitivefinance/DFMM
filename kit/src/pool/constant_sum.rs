@@ -1,6 +1,6 @@
 use bindings::{constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver};
 
-use self::bindings::constant_sum_solver;
+use self::bindings::constant_sum_solver::{self, ConstantSumParams};
 use super::*;
 
 #[derive(Clone, Debug)]
@@ -8,11 +8,6 @@ pub struct ConstantSumPool {
     pub strategy_contract: ConstantSum<ArbiterMiddleware>,
     pub solver_contract: ConstantSumSolver<ArbiterMiddleware>,
     pub parameters: ConstantSumParams,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
-pub struct ConstantSumParams {
-    pub price: eU256,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -40,21 +35,12 @@ impl PoolType for ConstantSumPool {
 
     async fn get_init_data(
         base_config: &BaseConfig,
-        params: &Self::Parameters,
+        params: Self::Parameters,
         allocation_data: &Self::AllocationData,
         solver_contract: &Self::SolverContract,
     ) -> Result<Bytes> {
-        let constant_sum_params = constant_sum_solver::ConstantSumParams {
-            price: params.price,
-            swap_fee: base_config.swap_fee,
-            controller: eAddress::zero(),
-        };
         let init_bytes = solver_contract
-            .get_initial_pool_data(
-                allocation_data.reserve_x,
-                allocation_data.reserve_y,
-                constant_sum_params,
-            )
+            .get_initial_pool_data(allocation_data.reserve_x, allocation_data.reserve_y, params)
             .call()
             .await?;
         Ok(init_bytes)

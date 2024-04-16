@@ -34,15 +34,15 @@ async fn run_deployer() {
             data.geometric_mean
         );
         assert_eq!(
-            eAddress::from_str("0xe57772db8a9609c7832c126d7416c172ea8073db").unwrap(),
+            eAddress::from_str("0xefe90bf7114239ba5bd78f8ecb25169ccb79d421").unwrap(),
             data.log_normal
         );
         assert_eq!(
-            eAddress::from_str("0xefe90bf7114239ba5bd78f8ecb25169ccb79d421").unwrap(),
+            eAddress::from_str("0xe676315ff317009c870ef3371830db6e54eea748").unwrap(),
             data.constant_sum
         );
         assert_eq!(
-            eAddress::from_str("0x73e04be543b6cd0452ee4b4f3702b3dd72c0f9f0").unwrap(),
+            eAddress::from_str("0xc4867ade0303cce4261da6f267c30c6e27a8c223").unwrap(),
             data.n_token_geometric_mean
         );
     } else {

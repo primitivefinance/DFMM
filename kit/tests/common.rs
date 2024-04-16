@@ -5,14 +5,17 @@ use dfmm_kit::{
         deployer::Deployer,
         token_admin::{self, TokenAdmin},
     },
+    bindings::{
+        constant_sum_solver::ConstantSumParams, geometric_mean_solver::GeometricMeanParams,
+    },
     pool::{
-        constant_sum::{ConstantSumAllocationData, ConstantSumParams, ConstantSumPool},
-        geometric_mean::{GeometricMeanAllocationData, GeometricMeanParams, GeometricMeanPool},
+        constant_sum::{ConstantSumAllocationData, ConstantSumPool},
+        geometric_mean::{GeometricMeanAllocationData, GeometricMeanPool},
         BaseConfig,
     },
     TokenData,
 };
-use ethers::types::U256 as eU256;
+use ethers::types::{Address, U256 as eU256};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
@@ -76,7 +79,11 @@ pub fn spawn_constant_sum_creator(world: &mut World) {
     > {
         token_admin: TOKEN_ADMIN.to_owned(),
         data: creator::Config {
-            params: ConstantSumParams { price: PRICE },
+            params: ConstantSumParams {
+                price: PRICE,
+                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+                controller: Address::zero(),
+            },
             token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
             base_config: BaseConfig {
                 name: "Test Pool".to_string(),
@@ -92,27 +99,18 @@ pub fn spawn_constant_sum_creator(world: &mut World) {
     }));
 }
 
-pub fn spawn_geometric_mean_creator(world: &mut World) {
-    world.add_agent(Agent::builder(CREATOR).with_behavior(Creator::<
-        creator::Config<GeometricMeanPool>,
-    > {
-        token_admin: TOKEN_ADMIN.to_owned(),
-        data: creator::Config {
-            params: GeometricMeanParams {
-                target_weight_y: ethers::utils::parse_ether(0.5).unwrap(),
-                target_weight_x: ethers::utils::parse_ether(0.5).unwrap(),
-            },
-            base_config: BaseConfig {
-                name: "Test Pool".to_string(),
-                symbol: "TP".to_string(),
-                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
-                controller_fee: 0.into(),
-            },
-            allocation_data: GeometricMeanAllocationData {
-                amount_x: RESERVE_X,
-                price: WAD,
-            },
-            token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
-        },
-    }));
-}
+// pub fn spawn_geometric_mean_creator(world: &mut World) {
+//     world.add_agent(Agent::builder(CREATOR).with_behavior(Creator::<
+//         creator::Config<GeometricMeanPool>,
+//     > { token_admin: TOKEN_ADMIN.to_owned(), data: creator::Config { params:
+//     > GeometricMeanParams { target_weight_y:
+//     > ethers::utils::parse_ether(0.5).unwrap(), target_weight_x:
+//     > ethers::utils::parse_ether(0.5).unwrap(), w_x: todo!(), w_y: todo!(),
+//     > swap_fee: todo!(), controller: todo!(), }, base_config: BaseConfig {
+//     > name: "Test Pool".to_string(), symbol: "TP".to_string(), swap_fee:
+//     > ethers::utils::parse_ether(0.003).unwrap(), controller_fee: 0.into(),
+//     > }, allocation_data: GeometricMeanAllocationData { amount_x: RESERVE_X,
+//     > price: WAD, }, token_list: vec![TOKEN_X_NAME.to_owned(),
+//     > TOKEN_Y_NAME.to_owned()], },
+//     }));
+// }

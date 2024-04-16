@@ -1,4 +1,7 @@
-use bindings::{geometric_mean::GeometricMean, geometric_mean_solver::GeometricMeanSolver};
+use bindings::{
+    geometric_mean::GeometricMean,
+    geometric_mean_solver::{GeometricMeanParams, GeometricMeanSolver},
+};
 use ethers::types::Address;
 
 use self::bindings::geometric_mean_solver;
@@ -9,12 +12,6 @@ pub struct GeometricMeanPool {
     pub strategy_contract: GeometricMean<ArbiterMiddleware>,
     pub solver_contract: GeometricMeanSolver<ArbiterMiddleware>,
     pub parameters: GeometricMeanParams,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
-pub struct GeometricMeanParams {
-    pub target_weight_y: eU256,
-    pub target_weight_x: eU256,
 }
 
 pub enum UpdateParameters {
@@ -116,27 +113,16 @@ impl PoolType for GeometricMeanPool {
 
     async fn get_init_data(
         base_config: &BaseConfig,
-        params: &Self::Parameters,
+        params: Self::Parameters,
         allocation_data: &Self::AllocationData,
         solver_contract: &Self::SolverContract,
     ) -> Result<Bytes> {
-        let geometric_mean_params = geometric_mean_solver::GeometricMeanParams {
-            w_x: params.target_weight_x,
-            w_y: params.target_weight_y,
-            swap_fee: base_config.swap_fee,
-            controller: eAddress::zero(),
-        };
-
         debug!(
             "Encoding g3m init data: amount: {:?}, price: {:?}, g3m params: {:?}",
-            allocation_data.amount_x, allocation_data.price, geometric_mean_params
+            allocation_data.amount_x, allocation_data.price, params
         );
         let init_bytes = solver_contract
-            .get_initial_pool_data(
-                allocation_data.amount_x,
-                allocation_data.price,
-                geometric_mean_params,
-            )
+            .get_initial_pool_data(allocation_data.amount_x, allocation_data.price, params)
             .call()
             .await?;
         debug!("Encoded g3m init data: {:?}", init_bytes);

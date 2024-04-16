@@ -8,12 +8,12 @@
 use std::sync::Arc;
 
 use arbiter_core::middleware::ArbiterMiddleware;
-use ethers::types::Bytes;
+use ethers::{abi::AbiDecode, types::Bytes};
 use serde::{Deserialize, Serialize};
 
 use self::{
     behaviors::deployer::DeploymentData,
-    bindings::{erc20::ERC20, shared_types},
+    bindings::{erc20::ERC20, i_strategy::IStrategy, shared_types},
 };
 use super::*;
 use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM, shared_types::InitParams};
@@ -69,7 +69,8 @@ pub trait PoolType: Clone + std::fmt::Debug + 'static {
         + for<'de> Deserialize<'de>
         + Send
         + Sync
-        + 'static;
+        + 'static
+        + ethers::abi::AbiDecode;
     // ~~ These are the contracts that are used to interact with the pool. ~~
     type StrategyContract;
     type SolverContract;
@@ -100,7 +101,7 @@ pub trait PoolType: Clone + std::fmt::Debug + 'static {
 
     async fn get_init_data(
         base_config: &BaseConfig,
-        params: &Self::Parameters,
+        params: Self::Parameters,
         allocation_data: &Self::AllocationData,
         solver_contract: &Self::SolverContract,
     ) -> Result<Bytes>;
@@ -110,6 +111,16 @@ pub trait PoolType: Clone + std::fmt::Debug + 'static {
         solver_contract: Self::SolverContract,
         parameters: Self::Parameters,
     ) -> Self;
+
+    async fn get_params(
+        strategy_address: eAddress,
+        client: Arc<ArbiterMiddleware>,
+        pool_id: eU256,
+    ) -> Self::Parameters {
+        let i_strategy = IStrategy::new(strategy_address, client);
+        let bytes = i_strategy.get_pool_params(pool_id).await.unwrap();
+        Self::Parameters::decode(bytes).unwrap()
+    }
 }
 
 pub enum UpdateParameters<P: PoolType> {
@@ -134,7 +145,7 @@ pub enum AllocateOrDeallocate {
     Deallocate,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Pool<P: PoolType> {
     pub id: eU256,
     pub dfmm: DFMM<ArbiterMiddleware>,
@@ -153,8 +164,13 @@ impl<P: PoolType> Pool<P> {
         dfmm: DFMM<ArbiterMiddleware>,
         tokens: Vec<ArbiterToken<ArbiterMiddleware>>,
     ) -> Result<Self> {
-        let data =
-            P::get_init_data(&base_config, &params, &allocation_data, &solver_contract).await?;
+        let data = P::get_init_data(
+            &base_config,
+            params.clone(),
+            &allocation_data,
+            &solver_contract,
+        )
+        .await?;
         debug!("Got init data {:?}", data);
         let init_params = InitParams {
             name: base_config.name,
