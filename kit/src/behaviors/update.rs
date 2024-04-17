@@ -106,11 +106,11 @@ where
         match msg {
             UpdatoorQuerry::UpdateMeDaddy => {
                 let params = self.data.pool_params.pop().unwrap();
-                self.data.pool.update(params).await?;
+                self.data.pool.update(params.clone()).await?;
                 let _ = self
                     .data
                     .messager
-                    .send(To::Agent(event.from), UpdatoorResponse::PriceUpdated)
+                    .send(To::Agent(event.from), params)
                     .await?;
             }
 
@@ -127,9 +127,4 @@ where
 pub enum UpdatoorQuerry {
     NoOp,
     UpdateMeDaddy,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum UpdatoorResponse {
-    PriceUpdated,
 }

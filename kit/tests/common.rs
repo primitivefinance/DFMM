@@ -4,13 +4,11 @@ use dfmm_kit::{
         creator::{self, Create},
         deploy::Deploy,
         token::{self, TokenAdmin},
+        update::{Config, Update},
     },
-    bindings::{
-        constant_sum_solver::ConstantSumParams, geometric_mean_solver::GeometricMeanParams,
-    },
+    bindings::constant_sum_solver::ConstantSumParams,
     pool::{
         constant_sum::{ConstantSumAllocationData, ConstantSumPool},
-        // geometric_mean::{GeometricMeanAllocationData, GeometricMeanPool},
         BaseConfig,
     },
     TokenData,
@@ -23,6 +21,7 @@ pub const WAD: eU256 = eU256([1_000_000_000_000_000_000, 0, 0, 0]);
 pub const DEPLOYER: &str = "deployer";
 pub const TOKEN_ADMIN: &str = "token_admin";
 pub const CREATOR: &str = "creator";
+pub const UPDATER: &str = "updater";
 
 pub const TOKEN_X_NAME: &str = "Token X";
 pub const TOKEN_X_SYMBOL: &str = "TKNX";
@@ -98,6 +97,46 @@ pub fn spawn_constant_sum_creator(world: &mut World) {
     }));
 }
 
+pub fn spawn_constant_sum_updater(world: &mut World) {
+    let params = constant_sum_parameters();
+    world.add_agent(
+        Agent::builder(UPDATER).with_behavior(Update::<Config<ConstantSumPool>> {
+            token_admin: TOKEN_ADMIN.to_owned(),
+            data: Config {
+                base_config: BaseConfig {
+                    name: "Test Pool".to_string(),
+                    symbol: "TP".to_string(),
+                    swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+                    controller_fee: 0.into(),
+                },
+                allocation_data: ConstantSumAllocationData {
+                    reserve_x: RESERVE_X,
+                    reserve_y: RESERVE_Y,
+                },
+                token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
+                params,
+            },
+        }),
+    )
+}
+
+pub fn constant_sum_parameters() -> Vec<ConstantSumParams> {
+    let prices = vec![
+        PRICE,
+        ethers::utils::parse_ether(2).unwrap(),
+        ethers::utils::parse_ether(3).unwrap(),
+    ];
+    let mut params = vec![];
+    for price in prices {
+        let parameter = ConstantSumParams {
+            price,
+            swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+            controller: eAddress::zero(),
+        };
+        params.push(parameter);
+    }
+    params
+}
 // pub fn spawn_geometric_mean_creator(world: &mut World) {
 //     world.add_agent(Agent::builder(CREATOR).with_behavior(Creator::<
 //         creator::Config<GeometricMeanPool>,
