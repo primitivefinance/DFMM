@@ -6,6 +6,10 @@ use bindings::{
 };
 
 use super::*;
+use crate::bindings::{
+    n_token_geometric_mean::NTokenGeometricMean,
+    n_token_geometric_mean_solver::{self, NTokenGeometricMeanSolver},
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Deploy {}
@@ -17,6 +21,7 @@ pub struct DeploymentData {
     pub geometric_mean: eAddress,
     pub geometric_mean_solver: eAddress,
     pub n_token_geometric_mean: eAddress,
+    pub n_token_geometric_mean_solver: eAddress,
     pub log_normal: eAddress,
     pub log_normal_solver: eAddress,
     pub constant_sum: eAddress,
@@ -73,16 +78,22 @@ impl Behavior<()> for Deploy {
             .await?;
         trace!("ConstantSumSolver deployed at {:?}", constant_sum.address());
 
-        let n_token_geometric_mean = GeometricMean::deploy(client.clone(), dfmm.address())?
+        let n_token_geometric_mean = NTokenGeometricMean::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
 
+        let n_token_geometric_mean_solver =
+            NTokenGeometricMeanSolver::deploy(client.clone(), dfmm.address())?
+                .send()
+                .await?;
+
         let deployment_data = DeploymentData {
-            n_token_geometric_mean: n_token_geometric_mean.address(),
             weth: weth.address(),
             dfmm: dfmm.address(),
             geometric_mean: geometric_mean.address(),
             geometric_mean_solver: geometric_mean_solver.address(),
+            n_token_geometric_mean: n_token_geometric_mean.address(),
+            n_token_geometric_mean_solver: n_token_geometric_mean_solver.address(),
             log_normal: log_normal.address(),
             log_normal_solver: log_normal_solver.address(),
             constant_sum: constant_sum.address(),
