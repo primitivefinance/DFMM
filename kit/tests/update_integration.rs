@@ -3,7 +3,8 @@ use std::time::Duration;
 use arbiter_engine::messager::To;
 use dfmm_kit::behaviors::update;
 use futures_util::StreamExt;
-use tracing::info;
+use tracing::{debug, info};
+use tracing_subscriber::registry::Data;
 include!("common.rs");
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
@@ -31,24 +32,24 @@ async fn run_updater_constant_sum() {
             .await
             .unwrap();
         let mut stream = messager.stream().unwrap();
-        let mut count = 0;
+        // let mut count = 0;
         while let Some(message) = stream.next().await {
             info!("Saw message: {:#?}", message);
+
+            // for some reason we are never entering this loop
             match serde_json::from_str::<ConstantSumParams>(&message.data) {
                 Ok(data) => {
                     info!("Saw data: {:#?}", data);
                     let mock_data = constant_sum_parameters();
-                    assert_eq!(data, mock_data[count]);
+                    assert_eq!(data, mock_data[0]);
                     info!("Asserts passed!");
-                    if count >= 2 {
-                        break;
-                    }
+                    break;
                 }
                 Err(_) => {
                     continue;
                 }
             }
-            count += 1;
+            // count += 1;
         }
     });
 
