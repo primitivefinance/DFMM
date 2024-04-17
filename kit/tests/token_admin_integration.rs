@@ -1,5 +1,7 @@
 use std::time::Duration;
 
+use arbiter_engine::messager::To;
+use dfmm_kit::behaviors::TokenAdminQuery;
 use tracing::info;
 
 include!("common.rs");
@@ -9,14 +11,16 @@ async fn run_token_admin() {
     log();
 
     let mut world = World::new("test");
-    let mut messager = world.messager.clone();
-
+    let mut messager = world.messager.for_agent("id");
+    
     spawn_deployer(&mut world);
     spawn_token_admin(&mut world);
 
-    let task = tokio::spawn(async move {
+    messager.send(To::Agent(TOKEN_ADMIN.to_owned()), TokenAdminQuery::GetAssetUniverse).await.unwrap();
+
+    let task: tokio::task::JoinHandle<()> = tokio::spawn(async move {
         loop {
-            if let Ok(message) = messager.get_next::<Vec<TokenData>>().await {
+            if let Ok(message) = messager.get_next::<Vec<(TokenData, Address)>>().await {
                 let data = message.data;
                 info!("Saw message data: {:#?}", data);
 
@@ -35,22 +39,24 @@ async fn run_token_admin() {
                 let mock_data = token::Config {
                     token_data: vec![token_x, token_y],
                 };
-                assert_eq!(data[0].name, mock_data.token_data[0].name);
-                assert_eq!(data[0].symbol, mock_data.token_data[0].symbol);
-                assert_eq!(data[1].name, mock_data.token_data[1].name);
-                assert_eq!(data[1].symbol, mock_data.token_data[1].symbol);
+                assert_eq!(data[0].0.name, mock_data.token_data[0].name);
+                assert_eq!(data[0].0.symbol, mock_data.token_data[0].symbol);
+                assert_eq!(data[1].0.name, mock_data.token_data[1].name);
+                assert_eq!(data[1].0.symbol, mock_data.token_data[1].symbol);
 
                 info!("Asserts passed!");
                 break;
             } else {
                 info!("Got another message.");
+                continue
             }
         }
+    
     });
 
     // Setup a timeout for the test to ensure it does not run indefinitely.
     let timeout_duration = Duration::from_secs(5); // Adjust the timeout as needed.
-
+    
     tokio::select! {
         _ = world.run() => {
             panic!("World run unexpectedly completed");

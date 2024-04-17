@@ -54,7 +54,6 @@ impl Behavior<Message> for TokenAdmin<Config> {
             tokens.insert(token_data.name.clone(), (token_data.clone(), token));
         }
 
-        let _ = messager.send(To::All, self.data.token_data.clone()).await?;
         debug!("Tokens deployed {:?}", tokens);
 
         let process = Self::Processor {
@@ -118,8 +117,8 @@ impl TokenAdmin<Processing> {
             .data
             .tokens
             .values()
-            .map(|(meta, token)| (meta, token.address()))
-            .collect::<Vec<(&TokenData, eAddress)>>();
+            .map(|(meta, token)| (meta.clone(), token.address()))
+            .collect::<Vec<(TokenData, eAddress)>>();
 
         Ok(self
             .data

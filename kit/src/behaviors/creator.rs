@@ -1,5 +1,6 @@
 use super::*;
 use crate::behaviors::{deploy::DeploymentData, token::Response};
+use futures_util::StreamExt;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Create<S: State> {
@@ -34,7 +35,10 @@ where
     ) -> Result<Option<(Self::Processor, EventStream<()>)>> {
         // Receive the `DeploymentData` from the `Deployer` agent and use it to get the
         // contracts.
-        let deployment_data = messager.get_next::<DeploymentData>().await?.data;
+        debug!("Starting the creator");
+        let deployment_data = 
+            messager.get_next::<DeploymentData>().await?.data;
+
         debug!("Creator: Received deployment data {:?}", deployment_data);
         let (strategy_contract, solver_contract) =
             P::get_contracts(&deployment_data, client.clone());
