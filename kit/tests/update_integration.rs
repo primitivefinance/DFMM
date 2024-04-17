@@ -36,7 +36,7 @@ async fn run_updater_constant_sum() {
         while let Some(message) = stream.next().await {
             info!("Saw message: {:#?}", message);
 
-            // for some reason we are never entering this loop
+            // BUG IS HERE: for some reason we are never entering this loop
             match serde_json::from_str::<ConstantSumParams>(&message.data) {
                 Ok(data) => {
                     info!("Saw data: {:#?}", data);
