@@ -15,7 +15,7 @@ use dfmm_kit::{
     },
     TokenData,
 };
-use ethers::types::{Address, U256 as eU256};
+use ethers::types::{Address as eAddress, U256 as eU256};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
@@ -38,10 +38,10 @@ pub const RESERVE_Y: eU256 = WAD;
 
 pub const TARGET_TIMESTAMP: eU256 = WAD;
 
-pub fn log() {
+pub fn log(level: Level) {
     tracing::subscriber::set_global_default(
         FmtSubscriber::builder()
-            .with_max_level(Level::DEBUG)
+            .with_max_level(level)
             .pretty()
             .finish(),
     )
@@ -81,7 +81,7 @@ pub fn spawn_constant_sum_creator(world: &mut World) {
             params: ConstantSumParams {
                 price: PRICE,
                 swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
-                controller: Address::zero(),
+                controller: eAddress::zero(),
             },
             token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
             base_config: BaseConfig {

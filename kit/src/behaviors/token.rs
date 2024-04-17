@@ -38,7 +38,7 @@ impl Behavior<Message> for TokenAdmin<Config> {
         messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<Message>)>> {
         let mut tokens = HashMap::new();
-        for token_data in &self.data.token_data.clone() {
+        for token_data in self.data.token_data.drain(..) {
             let token = ArbiterToken::deploy(
                 client.clone(),
                 (
@@ -51,10 +51,10 @@ impl Behavior<Message> for TokenAdmin<Config> {
             .send()
             .await
             .unwrap();
-            tokens.insert(token_data.name.clone(), (token_data.clone(), token));
+            tokens.insert(token_data.name.clone(), (token_data, token));
         }
 
-        debug!("Tokens deployed {:?}", tokens);
+        debug!("Tokens deployed {:#?}", tokens);
 
         let process = Self::Processor {
             data: Processing {
@@ -65,7 +65,6 @@ impl Behavior<Message> for TokenAdmin<Config> {
         };
 
         let stream = process.data.messager.clone().stream()?;
-        debug!("Token Admin completed");
         Ok(Some((process, stream)))
     }
 }

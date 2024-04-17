@@ -1,6 +1,6 @@
 use super::*;
 
-trait AllocateType<E>: Debug + Serialize + Clone
+pub trait AllocateType<E>: Debug + Serialize + Clone
 where
     E: Send + 'static,
 {

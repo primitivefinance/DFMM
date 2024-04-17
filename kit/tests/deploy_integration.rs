@@ -3,12 +3,11 @@ include!("common.rs");
 use std::str::FromStr;
 
 use dfmm_kit::behaviors::deploy::DeploymentData;
-use ethers::types::Address as eAddress;
 use tracing::info;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
 async fn run_deployer() {
-    log();
+    log(Level::DEBUG);
 
     let mut world = World::new("test");
     let mut messager = world.messager.clone();

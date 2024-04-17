@@ -6,7 +6,7 @@ include!("common.rs");
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
 async fn run_creator_constant_sum() {
-    log();
+    log(Level::DEBUG);
 
     let mut world = World::new("test");
     let mut messager = world.messager.clone();
@@ -29,7 +29,7 @@ async fn run_creator_constant_sum() {
                     params: ConstantSumParams {
                         price: WAD,
                         swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
-                        controller: Address::zero(),
+                        controller: eAddress::zero(),
                     },
                     allocation_data: ConstantSumAllocationData {
                         reserve_x: RESERVE_X,
