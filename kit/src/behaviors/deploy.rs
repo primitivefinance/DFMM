@@ -1,31 +1,30 @@
 use arbiter_bindings::bindings::weth::WETH;
 use bindings::{
-    constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver, dfmm::DFMM,
+    constant_sum::ConstantSum, constant_sum_solver::ConstantSumSolver,
     geometric_mean::GeometricMean, geometric_mean_solver::GeometricMeanSolver,
     log_normal::LogNormal, log_normal_solver::LogNormalSolver,
 };
-use ethers::types::Address;
 
 use super::*;
 
 #[derive(Debug, Deserialize, Serialize)]
-pub struct Deployer {}
+pub struct Deploy {}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DeploymentData {
-    pub weth: Address,
-    pub dfmm: Address,
-    pub geometric_mean: Address,
-    pub geometric_mean_solver: Address,
-    pub n_token_geometric_mean: Address,
-    pub log_normal: Address,
-    pub log_normal_solver: Address,
-    pub constant_sum: Address,
-    pub constant_sum_solver: Address,
+    pub weth: eAddress,
+    pub dfmm: eAddress,
+    pub geometric_mean: eAddress,
+    pub geometric_mean_solver: eAddress,
+    pub n_token_geometric_mean: eAddress,
+    pub log_normal: eAddress,
+    pub log_normal_solver: eAddress,
+    pub constant_sum: eAddress,
+    pub constant_sum_solver: eAddress,
 }
 
 #[async_trait::async_trait]
-impl Behavior<()> for Deployer {
+impl Behavior<()> for Deploy {
     type Processor = ();
     async fn startup(
         &mut self,

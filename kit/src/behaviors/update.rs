@@ -1,23 +1,17 @@
-use arbiter_core::events::stream_event;
-use bindings::dfmm::DFMM;
-use futures_util::StreamExt;
-
-use self::pool::BaseConfig;
 use super::*;
 use crate::{
-    behaviors::{creator::PoolCreation, deployer::DeploymentData},
+    behaviors::{creator::PoolCreation, deploy::DeploymentData},
     bindings::erc20::ERC20,
-    pool::Pool,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Updatoor<S: State> {
+pub struct Update<S: State> {
     pub token_admin: String,
     pub data: S::Data,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct UpdatoorConfig<P: PoolType> {
+pub struct Config<P: PoolType> {
     pub base_config: BaseConfig,
     pub allocation_data: P::AllocationData,
     pub token_list: Vec<String>,
@@ -25,18 +19,18 @@ pub struct UpdatoorConfig<P: PoolType> {
 }
 
 #[derive(Debug, Clone)]
-pub struct ProcessingUpdates<P: PoolType> {
+pub struct Processing<P: PoolType> {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
     pub pool: Pool<P>,
     pub pool_params: Vec<P::Parameters>,
 }
 
-impl<P: PoolType> State for UpdatoorConfig<P> {
+impl<P: PoolType> State for Config<P> {
     type Data = Self;
 }
 
-impl<P> State for ProcessingUpdates<P>
+impl<P> State for Processing<P>
 where
     P: PoolType,
 {
@@ -44,14 +38,14 @@ where
 }
 
 #[async_trait::async_trait]
-impl<P> Behavior<Message> for Updatoor<UpdatoorConfig<P>>
+impl<P> Behavior<Message> for Update<Config<P>>
 where
     P: PoolType + Send + Sync + 'static,
     P::Parameters: Send + Sync + 'static,
     P::StrategyContract: Send + Sync + 'static,
     P::SolverContract: Send + Sync + 'static,
 {
-    type Processor = Updatoor<ProcessingUpdates<P>>;
+    type Processor = Update<Processing<P>>;
     async fn startup(
         &mut self,
         client: Arc<ArbiterMiddleware>,
@@ -89,7 +83,7 @@ where
 
         let process = Self::Processor {
             token_admin: self.token_admin.clone(),
-            data: ProcessingUpdates {
+            data: Processing {
                 messager,
                 client,
                 pool,
@@ -102,7 +96,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<P> Processor<Message> for Updatoor<ProcessingUpdates<P>>
+impl<P> Processor<Message> for Update<Processing<P>>
 where
     P: PoolType + Send + Sync,
 {

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use anyhow::Ok;
 use ethers::utils::parse_ether;
 
 use super::*;

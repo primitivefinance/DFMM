@@ -1,10 +1,3 @@
-// Notes:
-// Idea is that we want to be able to configure behaviors that depend on the
-// `PoolType` generic from the config.toml. What this means is that `PoolType`
-// itself has to be `Deserialize`able and this is kinda tough to work with.
-// ---->>> The reason why is because we can't `Deserialize` contract objects
-// themselves because that's just not possible.
-
 use std::sync::Arc;
 
 use arbiter_core::middleware::ArbiterMiddleware;
@@ -12,35 +5,16 @@ use ethers::{abi::AbiDecode, types::Bytes};
 use serde::{Deserialize, Serialize};
 
 use self::{
-    behaviors::deployer::DeploymentData,
+    behaviors::deploy::DeploymentData,
     bindings::{erc20::ERC20, i_strategy::IStrategy, shared_types},
 };
 use super::*;
 use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM, shared_types::InitParams};
 
 pub mod constant_sum;
-pub mod geometric_mean;
+// pub mod geometric_mean;
 // pub mod log_normal;
 // pub mod n_token_geometric_mean;
-
-// Notes:
-// `InitData` is something that all pools need  in order to be created. This
-// consists of:
-// 1. The parameters of the pool which, for example, are like the `mean` and
-//    `width` of the `LogNormal` pool. (Strategy specific since other pools
-//    might have different params like `ConstantSum` has `price`)
-// 2. Initial allocation data, which consists of, for example, a `price` and an
-//    amount of `token_x` for the `LogNormal` pool. (Strategy specific since
-//    other pools like `ConstantSum` may not have the same needs)
-// 3. Base configuration which ALL pools share as part of their parameterization
-//    which is the `swap_fee`, `controller` and the `controller_fee`. Every type
-//    of strategy needs these.
-// #[derive(Clone, Debug, Serialize, Deserialize)]
-// pub struct InitData<P: PoolType> {
-//     pub params: P::PoolParameters,
-//     pub initial_allocation_data: P::InitialAllocationData,
-//     pub base_config: BaseParameters,
-// }
 
 // Notes:
 // These are the things that all strategies need to have to be initialized (and

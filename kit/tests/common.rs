@@ -1,8 +1,8 @@
 use arbiter_engine::{agent::Agent, world::World};
 use dfmm_kit::{
     behaviors::{
-        creator::{self, Creator},
-        deployer::Deployer,
+        creator::{self, Create},
+        deploy::Deploy,
         token_admin::{self, TokenAdmin},
     },
     bindings::{
@@ -49,7 +49,7 @@ pub fn log() {
 }
 
 pub fn spawn_deployer(world: &mut World) {
-    world.add_agent(Agent::builder(DEPLOYER).with_behavior(Deployer {}));
+    world.add_agent(Agent::builder(DEPLOYER).with_behavior(Deploy {}));
 }
 
 pub fn spawn_token_admin(world: &mut World) {
@@ -74,11 +74,11 @@ pub fn spawn_token_admin(world: &mut World) {
 }
 
 pub fn spawn_constant_sum_creator(world: &mut World) {
-    world.add_agent(Agent::builder(CREATOR).with_behavior(Creator::<
-        creator::CreatorConfig<ConstantSumPool>,
+    world.add_agent(Agent::builder(CREATOR).with_behavior(Create::<
+        creator::Config<ConstantSumPool>,
     > {
         token_admin: TOKEN_ADMIN.to_owned(),
-        data: creator::CreatorConfig {
+        data: creator::Config {
             params: ConstantSumParams {
                 price: PRICE,
                 swap_fee: ethers::utils::parse_ether(0.003).unwrap(),

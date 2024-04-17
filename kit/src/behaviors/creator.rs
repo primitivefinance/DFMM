@@ -1,32 +1,26 @@
-use bindings::dfmm::DFMM;
-
-use self::pool::BaseConfig;
 use super::*;
-use crate::{
-    behaviors::{deployer::DeploymentData, token_admin::Response},
-    pool::Pool,
-};
+use crate::behaviors::{deploy::DeploymentData, token::Response};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Creator<S: State> {
+pub struct Create<S: State> {
     pub token_admin: String,
     pub data: S::Data,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct CreatorConfig<P: PoolType> {
+pub struct Config<P: PoolType> {
     pub base_config: BaseConfig,
     pub params: P::Parameters,
     pub allocation_data: P::AllocationData,
     pub token_list: Vec<String>,
 }
 
-impl<P: PoolType> State for CreatorConfig<P> {
+impl<P: PoolType> State for Config<P> {
     type Data = Self;
 }
 
 #[async_trait::async_trait]
-impl<P> Behavior<()> for Creator<CreatorConfig<P>>
+impl<P> Behavior<()> for Create<Config<P>>
 where
     P: PoolType + Send + Sync + 'static,
     P::StrategyContract: Send,

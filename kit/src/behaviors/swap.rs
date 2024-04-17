@@ -1,53 +1,45 @@
-use std::{marker::PhantomData, pin::Pin};
-
-use arbiter_core::events::stream_event;
-use futures_util::{Stream, StreamExt};
-
 use self::{
-    bindings::{dfmm::DFMM, erc20::ERC20},
-    creator::PoolCreation,
-    deployer::DeploymentData,
-    pool::{BaseConfig, InputToken, Pool},
-    updatoor::UpdatoorQuerry,
+    bindings::erc20::ERC20, creator::PoolCreation, deploy::DeploymentData, pool::InputToken,
+    update::UpdatoorQuerry,
 };
 use super::*;
-use crate::behaviors::token_admin::Response;
+use crate::behaviors::token::Response;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Swap<S: State, T: SwapType<E>, E> {
-    // to get tokens on start up
-    pub token_admin: String,
-    pub updatoor: String,
-    pub data: S::Data,
-    pub swap_type: T,
-    _phantom_e: PhantomData<E>,
-}
-
-#[derive(Debug, Clone)]
-pub struct SwapProcessing<P: PoolType> {
-    pub messager: Messager,
-    pub client: Arc<ArbiterMiddleware>,
-    pub pool: Pool<P>,
-}
-
-pub trait SwapType<E>: std::fmt::Debug + Serialize + Clone {
+pub trait SwapType<E>: Debug + Serialize + Clone {
     fn compute_swap_amount(event: E) -> (eU256, InputToken);
     fn get_stream(&self) -> Pin<Box<dyn Stream<Item = E> + Send + Sync>>;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SwapConfig<P: PoolType> {
+pub struct Swap<S: State, T: SwapType<E>, E> {
+    // to get tokens on start up
+    pub token_admin: String,
+    pub update: String,
+    pub data: S::Data,
+    pub swap_type: T,
+    _phantom: PhantomData<E>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Config<P: PoolType> {
     pub base_config: BaseConfig,
     pub params: P::Parameters,
     pub allocation_data: P::AllocationData,
     pub token_list: Vec<String>,
 }
 
-impl<P: PoolType> State for SwapConfig<P> {
+#[derive(Debug, Clone)]
+pub struct Processing<P: PoolType> {
+    pub messager: Messager,
+    pub client: Arc<ArbiterMiddleware>,
+    pub pool: Pool<P>,
+}
+
+impl<P: PoolType> State for Config<P> {
     type Data = Self;
 }
 
-impl<P> State for SwapProcessing<P>
+impl<P> State for Processing<P>
 where
     P: PoolType,
 {
@@ -55,15 +47,15 @@ where
 }
 
 #[async_trait::async_trait]
-impl<P, T, E> Behavior<E> for Swap<SwapConfig<P>, T, E>
+impl<P, T, E> Behavior<E> for Swap<Config<P>, T, E>
 where
     P: PoolType + Send + Sync + 'static,
     P::StrategyContract: Send,
     P::SolverContract: Send,
     T: SwapType<E> + Send + Sync + 'static + for<'a> Deserialize<'a>,
-    E: std::fmt::Debug + Send + Sync + 'static,
+    E: Debug + Send + Sync + 'static,
 {
-    type Processor = Swap<SwapProcessing<P>, T, E>;
+    type Processor = Swap<Processing<P>, T, E>;
     async fn startup(
         &mut self,
         client: Arc<ArbiterMiddleware>,
@@ -126,7 +118,7 @@ where
         // ask for first price udpate
         messager
             .send(
-                To::Agent(self.updatoor.to_owned()),
+                To::Agent(self.update.to_owned()),
                 UpdatoorQuerry::UpdateMeDaddy,
             )
             .await?;
@@ -142,14 +134,14 @@ where
 
         let process = Self::Processor {
             token_admin: self.token_admin.clone(),
-            updatoor: self.updatoor.clone(),
-            data: SwapProcessing {
+            update: self.update.clone(),
+            data: Processing {
                 messager,
                 client,
                 pool,
             },
             swap_type: self.swap_type.clone(),
-            _phantom_e: PhantomData::<E>,
+            _phantom: PhantomData::<E>,
         };
 
         let stream = self.swap_type.get_stream();
@@ -158,7 +150,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<P, T, E> Processor<E> for Swap<SwapProcessing<P>, T, E>
+impl<P, T, E> Processor<E> for Swap<Processing<P>, T, E>
 where
     P: PoolType + Send + Sync,
     T: SwapType<E> + Send + Sync + 'static,

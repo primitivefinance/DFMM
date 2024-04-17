@@ -1,29 +1,31 @@
-use std::sync::Arc;
+use std::{boxed::Box, marker::PhantomData, pin::Pin, sync::Arc};
 
+use arbiter_core::events::stream_event;
 use arbiter_engine::{
     machine::{Behavior, ControlFlow, EventStream, Processor, State},
     messager::{Message, Messager, To},
 };
 #[allow(unused)]
 use arbiter_macros::Behaviors;
-use bindings::arbiter_token::ArbiterToken;
-pub use token_admin::{MintRequest, TokenAdminQuery};
+use bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
+use futures_util::{Stream, StreamExt};
+pub use token::{MintRequest, TokenAdminQuery};
 
-use self::{creator::Creator, deployer::Deployer, pool::PoolType, token_admin::TokenAdmin};
+use self::{creator::Create, deploy::Deploy, pool::PoolType, token::TokenAdmin};
 use super::*;
 
 pub const MAX: eU256 = eU256::MAX;
 
-// pub mod allocate;
+pub mod allocate;
 pub mod creator;
-pub mod deployer;
+pub mod deploy;
 pub mod swap;
-pub mod token_admin;
-pub mod updatoor;
+pub mod token;
+pub mod update;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Behaviors<P: PoolType> {
-    Creator(Creator<creator::CreatorConfig<P>>),
-    Deployer(Deployer),
-    TokenAdmin(TokenAdmin<token_admin::Config>),
+    Create(Create<creator::Config<P>>),
+    Deployer(Deploy),
+    TokenAdmin(TokenAdmin<token::Config>),
 }
