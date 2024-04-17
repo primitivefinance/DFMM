@@ -16,10 +16,7 @@ async fn run_token_admin() {
 
     let task = tokio::spawn(async move {
         loop {
-            if let Ok(message) = messager
-                .get_next::<Vec<TokenData>>()
-                .await
-            {
+            if let Ok(message) = messager.get_next::<Vec<TokenData>>().await {
                 let data = message.data;
                 info!("Saw message data: {:#?}", data);
 
@@ -35,7 +32,7 @@ async fn run_token_admin() {
                     decimals: TOKEN_Y_DECIMALS,
                     address: None,
                 };
-                let mock_data = token_admin::Config {
+                let mock_data = token::Config {
                     token_data: vec![token_x, token_y],
                 };
                 assert_eq!(data[0].name, mock_data.token_data[0].name);

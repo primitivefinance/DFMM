@@ -3,14 +3,14 @@ use dfmm_kit::{
     behaviors::{
         creator::{self, Create},
         deploy::Deploy,
-        token_admin::{self, TokenAdmin},
+        token::{self, TokenAdmin},
     },
     bindings::{
         constant_sum_solver::ConstantSumParams, geometric_mean_solver::GeometricMeanParams,
     },
     pool::{
         constant_sum::{ConstantSumAllocationData, ConstantSumPool},
-        geometric_mean::{GeometricMeanAllocationData, GeometricMeanPool},
+        // geometric_mean::{GeometricMeanAllocationData, GeometricMeanPool},
         BaseConfig,
     },
     TokenData,
@@ -65,12 +65,11 @@ pub fn spawn_token_admin(world: &mut World) {
         decimals: TOKEN_Y_DECIMALS,
         address: None,
     };
-    let data = token_admin::Config {
+    let data = token::Config {
         token_data: vec![token_x, token_y],
     };
-    world.add_agent(
-        Agent::builder(TOKEN_ADMIN).with_behavior(TokenAdmin::<token_admin::Config> { data }),
-    );
+    world
+        .add_agent(Agent::builder(TOKEN_ADMIN).with_behavior(TokenAdmin::<token::Config> { data }));
 }
 
 pub fn spawn_constant_sum_creator(world: &mut World) {

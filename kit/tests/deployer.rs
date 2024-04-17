@@ -2,7 +2,7 @@ include!("common.rs");
 
 use std::str::FromStr;
 
-use dfmm_kit::behaviors::deployer::DeploymentData;
+use dfmm_kit::behaviors::deploy::DeploymentData;
 use ethers::types::Address as eAddress;
 use tracing::info;
 
