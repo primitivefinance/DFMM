@@ -54,7 +54,9 @@ impl Behavior<Message> for TokenAdmin<Config> {
             .unwrap();
             tokens.insert(token_data.name.clone(), (token_data.clone(), token));
         }
-        debug!("Tokens deployed!");
+
+        let _ = messager.send(To::All, self.data.token_data.clone()).await?;
+        debug!("Tokens deployed {:?}", tokens);
 
         let process = Self::Processor {
             data: Processing {
@@ -65,6 +67,7 @@ impl Behavior<Message> for TokenAdmin<Config> {
         };
 
         let stream = process.data.messager.clone().stream()?;
+        debug!("Token Admin completed");
         Ok(Some((process, stream)))
     }
 }
@@ -90,7 +93,7 @@ impl Processor<Message> for TokenAdmin<Processing> {
                 self.reply_token_data(token_name, event.from).await?;
             }
             TokenAdminQuery::NoOp => {
-                debug!("NoOp");
+                debug!("NoOp: {:?}", event);
             }
         }
         Ok(ControlFlow::Continue)

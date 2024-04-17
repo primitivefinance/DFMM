@@ -41,6 +41,7 @@ where
         // Receive the `DeploymentData` from the `Deployer` agent and use it to get the
         // contracts.
         let deployment_data = messager.get_next::<DeploymentData>().await?.data;
+        debug!("Creator: Received deployment data {:?}", deployment_data);
         let (strategy_contract, solver_contract) =
             P::get_contracts(&deployment_data, client.clone());
         let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
