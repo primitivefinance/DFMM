@@ -3,6 +3,7 @@ use crate::{
     behaviors::{creator::PoolCreation, deploy::DeploymentData},
     bindings::erc20::ERC20,
 };
+use futures_util::StreamExt;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Update<S: State> {
@@ -40,8 +41,8 @@ where
 #[async_trait::async_trait]
 impl<P> Behavior<Message> for Update<Config<P>>
 where
-    P: PoolType + Send + Sync + 'static,
-    P::Parameters: Send + Sync + 'static,
+    P: PoolType + Send + Sync + for<'de>Deserialize<'de> + 'static,
+    P::Parameters: Send + Sync +'static,
     P::StrategyContract: Send + Sync + 'static,
     P::SolverContract: Send + Sync + 'static,
 {
@@ -52,17 +53,27 @@ where
         mut messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<Message>)>> {
         // Configuration from deployed contracts
+
+        debug!("starting the updator");
         let deployment_data = messager.clone().get_next::<DeploymentData>().await?.data;
+        debug!("got message {:?}", deployment_data);
         let (strategy_contract, solver_contract) =
             P::get_contracts(&deployment_data, client.clone());
         let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
         let mut init_event_stream = stream_event(dfmm.init_filter());
 
         let init_event = init_event_stream.next().await.unwrap();
-        let pool_creation = messager.get_next::<PoolCreation<P>>().await?.data;
-        let lp_token = ERC20::new(init_event.lp_token, client.clone());
-        let instance = P::create_instance(strategy_contract, solver_contract, pool_creation.params);
+        debug!("got init event {:?}", init_event);
 
+        // this might be failing here
+        // let msg = messager.get_next::<MessageTypes<P>>().await?.data;
+
+        let pool_creatrion = while let MessageTypes::Create(pool_creation) = messager.get_next::<MessageTypes<P>>().await?.data { 
+            // debug!("got message {:?}", msg);
+        };
+
+        let instance = P::create_instance(strategy_contract, solver_contract, pool_creation.params);
+        let lp_token = ERC20::new(init_event.lp_token, client.clone());
         // Get the intended tokens for the pool and do approvals.
         let mut tokens: Vec<ArbiterToken<ArbiterMiddleware>> = Vec::new();
         for _ in self.data.token_list.drain(..) {
