@@ -1,10 +1,5 @@
-use futures_util::StreamExt;
-
 use super::*;
-use crate::{
-    behaviors::{creator::PoolCreation, deploy::DeploymentData},
-    bindings::erc20::ERC20,
-};
+use crate::bindings::erc20::ERC20;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Update<S: State> {
@@ -42,7 +37,7 @@ where
 #[async_trait::async_trait]
 impl<P> Behavior<Message> for Update<Config<P>>
 where
-    P: PoolType + Send + Sync + for<'de> Deserialize<'de> + 'static,
+    P: PoolType + Send + Sync + 'static,
     P::Parameters: Send + Sync + 'static,
     P::StrategyContract: Send + Sync + 'static,
     P::SolverContract: Send + Sync + 'static,
@@ -67,10 +62,12 @@ where
         debug!("got init event {:?}", init_event);
 
         let instance = loop {
-            if let MessageTypes::Create(pool_creation) =
+            // TODO: This is where we use the weird tuple struct to bypass compile issues
+            // with the `MessageTypes<P>` enum. See `behaviors/mod.rs` for that.
+            if let MessageTypes::Create((_id, params, _allocation_data)) =
                 messager.get_next::<MessageTypes<P>>().await?.data
             {
-                break P::create_instance(strategy_contract, solver_contract, pool_creation.params);
+                break P::create_instance(strategy_contract, solver_contract, params);
             } else {
                 continue;
             }

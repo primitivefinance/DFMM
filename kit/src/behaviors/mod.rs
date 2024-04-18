@@ -11,7 +11,12 @@ use bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
 use futures_util::{Stream, StreamExt};
 pub use token::{MintRequest, TokenAdminQuery};
 
-use self::{creator::Create, deploy::{Deploy, DeploymentData}, pool::PoolType, token::TokenAdmin};
+use self::{
+    creator::Create,
+    deploy::{Deploy, DeploymentData},
+    pool::PoolType,
+    token::TokenAdmin,
+};
 use super::*;
 
 pub const MAX: eU256 = eU256::MAX;
@@ -31,11 +36,19 @@ pub enum Behaviors<P: PoolType> {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-pub enum MessageTypes<P> where P: PoolType {
+pub enum MessageTypes<P>
+where
+    P: PoolType,
+{
     #[serde(untagged)]
     Deploy(DeploymentData),
     #[serde(untagged)]
-    Create(creator::PoolCreation<P>),
+    // TODO: This is super weird. The following commented out version with `PoolCreation<P>`
+    // doesn't compile. Create(creator::PoolCreation<P>),
+    // TODO: BUT, this line where the tuple struct has the exact same data as `PoolCreation<P>`
+    // DOES compile. I'm not sure how to go about making this work nicely, but at least this works
+    // for now.
+    Create((eU256, P::Parameters, P::AllocationData)),
     #[serde(untagged)]
     TokenAdmin(token::Response),
     #[serde(untagged)]

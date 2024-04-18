@@ -1,9 +1,8 @@
 use std::time::Duration;
 
 use arbiter_engine::messager::To;
-use dfmm_kit::behaviors::update;
 use futures_util::StreamExt;
-use tracing::{debug, info};
+use tracing::{debug, info, warn};
 use tracing_subscriber::registry::Data;
 include!("common.rs");
 
@@ -46,6 +45,10 @@ async fn run_updater_constant_sum() {
                     break;
                 }
                 Err(_) => {
+                    warn!(
+                        "Failed to parse message data into ConstantSumParams, instead got: {:#?}",
+                        message.data
+                    );
                     continue;
                 }
             }

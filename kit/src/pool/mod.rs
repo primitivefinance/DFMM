@@ -31,14 +31,14 @@ pub struct BaseConfig {
 // All the other types will be specific to each pool/strategy type since those
 // will be specific contracts
 #[async_trait::async_trait]
-pub trait PoolType: Clone + std::fmt::Debug + 'static {
+pub trait PoolType: Clone + Debug + 'static {
     // This trait provides the interface for people to construct pools from a
     // `Configuration` state since all of this should be `Serialize` and
     // `Deserialize`. This stuff ultimately will be what's used to deploy a
     // `Pool<P: PoolType>` which will hold onto actual instances of contracts
     // (whereas this just holds config data).
     type Parameters: Clone
-        + std::fmt::Debug
+        + Debug
         + Serialize
         + for<'de> Deserialize<'de>
         + Send
@@ -49,7 +49,7 @@ pub trait PoolType: Clone + std::fmt::Debug + 'static {
     type StrategyContract;
     type SolverContract;
     type AllocationData: Clone
-        + std::fmt::Debug
+        + Debug
         + Serialize
         + for<'de> Deserialize<'de>
         + Send

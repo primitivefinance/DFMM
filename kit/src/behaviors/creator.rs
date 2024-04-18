@@ -98,16 +98,26 @@ where
 
         debug!("Pool created!\n {:#?}", pool);
 
-        let pool_creation = PoolCreation::<P> {
-            id: pool.id,
-            params: self.data.params.clone(),
-            allocation_data: self.data.allocation_data.clone(),
-        };
+        // TODO: This won't actually work nicely on the receiving end as for whatever
+        // reason, wrapping this into the enum breaks with the generic <P>. So we tuple
+        // it up for now.
+        // let pool_creation = PoolCreation::<P> {
+        //     id: pool.id,
+        //     params: self.data.params.clone(),
+        //     allocation_data: self.data.allocation_data.clone(),
+        // };
+        let pool_creation = (
+            pool.id,
+            self.data.params.clone(),
+            self.data.allocation_data.clone(),
+        );
         messager.send(To::All, pool_creation).await.unwrap();
         Ok(None)
     }
 }
 
+// TODO: We should be able to use this but it is currently hard to work with due
+// to `serde::Deserialize`
 #[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct PoolCreation<P: PoolType> {
     pub id: eU256,
