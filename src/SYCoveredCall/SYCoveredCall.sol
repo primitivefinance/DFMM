@@ -5,44 +5,59 @@ import { Pool } from "src/interfaces/IDFMM.sol";
 import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import {
     computeTradingFunction,
     computeDeltaGivenDeltaLRoundUp,
     computeDeltaGivenDeltaLRoundDown,
     computeDeltaLXIn,
-    computeDeltaLYIn
-} from "src/CoveredCall/CoveredCallMath.sol";
+    computeDeltaLYIn,
+    computeTau
+} from "src/SYCoveredCall/SYCoveredCallMath.sol";
 import {
     decodeFeeUpdate,
     decodeControllerUpdate
-} from "src/CoveredCall/CoveredCallUtils.sol";
+} from "src/SYCoveredCall/SYCoveredCallUtils.sol";
 import { EPSILON } from "src/lib/StrategyLib.sol";
+import { IPPrincipalToken } from "pendle/interfaces/IPPrincipalToken.sol";
 import { IStandardizedYield } from "pendle/interfaces/IStandardizedYield.sol";
+import { IPYieldToken } from "pendle/interfaces/IPYieldToken.sol";
 
 enum UpdateCode {
     Invalid,
     SwapFee,
-    Width,
-    Mean,
     Controller
 }
 
 struct InternalParams {
+    uint256 meanAnchor;
     uint256 mean;
     uint256 width;
     uint256 maturity;
+
     uint256 swapFee;
     address controller;
+
+    IStandardizedYield SY;
+    IPPrincipalToken PT;
+    IPYieldToken YT;
 }
 
 /// @dev Parameterization of the Log Normal curve.
-struct CoveredCallParams {
+struct SYCoveredCallParams {
+    uint256 meanAnchor;
     uint256 mean;
     uint256 width;
     uint256 maturity;
+
     uint256 swapFee;
     address controller;
+
     uint256 timestamp;
+
+    IStandardizedYield SY;
+    IPPrincipalToken PT;
+    IPYieldToken YT;
 }
 
 /// @dev Thrown when the mean parameter is not within the allowed bounds.
@@ -54,6 +69,12 @@ error InvalidWidth();
 /// @dev Thrown when the maturity parameter is not later than the current block.timestamp.
 error InvalidMaturity();
 
+/// @dev Thrown when the pool SY token is not associated with the pool PT token.
+error InvalidPair();
+
+/// @dev Thrown when meanAnchor <= ONE.
+error InvalidMeanAnchor();
+
 /// @dev Thrown when the computedL passed to swap does not satisfy the invariant check
 error InvalidComputedLiquidity(int256 invariant);
 
@@ -63,14 +84,13 @@ uint256 constant MIN_MEAN = 1;
 uint256 constant MAX_MEAN = uint256(type(int256).max);
 
 /**
- * @title CoveredCall Strategy for DFMM.
+ * @title SYCoveredCall Strategy for DFMM.
  * @author Primitive
  */
-contract CoveredCall is PairStrategy {
-    using DynamicParamLib for DynamicParam;
-
+contract SYCoveredCall is PairStrategy {
+    using FixedPointMathLib for int256;
     /// @inheritdoc IStrategy
-    string public constant override name = "CoveredCall";
+    string public constant override name = "SYCoveredCall";
 
     mapping(uint256 => InternalParams) public internalParams;
 
@@ -93,32 +113,41 @@ contract CoveredCall is PairStrategy {
             uint256 totalLiquidity
         )
     {
-        CoveredCallParams memory params;
+        SYCoveredCallParams memory params;
 
         (reserves, totalLiquidity, params) =
-            abi.decode(data, (uint256[], uint256, CoveredCallParams));
+            abi.decode(data, (uint256[], uint256, SYCoveredCallParams));
 
+        IStandardizedYield SY = IStandardizedYield(pool.tokens[1]);
+        IPPrincipalToken PT = IPPrincipalToken(pool.tokens[1]);
         params.timestamp = block.timestamp;
 
-        if (params.mean < MIN_WIDTH || params.mean > MAX_MEAN) {
-            revert InvalidMean();
+        int256 tau = int256(computeTau(params));
+
+        if (PT.SY() != address(SY)) {
+          revert InvalidPair();
         }
 
-        if (params.maturity < block.timestamp) {
-            revert InvalidMaturity();
+        if (PT.expiry() <= block.timestamp) {
+          revert InvalidMaturity();
         }
 
-        if (params.width < MIN_WIDTH || params.width > MAX_WIDTH) {
-            revert InvalidWidth();
+        if (params.meanAnchor <= 1 ether) {
+          revert InvalidMeanAnchor();
         }
 
         if (pool.reserves.length != 2 || reserves.length != 2) {
             revert InvalidReservesLength();
         }
 
-        internalParams[poolId].mean = params.mean;
+        internalParams[poolId].SY = SY;
+        internalParams[poolId].PT = PT;
+        internalParams[poolId].YT = IPYieldToken(PT.YT());
+
+        internalParams[poolId].maturity = internalParams[poolId].PT.expiry();
+        internalParams[poolId].meanAnchor = params.meanAnchor;
+        internalParams[poolId].mean = uint256(int256(params.meanAnchor).powWad(tau));
         internalParams[poolId].width = params.width;
-        internalParams[poolId].maturity = params.maturity;
         internalParams[poolId].swapFee = params.swapFee;
         internalParams[poolId].controller = params.controller;
 
@@ -152,7 +181,7 @@ contract CoveredCall is PairStrategy {
         override
         returns (bytes memory)
     {
-        CoveredCallParams memory params;
+        SYCoveredCallParams memory params;
 
         params.width = internalParams[poolId].width;
         params.mean = internalParams[poolId].mean;
@@ -215,8 +244,8 @@ contract CoveredCall is PairStrategy {
         uint256 totalLiquidity,
         bytes memory params
     ) public pure override returns (int256) {
-        CoveredCallParams memory poolParams =
-            abi.decode(params, (CoveredCallParams));
+        SYCoveredCallParams memory poolParams =
+            abi.decode(params, (SYCoveredCallParams));
         return computeTradingFunction(
             reserves[0], reserves[1], totalLiquidity, poolParams
         );
@@ -267,8 +296,8 @@ contract CoveredCall is PairStrategy {
         uint256 amountIn,
         uint256
     ) internal pure override returns (uint256) {
-        CoveredCallParams memory poolParams =
-            abi.decode(params, (CoveredCallParams));
+        SYCoveredCallParams memory poolParams =
+            abi.decode(params, (SYCoveredCallParams));
 
         if (tokenInIndex == 0) {
             return computeDeltaLXIn(
