@@ -16,7 +16,7 @@ async fn run_updater_constant_sum() {
 
     spawn_deployer(&mut world);
     spawn_token_admin(&mut world);
-    spawn_constant_sum_creator(&mut world);
+    // spawn_constant_sum_creator(&mut world);
     spawn_constant_sum_updater(&mut world);
 
     let task: tokio::task::JoinHandle<()> = tokio::spawn(async move {

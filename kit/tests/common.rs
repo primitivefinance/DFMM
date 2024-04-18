@@ -72,29 +72,7 @@ pub fn spawn_token_admin(world: &mut World) {
 }
 
 pub fn spawn_constant_sum_creator(world: &mut World) {
-    world.add_agent(Agent::builder(CREATOR).with_behavior(Create::<
-        creator::Config<ConstantSumPool>,
-    > {
-        token_admin: TOKEN_ADMIN.to_owned(),
-        data: creator::Config {
-            params: ConstantSumParams {
-                price: PRICE,
-                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
-                controller: eAddress::zero(),
-            },
-            token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
-            base_config: BaseConfig {
-                name: "Test Pool".to_string(),
-                symbol: "TP".to_string(),
-                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
-                controller_fee: 0.into(),
-            },
-            allocation_data: ConstantSumAllocationData {
-                reserve_x: RESERVE_X,
-                reserve_y: RESERVE_Y,
-            },
-        },
-    }));
+    world.add_agent(Agent::builder(CREATOR).with_behavior(creator()));
 }
 
 pub fn spawn_constant_sum_updater(world: &mut World) {
@@ -136,4 +114,28 @@ pub fn constant_sum_parameters() -> Vec<ConstantSumParams> {
         params.push(parameter);
     }
     params
+}
+
+fn creator() -> Create<creator::Config<ConstantSumPool>> {
+    Create::<creator::Config<ConstantSumPool>> {
+        token_admin: TOKEN_ADMIN.to_owned(),
+        data: creator::Config {
+            params: ConstantSumParams {
+                price: PRICE,
+                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+                controller: eAddress::zero(),
+            },
+            token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
+            base_config: BaseConfig {
+                name: "Test Pool".to_string(),
+                symbol: "TP".to_string(),
+                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+                controller_fee: 0.into(),
+            },
+            allocation_data: ConstantSumAllocationData {
+                reserve_x: RESERVE_X,
+                reserve_y: RESERVE_Y,
+            },
+        },
+    }
 }
