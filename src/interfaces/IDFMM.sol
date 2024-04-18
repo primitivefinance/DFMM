@@ -98,7 +98,7 @@ interface IDFMM {
         address strategy,
         address lpToken,
         uint256 poolId,
-        address[] indexed tokens,
+        address[] tokens,
         uint256[] reserves,
         uint256 totalLiquidity
     );

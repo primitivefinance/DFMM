@@ -137,18 +137,3 @@ pub fn constant_sum_parameters() -> Vec<ConstantSumParams> {
     }
     params
 }
-// pub fn spawn_geometric_mean_creator(world: &mut World) {
-//     world.add_agent(Agent::builder(CREATOR).with_behavior(Creator::<
-//         creator::Config<GeometricMeanPool>,
-//     > { token_admin: TOKEN_ADMIN.to_owned(), data: creator::Config { params:
-//     > GeometricMeanParams { target_weight_y:
-//     > ethers::utils::parse_ether(0.5).unwrap(), target_weight_x:
-//     > ethers::utils::parse_ether(0.5).unwrap(), w_x: todo!(), w_y: todo!(),
-//     > swap_fee: todo!(), controller: todo!(), }, base_config: BaseConfig {
-//     > name: "Test Pool".to_string(), symbol: "TP".to_string(), swap_fee:
-//     > ethers::utils::parse_ether(0.003).unwrap(), controller_fee: 0.into(),
-//     > }, allocation_data: GeometricMeanAllocationData { amount_x: RESERVE_X,
-//     > price: WAD, }, token_list: vec![TOKEN_X_NAME.to_owned(),
-//     > TOKEN_Y_NAME.to_owned()], },
-//     }));
-// }

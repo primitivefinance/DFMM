@@ -6,10 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use self::{
     behaviors::deploy::DeploymentData,
-    bindings::{erc20::ERC20, i_strategy::IStrategy, shared_types},
+    bindings::{erc20::ERC20, i_strategy::IStrategy, shared_types, arbiter_token::ArbiterToken, dfmm::DFMM, shared_types::InitParams},
 };
 use super::*;
-use crate::bindings::{arbiter_token::ArbiterToken, dfmm::DFMM, shared_types::InitParams};
 
 pub mod constant_sum;
 // pub mod geometric_mean;
@@ -241,6 +240,7 @@ impl<P: PoolType> Pool<P> {
     /// error.
     pub async fn update(&self, new_data: P::Parameters) -> Result<()> {
         let data = self.instance.update_data(new_data).await?;
+        info!("Got update data");
         self.dfmm.update(self.id, data).send().await?.await?;
         Ok(())
     }

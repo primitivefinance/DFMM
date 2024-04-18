@@ -1,3 +1,6 @@
+use bindings::idfmm::IDFMM;
+use tracing::warn;
+
 use super::*;
 use crate::bindings::erc20::ERC20;
 
@@ -50,16 +53,16 @@ where
     ) -> Result<Option<(Self::Processor, EventStream<Message>)>> {
         // Configuration from deployed contracts
 
-        debug!("starting the updator");
+        debug!("Startup: starting the updator");
         let deployment_data = messager.clone().get_next::<DeploymentData>().await?.data;
-        debug!("got message {:?}", deployment_data);
+        debug!("Startup: got message {:?}", deployment_data);
         let (strategy_contract, solver_contract) =
             P::get_contracts(&deployment_data, client.clone());
         let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
         let mut init_event_stream = stream_event(dfmm.init_filter());
 
         let init_event = init_event_stream.next().await.unwrap();
-        debug!("got init event {:?}", init_event);
+        debug!("Startup: got init event {:?}", init_event);
 
         let instance = loop {
             // TODO: This is where we use the weird tuple struct to bypass compile issues
@@ -76,11 +79,8 @@ where
         let lp_token = ERC20::new(init_event.lp_token, client.clone());
         // Get the intended tokens for the pool and do approvals.
         let mut tokens: Vec<ArbiterToken<ArbiterMiddleware>> = Vec::new();
-        for _ in self.data.token_list.drain(..) {
-            let token = ArbiterToken::new(
-                messager.get_next::<eAddress>().await.unwrap().data,
-                client.clone(),
-            );
+        for token in init_event.tokens {
+            let token = ArbiterToken::new(token, client.clone());
             tokens.push(token);
         }
 
@@ -101,6 +101,7 @@ where
                 pool_params: self.data.params.clone(),
             },
         };
+        warn!("got to the end up the updator startup");
         let stream = process.data.messager.clone().stream()?;
         Ok(Some((process, stream)))
     }
@@ -112,17 +113,16 @@ where
     P: PoolType + Send + Sync,
 {
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
+        warn!("Process: Got event: {:?}", event);
         let msg: UpdatoorQuerry = serde_json::from_str(&event.data).unwrap_or(UpdatoorQuerry::NoOp);
+
+        warn!("Process: deserialized update querry: {:?}", msg);
 
         match msg {
             UpdatoorQuerry::UpdateMeDaddy => {
                 let params = self.data.pool_params.pop().unwrap();
                 self.data.pool.update(params.clone()).await?;
-                let _ = self
-                    .data
-                    .messager
-                    .send(To::Agent(event.from), params)
-                    .await?;
+                let _ = self.data.messager.send(To::All, params).await?;
             }
 
             UpdatoorQuerry::NoOp => {
