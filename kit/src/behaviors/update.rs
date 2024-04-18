@@ -1,9 +1,10 @@
+use futures_util::StreamExt;
+
 use super::*;
 use crate::{
     behaviors::{creator::PoolCreation, deploy::DeploymentData},
     bindings::erc20::ERC20,
 };
-use futures_util::StreamExt;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Update<S: State> {
@@ -41,8 +42,8 @@ where
 #[async_trait::async_trait]
 impl<P> Behavior<Message> for Update<Config<P>>
 where
-    P: PoolType + Send + Sync + for<'de>Deserialize<'de> + 'static,
-    P::Parameters: Send + Sync +'static,
+    P: PoolType + Send + Sync + for<'de> Deserialize<'de> + 'static,
+    P::Parameters: Send + Sync + 'static,
     P::StrategyContract: Send + Sync + 'static,
     P::SolverContract: Send + Sync + 'static,
 {
@@ -65,14 +66,16 @@ where
         let init_event = init_event_stream.next().await.unwrap();
         debug!("got init event {:?}", init_event);
 
-        // this might be failing here
-        // let msg = messager.get_next::<MessageTypes<P>>().await?.data;
-
-        let pool_creatrion = while let MessageTypes::Create(pool_creation) = messager.get_next::<MessageTypes<P>>().await?.data { 
-            // debug!("got message {:?}", msg);
+        let instance = loop {
+            if let MessageTypes::Create(pool_creation) =
+                messager.get_next::<MessageTypes<P>>().await?.data
+            {
+                break P::create_instance(strategy_contract, solver_contract, pool_creation.params);
+            } else {
+                continue;
+            }
         };
 
-        let instance = P::create_instance(strategy_contract, solver_contract, pool_creation.params);
         let lp_token = ERC20::new(init_event.lp_token, client.clone());
         // Get the intended tokens for the pool and do approvals.
         let mut tokens: Vec<ArbiterToken<ArbiterMiddleware>> = Vec::new();
@@ -85,7 +88,7 @@ where
         }
 
         let pool = Pool::<P> {
-            id: pool_creation.id,
+            id: init_event.pool_id,
             dfmm,
             instance,
             tokens,
