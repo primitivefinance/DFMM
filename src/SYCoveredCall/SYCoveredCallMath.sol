@@ -31,12 +31,13 @@ function computeTradingFunction(
 }
 
 function computeTau(SYCoveredCallParams memory params) pure returns (uint256) {
-    if (params.timestamp >= params.maturity) {
+    if (params.lastTimestamp >= params.maturity) {
         return 0;
     } else {
-        return ONE * (params.maturity - params.timestamp) / YEAR;
+        return ONE * (params.maturity - params.lastTimestamp) / YEAR;
     }
 }
+
 function computeDeltaGivenDeltaLRoundUp(
     uint256 reserve,
     uint256 deltaLiquidity,
@@ -214,7 +215,11 @@ function computePriceGivenX(
 }
 
 // K = P1(x) / exp[ni(x/L)√(L + (1/2)v²t)]
-function computeKGivenLastPrice(uint256 rX, uint256 L, SYCoveredCallParams memory params) pure returns (uint256 K) {
+function computeKGivenLastPrice(
+    uint256 rX,
+    uint256 L,
+    SYCoveredCallParams memory params
+) pure returns (uint256 K) {
     uint256 price = computePriceGivenX(rX, L, params);
 
     uint256 tau = computeTau(params);
@@ -225,11 +230,8 @@ function computeKGivenLastPrice(uint256 rX, uint256 L, SYCoveredCallParams memor
         b.wadMul(int256(computeSigmaSqrtTau(params.width, tau))) - int256(a)
     ).expWad();
 
-    K = price.divWadDown(exp);
-        
-
+    K = price.divWadDown(uint256(exp));
 }
-
 
 function computePriceGivenY(
     uint256 rY,
