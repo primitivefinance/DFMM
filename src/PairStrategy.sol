@@ -134,10 +134,11 @@ abstract contract PairStrategy is IStrategy {
             uint256 tokenOutIndex,
             uint256 amountIn,
             uint256 amountOut,
-            uint256 deltaLiquidity
+            uint256 deltaLiquidity,
+            bytes memory params
         )
     {
-        bytes memory params = getPoolParams(poolId);
+        params = getPoolParams(poolId);
 
         (tokenInIndex, tokenOutIndex, amountIn, amountOut) =
             abi.decode(data, (uint256, uint256, uint256, uint256));

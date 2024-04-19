@@ -12,7 +12,8 @@ import {
     computeDeltaGivenDeltaLRoundDown,
     computeDeltaLXIn,
     computeDeltaLYIn,
-    computeTau
+    computeTau,
+    computeKGivenLastPrice
 } from "src/SYCoveredCall/SYCoveredCallMath.sol";
 import {
     decodeFeeUpdate,
@@ -34,10 +35,9 @@ struct InternalParams {
     uint256 mean;
     uint256 width;
     uint256 maturity;
-
     uint256 swapFee;
     address controller;
-
+    uint256 lastTimestamp;
     IStandardizedYield SY;
     IPPrincipalToken PT;
     IPYieldToken YT;
@@ -49,12 +49,9 @@ struct SYCoveredCallParams {
     uint256 mean;
     uint256 width;
     uint256 maturity;
-
     uint256 swapFee;
     address controller;
-
-    uint256 timestamp;
-
+    uint256 lastTimestamp;
     IStandardizedYield SY;
     IPPrincipalToken PT;
     IPYieldToken YT;
@@ -75,6 +72,10 @@ error InvalidPair();
 /// @dev Thrown when meanAnchor <= ONE.
 error InvalidMeanAnchor();
 
+error InvalidTimestamp();
+
+error InvalidComputedK();
+
 /// @dev Thrown when the computedL passed to swap does not satisfy the invariant check
 error InvalidComputedLiquidity(int256 invariant);
 
@@ -82,6 +83,7 @@ uint256 constant MIN_WIDTH = 1;
 uint256 constant MAX_WIDTH = uint256(type(int256).max);
 uint256 constant MIN_MEAN = 1;
 uint256 constant MAX_MEAN = uint256(type(int256).max);
+uint256 constant T_EPSILON = 200;
 
 /**
  * @title SYCoveredCall Strategy for DFMM.
@@ -90,6 +92,7 @@ uint256 constant MAX_MEAN = uint256(type(int256).max);
 contract SYCoveredCall is PairStrategy {
     using FixedPointMathLib for int256;
     /// @inheritdoc IStrategy
+
     string public constant override name = "SYCoveredCall";
 
     mapping(uint256 => InternalParams) public internalParams;
@@ -118,22 +121,22 @@ contract SYCoveredCall is PairStrategy {
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, SYCoveredCallParams));
 
-        IStandardizedYield SY = IStandardizedYield(pool.tokens[1]);
+        IStandardizedYield SY = IStandardizedYield(pool.tokens[0]);
         IPPrincipalToken PT = IPPrincipalToken(pool.tokens[1]);
-        params.timestamp = block.timestamp;
+        params.lastTimestamp = block.timestamp;
 
         int256 tau = int256(computeTau(params));
 
         if (PT.SY() != address(SY)) {
-          revert InvalidPair();
+            revert InvalidPair();
         }
 
         if (PT.expiry() <= block.timestamp) {
-          revert InvalidMaturity();
+            revert InvalidMaturity();
         }
 
         if (params.meanAnchor <= 1 ether) {
-          revert InvalidMeanAnchor();
+            revert InvalidMeanAnchor();
         }
 
         if (pool.reserves.length != 2 || reserves.length != 2) {
@@ -146,7 +149,8 @@ contract SYCoveredCall is PairStrategy {
 
         internalParams[poolId].maturity = internalParams[poolId].PT.expiry();
         internalParams[poolId].meanAnchor = params.meanAnchor;
-        internalParams[poolId].mean = uint256(int256(params.meanAnchor).powWad(tau));
+        internalParams[poolId].mean =
+            uint256(int256(params.meanAnchor).powWad(tau));
         internalParams[poolId].width = params.width;
         internalParams[poolId].swapFee = params.swapFee;
         internalParams[poolId].controller = params.controller;
@@ -187,7 +191,7 @@ contract SYCoveredCall is PairStrategy {
         params.mean = internalParams[poolId].mean;
         params.swapFee = internalParams[poolId].swapFee;
         params.maturity = internalParams[poolId].maturity;
-        params.timestamp = IDFMM(dfmm).pools(poolId).lastSwapTimestamp;
+        params.lastTimestamp = internalParams[poolId].lastTimestamp;
 
         return abi.encode(params);
     }
@@ -209,33 +213,82 @@ contract SYCoveredCall is PairStrategy {
             uint256 tokenOutIndex,
             uint256 amountIn,
             uint256 amountOut,
-            uint256 deltaLiquidity
+            uint256 deltaLiquidity,
+            bytes memory params
         )
     {
-        bytes memory params = getPoolParams(poolId);
+        // fetch computedL and swapTimestamp from data
+        params = getPoolParams(poolId);
+        SYCoveredCallParams memory ccParams =
+            abi.decode(params, (SYCoveredCallParams));
+
         uint256 computedL;
-        (tokenInIndex, tokenOutIndex, amountIn, amountOut, computedL) =
-            abi.decode(data, (uint256, uint256, uint256, uint256, uint256));
+        uint256 swapTimestamp;
+        (
+            tokenInIndex,
+            tokenOutIndex,
+            amountIn,
+            amountOut,
+            computedL,
+            swapTimestamp
+        ) = abi.decode(
+            data, (uint256, uint256, uint256, uint256, uint256, uint256)
+        );
+
+        if (
+            swapTimestamp < internalParams[poolId].lastTimestamp
+                || swapTimestamp < block.timestamp - T_EPSILON
+                || swapTimestamp > block.timestamp + T_EPSILON
+        ) {
+            revert InvalidTimestamp();
+        }
+
+        // if timestamp is valid, append it to the poolParams for validation check
+        ccParams.lastTimestamp = swapTimestamp;
+
+        // compute new K
+        ccParams.mean =
+            computeKGivenLastPrice(pool.reserves[0], computedL, ccParams);
 
         int256 computedInvariant =
-            tradingFunction(pool.reserves, computedL, params);
+            tradingFunction(pool.reserves, computedL, abi.encode(params));
 
         if (computedInvariant < 0 || computedInvariant > EPSILON) {
             revert InvalidComputedLiquidity(computedInvariant);
         }
 
         deltaLiquidity = _computeSwapDeltaLiquidity(
-            pool, params, tokenInIndex, tokenOutIndex, amountIn, amountOut
+            pool,
+            abi.encode(params),
+            tokenInIndex,
+            tokenOutIndex,
+            amountIn,
+            amountOut
         );
 
         pool.reserves[tokenInIndex] += amountIn;
         pool.reserves[tokenOutIndex] -= amountOut;
 
-        invariant =
-            tradingFunction(pool.reserves, computedL + deltaLiquidity, params);
+        invariant = tradingFunction(
+            pool.reserves, computedL + deltaLiquidity, abi.encode(params)
+        );
 
+        params = abi.encode(ccParams);
         valid = invariant >= 0;
         //valid = invariant >= 0 && invariant <= EPSILON;
+    }
+
+    function postSwapHook(
+        address,
+        uint256 poolId,
+        Pool memory,
+        bytes memory params
+    ) external onlyDFMM {
+        SYCoveredCallParams memory ccParams =
+            abi.decode(params, (SYCoveredCallParams));
+
+        internalParams[poolId].lastTimestamp = ccParams.lastTimestamp;
+        internalParams[poolId].mean = ccParams.mean;
     }
 
     /// @inheritdoc IStrategy

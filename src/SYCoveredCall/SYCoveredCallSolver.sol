@@ -72,7 +72,7 @@ contract SYCoveredCallSolver {
         uint256 timestamp
     ) public view returns (SYCoveredCallParams memory) {
         SYCoveredCallParams memory params = getPoolParams(poolId);
-        params.timestamp = timestamp;
+        params.lastTimestamp = timestamp;
         return params;
     }
 
@@ -305,7 +305,7 @@ contract SYCoveredCallSolver {
         }
 
         uint256 poolId = poolId;
-        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
 
