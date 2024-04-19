@@ -168,8 +168,9 @@ contract GeometricMeanSolver is ISolver {
         bytes memory swapData =
             abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut);
 
-        (bool valid,,,,,,) =
-            strategy.validateSwap(address(this), poolId, pool, swapData);
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
+            address(this), poolId, pool, swapData
+        );
 
         return (valid, state.amountOut, swapData);
     }

@@ -31,10 +31,10 @@ function computeTradingFunction(
 }
 
 function computeTau(CoveredCallParams memory params) pure returns (uint256) {
-    if (params.timestamp >= params.maturity) {
+    if (params.lastTimestamp >= params.maturity) {
         return 0;
     } else {
-        return ONE * (params.maturity - params.timestamp) / YEAR;
+        return ONE * (params.maturity - params.lastTimestamp) / YEAR;
     }
 }
 

@@ -131,8 +131,9 @@ contract ConstantSumSolver is ISolver {
             swapData = abi.encode(1, 0, amountIn, amountOut);
         }
 
-        (bool valid,,,,,,) =
-            strategy.validateSwap(address(this), poolId, pool, swapData);
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
+            address(this), poolId, pool, swapData
+        );
         return (valid, amountOut, swapData);
     }
 

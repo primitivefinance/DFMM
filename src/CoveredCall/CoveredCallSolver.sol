@@ -72,7 +72,7 @@ contract CoveredCallSolver {
         uint256 timestamp
     ) public view returns (CoveredCallParams memory) {
         CoveredCallParams memory params = getPoolParams(poolId);
-        params.timestamp = timestamp;
+        params.lastTimestamp = timestamp;
         return params;
     }
 
@@ -305,7 +305,7 @@ contract CoveredCallSolver {
         }
 
         uint256 poolId = poolId;
-        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
 

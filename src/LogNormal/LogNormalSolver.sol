@@ -216,9 +216,15 @@ contract LogNormalSolver is ISolver {
         }
 
         uint256 poolId = poolId;
-        (bool valid,,,,,,) =
-            strategy.validateSwap(address(this), poolId, pool, swapData);
-        return (valid, state.amountOut, swapData);
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
+            address(this), poolId, pool, swapData
+        );
+        return (
+            valid,
+            state.amountOut,
+            computePriceGivenX(endReserves.rx, endReserves.L, poolParams),
+            swapData
+        );
     }
 
     /// @inheritdoc ISolver

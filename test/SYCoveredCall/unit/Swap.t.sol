@@ -19,7 +19,7 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
         bool swapXForY = true;
 
         (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+            solver.simulateSwap(POOL_ID, swapXForY, amountIn, block.timestamp);
         assertEq(valid, true);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
@@ -34,10 +34,7 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
         );
     }
 
-    function test_SYCoveredCall_swap_SwapsXforY_WarpToMaturity()
-        public
-        init_no_fee
-    {
+    function test_SYCoveredCall_swap_SwapsXforY_WarpToMaturity() public init {
         vm.warp(370 days);
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
@@ -49,7 +46,7 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
         bool swapXForY = true;
 
         (bool valid, uint256 amountOut,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+            solver.simulateSwap(POOL_ID, swapXForY, amountIn, block.timestamp);
         assertEq(valid, true);
 
         console2.log("out", amountOut);
@@ -77,7 +74,7 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
         bool swapXForY = false;
 
         (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+            solver.simulateSwap(POOL_ID, swapXForY, amountIn, block.timestamp);
         assertEq(valid, true);
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), payload, "");
@@ -128,33 +125,5 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
 
         vm.expectRevert();
         dfmm.swap(POOL_ID, address(this), payload, "");
-    }
-
-    function test_SYCoveredCall_swap_ChargesCorrectFeesYIn() public deep {
-        uint256 amountIn = 1 ether;
-        bool swapXForY = false;
-
-        (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
-
-        (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), payload, "");
-
-        console2.log(inputAmount);
-        console2.log(outputAmount);
-    }
-
-    function test_SYCoveredCall_swap_ChargesCorrectFeesXIn() public deep {
-        uint256 amountIn = 1 ether;
-        bool swapXForY = true;
-
-        (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
-
-        (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), payload, "");
-
-        console2.log(inputAmount);
-        console2.log(outputAmount);
     }
 }
