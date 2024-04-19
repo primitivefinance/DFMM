@@ -283,7 +283,7 @@ contract SYCoveredCall is PairStrategy {
         uint256 poolId,
         Pool memory,
         bytes memory params
-    ) external onlyDFMM {
+    ) external override onlyDFMM {
         SYCoveredCallParams memory ccParams =
             abi.decode(params, (SYCoveredCallParams));
 

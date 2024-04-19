@@ -157,6 +157,13 @@ abstract contract PairStrategy is IStrategy {
         valid = invariant >= 0;
     }
 
+    function postSwapHook(
+        address,
+        uint256,
+        Pool memory,
+        bytes calldata
+    ) external onlyDFMM { }
+
     /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)
         public
