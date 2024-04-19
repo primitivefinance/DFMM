@@ -31,6 +31,7 @@ import {
     computeAllocationGivenDeltaY,
     computeDeallocationGivenDeltaX,
     computeDeallocationGivenDeltaY,
+    computeKGivenLastPrice,
     YEAR,
     ONE
 } from "src/SYCoveredCall/SYCoveredCallMath.sol";
@@ -220,22 +221,24 @@ contract SYCoveredCallSolver {
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
-        uint256 amountIn
+        uint256 amountIn,
+        uint256 timestamp
     ) public view returns (bool, uint256, uint256, bytes memory) {
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
         SYCoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+            getPoolParamsCustomTimestamp(poolId, timestamp);
 
         SimulateSwapState memory state;
 
         uint256 startComputedL = getNextLiquidity(
             poolId, preReserves[0], preReserves[1], preTotalLiquidity
         );
+        poolParams.mean = computeKGivenLastPrice(
+            preReserves[0], preTotalLiquidity, poolParams
+        );
         {
-            console2.log("startComputedL", startComputedL);
-
             if (swapXIn) {
                 state.deltaLiquidity = computeDeltaLXIn(
                     amountIn,
@@ -244,20 +247,15 @@ contract SYCoveredCallSolver {
                     preTotalLiquidity,
                     poolParams
                 );
-                console2.log("state.deltaLiquidity", state.deltaLiquidity);
 
                 endReserves.rx = preReserves[0] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
-                console2.log("endReserves.rx", endReserves.rx);
-                console2.log("endReserves.L", endReserves.L);
                 uint256 approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
-                console2.log("approxPrice", approxPrice);
 
                 endReserves.ry = getNextReserveY(
                     poolId, endReserves.rx, endReserves.L, approxPrice
                 );
-                console2.log("endReserves.ry", endReserves.ry);
 
                 require(
                     endReserves.ry < preReserves[1],

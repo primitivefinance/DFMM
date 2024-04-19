@@ -33,6 +33,7 @@ struct InternalParams {
     uint256 maturity;
     uint256 swapFee;
     address controller;
+    uint256 lastTimestamp;
 }
 
 /// @dev Parameterization of the Log Normal curve.
@@ -42,7 +43,7 @@ struct CoveredCallParams {
     uint256 maturity;
     uint256 swapFee;
     address controller;
-    uint256 timestamp;
+    uint256 lastTimestamp;
 }
 
 /// @dev Thrown when the mean parameter is not within the allowed bounds.
@@ -158,7 +159,7 @@ contract CoveredCall is PairStrategy {
         params.mean = internalParams[poolId].mean;
         params.swapFee = internalParams[poolId].swapFee;
         params.maturity = internalParams[poolId].maturity;
-        params.timestamp = IDFMM(dfmm).pools(poolId).lastSwapTimestamp;
+        params.lastTimestamp = internalParams[poolId].lastTimestamp;
 
         return abi.encode(params);
     }
@@ -180,10 +181,18 @@ contract CoveredCall is PairStrategy {
             uint256 tokenOutIndex,
             uint256 amountIn,
             uint256 amountOut,
-            uint256 deltaLiquidity
+            uint256 deltaLiquidity,
+            bytes memory params
         )
     {
-        bytes memory params = getPoolParams(poolId);
+        params = getPoolParams(poolId);
+
+        CoveredCallParams memory ccParams =
+            abi.decode(params, (CoveredCallParams));
+        ccParams.lastTimestamp = block.timestamp;
+
+        params = abi.encode(ccParams);
+
         uint256 computedL;
         (tokenInIndex, tokenOutIndex, amountIn, amountOut, computedL) =
             abi.decode(data, (uint256, uint256, uint256, uint256, uint256));
@@ -207,6 +216,15 @@ contract CoveredCall is PairStrategy {
 
         valid = invariant >= 0;
         //valid = invariant >= 0 && invariant <= EPSILON;
+    }
+
+    function postSwapHook(
+        address,
+        uint256 poolId,
+        Pool calldata pool,
+        bytes calldata
+    ) external override onlyDFMM {
+        internalParams[poolId].lastTimestamp = block.timestamp;
     }
 
     /// @inheritdoc IStrategy

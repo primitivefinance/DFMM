@@ -225,6 +225,7 @@ contract DFMM is IDFMM {
         bytes calldata callbackData
     ) external payable lock returns (address, address, uint256, uint256) {
         SwapState memory state;
+        bytes memory postSwapHookData;
 
         (
             state.valid,
@@ -233,7 +234,8 @@ contract DFMM is IDFMM {
             state.tokenOutIndex,
             state.amountIn,
             state.amountOut,
-            state.deltaLiquidity
+            state.deltaLiquidity,
+            postSwapHookData
         ) = IStrategy(_pools[poolId].strategy).validateSwap(
             msg.sender, poolId, _pools[poolId], data
         );
@@ -263,6 +265,10 @@ contract DFMM is IDFMM {
 
         // Optimistically transfer the output tokens to the recipient.
         _transfer(state.tokenOut, recipient, state.amountOut);
+
+        IStrategy(_pools[poolId].strategy).postSwapHook(
+            msg.sender, poolId, _pools[poolId], postSwapHookData
+        );
 
         // If the callbackData is empty, do a regular `_transferFrom()` call, as in the other operations.
         if (callbackData.length == 0) {
