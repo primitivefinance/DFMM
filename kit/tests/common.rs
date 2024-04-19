@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use arbiter_engine::{agent::Agent, world::World};
 use dfmm_kit::{
     behaviors::{
@@ -87,6 +89,7 @@ pub fn spawn_constant_sum_updater(world: &mut World) {
                         symbol: "TP".to_string(),
                         swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
                         controller_fee: 0.into(),
+                        controller: eAddress::zero(),
                     },
                     allocation_data: ConstantSumAllocationData {
                         reserve_x: RESERVE_X,
@@ -100,20 +103,21 @@ pub fn spawn_constant_sum_updater(world: &mut World) {
     )
 }
 
-pub fn constant_sum_parameters() -> Vec<ConstantSumParams> {
-    let prices = vec![
+pub fn constant_sum_parameters() -> VecDeque<ConstantSumParams> {
+    let prices: VecDeque<eU256> = vec![
         PRICE,
         ethers::utils::parse_ether(2).unwrap(),
         ethers::utils::parse_ether(3).unwrap(),
-    ];
-    let mut params = vec![];
+    ]
+    .into();
+    let mut params = VecDeque::new();
     for price in prices {
         let parameter = ConstantSumParams {
             price,
             swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
             controller: eAddress::zero(),
         };
-        params.push(parameter);
+        params.push_back(parameter);
     }
     params
 }
@@ -133,6 +137,7 @@ fn creator() -> Create<creator::Config<ConstantSumPool>> {
                 symbol: "TP".to_string(),
                 swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
                 controller_fee: 0.into(),
+                controller: eAddress::zero(),
             },
             allocation_data: ConstantSumAllocationData {
                 reserve_x: RESERVE_X,

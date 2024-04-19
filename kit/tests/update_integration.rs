@@ -3,8 +3,7 @@ use std::time::Duration;
 use arbiter_engine::messager::To;
 use dfmm_kit::behaviors::MessageTypes;
 use futures_util::StreamExt;
-use tracing::{debug, info, warn};
-use tracing_subscriber::registry::Data;
+use tracing::{info, warn};
 include!("common.rs");
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
@@ -24,7 +23,7 @@ async fn run_updater_constant_sum() {
         // receivers. TODO: This is a bit of a hack and we could honestly make
         // the `World::run` better to handle this, but this works for now.
         tokio::time::sleep(Duration::from_millis(2000)).await;
-        for _ in 0..2 {
+        for _ in 0..3 {
             messager
                 .send(
                     To::Agent(UPDATER.to_owned()),
@@ -45,10 +44,14 @@ async fn run_updater_constant_sum() {
                         MessageTypes::Create(_) => continue,
                         MessageTypes::TokenAdmin(_) => continue,
                         MessageTypes::Update(params) => {
+                            info!("successfully updated the params to {:?}", params);
                             let mock_data = constant_sum_parameters();
-                            // assert_eq!(data, mock_data[0]);
-                            warn!("deseriazlied into update respondse {:?}", params);
-                            break;
+                            assert_eq!(params, mock_data[count]);
+                            if count >= 2 {
+                                break;
+                            } else {
+                                count += 1;
+                            }
                         }
                     }
                 }

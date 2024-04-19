@@ -29,6 +29,7 @@ pub struct BaseConfig {
     pub name: String,
     pub symbol: String,
     pub swap_fee: eU256,
+    pub controller: eAddress,
     pub controller_fee: eU256,
 }
 
@@ -83,6 +84,8 @@ pub trait PoolType: Clone + Debug + 'static {
         allocation_data: &Self::AllocationData,
         solver_contract: &Self::SolverContract,
     ) -> Result<Bytes>;
+
+    fn set_controller(params: Self::Parameters, controller: eAddress) -> Self::Parameters;
 
     fn create_instance(
         strategy_contract: Self::StrategyContract,
@@ -142,7 +145,17 @@ impl<P: PoolType> Pool<P> {
         dfmm: DFMM<ArbiterMiddleware>,
         tokens: Vec<ArbiterToken<ArbiterMiddleware>>,
     ) -> Result<Self> {
-        let data = P::get_init_data(params.clone(), &allocation_data, &solver_contract).await?;
+        // This seems a little hacky but might be the way forward untill we get the
+        // contract changes settled in the future we should see if we can work
+        // with Matt and Clement to remove the controller from the init params
+        let params_with_controller = P::set_controller(params, base_config.controller);
+
+        let data = P::get_init_data(
+            params_with_controller.clone(),
+            &allocation_data,
+            &solver_contract,
+        )
+        .await?;
         debug!("Got init data {:?}", data);
         let init_params = InitParams {
             name: base_config.name,
@@ -157,7 +170,8 @@ impl<P: PoolType> Pool<P> {
         let (id, _reserves, _total_liquidity) = dfmm.init(init_params.clone()).call().await?;
         dfmm.init(init_params).send().await?.await?;
         let pool: shared_types::Pool = dfmm.pools(id).call().await?;
-        let instance = P::create_instance(strategy_contract, solver_contract, params);
+        let instance =
+            P::create_instance(strategy_contract, solver_contract, params_with_controller);
         let client = dfmm.client();
 
         let pool = Self {

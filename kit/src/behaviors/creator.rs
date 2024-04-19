@@ -83,6 +83,13 @@ where
 
             tokens.push(token);
         }
+        debug!(
+            "Setting Controller Address to self address: {:?}",
+            client.address()
+        );
+        if self.data.base_config.controller == eAddress::zero() {
+            self.data.base_config.controller = client.address();
+        }
         debug!("creating pool...");
         // Create the pool.
         let pool = Pool::<P>::new(
@@ -110,6 +117,9 @@ where
             pool.id,
             pool.tokens.iter().map(|t| t.address()).collect::<Vec<_>>(),
             pool.liquidity_token.address(),
+            // TODO: This params will show the incorrect controller address
+            // Would be nice to have it be the correct one set on line 88
+            // so that the debug msg's are more helpful
             self.data.params.clone(),
             self.data.allocation_data.clone(),
         );

@@ -45,6 +45,11 @@ impl PoolType for ConstantSumPool {
         Ok(init_bytes)
     }
 
+    fn set_controller(mut params: Self::Parameters, controller: eAddress) -> Self::Parameters {
+        params.controller = controller;
+        params
+    }
+
     fn get_strategy_address(strategy_contract: &Self::StrategyContract) -> eAddress {
         strategy_contract.address()
     }

@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use bindings::idfmm::IDFMM;
 use tracing::warn;
 
@@ -15,7 +17,7 @@ pub struct Config<P: PoolType> {
     pub base_config: BaseConfig,
     pub allocation_data: P::AllocationData,
     pub token_list: Vec<String>,
-    pub params: Vec<P::Parameters>,
+    pub params: VecDeque<P::Parameters>,
 }
 
 #[derive(Debug, Clone)]
@@ -23,7 +25,7 @@ pub struct Processing<P: PoolType> {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
     pub pool: Pool<P>,
-    pub pool_params: Vec<P::Parameters>,
+    pub pool_params: VecDeque<P::Parameters>,
 }
 
 impl<P: PoolType> State for Config<P> {
@@ -64,6 +66,7 @@ where
         mut messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<Message>)>> {
         // Make a "TODO" list.
+        // This is the data I need to recieve to do my job
         let mut todo: Todo<P> = Todo {
             deployment_data: None,
             pool_creation: None,
@@ -152,9 +155,14 @@ where
 
         match msg {
             UpdatoorQuerry::UpdateMeDaddy => {
-                let params = self.data.pool_params.pop().unwrap();
+                let params = self.data.pool_params.pop_front().unwrap();
                 self.data.pool.update(params.clone()).await?;
-                let _ = self.data.messager.send(To::All, params).await?;
+                let _ = self
+                    .data
+                    .messager
+                    .send(To::Agent(event.from), MessageTypes::Update::<P>(params))
+                    .await?;
+                info!("Successfully updated!");
             }
 
             UpdatoorQuerry::NoOp => {
