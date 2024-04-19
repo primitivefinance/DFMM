@@ -8,7 +8,7 @@ use bindings::{
 use super::*;
 use crate::bindings::{
     n_token_geometric_mean::NTokenGeometricMean,
-    n_token_geometric_mean_solver::{self, NTokenGeometricMeanSolver},
+    n_token_geometric_mean_solver::NTokenGeometricMeanSolver,
 };
 
 #[derive(Debug, Deserialize, Serialize)]

@@ -77,7 +77,7 @@ where
     P: PoolType + Debug + Send + Sync + 'static,
     E: Debug + Send + Sync + 'static,
 {
-    async fn process(&mut self, event: E) -> Result<ControlFlow> {
+    async fn process(&mut self, _event: E) -> Result<ControlFlow> {
         Ok(ControlFlow::Halt)
     }
 }

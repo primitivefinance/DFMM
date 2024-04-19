@@ -1,7 +1,5 @@
-use futures_util::StreamExt;
-
 use super::*;
-use crate::behaviors::{deploy::DeploymentData, token::Response};
+use crate::behaviors::token::Response;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Create<S: State> {

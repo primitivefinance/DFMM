@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use arbiter_core::middleware::ArbiterMiddleware;
 use ethers::{abi::AbiDecode, types::Bytes};
-use futures_util::future::err;
 use serde::{Deserialize, Serialize};
 use tracing::warn;
 
@@ -266,7 +265,7 @@ impl<P: PoolType> Pool<P> {
         match tx_result {
             Ok(_) => {}
             Err(er) => match er.as_middleware_error().unwrap() {
-                arbiter_core::errors::ArbiterCoreError::ExecutionRevert { gas_used, output } => {
+                arbiter_core::errors::ArbiterCoreError::ExecutionRevert { gas_used: _, output } => {
                     let error = dfmm::DFMMErrors::decode(output);
                     warn!("Contract reverted with error: {:?}", error);
                 }

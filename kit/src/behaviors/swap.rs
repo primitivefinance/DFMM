@@ -1,5 +1,5 @@
 use self::{
-    bindings::erc20::ERC20, creator::PoolCreation, deploy::DeploymentData, pool::InputToken,
+    bindings::erc20::ERC20, creator::PoolCreation, pool::InputToken,
     update::UpdatoorQuerry,
 };
 use super::*;
