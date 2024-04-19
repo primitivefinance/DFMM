@@ -25,7 +25,7 @@ contract CoveredCallInitTest is CoveredCallSetUp {
             width: 0.1 ether,
             maturity: YEAR * 2,
             swapFee: FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 

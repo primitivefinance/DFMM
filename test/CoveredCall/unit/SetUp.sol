@@ -41,7 +41,7 @@ contract CoveredCallSetUp is SetUp {
             width: 0.1 ether,
             maturity: YEAR,
             swapFee: TEST_SWAP_FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
@@ -76,7 +76,7 @@ contract CoveredCallSetUp is SetUp {
             width: 0.05 ether,
             maturity: YEAR * 2,
             swapFee: FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
@@ -113,7 +113,7 @@ contract CoveredCallSetUp is SetUp {
             width: 0.00001 ether,
             maturity: YEAR,
             swapFee: 0,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
@@ -148,7 +148,7 @@ contract CoveredCallSetUp is SetUp {
             width: 0.1 ether,
             maturity: YEAR / 4,
             swapFee: TEST_SWAP_FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
@@ -183,7 +183,7 @@ contract CoveredCallSetUp is SetUp {
             width: 0.25 ether,
             maturity: YEAR,
             swapFee: TEST_SWAP_FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
@@ -214,7 +214,7 @@ contract CoveredCallSetUp is SetUp {
             width: 0,
             maturity: YEAR,
             swapFee: TEST_SWAP_FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 

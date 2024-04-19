@@ -162,7 +162,7 @@ abstract contract PairStrategy is IStrategy {
         uint256,
         Pool memory,
         bytes calldata
-    ) external onlyDFMM { }
+    ) external virtual onlyDFMM { }
 
     /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)

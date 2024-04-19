@@ -316,7 +316,7 @@ contract LogNormalSolver {
         }
 
         uint256 poolId = poolId;
-        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
         return (
