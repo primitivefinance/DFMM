@@ -31,7 +31,6 @@ enum UpdateCode {
 }
 
 struct InternalParams {
-    uint256 meanAnchor;
     uint256 mean;
     uint256 width;
     uint256 maturity;
@@ -45,7 +44,6 @@ struct InternalParams {
 
 /// @dev Parameterization of the Log Normal curve.
 struct SYCoveredCallParams {
-    uint256 meanAnchor;
     uint256 mean;
     uint256 width;
     uint256 maturity;
@@ -135,7 +133,7 @@ contract SYCoveredCall is PairStrategy {
             revert InvalidMaturity();
         }
 
-        if (params.meanAnchor <= 1 ether) {
+        if (params.mean <= 1 ether) {
             revert InvalidMeanAnchor();
         }
 
@@ -148,9 +146,7 @@ contract SYCoveredCall is PairStrategy {
         internalParams[poolId].YT = IPYieldToken(PT.YT());
 
         internalParams[poolId].maturity = internalParams[poolId].PT.expiry();
-        internalParams[poolId].meanAnchor = params.meanAnchor;
-        internalParams[poolId].mean =
-            uint256(int256(params.meanAnchor).powWad(tau));
+        internalParams[poolId].mean = params.mean;
         internalParams[poolId].width = params.width;
         internalParams[poolId].swapFee = params.swapFee;
         internalParams[poolId].controller = params.controller;
