@@ -108,6 +108,8 @@ where
         // };
         let pool_creation = (
             pool.id,
+            pool.tokens.iter().map(|t| t.address()).collect::<Vec<_>>(),
+            pool.liquidity_token.address(),
             self.data.params.clone(),
             self.data.allocation_data.clone(),
         );

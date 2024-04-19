@@ -14,7 +14,7 @@ use crate::bindings::{
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Deploy {}
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct DeploymentData {
     pub weth: eAddress,
     pub dfmm: eAddress,

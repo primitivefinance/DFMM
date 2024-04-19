@@ -48,7 +48,15 @@ where
     // TODO: BUT, this line where the tuple struct has the exact same data as `PoolCreation<P>`
     // DOES compile. I'm not sure how to go about making this work nicely, but at least this works
     // for now.
-    Create((eU256, P::Parameters, P::AllocationData)),
+    Create(
+        (
+            eU256,         // Pool ID
+            Vec<eAddress>, // Token List
+            eAddress,      // Liquidity Token
+            P::Parameters,
+            P::AllocationData,
+        ),
+    ),
     #[serde(untagged)]
     TokenAdmin(token::Response),
     #[serde(untagged)]

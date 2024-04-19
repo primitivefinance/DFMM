@@ -77,25 +77,27 @@ pub fn spawn_constant_sum_creator(world: &mut World) {
 
 pub fn spawn_constant_sum_updater(world: &mut World) {
     let params = constant_sum_parameters();
-    world.add_agent(Agent::builder(UPDATER).with_behavior(Update::<
-        update::Config<ConstantSumPool>,
-    > {
-        token_admin: TOKEN_ADMIN.to_owned(),
-        data: update::Config {
-            base_config: BaseConfig {
-                name: "Test Pool".to_string(),
-                symbol: "TP".to_string(),
-                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
-                controller_fee: 0.into(),
-            },
-            allocation_data: ConstantSumAllocationData {
-                reserve_x: RESERVE_X,
-                reserve_y: RESERVE_Y,
-            },
-            token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
-            params,
-        },
-    }))
+    world.add_agent(
+        Agent::builder(UPDATER)
+            .with_behavior(Update::<update::Config<ConstantSumPool>> {
+                token_admin: TOKEN_ADMIN.to_owned(),
+                data: update::Config {
+                    base_config: BaseConfig {
+                        name: "Test Pool".to_string(),
+                        symbol: "TP".to_string(),
+                        swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+                        controller_fee: 0.into(),
+                    },
+                    allocation_data: ConstantSumAllocationData {
+                        reserve_x: RESERVE_X,
+                        reserve_y: RESERVE_Y,
+                    },
+                    token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
+                    params,
+                },
+            })
+            .with_behavior(creator()),
+    )
 }
 
 pub fn constant_sum_parameters() -> Vec<ConstantSumParams> {

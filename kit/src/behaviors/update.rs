@@ -37,6 +37,18 @@ where
     type Data = Self;
 }
 
+#[derive(Debug)]
+struct Todo<P: PoolType> {
+    deployment_data: Option<DeploymentData>,
+    pool_creation: Option<(
+        eU256,         // Pool ID
+        Vec<eAddress>, // Token List
+        eAddress,      // Liquidity Token
+        <P as PoolType>::Parameters,
+        <P as PoolType>::AllocationData,
+    )>,
+}
+
 #[async_trait::async_trait]
 impl<P> Behavior<Message> for Update<Config<P>>
 where
@@ -51,58 +63,78 @@ where
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
     ) -> Result<Option<(Self::Processor, EventStream<Message>)>> {
-        // Configuration from deployed contracts
+        // Make a "TODO" list.
+        let mut todo: Todo<P> = Todo {
+            deployment_data: None,
+            pool_creation: None,
+        };
 
-        debug!("Startup: starting the updator");
-        let deployment_data = messager.clone().get_next::<DeploymentData>().await?.data;
-        debug!("Startup: got message {:?}", deployment_data);
-        let (strategy_contract, solver_contract) =
-            P::get_contracts(&deployment_data, client.clone());
-        let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
-        let mut init_event_stream = stream_event(dfmm.init_filter());
-
-        let init_event = init_event_stream.next().await.unwrap();
-        debug!("Startup: got init event {:?}", init_event);
-
-        let instance = loop {
-            // TODO: This is where we use the weird tuple struct to bypass compile issues
-            // with the `MessageTypes<P>` enum. See `behaviors/mod.rs` for that.
-            if let MessageTypes::Create((_id, params, _allocation_data)) =
-                messager.get_next::<MessageTypes<P>>().await?.data
-            {
-                break P::create_instance(strategy_contract, solver_contract, params);
+        // Loop through the messager until we check off the boxes for this TODO list.
+        debug!("Updater is looping through their TODO list.");
+        loop {
+            if let Ok(msg) = messager.get_next::<MessageTypes<P>>().await {
+                match msg.data {
+                    MessageTypes::Deploy(deploy_data) => {
+                        debug!("Updater: Got deployment data: {:?}", deploy_data);
+                        todo.deployment_data = Some(deploy_data);
+                        if todo.pool_creation.is_some() {
+                            debug!("Updater: Got all the data.\n{:#?}", todo);
+                            break;
+                        }
+                    }
+                    MessageTypes::Create(pool_creation) => {
+                        debug!("Updater: Got pool creation data: {:?}", pool_creation);
+                        todo.pool_creation = Some(pool_creation);
+                        if todo.deployment_data.is_some() {
+                            debug!("Updater: Got all the data.\n{:#?}", todo);
+                            break;
+                        }
+                    }
+                    _ => continue,
+                }
             } else {
+                debug!("Updater got some other message variant it could ignore.");
                 continue;
             }
-        };
-
-        let lp_token = ERC20::new(init_event.lp_token, client.clone());
-        // Get the intended tokens for the pool and do approvals.
-        let mut tokens: Vec<ArbiterToken<ArbiterMiddleware>> = Vec::new();
-        for token in init_event.tokens {
-            let token = ArbiterToken::new(token, client.clone());
-            tokens.push(token);
         }
+        debug!("Updater has checked off their TODO list.");
+
+        let (strategy_contract, solver_contract) =
+            P::get_contracts(todo.deployment_data.as_ref().unwrap(), client.clone());
+        let dfmm = DFMM::new(todo.deployment_data.unwrap().dfmm, client.clone());
+        debug!("Got DFMM and the strategy contracts.");
 
         let pool = Pool::<P> {
-            id: init_event.pool_id,
+            id: todo.pool_creation.clone().unwrap().0,
             dfmm,
-            instance,
-            tokens,
-            liquidity_token: lp_token,
+            instance: P::create_instance(
+                strategy_contract,
+                solver_contract,
+                todo.pool_creation.clone().unwrap().3.clone(),
+            ),
+            tokens: todo
+                .pool_creation
+                .clone()
+                .unwrap()
+                .1
+                .into_iter()
+                .map(|t| ArbiterToken::new(t, client.clone()))
+                .collect(),
+            liquidity_token: ERC20::new(todo.pool_creation.as_ref().unwrap().2, client.clone()),
         };
+
+        debug!("Updater has built the pool.");
 
         let process = Self::Processor {
             token_admin: self.token_admin.clone(),
             data: Processing {
-                messager,
+                messager: messager.clone(),
                 client,
                 pool,
                 pool_params: self.data.params.clone(),
             },
         };
-        warn!("got to the end up the updator startup");
-        let stream = process.data.messager.clone().stream()?;
+        let stream = messager.stream()?;
         Ok(Some((process, stream)))
     }
 }
