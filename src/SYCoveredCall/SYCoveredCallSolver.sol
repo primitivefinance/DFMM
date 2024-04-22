@@ -35,7 +35,6 @@ import {
     YEAR,
     ONE
 } from "src/SYCoveredCall/SYCoveredCallMath.sol";
-import "forge-std/console2.sol";
 
 contract SYCoveredCallSolver {
     using FixedPointMathLib for uint256;
@@ -232,9 +231,6 @@ contract SYCoveredCallSolver {
 
         SimulateSwapState memory state;
         state.timestamp = timestamp;
-        console2.log("preTotalLiquidity", preTotalLiquidity);
-        console2.log("preReserves[0]", preReserves[0]);
-        console2.log("preReserves[1]", preReserves[1]);
 
         uint256 startComputedL = getNextLiquidity(
             poolId, preReserves[0], preReserves[1], preTotalLiquidity

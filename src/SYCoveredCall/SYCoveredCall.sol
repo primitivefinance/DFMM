@@ -24,7 +24,6 @@ import { EPSILON } from "src/lib/StrategyLib.sol";
 import { IPPrincipalToken } from "pendle/interfaces/IPPrincipalToken.sol";
 import { IStandardizedYield } from "pendle/interfaces/IStandardizedYield.sol";
 import { IPYieldToken } from "pendle/interfaces/IPYieldToken.sol";
-import "forge-std/console2.sol";
 import { Gaussian } from "solstat/Gaussian.sol";
 
 enum UpdateCode {
@@ -231,9 +230,6 @@ contract SYCoveredCall is PairStrategy {
             data, (uint256, uint256, uint256, uint256, uint256, uint256)
         );
 
-        console2.log("swapTimestamp", swapTimestamp);
-        console2.log("block.timestamp", block.timestamp);
-
         if (
             swapTimestamp < internalParams[poolId].lastTimestamp
                 || swapTimestamp < block.timestamp - T_EPSILON
@@ -250,13 +246,11 @@ contract SYCoveredCall is PairStrategy {
 
         int256 computedInvariant =
             tradingFunction(pool.reserves, computedL, abi.encode(ccParams));
-        console2.log("got here");
 
         if (computedInvariant < 0 || computedInvariant > EPSILON) {
             revert InvalidComputedLiquidity(computedInvariant);
         }
 
-        console2.log("now we compute dl");
         deltaLiquidity = _computeSwapDeltaLiquidity(
             pool,
             abi.encode(ccParams),
@@ -265,7 +259,6 @@ contract SYCoveredCall is PairStrategy {
             amountIn,
             amountOut
         );
-        console2.log("deltaLiquidity", deltaLiquidity);
 
         pool.reserves[tokenInIndex] += amountIn;
         pool.reserves[tokenOutIndex] -= amountOut;
