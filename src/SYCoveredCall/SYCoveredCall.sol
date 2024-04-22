@@ -5,6 +5,7 @@ import { Pool } from "src/interfaces/IDFMM.sol";
 import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
+import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import {
     computeTradingFunction,
@@ -12,7 +13,7 @@ import {
     computeDeltaGivenDeltaLRoundDown,
     computeDeltaLXIn,
     computeDeltaLYIn,
-    computeTau,
+    computePriceGivenX,
     computeKGivenLastPrice
 } from "src/SYCoveredCall/SYCoveredCallMath.sol";
 import {
@@ -24,6 +25,7 @@ import { IPPrincipalToken } from "pendle/interfaces/IPPrincipalToken.sol";
 import { IStandardizedYield } from "pendle/interfaces/IStandardizedYield.sol";
 import { IPYieldToken } from "pendle/interfaces/IPYieldToken.sol";
 import "forge-std/console2.sol";
+import { Gaussian } from "solstat/Gaussian.sol";
 
 enum UpdateCode {
     Invalid,
@@ -120,19 +122,11 @@ contract SYCoveredCall is PairStrategy {
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, SYCoveredCallParams));
 
-        IStandardizedYield SY = IStandardizedYield(pool.tokens[0]);
-        IPPrincipalToken PT = IPPrincipalToken(pool.tokens[1]);
         params.lastTimestamp = block.timestamp;
 
-        int256 tau = int256(computeTau(params));
-
-        console2.log("got here1");
-        console2.log("pt.sy", params.PT.SY());
-        console2.log("sy", address(params.SY));
         if (params.PT.SY() != address(params.SY)) {
             revert InvalidPair();
         }
-        console2.log("got here2");
 
         if (params.PT.expiry() <= block.timestamp) {
             revert InvalidMaturity();
@@ -155,6 +149,7 @@ contract SYCoveredCall is PairStrategy {
         internalParams[poolId].width = params.width;
         internalParams[poolId].swapFee = params.swapFee;
         internalParams[poolId].controller = params.controller;
+        internalParams[poolId].lastTimestamp = block.timestamp;
 
         invariant =
             tradingFunction(reserves, totalLiquidity, abi.encode(params));
@@ -222,7 +217,6 @@ contract SYCoveredCall is PairStrategy {
         params = getPoolParams(poolId);
         SYCoveredCallParams memory ccParams =
             abi.decode(params, (SYCoveredCallParams));
-        console2.log("got here");
 
         uint256 computedL;
         uint256 swapTimestamp;
@@ -236,7 +230,9 @@ contract SYCoveredCall is PairStrategy {
         ) = abi.decode(
             data, (uint256, uint256, uint256, uint256, uint256, uint256)
         );
-        console2.log("got here2");
+
+        console2.log("swapTimestamp", swapTimestamp);
+        console2.log("block.timestamp", block.timestamp);
 
         if (
             swapTimestamp < internalParams[poolId].lastTimestamp
@@ -249,31 +245,33 @@ contract SYCoveredCall is PairStrategy {
         // if timestamp is valid, append it to the poolParams for validation check
         ccParams.lastTimestamp = swapTimestamp;
 
-        // compute new K
         ccParams.mean =
             computeKGivenLastPrice(pool.reserves[0], computedL, ccParams);
 
         int256 computedInvariant =
-            tradingFunction(pool.reserves, computedL, abi.encode(params));
+            tradingFunction(pool.reserves, computedL, abi.encode(ccParams));
+        console2.log("got here");
 
         if (computedInvariant < 0 || computedInvariant > EPSILON) {
             revert InvalidComputedLiquidity(computedInvariant);
         }
 
+        console2.log("now we compute dl");
         deltaLiquidity = _computeSwapDeltaLiquidity(
             pool,
-            abi.encode(params),
+            abi.encode(ccParams),
             tokenInIndex,
             tokenOutIndex,
             amountIn,
             amountOut
         );
+        console2.log("deltaLiquidity", deltaLiquidity);
 
         pool.reserves[tokenInIndex] += amountIn;
         pool.reserves[tokenOutIndex] -= amountOut;
 
         invariant = tradingFunction(
-            pool.reserves, computedL + deltaLiquidity, abi.encode(params)
+            pool.reserves, computedL + deltaLiquidity, abi.encode(ccParams)
         );
 
         params = abi.encode(ccParams);
