@@ -64,6 +64,37 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
         );
     }
 
+    function test_SYCoveredCall_swap_SwapsXforY_Warp2DaysUpdatesK()
+        public
+        init
+    {
+        vm.warp(block.timestamp + 2 days);
+
+        (uint256[] memory reserves, uint256 L) =
+            solver.getReservesAndLiquidity(POOL_ID);
+        SYCoveredCallParams memory params = solver.getPoolParams(POOL_ID);
+        uint256 initialK = computeKGivenLastPrice(reserves[0], L, params);
+        uint256 amountIn = 0.1 ether;
+        bool swapXForY = true;
+        console2.log("initialK", initialK);
+
+        (bool valid, uint256 amountOut,, bytes memory payload) =
+            solver.simulateSwap(POOL_ID, swapXForY, amountIn, block.timestamp);
+        assertEq(valid, true);
+
+        console2.log("out", amountOut);
+
+        (,, uint256 inputAmount, uint256 outputAmount) =
+            dfmm.swap(POOL_ID, address(this), payload, "");
+
+        (uint256[] memory nextReserves, uint256 nextL) =
+            solver.getReservesAndLiquidity(POOL_ID);
+        SYCoveredCallParams memory nextParams = solver.getPoolParams(POOL_ID);
+
+        uint256 k = computeKGivenLastPrice(nextReserves[0], nextL, nextParams);
+        console2.log("k", k);
+    }
+
     function test_SYCoveredCall_swap_SwapsYforX() public init {
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));

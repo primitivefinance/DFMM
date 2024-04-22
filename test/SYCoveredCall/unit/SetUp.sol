@@ -27,7 +27,7 @@ contract SYCoveredCallSetUp is SetUp {
     uint256 defaultReserveXMil = 1_000_000 ether;
     uint256 defaultReserveXDeep = ONE * 10_000_000;
 
-    uint256 defaultPrice = ONE;
+    uint256 defaultPrice;
     uint256 defaultPricePoint9Rate = 0.84167999326 ether;
 
     address public constant wstETH = 0x7f39C581F595B53c5cb19bD0b3f8dA6c935E2Ca0; //real wsteth
@@ -105,6 +105,8 @@ contract SYCoveredCallSetUp is SetUp {
             YT: YT
         });
 
+        defaultPrice = uint256(pendleRateAnchor);
+
         bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
             defaultReserveX, defaultPrice, defaultParams
         );
@@ -118,7 +120,6 @@ contract SYCoveredCallSetUp is SetUp {
             feeCollector: address(0),
             controllerFee: 0
         });
-        console2.log("timestamp", block.timestamp);
 
         (POOL_ID,,) = dfmm.init(defaultInitParams);
 
