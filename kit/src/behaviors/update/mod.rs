@@ -1,7 +1,5 @@
 use std::collections::VecDeque;
-
 use tracing::warn;
-
 use super::*;
 use crate::bindings::erc20::ERC20;
 
@@ -39,7 +37,7 @@ where
 }
 
 #[derive(Debug)]
-struct Todo<P: PoolType> {
+struct UpdateTodo<P: PoolType> {
     deployment_data: Option<DeploymentData>,
     pool_creation: Option<(
         eU256,         // Pool ID
@@ -66,7 +64,7 @@ where
     ) -> Result<Option<(Self::Processor, EventStream<Message>)>> {
         // Make a "TODO" list.
         // This is the data I need to recieve to do my job
-        let mut todo: Todo<P> = Todo {
+        let mut todo: UpdateTodo<P> = UpdateTodo {
             deployment_data: None,
             pool_creation: None,
         };
