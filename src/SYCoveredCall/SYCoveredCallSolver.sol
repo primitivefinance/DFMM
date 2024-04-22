@@ -217,7 +217,6 @@ contract SYCoveredCallSolver {
         uint256 fees;
     }
 
-    /// @dev Estimates a swap's reserves and adjustments and returns its validity.
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
@@ -238,17 +237,21 @@ contract SYCoveredCallSolver {
         poolParams.mean = computeKGivenLastPrice(
             preReserves[0], preTotalLiquidity, poolParams
         );
+
+        uint256 poolId = poolId;
+        uint256 swapAmountIn = amountIn;
+        bool swapXToY = swapXIn;
         {
-            if (swapXIn) {
+            if (swapXToY) {
                 state.deltaLiquidity = computeDeltaLXIn(
-                    amountIn,
+                    swapAmountIn,
                     preReserves[0],
                     preReserves[1],
                     preTotalLiquidity,
                     poolParams
                 );
 
-                endReserves.rx = preReserves[0] + amountIn;
+                endReserves.rx = preReserves[0] + swapAmountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
@@ -264,14 +267,14 @@ contract SYCoveredCallSolver {
                 state.amountOut = preReserves[1] - endReserves.ry;
             } else {
                 state.deltaLiquidity = computeDeltaLYIn(
-                    amountIn,
+                    swapAmountIn,
                     preReserves[0],
                     preReserves[1],
                     preTotalLiquidity,
                     poolParams
                 );
 
-                endReserves.ry = preReserves[1] + amountIn;
+                endReserves.ry = preReserves[1] + swapAmountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
                     getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
@@ -294,15 +297,14 @@ contract SYCoveredCallSolver {
 
         bytes memory swapData;
 
-        if (swapXIn) {
+        if (swapXToY) {
             swapData =
-                abi.encode(0, 1, amountIn, state.amountOut, startComputedL);
+                abi.encode(0, 1, swapAmountIn, state.amountOut, startComputedL);
         } else {
             swapData =
-                abi.encode(1, 0, amountIn, state.amountOut, startComputedL);
+                abi.encode(1, 0, swapAmountIn, state.amountOut, startComputedL);
         }
 
-        uint256 poolId = poolId;
         (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );

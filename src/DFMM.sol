@@ -13,6 +13,7 @@ import {
     downscaleUp
 } from "./lib/ScalingLib.sol";
 import { LPToken } from "./LPToken.sol";
+import "forge-std/console2.sol";
 
 /**
  * @title DFMM
@@ -218,7 +219,6 @@ contract DFMM is IDFMM {
         bytes postSwapHookData;
     }
 
-    /// @inheritdoc IDFMM
     function swap(
         uint256 poolId,
         address recipient,
@@ -240,6 +240,8 @@ contract DFMM is IDFMM {
             msg.sender, poolId, _pools[poolId], data
         );
 
+        uint256 poolId = poolId;
+
         if (!state.valid) revert InvalidInvariant(state.invariant);
 
         if (_pools[poolId].controllerFee > 0) {
@@ -258,11 +260,6 @@ contract DFMM is IDFMM {
         state.tokenIn = _pools[poolId].tokens[state.tokenInIndex];
         state.tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
-        address[] memory tokens = new address[](1);
-        tokens[0] = state.tokenIn;
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = state.amountIn;
-
         // Optimistically transfer the output tokens to the recipient.
         _transfer(state.tokenOut, recipient, state.amountOut);
 
@@ -272,6 +269,10 @@ contract DFMM is IDFMM {
 
         // If the callbackData is empty, do a regular `_transferFrom()` call, as in the other operations.
         if (callbackData.length == 0) {
+            address[] memory tokens = new address[](1);
+            tokens[0] = state.tokenIn;
+            uint256[] memory amounts = new uint256[](1);
+            amounts[0] = state.amountIn;
             _transferFrom(tokens, amounts);
         } else {
             // Otherwise, execute the callback and assert the input amount has been paid

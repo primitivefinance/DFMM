@@ -24,6 +24,7 @@ number_underscore = "thousands"
 [rpc_endpoints]
 local = "http://localhost:8545"
 optimism_sepolia = "${OPTIMISM_SEPOLIA_RPC_URL}"
+mainnet = "${MAINNET_RPC_URL}"
 
 [etherscan]
 optimism_sepolia = { key = "${ETHERSCAN_API_KEY}" }

@@ -23,6 +23,7 @@ import { EPSILON } from "src/lib/StrategyLib.sol";
 import { IPPrincipalToken } from "pendle/interfaces/IPPrincipalToken.sol";
 import { IStandardizedYield } from "pendle/interfaces/IStandardizedYield.sol";
 import { IPYieldToken } from "pendle/interfaces/IPYieldToken.sol";
+import "forge-std/console2.sol";
 
 enum UpdateCode {
     Invalid,
@@ -125,11 +126,15 @@ contract SYCoveredCall is PairStrategy {
 
         int256 tau = int256(computeTau(params));
 
-        if (PT.SY() != address(SY)) {
+        console2.log("got here1");
+        console2.log("pt.sy", params.PT.SY());
+        console2.log("sy", address(params.SY));
+        if (params.PT.SY() != address(params.SY)) {
             revert InvalidPair();
         }
+        console2.log("got here2");
 
-        if (PT.expiry() <= block.timestamp) {
+        if (params.PT.expiry() <= block.timestamp) {
             revert InvalidMaturity();
         }
 
@@ -141,9 +146,9 @@ contract SYCoveredCall is PairStrategy {
             revert InvalidReservesLength();
         }
 
-        internalParams[poolId].SY = SY;
-        internalParams[poolId].PT = PT;
-        internalParams[poolId].YT = IPYieldToken(PT.YT());
+        internalParams[poolId].SY = params.SY;
+        internalParams[poolId].PT = params.PT;
+        internalParams[poolId].YT = IPYieldToken(params.PT.YT());
 
         internalParams[poolId].maturity = internalParams[poolId].PT.expiry();
         internalParams[poolId].mean = params.mean;
@@ -217,6 +222,7 @@ contract SYCoveredCall is PairStrategy {
         params = getPoolParams(poolId);
         SYCoveredCallParams memory ccParams =
             abi.decode(params, (SYCoveredCallParams));
+        console2.log("got here");
 
         uint256 computedL;
         uint256 swapTimestamp;
@@ -230,6 +236,7 @@ contract SYCoveredCall is PairStrategy {
         ) = abi.decode(
             data, (uint256, uint256, uint256, uint256, uint256, uint256)
         );
+        console2.log("got here2");
 
         if (
             swapTimestamp < internalParams[poolId].lastTimestamp
