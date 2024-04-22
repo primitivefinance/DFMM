@@ -33,6 +33,7 @@ pub enum Behaviors<P: PoolType> {
     Create(Create<creator::Config<P>>),
     Deployer(Deploy),
     TokenAdmin(TokenAdmin<token::Config>),
+    Swap(swap::Config<P>),
 }
 
 #[derive(Debug, Deserialize, Serialize)]

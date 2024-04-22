@@ -265,7 +265,10 @@ impl<P: PoolType> Pool<P> {
         match tx_result {
             Ok(_) => {}
             Err(er) => match er.as_middleware_error().unwrap() {
-                arbiter_core::errors::ArbiterCoreError::ExecutionRevert { gas_used: _, output } => {
+                arbiter_core::errors::ArbiterCoreError::ExecutionRevert {
+                    gas_used: _,
+                    output,
+                } => {
                     let error = dfmm::DFMMErrors::decode(output);
                     warn!("Contract reverted with error: {:?}", error);
                 }

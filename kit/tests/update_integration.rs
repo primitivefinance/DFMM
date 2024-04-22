@@ -43,7 +43,7 @@ async fn run_updater_constant_sum() {
                         MessageTypes::TokenAdmin(_) => continue,
                         MessageTypes::Update(params) => {
                             info!("successfully updated the params to {:?}", params);
-                            let mock_data = constant_sum_parameters();
+                            let mock_data = constant_sum_parameters_vec();
                             assert_eq!(params, mock_data[count]);
                             if count >= 2 {
                                 break;

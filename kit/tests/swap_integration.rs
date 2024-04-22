@@ -15,45 +15,30 @@ async fn run_updater_constant_sum() {
 
     spawn_deployer(&mut world);
     spawn_token_admin(&mut world);
-    // spawn_constant_sum_creator(&mut world);
-    spawn_constant_sum_updater(&mut world);
+    spawn_constant_sum_creator(&mut world);
+    spawn_constant_sum_swapper(&mut world);
 
     let task: tokio::task::JoinHandle<()> = tokio::spawn(async move {
         // Sleep because the world needs to give all of the agents time to build their
         // receivers. TODO: This is a bit of a hack and we could honestly make
         // the `World::run` better to handle this, but this works for now.
         tokio::time::sleep(Duration::from_millis(2000)).await;
-        // let mut count = 0;
-        // let mut stream = messager.stream().unwrap();
-        // while let Some(message) = stream.next().await {
-        //     match serde_json::from_str::<MessageTypes<ConstantSumPool>>(&message.data) {
-        //         Ok(data) => {
-        //             info!("deserialized data: {:#?}", data);
-        //             match data {
-        //                 MessageTypes::Deploy(_) => continue,
-        //                 MessageTypes::Create(_) => continue,
-        //                 MessageTypes::TokenAdmin(_) => continue,
-        //                 MessageTypes::Update(params) => {
-        //                     info!("successfully updated the params to {:?}", params);
-        //                     let mock_data = constant_sum_parameters();
-        //                     assert_eq!(params, mock_data[count]);
-        //                     if count >= 2 {
-        //                         break;
-        //                     } else {
-        //                         count += 1;
-        //                     }
-        //                 }
-        //             }
-        //         }
-        //         Err(_) => {
-        //             warn!(
-        //                 "Failed to parse message data into ConstantSumParams, instead got: {:#?}",
-        //                 message.data
-        //             );
-        //             continue;
-        //         }
-        //     }
-        // }
+        let mut stream = messager.stream().unwrap();
+
+        while let Some(message) = stream.next().await {
+            match serde_json::from_str::<MessageTypes<ConstantSumPool>>(&message.data) {
+                Ok(data) => {
+                    info!("deserialized data: {:#?}", data);
+                }
+                Err(_) => {
+                    warn!(
+                        "Failed to parse message data into ConstantSumParams, instead got: {:#?}",
+                        message.data
+                    );
+                    continue;
+                }
+            }
+        }
     });
 
     // Setup a timeout for the test to ensure it does not run indefinitely.

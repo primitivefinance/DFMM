@@ -1,30 +1,43 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, marker::PhantomData};
 
-use arbiter_engine::{agent::Agent, world::World};
+use arbiter_engine::{
+    agent::Agent,
+    messager::{Message, Messager},
+    world::World,
+};
 use dfmm_kit::{
     behaviors::{
         creator::{self, Create},
         deploy::Deploy,
+        swap::{self, Swap, SwapType},
         token::{self, TokenAdmin},
         update::{self, Update},
     },
     bindings::constant_sum_solver::ConstantSumParams,
     pool::{
         constant_sum::{ConstantSumAllocationData, ConstantSumPool},
-        BaseConfig,
+        BaseConfig, InputToken,
     },
     TokenData,
 };
-use ethers::types::{Address as eAddress, U256 as eU256};
+use ethers::{
+    abi::ethereum_types::BloomInput,
+    types::{Address as eAddress, U256 as eU256},
+};
+use serde::{Deserialize, Serialize};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
 
 pub const WAD: eU256 = eU256([1_000_000_000_000_000_000, 0, 0, 0]);
+
+// Agent IDs
 pub const DEPLOYER: &str = "deployer";
 pub const TOKEN_ADMIN: &str = "token_admin";
 pub const CREATOR: &str = "creator";
 pub const UPDATER: &str = "updater";
+pub const SWAPPER: &str = "swapper";
 
+// Token Data
 pub const TOKEN_X_NAME: &str = "Token X";
 pub const TOKEN_X_SYMBOL: &str = "TKNX";
 pub const TOKEN_X_DECIMALS: u8 = 18;
@@ -43,7 +56,6 @@ pub const TARGET_TIMESTAMP: eU256 = WAD;
 pub const POOL_NAME: &str = "TEST POOL";
 pub const POOL_SYMBOL: &str = "TP";
 
-
 pub fn log(level: Level) {
     tracing::subscriber::set_global_default(
         FmtSubscriber::builder()
@@ -54,11 +66,73 @@ pub fn log(level: Level) {
     .unwrap();
 }
 
+pub fn spawn_constant_sum_swapper(world: &mut World) {
+    world.add_agent(Agent::builder(SWAPPER).with_behavior(mock_swap_behavior()))
+}
+
+pub fn spawn_constant_sum_updater(world: &mut World) {
+    world.add_agent(
+        Agent::builder(UPDATER)
+            .with_behavior(mock_update_behavior())
+            .with_behavior(mock_creator_behavior()),
+    )
+}
+
 pub fn spawn_deployer(world: &mut World) {
     world.add_agent(Agent::builder(DEPLOYER).with_behavior(Deploy {}));
 }
 
 pub fn spawn_token_admin(world: &mut World) {
+    world.add_agent(Agent::builder(TOKEN_ADMIN).with_behavior(mock_token_admin_behavior()));
+}
+
+pub fn spawn_constant_sum_creator(world: &mut World) {
+    world.add_agent(Agent::builder(CREATOR).with_behavior(mock_creator_behavior()));
+}
+
+fn mock_swap_behavior() -> Swap<swap::Config<ConstantSumPool>, VanillaSwap, Message> {
+    let data: swap::Config<ConstantSumPool> = swap::Config {
+        base_config: mock_base_config(),
+        params: constant_sum_parameters(),
+        allocation_data: ConstantSumAllocationData {
+            reserve_x: RESERVE_X,
+            reserve_y: RESERVE_Y,
+        },
+        token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
+    };
+
+    Swap::<swap::Config<ConstantSumPool>, VanillaSwap, Message> {
+        token_admin: TOKEN_ADMIN.to_owned(),
+        update: UPDATER.to_owned(),
+        data,
+        swap_type: VanillaSwap {},
+        _phantom: PhantomData,
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct VanillaSwap {}
+
+impl SwapType<Message> for VanillaSwap {
+    fn compute_swap_amount(_event: Message) -> (eU256, dfmm_kit::pool::InputToken) {
+        (ethers::utils::parse_ether(0.5).unwrap(), InputToken::TokenY)
+    }
+
+    fn get_stream(
+        &self,
+        messager: Messager,
+    ) -> Option<std::pin::Pin<Box<dyn futures_util::Stream<Item = Message> + Send + Sync>>> {
+        Some(messager.stream().unwrap())
+    }
+}
+
+fn mock_token_admin_behavior() -> TokenAdmin<token::Config> {
+    TokenAdmin::<token::Config> {
+        data: mock_token_data(),
+    }
+}
+
+fn mock_token_data() -> token::Config {
     let token_x = TokenData {
         name: TOKEN_X_NAME.to_owned(),
         symbol: TOKEN_X_SYMBOL.to_owned(),
@@ -71,25 +145,11 @@ pub fn spawn_token_admin(world: &mut World) {
         decimals: TOKEN_Y_DECIMALS,
         address: None,
     };
-    let data = token::Config {
+    token::Config {
         token_data: vec![token_x, token_y],
-    };
-    world
-        .add_agent(Agent::builder(TOKEN_ADMIN).with_behavior(TokenAdmin::<token::Config> { data }));
+    }
 }
-
-pub fn spawn_constant_sum_creator(world: &mut World) {
-    world.add_agent(Agent::builder(CREATOR).with_behavior(mock_creator_behavior()));
-}
-
-pub fn spawn_constant_sum_updater(world: &mut World) {
-    world.add_agent(
-        Agent::builder(UPDATER)
-            .with_behavior(mock_update_behavior())
-            .with_behavior(mock_creator_behavior()),
-    )
-}
-fn mock_update_behavior() -> Update::<update::Config<ConstantSumPool>> {
+fn mock_update_behavior() -> Update<update::Config<ConstantSumPool>> {
     Update::<update::Config<ConstantSumPool>> {
         token_admin: TOKEN_ADMIN.to_owned(),
         data: update::Config {
@@ -99,8 +159,8 @@ fn mock_update_behavior() -> Update::<update::Config<ConstantSumPool>> {
                 reserve_y: RESERVE_Y,
             },
             token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
-            params: constant_sum_parameters(),
-        }
+            params: constant_sum_parameters_vec(),
+        },
     }
 }
 fn mock_creator_behavior() -> Create<creator::Config<ConstantSumPool>> {
@@ -132,7 +192,7 @@ fn mock_base_config() -> BaseConfig {
     }
 }
 
-pub fn constant_sum_parameters() -> VecDeque<ConstantSumParams> {
+pub fn constant_sum_parameters_vec() -> VecDeque<ConstantSumParams> {
     let prices: VecDeque<eU256> = vec![
         PRICE,
         ethers::utils::parse_ether(2).unwrap(),
@@ -149,4 +209,12 @@ pub fn constant_sum_parameters() -> VecDeque<ConstantSumParams> {
         params.push_back(parameter);
     }
     params
+}
+
+fn constant_sum_parameters() -> ConstantSumParams {
+    ConstantSumParams {
+        price: ethers::utils::parse_ether(1).unwrap(),
+        swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+        controller: eAddress::zero(),
+    }
 }
