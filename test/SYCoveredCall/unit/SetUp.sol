@@ -89,8 +89,6 @@ contract SYCoveredCallSetUp is SetUp {
     }
 
     modifier init() {
-        vm.warp(0);
-
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
@@ -99,7 +97,7 @@ contract SYCoveredCallSetUp is SetUp {
             mean: uint256(pendleRateAnchor),
             width: 0.1 ether,
             maturity: PT.expiry(),
-            swapFee: TEST_SWAP_FEE,
+            swapFee: 0.0005 ether,
             lastTimestamp: block.timestamp,
             controller: address(this),
             SY: SY,
@@ -120,6 +118,7 @@ contract SYCoveredCallSetUp is SetUp {
             feeCollector: address(0),
             controllerFee: 0
         });
+        console2.log("timestamp", block.timestamp);
 
         (POOL_ID,,) = dfmm.init(defaultInitParams);
 

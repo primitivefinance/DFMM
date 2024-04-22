@@ -215,6 +215,7 @@ contract SYCoveredCallSolver {
         uint256 amountOut;
         uint256 deltaLiquidity;
         uint256 fees;
+        uint256 timestamp;
     }
 
     function simulateSwap(
@@ -230,6 +231,10 @@ contract SYCoveredCallSolver {
             getPoolParamsCustomTimestamp(poolId, timestamp);
 
         SimulateSwapState memory state;
+        state.timestamp = timestamp;
+        console2.log("preTotalLiquidity", preTotalLiquidity);
+        console2.log("preReserves[0]", preReserves[0]);
+        console2.log("preReserves[1]", preReserves[1]);
 
         uint256 startComputedL = getNextLiquidity(
             poolId, preReserves[0], preReserves[1], preTotalLiquidity
@@ -298,11 +303,23 @@ contract SYCoveredCallSolver {
         bytes memory swapData;
 
         if (swapXToY) {
-            swapData =
-                abi.encode(0, 1, swapAmountIn, state.amountOut, startComputedL);
+            swapData = abi.encode(
+                0,
+                1,
+                swapAmountIn,
+                state.amountOut,
+                startComputedL,
+                state.timestamp
+            );
         } else {
-            swapData =
-                abi.encode(1, 0, swapAmountIn, state.amountOut, startComputedL);
+            swapData = abi.encode(
+                1,
+                0,
+                swapAmountIn,
+                state.amountOut,
+                startComputedL,
+                state.timestamp
+            );
         }
 
         (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(

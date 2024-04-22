@@ -34,15 +34,16 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
         );
     }
 
-    function test_SYCoveredCall_swap_SwapsXforY_WarpToMaturity() public init {
-        vm.warp(370 days);
+    function test_SYCoveredCall_swap_SwapsXforY_Warp2Days() public init {
+        vm.warp(block.timestamp + 2 days);
+
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
 
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        uint256 amountIn = 99.9999999 ether;
+        uint256 amountIn = 0.1 ether;
         bool swapXForY = true;
 
         (bool valid, uint256 amountOut,, bytes memory payload) =
@@ -125,5 +126,30 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
 
         vm.expectRevert();
         dfmm.swap(POOL_ID, address(this), payload, "");
+    }
+
+    function _computeDeltaLXIn(
+        uint256 amountIn,
+        uint256 rx,
+        uint256 ry,
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) external view returns (uint256 deltaL) {
+        uint256 fees = params.swapFee.mulWadUp(amountIn);
+        uint256 px = computePriceGivenX(rx, L, params);
+        deltaL =
+            px.mulWadUp(L).mulWadUp(fees).divWadDown(px.mulWadDown(rx) + ry);
+    }
+
+    function _computeDeltaLYIn(
+        uint256 amountIn,
+        uint256 rx,
+        uint256 ry,
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) external returns (uint256 deltaL) {
+        uint256 fees = params.swapFee.mulWadUp(amountIn);
+        uint256 px = computePriceGivenX(rx, L, params);
+        deltaL = L.mulWadUp(fees).divWadDown(px.mulWadDown(rx) + ry);
     }
 }
