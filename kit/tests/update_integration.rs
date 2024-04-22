@@ -15,7 +15,6 @@ async fn run_updater_constant_sum() {
 
     spawn_deployer(&mut world);
     spawn_token_admin(&mut world);
-    // spawn_constant_sum_creator(&mut world);
     spawn_constant_sum_updater(&mut world);
 
     let task: tokio::task::JoinHandle<()> = tokio::spawn(async move {
@@ -35,7 +34,6 @@ async fn run_updater_constant_sum() {
         let mut count = 0;
         let mut stream = messager.stream().unwrap();
         while let Some(message) = stream.next().await {
-            // BUG IS HERE: for some reason we are never entering this loop
             match serde_json::from_str::<MessageTypes<ConstantSumPool>>(&message.data) {
                 Ok(data) => {
                     info!("deserialized data: {:#?}", data);
@@ -63,7 +61,6 @@ async fn run_updater_constant_sum() {
                     continue;
                 }
             }
-            // count += 1;
         }
     });
 

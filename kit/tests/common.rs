@@ -39,6 +39,11 @@ pub const RESERVE_Y: eU256 = WAD;
 
 pub const TARGET_TIMESTAMP: eU256 = WAD;
 
+// Base Config
+pub const POOL_NAME: &str = "TEST POOL";
+pub const POOL_SYMBOL: &str = "TP";
+
+
 pub fn log(level: Level) {
     tracing::subscriber::set_global_default(
         FmtSubscriber::builder()
@@ -74,33 +79,57 @@ pub fn spawn_token_admin(world: &mut World) {
 }
 
 pub fn spawn_constant_sum_creator(world: &mut World) {
-    world.add_agent(Agent::builder(CREATOR).with_behavior(creator()));
+    world.add_agent(Agent::builder(CREATOR).with_behavior(mock_creator_behavior()));
 }
 
 pub fn spawn_constant_sum_updater(world: &mut World) {
-    let params = constant_sum_parameters();
     world.add_agent(
         Agent::builder(UPDATER)
-            .with_behavior(Update::<update::Config<ConstantSumPool>> {
-                token_admin: TOKEN_ADMIN.to_owned(),
-                data: update::Config {
-                    base_config: BaseConfig {
-                        name: "Test Pool".to_string(),
-                        symbol: "TP".to_string(),
-                        swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
-                        controller_fee: 0.into(),
-                        controller: eAddress::zero(),
-                    },
-                    allocation_data: ConstantSumAllocationData {
-                        reserve_x: RESERVE_X,
-                        reserve_y: RESERVE_Y,
-                    },
-                    token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
-                    params,
-                },
-            })
-            .with_behavior(creator()),
+            .with_behavior(mock_update_behavior())
+            .with_behavior(mock_creator_behavior()),
     )
+}
+fn mock_update_behavior() -> Update::<update::Config<ConstantSumPool>> {
+    Update::<update::Config<ConstantSumPool>> {
+        token_admin: TOKEN_ADMIN.to_owned(),
+        data: update::Config {
+            base_config: mock_base_config(),
+            allocation_data: ConstantSumAllocationData {
+                reserve_x: RESERVE_X,
+                reserve_y: RESERVE_Y,
+            },
+            token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
+            params: constant_sum_parameters(),
+        }
+    }
+}
+fn mock_creator_behavior() -> Create<creator::Config<ConstantSumPool>> {
+    Create::<creator::Config<ConstantSumPool>> {
+        token_admin: TOKEN_ADMIN.to_owned(),
+        data: creator::Config {
+            params: ConstantSumParams {
+                price: PRICE,
+                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+                controller: eAddress::zero(),
+            },
+            token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
+            base_config: mock_base_config(),
+            allocation_data: ConstantSumAllocationData {
+                reserve_x: RESERVE_X,
+                reserve_y: RESERVE_Y,
+            },
+        },
+    }
+}
+
+fn mock_base_config() -> BaseConfig {
+    BaseConfig {
+        name: POOL_NAME.to_owned(),
+        symbol: POOL_SYMBOL.to_owned(),
+        swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+        controller_fee: 0.into(),
+        controller: eAddress::zero(),
+    }
 }
 
 pub fn constant_sum_parameters() -> VecDeque<ConstantSumParams> {
@@ -120,29 +149,4 @@ pub fn constant_sum_parameters() -> VecDeque<ConstantSumParams> {
         params.push_back(parameter);
     }
     params
-}
-
-fn creator() -> Create<creator::Config<ConstantSumPool>> {
-    Create::<creator::Config<ConstantSumPool>> {
-        token_admin: TOKEN_ADMIN.to_owned(),
-        data: creator::Config {
-            params: ConstantSumParams {
-                price: PRICE,
-                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
-                controller: eAddress::zero(),
-            },
-            token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
-            base_config: BaseConfig {
-                name: "Test Pool".to_string(),
-                symbol: "TP".to_string(),
-                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
-                controller_fee: 0.into(),
-                controller: eAddress::zero(),
-            },
-            allocation_data: ConstantSumAllocationData {
-                reserve_x: RESERVE_X,
-                reserve_y: RESERVE_Y,
-            },
-        },
-    }
 }

@@ -88,11 +88,12 @@ where
         if self.data.base_config.controller == eAddress::zero() {
             self.data.base_config.controller = client.address();
         }
+        let params = P::set_controller(self.data.params.clone(), client.address());
+
         debug!("creating pool...");
-        // Create the pool.
         let pool = Pool::<P>::new(
             self.data.base_config.clone(),
-            self.data.params.clone(),
+            params.clone(),
             self.data.allocation_data.clone(),
             strategy_contract,
             solver_contract,
@@ -103,22 +104,11 @@ where
 
         debug!("Pool created!\n {:#?}", pool);
 
-        // TODO: This won't actually work nicely on the receiving end as for whatever
-        // reason, wrapping this into the enum breaks with the generic <P>. So we tuple
-        // it up for now.
-        // let pool_creation = PoolCreation::<P> {
-        //     id: pool.id,
-        //     params: self.data.params.clone(),
-        //     allocation_data: self.data.allocation_data.clone(),
-        // };
         let pool_creation = (
             pool.id,
             pool.tokens.iter().map(|t| t.address()).collect::<Vec<_>>(),
             pool.liquidity_token.address(),
-            // TODO: This params will show the incorrect controller address
-            // Would be nice to have it be the correct one set on line 88
-            // so that the debug msg's are more helpful
-            self.data.params.clone(),
+            params,
             self.data.allocation_data.clone(),
         );
         messager.send(To::All, pool_creation).await.unwrap();
