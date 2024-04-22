@@ -51,10 +51,7 @@ contract SYCoveredCallSetUp is SetUp {
 
     function mintPtYt(uint256 amount) public {
         SY.transfer(address(YT), amount);
-        uint256 pyOut = YT.mintPY(address(this), address(this));
-        uint256 ptBal = PT.balanceOf(address(this));
-        uint256 ytBal = YT.balanceOf(address(this));
-        uint256 syBal = SY.balanceOf(address(this));
+        YT.mintPY(address(this), address(this));
     }
 
     function setUp() public override {
