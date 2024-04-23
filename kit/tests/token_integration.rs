@@ -49,13 +49,26 @@ async fn run_token_admin() {
                         decimals: TOKEN_Y_DECIMALS,
                         address: None,
                     };
-                    let mock_data = token::Config {
-                        token_data: vec![token_x, token_y],
-                    };
-                    assert_eq!(data[0].0.name, mock_data.token_data[0].name);
-                    assert_eq!(data[0].0.symbol, mock_data.token_data[0].symbol);
-                    assert_eq!(data[1].0.name, mock_data.token_data[1].name);
-                    assert_eq!(data[1].0.symbol, mock_data.token_data[1].symbol);
+                    let mut found_token_x = false;
+                    let mut found_token_y = false;
+
+                    for (token_data, _) in data {
+                        if token_data.name == token_x.name
+                            && token_data.symbol == token_x.symbol
+                            && token_data.decimals == token_x.decimals
+                        {
+                            found_token_x = true;
+                        }
+                        if token_data.name == token_y.name
+                            && token_data.symbol == token_y.symbol
+                            && token_data.decimals == token_y.decimals
+                        {
+                            found_token_y = true;
+                        }
+                    }
+
+                    assert!(found_token_x);
+                    assert!(found_token_y);
                     info!("Asserts passed!");
                     break;
                 }
