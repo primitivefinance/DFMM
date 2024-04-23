@@ -11,7 +11,7 @@ async fn run_updater_constant_sum() {
     log(Level::DEBUG);
 
     let mut world = World::new("test");
-    let messager = world.messager.for_agent("test");
+    let mut messager = world.messager.for_agent("test");
 
     spawn_deployer(&mut world);
     spawn_token_admin(&mut world);
@@ -26,7 +26,7 @@ async fn run_updater_constant_sum() {
             messager
                 .send(
                     To::Agent(UPDATER.to_owned()),
-                    update::UpdatoorQuerry::UpdateMeDaddy,
+                    update::UpdaterQuery::ApplyUpdate,
                 )
                 .await
                 .unwrap();

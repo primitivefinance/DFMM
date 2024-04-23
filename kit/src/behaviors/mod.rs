@@ -1,13 +1,12 @@
-use std::{boxed::Box, marker::PhantomData, pin::Pin, sync::Arc};
+use std::{boxed::Box, marker::PhantomData, sync::Arc};
 
 use arbiter_engine::{
     machine::{Behavior, ControlFlow, EventStream, Processor, State},
     messager::{Message, Messager, To},
 };
 #[allow(unused)]
-use arbiter_macros::Behaviors;
+use arbiter_macros::{Behaviors, State};
 use bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
-use futures_util::Stream;
 pub use token::{MintRequest, TokenAdminQuery};
 
 use self::{

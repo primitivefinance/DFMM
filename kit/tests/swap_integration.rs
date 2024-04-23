@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use arbiter_engine::messager::To;
 use dfmm_kit::behaviors::MessageTypes;
 use futures_util::StreamExt;
 use tracing::{info, warn};
@@ -11,7 +10,7 @@ async fn run_updater_constant_sum() {
     log(Level::DEBUG);
 
     let mut world = World::new("test");
-    let messager = world.messager.for_agent("test");
+    let mut messager = world.messager.for_agent("test");
 
     spawn_deployer(&mut world);
     spawn_token_admin(&mut world);

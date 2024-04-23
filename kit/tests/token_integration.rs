@@ -12,7 +12,7 @@ async fn run_token_admin() {
     log(Level::DEBUG);
 
     let mut world = World::new("test");
-    let messager = world.messager.for_agent("test");
+    let mut messager = world.messager.for_agent("test");
 
     spawn_deployer(&mut world);
     spawn_token_admin(&mut world);

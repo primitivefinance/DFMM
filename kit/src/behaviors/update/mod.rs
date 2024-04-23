@@ -11,7 +11,7 @@ pub struct Update<S: State> {
     pub data: S::Data,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, State)]
 pub struct Config<P: PoolType> {
     pub base_config: BaseConfig,
     pub allocation_data: P::AllocationData,
@@ -19,23 +19,12 @@ pub struct Config<P: PoolType> {
     pub params: VecDeque<P::Parameters>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, State)]
 pub struct Processing<P: PoolType> {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
     pub pool: Pool<P>,
     pub pool_params: VecDeque<P::Parameters>,
-}
-
-impl<P: PoolType> State for Config<P> {
-    type Data = Self;
-}
-
-impl<P> State for Processing<P>
-where
-    P: PoolType,
-{
-    type Data = Self;
 }
 
 type PoolId = eU256;
@@ -68,7 +57,7 @@ where
         &mut self,
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
-    ) -> Result<Option<(Self::Processor, EventStream<Message>)>> {
+    ) -> Result<Self::Processor> {
         // Make a "TODO" list.
         // This is the data I need to recieve to do my job
         let mut todo: UpdateTodo<P> = UpdateTodo {
@@ -131,17 +120,16 @@ where
 
         debug!("Updater has built the pool.");
 
-        let process = Self::Processor {
+        let processor = Self::Processor {
             token_admin: self.token_admin.clone(),
             data: Processing {
-                messager: messager.clone(),
+                messager,
                 client,
                 pool,
                 pool_params: self.data.params.clone(),
             },
         };
-        let stream = messager.stream()?;
-        Ok(Some((process, stream)))
+        Ok(processor)
     }
 }
 
@@ -150,14 +138,12 @@ impl<P> Processor<Message> for Update<Processing<P>>
 where
     P: PoolType + Send + Sync,
 {
+    async fn get_stream(&mut self) -> Result<Option<EventStream<Message>>> {
+        Ok(Some(self.data.messager.stream()?))
+    }
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-        warn!("Process: Got event: {:?}", event);
-        let msg: UpdatoorQuerry = serde_json::from_str(&event.data).unwrap_or(UpdatoorQuerry::NoOp);
-
-        warn!("Process: deserialized update querry: {:?}", msg);
-
-        match msg {
-            UpdatoorQuerry::UpdateMeDaddy => {
+        match serde_json::from_str(&event.data) {
+            Ok(UpdaterQuery::ApplyUpdate) => {
                 let params = self.data.pool_params.pop_front().unwrap();
                 self.data.pool.update(params.clone()).await?;
                 let _ = self
@@ -167,18 +153,15 @@ where
                     .await?;
                 info!("Successfully updated!");
             }
-
-            UpdatoorQuerry::NoOp => {
-                debug!("NoOp");
+            Err(e) => {
+                warn!("Failed to parse message: {}", e);
             }
         }
-
         Ok(ControlFlow::Continue)
     }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum UpdatoorQuerry {
-    NoOp,
-    UpdateMeDaddy,
+pub enum UpdaterQuery {
+    ApplyUpdate,
 }

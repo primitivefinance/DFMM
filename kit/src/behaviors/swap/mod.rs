@@ -4,14 +4,6 @@ use crate::behaviors::token::Response;
 
 pub trait SwapType<E>: Debug + Serialize + Clone {
     fn compute_swap_amount(event: E) -> (eU256, InputToken);
-    // TODO: Put this on the processor in arbiter engine so that startups just
-    // return a proccess
-    fn get_stream(
-        &self,
-        _messager: Messager,
-    ) -> Option<Pin<Box<dyn Stream<Item = E> + Send + Sync>>> {
-        None
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -24,7 +16,7 @@ pub struct Swap<S: State, T: SwapType<E>, E> {
     pub _phantom: PhantomData<E>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, State)]
 pub struct Config<P: PoolType> {
     pub base_config: BaseConfig,
     pub params: P::Parameters,
@@ -32,22 +24,11 @@ pub struct Config<P: PoolType> {
     pub token_list: Vec<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, State)]
 pub struct Processing<P: PoolType> {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
     pub pool: Pool<P>,
-}
-
-impl<P: PoolType> State for Config<P> {
-    type Data = Self;
-}
-
-impl<P> State for Processing<P>
-where
-    P: PoolType,
-{
-    type Data = Self;
 }
 
 #[derive(Debug)]
@@ -64,7 +45,7 @@ struct SwapTodo<P: PoolType> {
 }
 
 #[async_trait::async_trait]
-impl<P, T, E> Behavior<E> for Swap<Config<P>, T, E>
+impl<P, T, E> Behavior<()> for Swap<Config<P>, T, E>
 where
     P: PoolType + Send + Sync + 'static,
     P::StrategyContract: Send,
@@ -72,12 +53,13 @@ where
     T: SwapType<E> + Send + Sync + 'static + for<'a> Deserialize<'a>,
     E: Debug + Send + Sync + 'static,
 {
-    type Processor = Swap<Processing<P>, T, E>;
+    // type Processor = Swap<Processing<P>, T, E>;
+    type Processor = ();
     async fn startup(
         &mut self,
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
-    ) -> Result<Option<(Self::Processor, EventStream<E>)>> {
+    ) -> Result<Self::Processor> {
         // Make a "TODO" list.
         // This is the data I need to recieve to do my job
         let mut todo: SwapTodo<P> = SwapTodo {
@@ -176,24 +158,25 @@ where
             tokens,
             liquidity_token: lp_token,
         };
-
-        match self.swap_type.get_stream(messager.clone()) {
-            Some(stream) => {
-                let process = Self::Processor {
-                    token_admin: self.token_admin.clone(),
-                    update: self.update.clone(),
-                    data: Processing {
-                        messager,
-                        client,
-                        pool,
-                    },
-                    swap_type: self.swap_type.clone(),
-                    _phantom: PhantomData::<E>,
-                };
-                Ok(Some((process, stream)))
-            }
-            None => Ok(None),
-        }
+        // TODO: We need to come back around and adjust this.
+        // match self.swap_type.get_stream(messager.clone()) {
+        //     Some(stream) => {
+        //         let process = Self::Processor {
+        //             token_admin: self.token_admin.clone(),
+        //             update: self.update.clone(),
+        //             data: Processing {
+        //                 messager,
+        //                 client,
+        //                 pool,
+        //             },
+        //             swap_type: self.swap_type.clone(),
+        //             _phantom: PhantomData::<E>,
+        //         };
+        //         Ok(Some((process, stream)))
+        //     }
+        //     None => Ok(None),
+        // }
+        Ok(())
     }
 }
 
@@ -204,6 +187,9 @@ where
     T: SwapType<E> + Send + Sync + 'static,
     E: Send + Sync + 'static,
 {
+    async fn get_stream(&mut self) -> Result<Option<EventStream<E>>> {
+        todo!("We have not implemented the 'get_stream' method yet for the 'Swap' behavior.")
+    }
     async fn process(&mut self, event: E) -> Result<ControlFlow> {
         let (swap_amount, input) = T::compute_swap_amount(event);
         self.data.pool.swap(swap_amount, input).await?;

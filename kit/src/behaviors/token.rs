@@ -9,24 +9,16 @@ pub struct TokenAdmin<S: State> {
     pub data: S::Data,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, State)]
 pub struct Config {
     pub token_data: Vec<TokenData>,
 }
 
-impl State for Config {
-    type Data = Self;
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, State)]
 pub struct Processing {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
     pub tokens: HashMap<String, (TokenData, ArbiterToken<ArbiterMiddleware>)>,
-}
-
-impl State for Processing {
-    type Data = Self;
 }
 
 #[async_trait::async_trait]
@@ -36,7 +28,7 @@ impl Behavior<Message> for TokenAdmin<Config> {
         &mut self,
         client: Arc<ArbiterMiddleware>,
         messager: Messager,
-    ) -> Result<Option<(Self::Processor, EventStream<Message>)>> {
+    ) -> Result<Self::Processor> {
         let mut tokens = HashMap::new();
         for token_data in self.data.token_data.drain(..) {
             let token = ArbiterToken::deploy(
@@ -56,16 +48,13 @@ impl Behavior<Message> for TokenAdmin<Config> {
 
         debug!("Tokens deployed {:#?}", tokens);
 
-        let process = Self::Processor {
+        Ok(Self::Processor {
             data: Processing {
                 messager,
                 client,
                 tokens,
             },
-        };
-
-        let stream = process.data.messager.clone().stream()?;
-        Ok(Some((process, stream)))
+        })
     }
 }
 
@@ -73,24 +62,26 @@ impl Behavior<Message> for TokenAdmin<Config> {
 // easier. Would be nice to add this in arbiter_engine.
 #[async_trait::async_trait]
 impl Processor<Message> for TokenAdmin<Processing> {
+    async fn get_stream(&mut self) -> Result<Option<EventStream<Message>>> {
+        Ok(Some(self.data.messager.stream()?))
+    }
+
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-        let query: TokenAdminQuery =
-            serde_json::from_str(&event.data).unwrap_or(TokenAdminQuery::NoOp);
-        match query {
-            TokenAdminQuery::AddressOf(token_name) => {
+        match serde_json::from_str(&event.data) {
+            Ok(TokenAdminQuery::AddressOf(token_name)) => {
                 self.reply_address_of(token_name, event.from).await?;
             }
-            TokenAdminQuery::MintRequest(mint_request) => {
+            Ok(TokenAdminQuery::MintRequest(mint_request)) => {
                 self.reply_mint_request(mint_request, event.from).await?;
             }
-            TokenAdminQuery::GetAssetUniverse => {
+            Ok(TokenAdminQuery::GetAssetUniverse) => {
                 self.reply_get_asset_universe(event.from).await?;
             }
-            TokenAdminQuery::GetTokenData(token_name) => {
+            Ok(TokenAdminQuery::GetTokenData(token_name)) => {
                 self.reply_token_data(token_name, event.from).await?;
             }
-            TokenAdminQuery::NoOp => {
-                debug!("NoOp: {:?}", event);
+            _ => {
+                debug!("TokenAdmin got some other message variant it could ignore.");
             }
         }
         Ok(ControlFlow::Continue)
@@ -160,7 +151,6 @@ pub enum TokenAdminQuery {
     MintRequest(MintRequest),
     GetAssetUniverse,
     GetTokenData(String),
-    NoOp,
 }
 
 /// Used as an action to mint tokens.

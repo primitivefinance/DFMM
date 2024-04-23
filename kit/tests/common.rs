@@ -1,10 +1,6 @@
 use std::{collections::VecDeque, marker::PhantomData};
 
-use arbiter_engine::{
-    agent::Agent,
-    messager::{Message, Messager},
-    world::World,
-};
+use arbiter_engine::{agent::Agent, messager::Message, world::World};
 use dfmm_kit::{
     behaviors::{
         creator::{self, Create},
@@ -20,10 +16,7 @@ use dfmm_kit::{
     },
     TokenData,
 };
-use ethers::{
-    abi::ethereum_types::BloomInput,
-    types::{Address as eAddress, U256 as eU256},
-};
+use ethers::types::{Address as eAddress, U256 as eU256};
 use serde::{Deserialize, Serialize};
 use tracing::Level;
 use tracing_subscriber::FmtSubscriber;
@@ -116,13 +109,6 @@ pub struct VanillaSwap {}
 impl SwapType<Message> for VanillaSwap {
     fn compute_swap_amount(_event: Message) -> (eU256, dfmm_kit::pool::InputToken) {
         (ethers::utils::parse_ether(0.5).unwrap(), InputToken::TokenY)
-    }
-
-    fn get_stream(
-        &self,
-        messager: Messager,
-    ) -> Option<std::pin::Pin<Box<dyn futures_util::Stream<Item = Message> + Send + Sync>>> {
-        Some(messager.stream().unwrap())
     }
 }
 

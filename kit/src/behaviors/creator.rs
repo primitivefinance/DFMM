@@ -7,16 +7,12 @@ pub struct Create<S: State> {
     pub data: S::Data,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, State)]
 pub struct Config<P: PoolType> {
     pub base_config: BaseConfig,
     pub params: P::Parameters,
     pub allocation_data: P::AllocationData,
     pub token_list: Vec<String>,
-}
-
-impl<P: PoolType> State for Config<P> {
-    type Data = Self;
 }
 
 #[async_trait::async_trait]
@@ -31,7 +27,7 @@ where
         &mut self,
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
-    ) -> Result<Option<(Self::Processor, EventStream<()>)>> {
+    ) -> Result<Self::Processor> {
         // Receive the `DeploymentData` from the `Deployer` agent and use it to get the
         // contracts.
         debug!("Starting the creator");
@@ -112,7 +108,7 @@ where
             self.data.allocation_data.clone(),
         );
         messager.send(To::All, pool_creation).await.unwrap();
-        Ok(None)
+        Ok(())
     }
 }
 
