@@ -58,3 +58,10 @@ function computeSwapDeltaLiquidity(
         return params.swapFee.mulWadUp(delta);
     }
 }
+
+/**
+ * @dev Computes the price using the reserve of token X.
+ */
+function computePrice(ConstantSumParams memory params) pure returns (uint256) {
+    return params.price;
+}

@@ -22,8 +22,9 @@ import {
     computePrice,
     computeSwapDeltaLiquidity
 } from "./G3MMath.sol";
+import { PairSolver } from "src/PairSolver.sol";
 
-contract GeometricMeanSolver {
+contract GeometricMeanSolver is PairSolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
@@ -46,6 +47,7 @@ contract GeometricMeanSolver {
     function getReservesAndLiquidity(uint256 poolId)
         public
         view
+        override
         returns (uint256, uint256, uint256)
     {
         Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
@@ -92,50 +94,6 @@ contract GeometricMeanSolver {
         GeometricMeanParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolData(rx, S, params);
-    }
-
-    function allocateGivenDeltaX(
-        uint256 poolId,
-        uint256 deltaX
-    ) public view returns (uint256, uint256) {
-        (uint256 rX, uint256 rY, uint256 totalLiquidity) =
-            getReservesAndLiquidity(poolId);
-        (uint256 deltaY, uint256 deltaLiquidity) =
-            computeAllocationGivenDeltaX(deltaX, rX, rY, totalLiquidity);
-        return (deltaY, deltaLiquidity);
-    }
-
-    function allocateGivenDeltaY(
-        uint256 poolId,
-        uint256 deltaY
-    ) public view returns (uint256, uint256) {
-        (uint256 rX, uint256 rY, uint256 totalLiquidity) =
-            getReservesAndLiquidity(poolId);
-        (uint256 deltaX, uint256 deltaLiquidity) =
-            computeAllocationGivenDeltaY(deltaY, rX, rY, totalLiquidity);
-        return (deltaX, deltaLiquidity);
-    }
-
-    function deallocateGivenDeltaX(
-        uint256 poolId,
-        uint256 deltaX
-    ) public view returns (uint256, uint256) {
-        (uint256 rX, uint256 rY, uint256 totalLiquidity) =
-            getReservesAndLiquidity(poolId);
-        (uint256 deltaY, uint256 deltaLiquidity) =
-            computeDeallocationGivenDeltaX(deltaX, rX, rY, totalLiquidity);
-        return (deltaY, deltaLiquidity);
-    }
-
-    function deallocateGivenDeltaY(
-        uint256 poolId,
-        uint256 deltaY
-    ) public view returns (uint256, uint256) {
-        (uint256 rX, uint256 rY, uint256 totalLiquidity) =
-            getReservesAndLiquidity(poolId);
-        (uint256 deltaX, uint256 deltaLiquidity) =
-            computeDeallocationGivenDeltaY(deltaY, rX, rY, totalLiquidity);
-        return (deltaX, deltaLiquidity);
     }
 
     function getNextReserveX(

@@ -173,24 +173,28 @@ contract NTokenGeometricMeanSolver {
         uint256 poolId,
         uint256 indexT,
         uint256 deltaT
-    ) public view returns (uint256[] memory, uint256) {
+    ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 totalLiquidity) =
             getReservesAndLiquidity(poolId);
-        return computeAllocationDeltasGivenDeltaT(
+        (uint256[] memory deltaTokens, uint256 deltaLiquidity) = computeAllocationDeltasGivenDeltaT(
             deltaT, indexT, reserves, totalLiquidity
         );
+
+        return abi.encode(deltaTokens, deltaLiquidity);
     }
 
     function getDeallocationDeltasGivenDeltaT(
         uint256 poolId,
         uint256 indexT,
         uint256 deltaT
-    ) public view returns (uint256[] memory, uint256) {
+    ) public view returns (bytes memory) {
         (uint256[] memory reserves, uint256 totalLiquidity) =
             getReservesAndLiquidity(poolId);
-        return computeDeallocationDeltasGivenDeltaT(
+        (uint256[] memory deltaTokens, uint256 deltaLiquidity) = computeDeallocationDeltasGivenDeltaT(
             deltaT, indexT, reserves, totalLiquidity
         );
+        
+        return abi.encode(deltaTokens, deltaLiquidity);
     }
 
     function getNextLiquidity(uint256 poolId) public view returns (uint256) {

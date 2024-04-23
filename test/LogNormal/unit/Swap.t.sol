@@ -67,17 +67,16 @@ contract LogNormalSwapTest is LogNormalSetUp {
     function test_LogNormal_swap_RevertsIfInvariantNegative() public init {
         uint256 amountIn = 0.23 ether;
 
-        (uint256[] memory preReserves, uint256 preTotalLiquidity) =
+        (uint256 rX, uint256 rY, uint256 preTotalLiquidity) =
             solver.getReservesAndLiquidity(POOL_ID);
 
         LogNormalParams memory poolParams = solver.getPoolParams(POOL_ID);
-        uint256 startL = solver.getNextLiquidity(
-            POOL_ID, preReserves[0], preReserves[1], preTotalLiquidity
-        );
+        uint256 startL =
+            solver.getNextLiquidity(POOL_ID, rX, rY, preTotalLiquidity);
         uint256 deltaLiquidity =
             amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.mean);
 
-        uint256 ry = preReserves[1] + amountIn;
+        uint256 ry = rY + amountIn;
         uint256 L = startL + deltaLiquidity;
         uint256 approxPrice = solver.getPriceGivenYL(POOL_ID, ry, L);
 
@@ -91,7 +90,7 @@ contract LogNormalSwapTest is LogNormalSetUp {
 
         console2.log(invariant);
 
-        uint256 amountOut = preReserves[0] - rx;
+        uint256 amountOut = rX - rx;
 
         bytes memory payload =
             abi.encode(1, 0, amountIn, amountOut, deltaLiquidity);

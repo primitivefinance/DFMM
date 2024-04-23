@@ -10,35 +10,52 @@ import {
     encodeControllerUpdate
 } from "./ConstantSumUtils.sol";
 import {
+    computeAllocationGivenX,
+    computeAllocationGivenY
+} from "src/lib/StrategyLib.sol";
+import {
     ONE,
     computeInitialPoolData,
     FixedPointMathLib,
     computeSwapDeltaLiquidity
 } from "./ConstantSumMath.sol";
+import { PairSolver } from "src/PairSolver.sol";
 
-contract ConstantSumSolver {
+contract ConstantSumSolver is PairSolver {
     error NotEnoughLiquidity();
 
     using FixedPointMathLib for uint256;
 
+    /// @dev Reserves struct to hold reserve amounts and liquidity
     struct Reserves {
-        uint256 rx;
-        uint256 ry;
-        uint256 L;
+        uint256 reserveX;
+        /// @dev Reserve amount of token X
+        uint256 reserveY;
+        /// @dev Reserve amount of token Y
+        uint256 liquidity;
     }
+    /// @dev Total liquidity
 
+    /// @dev Address of the strategy contract
     address public strategy;
 
+    /// @notice Constructor to set the strategy address
+    /// @param strategy_ Address of the strategy contract
     constructor(address strategy_) {
         strategy = strategy_;
     }
 
+    /// @notice Computes the initial pool data for a Constant Sum pool
+    /// @param reserveX The reserve amount of token X
+    /// @param reserveY The reserve amount of token Y
+    /// @param params The Constant Sum pool parameters
+    /// @return The initial pool data encoded as bytes
     function getInitialPoolData(
-        uint256 rx,
-        uint256 ry,
+        uint256 reserveX,
+        uint256 reserveY,
         ConstantSumParams memory params
     ) public pure returns (bytes memory) {
-        return computeInitialPoolData(rx, ry, params);
+        return computeInitialPoolData(reserveX, reserveY, params);
     }
 
     function simulateSwap(
@@ -84,6 +101,10 @@ contract ConstantSumSolver {
         return (valid, amountOut, swapData);
     }
 
+    /// @notice Prepares the data for updating the price
+    /// @dev Used by the kit to update the price
+    /// @param newPrice The new price to set
+    /// @return The encoded data for updating the price
     function preparePriceUpdate(uint256 newPrice)
         public
         pure
@@ -92,6 +113,10 @@ contract ConstantSumSolver {
         return encodePriceUpdate(newPrice);
     }
 
+    /// @notice Prepares the data for updating the swap fee
+    /// @dev Used by the kit to update the swap fee
+    /// @param newSwapFee The new swap fee to set
+    /// @return The encoded data for updating the swap fee
     function prepareSwapFeeUpdate(uint256 newSwapFee)
         public
         pure
@@ -100,11 +125,65 @@ contract ConstantSumSolver {
         return encodeFeeUpdate(newSwapFee);
     }
 
+    /// @notice Prepares the data for updating the controller address
+    /// @dev Used by the kit to update the controller
+    /// @param newController The address of the new controller
+    /// @return The encoded data for updating the controller
     function prepareControllerUpdate(address newController)
         public
         pure
         returns (bytes memory)
     {
         return encodeControllerUpdate(newController);
+    }
+
+    /// @notice Gets the reserves and liquidity for a given pool
+    /// @param poolId The id of the pool
+    /// @return The reserve of token X, the reserve of token Y, and the total liquidity
+    function getReservesAndLiquidity(uint256 poolId)
+        public
+        view
+        override
+        returns (uint256, uint256, uint256)
+    {
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        return (pool.reserves[0], pool.reserves[1], pool.totalLiquidity);
+    }
+
+    /// @dev gets the pool params
+    /// @param poolId The pool id
+    /// @return params The pool params
+    function getPoolParams(uint256 poolId)
+        public
+        view
+        returns (ConstantSumParams memory)
+    {
+        return abi.decode(
+            IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
+        );
+    }
+
+    /// @dev Computes the change in allocation given a change in X reserve
+    /// @param poolId The pool id
+    /// @param deltaX The change in X reserve
+    /// @return encodedAllocationDelta The encoded change in allocation
+    function prepareAllocationDeltaGivenDeltaX(
+        uint256 poolId,
+        uint256 deltaX
+    ) public view returns (bytes memory) {
+        ConstantSumParams memory params = getPoolParams(poolId);
+        uint256 deltaL = deltaX.mulWadDown(params.price);
+        return abi.encode(deltaX, 0, deltaL);
+    }
+
+    /// @dev Computes the change in allocation given a change in Y reserve
+    /// @param deltaY The change in Y reserve
+    /// @return encodedAllocationDelta The encoded change in allocation
+    function prepareAllocationDeltaGivenDeltaY(uint256 deltaY)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return abi.encode(0, deltaY, deltaY);
     }
 }

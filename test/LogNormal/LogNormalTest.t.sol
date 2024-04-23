@@ -182,10 +182,10 @@ contract LogNormalTest is Test {
 
     // todo: write assertApproxEq
     function test_price_formulas() public basic {
-        (uint256[] memory reserves, uint256 L) =
+        (uint256 rX, uint256 rY, uint256 L) =
             solver.getReservesAndLiquidity(POOL_ID);
-        uint256 priceGivenX = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
-        uint256 priceGivenY = solver.getPriceGivenYL(POOL_ID, reserves[1], L);
+        uint256 priceGivenX = solver.getPriceGivenXL(POOL_ID, rX, L);
+        uint256 priceGivenY = solver.getPriceGivenYL(POOL_ID, rY, L);
         assertApproxEqAbs(priceGivenY, priceGivenX, 100);
     }
 

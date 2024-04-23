@@ -1,2 +1,8 @@
 [[deployer]]
 Deployer = {}
+
+[[token_admin]]
+TokenAdmin = { init_token_data = [
+    { name = "US Dollar Coin", symbol = "USDC", decimals = 18 },
+    { name = "Wrapped Ether", symbol = "WETH", decimals = 18 },
+] }
