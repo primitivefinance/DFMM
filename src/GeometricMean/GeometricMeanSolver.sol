@@ -1,32 +1,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { IStrategy } from "src/interfaces/IStrategy.sol";
 import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
-import { computeAllocationGivenX } from "src/lib/StrategyLib.sol";
 import { GeometricMeanParams } from "./GeometricMean.sol";
 import {
     encodeFeeUpdate,
     encodeWeightXUpdate,
-    encodeControllerUpdate,
-    computeInitialPoolData
+    encodeControllerUpdate
 } from "./G3MUtils.sol";
 import {
-    computeL,
-    computePrice,
-    computeLGivenX,
-    computeY,
-    computeX,
-    computeLGivenY,
-    computeNextLiquidity,
+    computeInitialPoolData,
     computeNextRx,
     computeNextRy,
     computeTradingFunction,
     computeAllocationGivenDeltaX,
     computeAllocationGivenDeltaY,
     computeDeallocationGivenDeltaX,
-    computeDeallocationGivenDeltaY
+    computeDeallocationGivenDeltaY,
+    computePrice,
+    computeSwapDeltaLiquidity
 } from "./G3MMath.sol";
 
 contract GeometricMeanSolver {
@@ -54,9 +48,8 @@ contract GeometricMeanSolver {
         view
         returns (uint256, uint256, uint256)
     {
-        (uint256[] memory reserves, uint256 totalLiquidity) =
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
-        return (reserves[0], reserves[1], totalLiquidity);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        return (pool.reserves[0], pool.reserves[1], pool.totalLiquidity);
     }
 
     function prepareFeeUpdate(uint256 swapFee)
@@ -194,9 +187,14 @@ contract GeometricMeanSolver {
             state.outWeight = params.wX;
         }
 
-        state.fees = amountIn.mulWadUp(params.swapFee);
-        state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve)
-            .mulWadUp(state.fees).mulWadUp(state.inWeight);
+        state.deltaLiquidity = computeSwapDeltaLiquidity(
+            amountIn,
+            state.inReserve,
+            pool.totalLiquidity,
+            state.inWeight,
+            params.swapFee
+        );
+
         {
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 d = uint256(
@@ -213,13 +211,8 @@ contract GeometricMeanSolver {
             state.amountOut = state.outReserve - a;
         }
 
-        bytes memory swapData = abi.encode(
-            tokenInIndex,
-            tokenOutIndex,
-            amountIn,
-            state.amountOut,
-            state.deltaLiquidity
-        );
+        bytes memory swapData =
+            abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut);
 
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData

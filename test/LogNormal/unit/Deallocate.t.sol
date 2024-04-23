@@ -14,7 +14,7 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
         uint256 minDeltaX = 0.1 ether;
 
         (uint256[] memory reserves, uint256 liquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            solver.getReservesAndLiquidity(POOL_ID);
         uint256 deltaLiquidity =
             computeDeltaLGivenDeltaX(minDeltaX, liquidity, reserves[0]);
         uint256 minDeltaY =
@@ -43,7 +43,7 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
         uint256 minDeltaY = 0.1 ether;
 
         (uint256[] memory reserves, uint256 liquidity) =
-            dfmm.getReservesAndLiquidity(POOL_ID);
+            solver.getReservesAndLiquidity(POOL_ID);
 
         uint256 deltaLiquidity =
             computeDeltaLGivenDeltaY(minDeltaY, liquidity, reserves[1]);

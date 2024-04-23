@@ -1,16 +1,25 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
-import "./ConstantSum.sol";
-import "src/interfaces/IStrategy.sol";
+import { Pool, IStrategy } from "src/interfaces/IStrategy.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
-import "solmate/tokens/ERC20.sol";
+import { ConstantSumParams } from "./ConstantSum.sol";
+import {
+    encodePriceUpdate,
+    encodeFeeUpdate,
+    encodeControllerUpdate
+} from "./ConstantSumUtils.sol";
+import {
+    ONE,
+    computeInitialPoolData,
+    FixedPointMathLib,
+    computeSwapDeltaLiquidity
+} from "./ConstantSumMath.sol";
 
 contract ConstantSumSolver {
     error NotEnoughLiquidity();
 
     using FixedPointMathLib for uint256;
-    using FixedPointMathLib for int256;
 
     struct Reserves {
         uint256 rx;
@@ -32,40 +41,31 @@ contract ConstantSumSolver {
         return computeInitialPoolData(rx, ry, params);
     }
 
-    struct SimulateSwapState {
-        uint256 amountOut;
-        uint256 deltaLiquidity;
-    }
-
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
-        (uint256[] memory reserves, uint256 totalLiquidity) =
-            IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
         ConstantSumParams memory poolParams = abi.decode(
             IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
         );
 
-        SimulateSwapState memory state;
+        uint256 amountOut;
 
         if (swapXIn) {
-            state.deltaLiquidity = amountIn.mulWadUp(poolParams.swapFee);
-            state.amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
+            amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
                 ONE - poolParams.swapFee
             );
 
-            if (reserves[1] < state.amountOut) {
+            if (pool.reserves[1] < amountOut) {
                 revert NotEnoughLiquidity();
             }
         } else {
-            state.deltaLiquidity =
-                amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.price);
-            state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
+            amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
-            if (reserves[0] < state.amountOut) {
+            if (pool.reserves[0] < amountOut) {
                 revert NotEnoughLiquidity();
             }
         }
@@ -73,23 +73,15 @@ contract ConstantSumSolver {
         bytes memory swapData;
 
         if (swapXIn) {
-            swapData = abi.encode(
-                0, 1, amountIn, state.amountOut, state.deltaLiquidity
-            );
+            swapData = abi.encode(0, 1, amountIn, amountOut);
         } else {
-            swapData = abi.encode(
-                1, 0, amountIn, state.amountOut, state.deltaLiquidity
-            );
+            swapData = abi.encode(1, 0, amountIn, amountOut);
         }
-
-        Pool memory pool;
-        pool.reserves = reserves;
-        pool.totalLiquidity = totalLiquidity;
 
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
-        return (valid, state.amountOut, swapData);
+        return (valid, amountOut, swapData);
     }
 
     function preparePriceUpdate(uint256 newPrice)
@@ -97,6 +89,22 @@ contract ConstantSumSolver {
         pure
         returns (bytes memory)
     {
-        return encodePriceUpdate(newPrice, 0);
+        return encodePriceUpdate(newPrice);
+    }
+
+    function prepareSwapFeeUpdate(uint256 newSwapFee)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodeFeeUpdate(newSwapFee);
+    }
+
+    function prepareControllerUpdate(address newController)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodeControllerUpdate(newController);
     }
 }

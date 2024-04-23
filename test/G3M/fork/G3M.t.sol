@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "solmate/test/utils/mocks/MockERC20.sol";
 import { DFMM, InitParams } from "src/DFMM.sol";
 import "src/GeometricMean/GeometricMean.sol";
-import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
+import { computeInitialPoolData } from "src/GeometricMean/G3MMath.sol";
 
 interface USDC {
     function masterMinter() external view returns (address);
@@ -76,7 +76,9 @@ contract G3MTestFork is Test {
                 symbol: "",
                 strategy: address(g3m),
                 tokens: tokens,
-                data: computeInitialPoolData(reserveX, price, params)
+                data: computeInitialPoolData(reserveX, price, params),
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
 
@@ -114,7 +116,9 @@ contract G3MTestFork is Test {
                 symbol: "",
                 strategy: address(g3m),
                 tokens: tokens,
-                data: computeInitialPoolData(reserveX, price, params)
+                data: computeInitialPoolData(reserveX, price, params),
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
 

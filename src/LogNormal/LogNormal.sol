@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
-import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
+import { Pool } from "src/interfaces/IDFMM.sol";
 import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
 import {
     computeTradingFunction,
     computeDeltaGivenDeltaLRoundUp,
-    computeDeltaGivenDeltaLRoundDown
+    computeDeltaGivenDeltaLRoundDown,
+    computeDeltaLXIn,
+    computeDeltaLYIn
 } from "src/LogNormal/LogNormalMath.sol";
 import {
     decodeFeeUpdate,
@@ -15,6 +17,7 @@ import {
     decodeWidthUpdate,
     decodeControllerUpdate
 } from "src/LogNormal/LogNormalUtils.sol";
+import { EPSILON } from "src/lib/StrategyLib.sol";
 
 enum UpdateCode {
     Invalid,
@@ -39,6 +42,17 @@ struct LogNormalParams {
     address controller;
 }
 
+/// @dev Thrown when the mean parameter is not within the allowed bounds.
+error InvalidMean();
+
+/// @dev Thrown when the width parameter is not within the allowed bounds.
+error InvalidWidth();
+
+uint256 constant MIN_WIDTH = 1;
+uint256 constant MAX_WIDTH = uint256(type(int256).max);
+uint256 constant MIN_MEAN = 1;
+uint256 constant MAX_MEAN = uint256(type(int256).max);
+
 /**
  * @title LogNormal Strategy for DFMM.
  * @author Primitive
@@ -58,7 +72,7 @@ contract LogNormal is PairStrategy {
     function init(
         address,
         uint256 poolId,
-        Pool calldata,
+        Pool calldata pool,
         bytes calldata data
     )
         public
@@ -74,6 +88,18 @@ contract LogNormal is PairStrategy {
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, LogNormalParams));
 
+        if (params.mean < MIN_MEAN || params.mean > MAX_MEAN) {
+            revert InvalidMean();
+        }
+
+        if (params.width < MIN_WIDTH || params.width > MAX_WIDTH) {
+            revert InvalidWidth();
+        }
+
+        if (pool.reserves.length != 2 || reserves.length != 2) {
+            revert InvalidReservesLength();
+        }
+
         internalParams[poolId].mean.lastComputedValue = params.mean;
         internalParams[poolId].width.lastComputedValue = params.width;
         internalParams[poolId].swapFee = params.swapFee;
@@ -81,8 +107,7 @@ contract LogNormal is PairStrategy {
 
         invariant =
             tradingFunction(reserves, totalLiquidity, getPoolParams(poolId));
-        // todo: should the be EXACTLY 0? just positive? within an epsilon?
-        valid = -(EPSILON) < invariant && invariant < EPSILON;
+        valid = invariant >= 0 && invariant <= EPSILON;
     }
 
     /// @inheritdoc IStrategy
@@ -100,10 +125,16 @@ contract LogNormal is PairStrategy {
         } else if (updateCode == UpdateCode.Width) {
             (uint256 targetWidth, uint256 targetTimestamp) =
                 decodeWidthUpdate(data);
+            if (targetWidth < MIN_WIDTH || targetWidth > MAX_WIDTH) {
+                revert InvalidWidth();
+            }
             internalParams[poolId].width.set(targetWidth, targetTimestamp);
         } else if (updateCode == UpdateCode.Mean) {
             (uint256 targetMean, uint256 targetTimestamp) =
                 decodeMeanUpdate(data);
+            if (targetMean < MIN_MEAN || targetMean > MAX_MEAN) {
+                revert InvalidMean();
+            }
             internalParams[poolId].mean.set(targetMean, targetTimestamp);
         } else if (updateCode == UpdateCode.Controller) {
             internalParams[poolId].controller = decodeControllerUpdate(data);
@@ -142,6 +173,7 @@ contract LogNormal is PairStrategy {
         );
     }
 
+    /// @inheritdoc PairStrategy
     function _computeAllocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,
@@ -160,6 +192,7 @@ contract LogNormal is PairStrategy {
         return deltas;
     }
 
+    /// @inheritdoc PairStrategy
     function _computeDeallocateDeltasGivenDeltaL(
         uint256 deltaLiquidity,
         Pool memory pool,
@@ -175,5 +208,35 @@ contract LogNormal is PairStrategy {
             pool.reserves[1], deltaLiquidity, pool.totalLiquidity
         );
         return deltas;
+    }
+
+    function _computeSwapDeltaLiquidity(
+        Pool memory pool,
+        bytes memory params,
+        uint256 tokenInIndex,
+        uint256,
+        uint256 amountIn,
+        uint256
+    ) internal pure override returns (uint256) {
+        LogNormalParams memory poolParams =
+            abi.decode(params, (LogNormalParams));
+
+        if (tokenInIndex == 0) {
+            return computeDeltaLXIn(
+                amountIn,
+                pool.reserves[0],
+                pool.reserves[1],
+                pool.totalLiquidity,
+                poolParams
+            );
+        }
+
+        return computeDeltaLYIn(
+            amountIn,
+            pool.reserves[0],
+            pool.reserves[1],
+            pool.totalLiquidity,
+            poolParams
+        );
     }
 }

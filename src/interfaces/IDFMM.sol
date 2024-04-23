@@ -8,6 +8,8 @@ pragma solidity ^0.8.13;
  * @param reserves Array of token reserves in the pool in WAD.
  * @param totalLiquidity Total liquidity in the pool.
  * @param liquidityToken Address of the LP token contract.
+ * @param feeCollector Address receiving controller fees.
+ * @param controllerFee Fees charged on the swap fee (in WAD).
  */
 struct Pool {
     address strategy;
@@ -15,6 +17,8 @@ struct Pool {
     uint256[] reserves;
     uint256 totalLiquidity;
     address liquidityToken;
+    address feeCollector;
+    uint256 controllerFee;
 }
 
 /**
@@ -24,6 +28,8 @@ struct Pool {
  * @param strategy Address of the associated strategy contract.
  * @param tokens Array of token addresses in the pool.
  * @param data An array of bytes used by the strategy contract.
+ * @param feeCollector Address receiving controller fees.
+ * @param controllerFee Fees charged on the swap fee (in WAD).
  */
 struct InitParams {
     string name;
@@ -31,6 +37,8 @@ struct InitParams {
     address strategy;
     address[] tokens;
     bytes data;
+    address feeCollector;
+    uint256 controllerFee;
 }
 
 /**
@@ -50,13 +58,28 @@ interface IDFMM {
     error InvalidInvariant(int256 invariant);
 
     /// @dev Thrown when pool tokens are identical.
-    error InvalidTokens();
+    error InvalidDuplicateTokens();
+
+    /// @dev Thrown when a strategy is returning an invalid amount of reserves.
+    error InvalidReserves();
+
+    /// @dev Thrown when a pool is being initalized with less than two tokens.
+    error InvalidMinimumTokens();
+
+    /// @dev Thrown when a pool is being initalized with more than eight tokens.
+    error InvalidMaximumTokens();
+
+    /// @dev Thrown when a token has more than 18 decimals or less than 6.
+    error InvalidTokenDecimals();
 
     /// @dev Thrown when a new call is made during a locked state.
     error Locked();
 
     /// @dev Thrown when a clone contract could not be deployed.
     error ERC1167FailedCreateClone();
+
+    /// @dev Thrown when the caller is not the pool controller.
+    error NotController();
 
     // Events
 
@@ -120,6 +143,7 @@ interface IDFMM {
     event Swap(
         address indexed account,
         uint256 indexed poolId,
+        address recipient,
         address tokenIn,
         address tokenOut,
         uint256 inputAmount,
@@ -169,6 +193,7 @@ interface IDFMM {
     /**
      * @notice Swaps tokens into pool `poolId`.
      * @param poolId Id of the pool to swap tokens into.
+     * @param recipient Address receiving the output tokens.
      * @param data An array of bytes used by the strategy contract.
      * @return tokenIn Address of the token being sent.
      * @return tokenOut Address of the token being received.
@@ -177,9 +202,11 @@ interface IDFMM {
      */
     function swap(
         uint256 poolId,
+        address recipient,
         bytes calldata data
     )
         external
+        payable
         returns (
             address tokenIn,
             address tokenOut,
@@ -196,22 +223,11 @@ interface IDFMM {
 
     // Getters
 
-    /// @notice Returns the amount of initialized pools.
-    function nonce() external view returns (uint256);
-
     /// @notice Address of the implementation of the LPToken contract.
     function lpTokenImplementation() external view returns (address);
 
     /// @notice Address of the WETH contract.
     function weth() external view returns (address);
-
-    /// @notice Returns the reserves and total liquidity of pool `poolId`.
-    /// @return reserves Array of token reserves in the pool in WAD.
-    /// @return totalLiquidity Total liquidity in the pool.
-    function getReservesAndLiquidity(uint256 poolId)
-        external
-        view
-        returns (uint256[] memory reserves, uint256 totalLiquidity);
 
     /// @notice Returns the pool parameters of pool `poolId`.
     /// @return pool A struct containing the pool parameters.

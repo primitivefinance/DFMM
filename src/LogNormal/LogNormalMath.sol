@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
-import { ONE, TWO, HALF } from "src/lib/StrategyLib.sol";
+import { ONE, HALF } from "src/lib/StrategyLib.sol";
 import { LogNormalParams } from "src/LogNormal/LogNormal.sol";
 import { Gaussian } from "solstat/Gaussian.sol";
 import { toUint } from "src/LogNormal/LogNormalUtils.sol";
@@ -22,7 +22,7 @@ function computeTradingFunction(
     LogNormalParams memory params
 ) pure returns (int256) {
     int256 a = Gaussian.ppf(int256(rX.divWadDown(L)));
-    int256 b = Gaussian.ppf(int256(rY.divWadDown(L.mulWadDown(params.mean))));
+    int256 b = Gaussian.ppf(int256(rY.divWadDown(L.mulWadUp(params.mean))));
     return a + b + int256(params.width);
 }
 
@@ -31,7 +31,7 @@ function computeDeltaGivenDeltaLRoundUp(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadUp(deltaLiquidity.divWadUp(totalLiquidity));
+    return reserve.mulDivUp(deltaLiquidity, totalLiquidity);
 }
 
 function computeDeltaGivenDeltaLRoundDown(
@@ -39,11 +39,14 @@ function computeDeltaGivenDeltaLRoundDown(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
+    return reserve.mulDivDown(deltaLiquidity, totalLiquidity);
 }
 
-function computeLnSDivK(uint256 S, uint256 K) pure returns (int256 lnSDivK) {
-    lnSDivK = int256(S.divWadUp(K)).lnWad();
+function computeLnSDivMean(
+    uint256 S,
+    uint256 mean
+) pure returns (int256 lnSDivK) {
+    lnSDivK = int256(S.divWadUp(mean)).lnWad();
 }
 
 /**
@@ -56,21 +59,25 @@ function computeHalfSigmaSquared(uint256 sigma) pure returns (uint256) {
     return HALF.mulWadDown(sigma.mulWadUp(sigma));
 }
 
-/// @dev Computes reserves L given rx, S.
-/// @param rx The reserve of x.
-/// @param S The price of X in Y, in WAD units.
-/// @param params LogNormParameters of the Log Normal distribution.
-/// @return L The reserve L computed as L(x, s) = K * L_x(x, S) * Gaussian.cdf[d2(S, K, sigma, tau)]
+/**
+ * @dev Computes reserves L given rx, S.
+ *
+ * $$L_0 = \frac{x}{1-\Phi(d_1(S;\mu,\sigma))}$$
+ *
+ * @param rx The reserve of x.
+ * @param S The price of X in Y, in WAD units.
+ * @param params LogNormParameters of the Log Normal distribution.
+ * @return L The liquidity given rx, S
+ */
 function computeLGivenX(
     uint256 rx,
     uint256 S,
     LogNormalParams memory params
 ) pure returns (uint256 L) {
     int256 d1 = computeD1({ S: S, params: params });
-    int256 cdf = Gaussian.cdf(d1);
-    uint256 unsignedCdf = toUint(cdf);
+    uint256 cdf = toUint(Gaussian.cdf(d1));
 
-    L = rx.divWadUp(ONE - unsignedCdf);
+    L = rx.divWadUp(ONE - cdf);
 }
 
 /// @dev Computes reserves y given L(x, S).
@@ -80,12 +87,10 @@ function computeYGivenL(
     uint256 S,
     LogNormalParams memory params
 ) pure returns (uint256 ry) {
-    int256 d2 = computeD2(S, params);
-    int256 cdf = Gaussian.cdf(d2);
-    uint256 unsignedCdf = toUint(cdf);
+    int256 d2 = computeD2({ S: S, params: params });
+    uint256 cdf = toUint(Gaussian.cdf(d2));
 
-    // TODO: Double check this formula
-    ry = L.mulWadUp(unsignedCdf);
+    ry = params.mean.mulWadUp(L).mulWadUp(cdf);
 }
 
 /// @dev Computes reserves x given L(y, S).
@@ -113,9 +118,9 @@ function computeD1(
     uint256 S,
     LogNormalParams memory params
 ) pure returns (int256 d1) {
-    int256 lnSDivK = computeLnSDivK(S, params.mean);
-    uint256 halfSigmaPowTwoTau = computeHalfSigmaSquared(params.width);
-    d1 = (lnSDivK + int256(halfSigmaPowTwoTau)).wadDiv(int256(params.width));
+    int256 lnSDivMean = computeLnSDivMean(S, params.mean);
+    uint256 halfSigmaPowTwo = computeHalfSigmaSquared(params.width);
+    d1 = (lnSDivMean + int256(halfSigmaPowTwo)).wadDiv(int256(params.width));
 }
 
 /// @dev Computes the d2 parameter for the Black-Scholes formula.
@@ -127,9 +132,9 @@ function computeD2(
     uint256 S,
     LogNormalParams memory params
 ) pure returns (int256 d2) {
-    int256 lnSDivK = computeLnSDivK(S, params.mean);
+    int256 lnSDivMean = computeLnSDivMean(S, params.mean);
     uint256 halfSigmaPowTwo = computeHalfSigmaSquared(params.width);
-    d2 = (lnSDivK - int256(halfSigmaPowTwo)).wadDiv(int256(params.width));
+    d2 = (lnSDivMean - int256(halfSigmaPowTwo)).wadDiv(int256(params.width));
 }
 
 /**
@@ -143,9 +148,7 @@ function computePriceGivenX(
     uint256 L,
     LogNormalParams memory params
 ) pure returns (uint256) {
-    // $$\frac{1}{2} \sigma^2$$
-    uint256 a =
-        HALF.mulWadDown(uint256(int256(params.width).powWad(int256(2 ether))));
+    uint256 a = computeHalfSigmaSquared(params.width);
     // $$\Phi^{-1} (1 - \frac{x}{L})$$
     int256 b = Gaussian.ppf(int256(ONE - rX.divWadDown(L)));
 
@@ -153,7 +156,7 @@ function computePriceGivenX(
     int256 exp = (b.wadMul(int256(params.width)) - int256(a)).expWad();
 
     // $$\mu \exp (\Phi^{-1}  (1 - \frac{x}{L} ) \sigma  - \frac{1}{2} \sigma^2  )$$
-    return params.mean.mulWadUp(a.mulWadUp(uint256(exp)));
+    return params.mean.mulWadUp(uint256(exp));
 }
 
 function computePriceGivenY(
@@ -161,9 +164,7 @@ function computePriceGivenY(
     uint256 L,
     LogNormalParams memory params
 ) pure returns (uint256) {
-    // $$\frac{1}{2} \sigma^2$$
-    uint256 a =
-        HALF.mulWadDown(uint256(int256(params.width).powWad(int256(2 ether))));
+    uint256 a = computeHalfSigmaSquared(params.width);
 
     // $$\Phi^{-1} (\frac{y}{\mu L})$$
     int256 b = Gaussian.ppf(int256(rY.divWadDown(params.mean.mulWadDown(L))));
@@ -172,7 +173,31 @@ function computePriceGivenY(
     int256 exp = (b.wadMul(int256(params.width)) + int256(a)).expWad();
 
     // $$\mu \exp (\Phi^{-1} (\frac{y}{\mu L}) \sigma  + \frac{1}{2} \sigma^2  )$$
-    return params.mean.mulWadUp(a.mulWadUp(uint256(exp)));
+    return params.mean.mulWadUp(uint256(exp));
+}
+
+function computeDeltaLXIn(
+    uint256 amountIn,
+    uint256 rx,
+    uint256 ry,
+    uint256 L,
+    LogNormalParams memory params
+) pure returns (uint256 deltaL) {
+    uint256 fees = params.swapFee.mulWadUp(amountIn);
+    uint256 px = computePriceGivenX(rx, L, params);
+    deltaL = px.mulWadUp(L).mulWadUp(fees).divWadDown(px.mulWadDown(rx) + ry);
+}
+
+function computeDeltaLYIn(
+    uint256 amountIn,
+    uint256 rx,
+    uint256 ry,
+    uint256 L,
+    LogNormalParams memory params
+) pure returns (uint256 deltaL) {
+    uint256 fees = params.swapFee.mulWadUp(amountIn);
+    uint256 px = computePriceGivenX(rx, L, params);
+    deltaL = L.mulWadUp(fees).divWadDown(px.mulWadDown(rx) + ry);
 }
 
 /// @dev This is a pure anonymous function defined at the file level, which allows
@@ -240,14 +265,23 @@ function computeNextLiquidity(
             });
         }
     }
-    L = bisection(
+    (uint256 rootInput,, uint256 lowerInput) = bisection(
         abi.encode(rX, rY, computedInvariant, params),
         lower,
         upper,
-        0,
+        1,
         MAX_ITER,
         findRootLiquidity
     );
+
+    if (
+        computeTradingFunction({ rX: rX, rY: rY, L: rootInput, params: params })
+            == 0
+    ) {
+        L = rootInput;
+    } else {
+        L = lowerInput;
+    }
 }
 
 function computeNextRx(
@@ -283,7 +317,7 @@ function computeNextRx(
             });
         }
     }
-    rX = bisection(
+    (uint256 rootInput, uint256 upperInput,) = bisection(
         abi.encode(rY, L, computedInvariant, params),
         lower,
         upper,
@@ -291,6 +325,15 @@ function computeNextRx(
         MAX_ITER,
         findRootX
     );
+    // `upperInput` should be positive, so if root is < 0 return upperInput instead
+    if (
+        computeTradingFunction({ rX: rootInput, rY: rY, L: L, params: params })
+            == 0
+    ) {
+        rX = rootInput;
+    } else {
+        rX = upperInput;
+    }
 }
 
 function computeNextRy(
@@ -324,7 +367,7 @@ function computeNextRy(
             });
         }
     }
-    rY = bisection(
+    (uint256 rootInput, uint256 upperInput,) = bisection(
         abi.encode(rX, L, computedInvariant, params),
         lower,
         upper,
@@ -332,4 +375,13 @@ function computeNextRy(
         MAX_ITER,
         findRootY
     );
+    // `upperInput` should be positive, so if root is < 0 return upperInput instead
+    if (
+        computeTradingFunction({ rX: rX, rY: rootInput, L: L, params: params })
+            == 0
+    ) {
+        rY = rootInput;
+    } else {
+        rY = upperInput;
+    }
 }

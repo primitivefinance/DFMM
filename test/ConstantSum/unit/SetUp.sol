@@ -46,7 +46,35 @@ contract ConstantSumSetUp is SetUp {
             symbol: "",
             strategy: address(constantSum),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        (POOL_ID,,) = dfmm.init(initParams);
+
+        _;
+    }
+
+    modifier zeroFeePool() {
+        uint256 reserveX = 1 ether;
+        uint256 reserveY = 1 ether;
+
+        bytes memory initData =
+            solver.getInitialPoolData(reserveX, reserveY, zeroFeeParams);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory initParams = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(constantSum),
+            tokens: tokens,
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(initParams);

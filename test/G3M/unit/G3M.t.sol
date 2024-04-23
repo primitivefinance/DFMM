@@ -13,9 +13,9 @@ import {
 import {
     computePrice,
     computeY,
-    computeLGivenX
+    computeLGivenX,
+    computeInitialPoolData
 } from "src/GeometricMean/G3MMath.sol";
-import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
 
 contract SetUp is Test {
     DFMM dfmm;
@@ -64,7 +64,9 @@ contract SetUp is Test {
             symbol: "TPOOL",
             strategy: address(g3m),
             tokens: tokens,
-            data: defaultInitialPoolData
+            data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(initParams);

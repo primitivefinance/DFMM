@@ -237,7 +237,7 @@ function computeOptimalLower(
     if (lowerBoundOutput < 0) {
         return 0;
     }
-    v = bisection(
+    (v,,) = bisection(
         abi.encode(S, rX, rY, L, params),
         lower,
         upper,
@@ -261,7 +261,7 @@ function computeOptimalRaise(
     if (lowerBoundOutput < 0) {
         return 0;
     }
-    v = bisection(
+    (v,,) = bisection(
         abi.encode(S, rX, rY, L, params),
         lower,
         upper,
@@ -302,7 +302,7 @@ function computeNextLiquidity(
             });
         }
     }
-    L = bisection(
+    (L,,) = bisection(
         abi.encode(rX, rY, computedInvariant, params),
         lower,
         upper,

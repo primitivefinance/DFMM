@@ -4,7 +4,8 @@ pragma solidity ^0.8.13;
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
 import "test/utils/SetUp.sol";
-import { ONE, TWO } from "src/lib/StrategyLib.sol";
+import { ONE } from "src/lib/StrategyLib.sol";
+import { InitParams } from "src/interfaces/IDFMM.sol";
 
 contract LogNormalSetUp is SetUp {
     LogNormal logNormal;
@@ -19,10 +20,23 @@ contract LogNormalSetUp is SetUp {
         controller: address(this)
     });
 
-    uint256 defaultReserveX = ONE;
+    LogNormalParams defaultParamsDeep = LogNormalParams({
+        mean: ONE,
+        width: 0.25 ether,
+        swapFee: TEST_SWAP_FEE,
+        controller: address(this)
+    });
+
+    uint256 defaultReserveX = 100 ether;
+    uint256 defaultReserveXDeep = ONE * 10_000_000;
+
     uint256 defaultPrice = ONE;
     bytes defaultInitialPoolData =
         computeInitialPoolData(defaultReserveX, defaultPrice, defaultParams);
+
+    bytes defaultInitialPoolDataDeep = computeInitialPoolData(
+        defaultReserveXDeep, defaultPrice, defaultParamsDeep
+    );
 
     function setUp() public override {
         SetUp.setUp();
@@ -42,10 +56,34 @@ contract LogNormalSetUp is SetUp {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: defaultInitialPoolData
+            data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(defaultInitParams);
+
+        _;
+    }
+
+    modifier deep() {
+        vm.warp(0);
+
+        address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory defaultInitParamsDeep = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(logNormal),
+            tokens: tokens,
+            data: defaultInitialPoolDataDeep,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        (POOL_ID,,) = dfmm.init(defaultInitParamsDeep);
 
         _;
     }
@@ -69,7 +107,9 @@ contract LogNormalSetUp is SetUp {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: computeInitialPoolData(1 ether, 2500 ether, params)
+            data: computeInitialPoolData(1 ether, 2500 ether, params),
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(defaultInitParams);

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./SetUp.sol";
+import "forge-std/Test.sol";
 
 contract LogNormalInitTest is LogNormalSetUp {
     function test_LogNormal_init_StoresPoolParameters() public init {
@@ -22,7 +23,6 @@ contract LogNormalInitTest is LogNormalSetUp {
     }
 
     function test_LogNormal_init_RevertsIfInvalidTokens() public {
-        skip();
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenX);
@@ -32,10 +32,22 @@ contract LogNormalInitTest is LogNormalSetUp {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: defaultInitialPoolData
+            data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
-        vm.expectRevert(IDFMM.InvalidTokens.selector);
+        vm.expectRevert(IDFMM.InvalidDuplicateTokens.selector);
         dfmm.init(initParams);
+    }
+
+    function test_LogNormal_init_ReturnsPriceOfOne() public init {
+        (uint256[] memory reserves, uint256 L) =
+            solver.getReservesAndLiquidity(POOL_ID);
+        uint256 priceGivenYL = solver.getPriceGivenYL(POOL_ID, reserves[1], L);
+        uint256 priceGivenXL = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
+
+        assertApproxEqAbs(priceGivenXL, ONE, 10);
+        assertApproxEqAbs(priceGivenYL, ONE, 10);
     }
 }

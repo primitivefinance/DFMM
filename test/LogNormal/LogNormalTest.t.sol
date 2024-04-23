@@ -7,6 +7,12 @@ import "src/DFMM.sol";
 import "src/LogNormal/LogNormal.sol";
 import "src/LogNormal/LogNormalSolver.sol";
 import { ONE, TWO } from "src/lib/StrategyLib.sol";
+import {
+    computeNextLiquidity,
+    computeLGivenX,
+    computeYGivenL,
+    computeTradingFunction
+} from "src/LogNormal/LogNormalMath.sol";
 
 contract LogNormalTest is Test {
     using stdStorage for StdStorage;
@@ -16,6 +22,8 @@ contract LogNormalTest is Test {
     LogNormalSolver solver;
     address tokenX;
     address tokenY;
+
+    uint256 POOL_ID;
 
     uint256 public constant TEST_SWAP_FEE = 0.003 ether;
 
@@ -55,11 +63,12 @@ contract LogNormalTest is Test {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
-        dfmm.init(initParams);
-
+        (POOL_ID,,) = dfmm.init(initParams);
         _;
     }
 
@@ -87,11 +96,12 @@ contract LogNormalTest is Test {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
-        dfmm.init(initParams);
-
+        (POOL_ID,,) = dfmm.init(initParams);
         _;
     }
 
@@ -118,7 +128,9 @@ contract LogNormalTest is Test {
             symbol: "",
             strategy: address(logNormal),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         dfmm.init(initParams);
@@ -126,31 +138,54 @@ contract LogNormalTest is Test {
         _;
     }
 
+    /*
+
+    function test_inital_pool_bisection() public {
+        vm.warp(0);
+
+        LogNormalParams memory params = LogNormalParams({
+            mean: ONE,
+            width: ONE,
+            swapFee: TEST_SWAP_FEE,
+            controller: address(0)
+        });
+        uint256 approxL = computeLGivenX(ONE, TWO, params);
+        uint256 ry = computeYGivenL(approxL, TWO, params);
+        int256 invariant = computeTradingFunction(ONE, ry, approxL, params);
+        (uint256 L, uint256 upperInput, uint256 lowerInput) = computeNextLiquidity2(ONE, ry, invariant, approxL, params);
+        int256 invUpper = computeTradingFunction(ONE, ry, upperInput, params);
+        int256 invLower = computeTradingFunction(ONE, ry, lowerInput, params);
+
+        console2.log(L);
+        console2.log("upper", invUpper);
+        console2.log("lower", invLower);
+    }
+    */
+
     function test_ln_swap_x_in() public basic {
         bool xIn = true;
         uint256 amountIn = 0.1 ether;
-        uint256 poolId = dfmm.nonce() - 1;
-        (,,, bytes memory swapData) = solver.simulateSwap(poolId, xIn, amountIn);
+        (,,, bytes memory swapData) =
+            solver.simulateSwap(POOL_ID, xIn, amountIn);
 
-        dfmm.swap(poolId, swapData);
+        dfmm.swap(POOL_ID, address(this), swapData);
     }
 
     function test_ln_swap_y_in() public basic {
         bool xIn = false;
         uint256 amountIn = 0.1 ether;
-        uint256 poolId = dfmm.nonce() - 1;
-        (,,, bytes memory swapData) = solver.simulateSwap(poolId, xIn, amountIn);
+        (,,, bytes memory swapData) =
+            solver.simulateSwap(POOL_ID, xIn, amountIn);
 
-        dfmm.swap(poolId, swapData);
+        dfmm.swap(POOL_ID, address(this), swapData);
     }
 
     // todo: write assertApproxEq
     function test_price_formulas() public basic {
-        uint256 poolId = dfmm.nonce() - 1;
         (uint256[] memory reserves, uint256 L) =
-            solver.getReservesAndLiquidity(poolId);
-        uint256 priceGivenX = solver.getPriceGivenXL(poolId, reserves[0], L);
-        uint256 priceGivenY = solver.getPriceGivenYL(poolId, reserves[1], L);
+            solver.getReservesAndLiquidity(POOL_ID);
+        uint256 priceGivenX = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
+        uint256 priceGivenY = solver.getPriceGivenYL(POOL_ID, reserves[1], L);
         assertApproxEqAbs(priceGivenY, priceGivenX, 100);
     }
 

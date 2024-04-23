@@ -4,9 +4,7 @@ pragma solidity ^0.8.13;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { GeometricMeanParams } from "src/GeometricMean/GeometricMean.sol";
 import { bisection } from "src/lib/BisectionLib.sol";
-import "forge-std/console2.sol";
-
-uint256 constant ONE = 1 ether;
+import { ONE } from "src/lib/StrategyLib.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
@@ -17,10 +15,10 @@ function computeTradingFunction(
     uint256 L,
     GeometricMeanParams memory params
 ) pure returns (int256) {
-    uint256 a = uint256(int256(rX.divWadDown(L)).powWad(int256(params.wX)));
-    uint256 b = uint256(int256(rY.divWadDown(L)).powWad(int256(params.wY)));
+    uint256 a = uint256(int256(rX.divWadUp(L)).powWad(int256(params.wX)));
+    uint256 b = uint256(int256(rY.divWadUp(L)).powWad(int256(params.wY)));
 
-    return int256(a.mulWadUp(b)) - int256(1 ether);
+    return int256(a.mulWadUp(b)) - int256(ONE);
 }
 
 function computeDeltaGivenDeltaLRoundUp(
@@ -28,7 +26,7 @@ function computeDeltaGivenDeltaLRoundUp(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadUp(deltaLiquidity.divWadUp(totalLiquidity));
+    return reserve.mulDivUp(deltaLiquidity, totalLiquidity);
 }
 
 function computeDeltaGivenDeltaLRoundDown(
@@ -36,7 +34,7 @@ function computeDeltaGivenDeltaLRoundDown(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
+    return reserve.mulDivDown(deltaLiquidity, totalLiquidity);
 }
 
 function computeLGivenX(
@@ -44,33 +42,9 @@ function computeLGivenX(
     uint256 S,
     GeometricMeanParams memory params
 ) pure returns (uint256) {
-    int256 a = int256(params.wY.divWadUp(params.wX).mulWadUp(S));
+    int256 a = int256(params.wY.mulDivUp(S, params.wX));
     int256 b = a.powWad(int256(params.wY));
     return x.mulWadUp(uint256(b));
-}
-
-function computeLGivenY(
-    uint256 y,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return y.mulWadUp(params.wX).divWadUp(params.wY.mulWadUp(S));
-}
-
-function computeXGivenL(
-    uint256 L,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wX.mulWadUp(L).divWadUp(params.wY.mulWadUp(S));
-}
-
-function computeYGivenL(
-    uint256 L,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wY.mulWadUp(L).divWadUp(params.wX.mulWadUp(S));
 }
 
 function computeAllocationGivenDeltaX(
@@ -123,14 +97,6 @@ function computeY(
     GeometricMeanParams memory params
 ) pure returns (uint256) {
     return params.wY.divWadDown(params.wX).mulWadDown(S).mulWadDown(x);
-}
-
-function computeX(
-    uint256 y,
-    uint256 S,
-    GeometricMeanParams memory params
-) pure returns (uint256) {
-    return params.wX.divWadDown(params.wY.mulWadDown(S)).mulWadDown(y);
 }
 
 function computeL(
@@ -224,12 +190,50 @@ function computeNextLiquidity(
             });
         }
     }
-    L = bisection(
+    (uint256 rootInput,, uint256 lowerInput) = bisection(
         abi.encode(rX, rY, computedInvariant, params),
         lower,
         upper,
         uint256(1),
         256,
         findRootLiquidity
+    );
+
+    if (computeTradingFunction(rX, rY, rootInput, params) == 0) {
+        L = rootInput;
+    } else {
+        L = lowerInput;
+    }
+}
+
+function computeInitialPoolData(
+    uint256 amountX,
+    uint256 initialPrice,
+    GeometricMeanParams memory params
+) pure returns (bytes memory) {
+    uint256 rY = computeY(amountX, initialPrice, params);
+    uint256 L = computeL(amountX, rY, params);
+
+    int256 invariant =
+        computeTradingFunction({ rX: amountX, rY: rY, L: L, params: params });
+
+    L = computeNextLiquidity(amountX, rY, invariant, L, params);
+
+    uint256[] memory reserves = new uint256[](2);
+    reserves[0] = amountX;
+    reserves[1] = rY;
+
+    return abi.encode(reserves, L, params.wX, params.swapFee, params.controller);
+}
+
+function computeSwapDeltaLiquidity(
+    uint256 amountIn,
+    uint256 reserve,
+    uint256 totalLiquidity,
+    uint256 weight,
+    uint256 swapFee
+) pure returns (uint256) {
+    return weight.mulWadUp(swapFee).mulWadUp(totalLiquidity).mulWadUp(
+        amountIn.divWadUp(reserve)
     );
 }

@@ -7,7 +7,7 @@ import {
 } from "src/GeometricMean/GeometricMean.sol";
 import { GeometricMeanSolver } from "src/GeometricMean/GeometricMeanSolver.sol";
 import "test/utils/SetUp.sol";
-import { computeInitialPoolData } from "src/GeometricMean/G3MUtils.sol";
+import { computeInitialPoolData } from "src/GeometricMean/G3MMath.sol";
 import "solmate/utils/FixedPointMathLib.sol";
 import { InitParams } from "src/interfaces/IDFMM.sol";
 
@@ -31,6 +31,10 @@ contract G3MSetUp is SetUp {
         defaultReserveX, defaultStrikePrice, defaultParams
     );
 
+    bytes default100InitialPoolData = computeInitialPoolData(
+      defaultReserveX * 100, defaultStrikePrice, defaultParams
+    );
+
     function setUp() public override {
         SetUp.setUp();
         g3m = new GeometricMean(address(dfmm));
@@ -49,7 +53,29 @@ contract G3MSetUp is SetUp {
             symbol: "",
             strategy: address(g3m),
             tokens: tokens,
-            data: defaultInitialPoolData
+            data: defaultInitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
+        });
+
+        (POOL_ID,,) = dfmm.init(defaultInitParams);
+
+        _;
+    }
+
+    modifier init_100() {
+      address[] memory tokens = new address[](2);
+        tokens[0] = address(tokenX);
+        tokens[1] = address(tokenY);
+
+        InitParams memory defaultInitParams = InitParams({
+            name: "",
+            symbol: "",
+            strategy: address(g3m),
+            tokens: tokens,
+            data: default100InitialPoolData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
         (POOL_ID,,) = dfmm.init(defaultInitParams);

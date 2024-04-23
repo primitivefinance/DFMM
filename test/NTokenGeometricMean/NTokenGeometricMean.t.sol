@@ -10,6 +10,9 @@ import "src/NTokenGeometricMean/NTokenGeometricMeanSolver.sol";
 import "src/interfaces/IDFMM.sol";
 import "src/DFMM.sol";
 
+import { computePrice } from
+    "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
+
 contract NTokenGeometricMeanTest is Test {
     using stdStorage for StdStorage;
     using FixedPointMathLib for uint256;
@@ -25,6 +28,8 @@ contract NTokenGeometricMeanTest is Test {
     address[] sTokens;
 
     uint256 public constant TEST_SWAP_FEE = 0.003 ether;
+
+    uint256 POOL_ID;
 
     function setUp() public {
         tokenA = address(new MockERC20("tokenA", "A", 18));
@@ -67,19 +72,21 @@ contract NTokenGeometricMeanTest is Test {
 
         NTokenGeometricMeanParams memory params = NTokenGeometricMeanParams({
             weights: weights,
-            swapFee: 0,
+            swapFee: TEST_SWAP_FEE,
             controller: address(this)
         });
 
         console2.log("addr of strategy", address(g3m));
 
-        dfmm.init(
+        (POOL_ID,,) = dfmm.init(
             InitParams({
                 name: "4-token-LP",
                 symbol: "4T",
                 strategy: address(g3m),
                 tokens: tokens,
-                data: solver.getInitialPoolData(ONE * 10, prices, params)
+                data: solver.getInitialPoolData(ONE * 10, prices, params),
+                feeCollector: address(0),
+                controllerFee: 0
             })
         );
     }
@@ -87,7 +94,7 @@ contract NTokenGeometricMeanTest is Test {
     /// @dev Initializes a basic pool in dfmm.
     modifier basic() {
         vm.warp(0);
-        uint256 reserveNumeraire = 1 ether;
+        uint256 reserveNumeraire = 10 ether;
         uint256 price = ONE;
         uint256 w = 0.25 ether;
         uint256[] memory weights = new uint256[](4);
@@ -102,7 +109,7 @@ contract NTokenGeometricMeanTest is Test {
 
         NTokenGeometricMeanParams memory params = NTokenGeometricMeanParams({
             weights: weights,
-            swapFee: 0,
+            swapFee: TEST_SWAP_FEE,
             controller: address(this)
         });
 
@@ -113,17 +120,19 @@ contract NTokenGeometricMeanTest is Test {
             symbol: "4T",
             strategy: address(g3m),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
-        dfmm.init(initParams);
+        (POOL_ID,,) = dfmm.init(initParams);
         _;
     }
 
     /// @dev Initializes a basic pool in dfmm.
     modifier basic_70_10_10_10() {
         vm.warp(0);
-        uint256 reserveNumeraire = 1 ether;
+        uint256 reserveNumeraire = 2 ether;
         uint256 price = ONE;
         uint256 w = 0.25 ether;
         uint256[] memory weights = new uint256[](4);
@@ -152,10 +161,12 @@ contract NTokenGeometricMeanTest is Test {
             symbol: "4T",
             strategy: address(g3m),
             tokens: tokens,
-            data: initData
+            data: initData,
+            feeCollector: address(0),
+            controllerFee: 0
         });
 
-        dfmm.init(initParams);
+        (POOL_ID,,) = dfmm.init(initParams);
         _;
     }
 
@@ -180,7 +191,6 @@ contract NTokenGeometricMeanTest is Test {
     }
 
     function test_4_token_allocate_basic() public basic {
-        uint256 poolId = dfmm.nonce() - 1;
         uint256 maxTokenDelta = 100e18;
         uint256[] memory maxDeltas = createTokenDeltas(maxTokenDelta);
         uint256 deltaL = ONE;
@@ -188,40 +198,37 @@ contract NTokenGeometricMeanTest is Test {
         bytes memory data = abi.encode(maxDeltas, deltaL);
 
         (uint256[] memory preReserves, uint256 preL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(POOL_ID);
         console2.log(preReserves[0]);
         console2.log(preL);
 
-        dfmm.allocate(poolId, data);
+        dfmm.allocate(POOL_ID, data);
 
         (uint256[] memory postReserves, uint256 postL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(POOL_ID);
         console2.log(postReserves[0]);
         console2.log(postL);
     }
 
     function test_4_token_allocate_given_delta_t() public basic {
-        uint256 poolId = dfmm.nonce() - 1;
         (uint256[] memory dReserves, uint256 dLiquidity) =
-            solver.getAllocationDeltasGivenDeltaT(poolId, 1, ONE);
+            solver.getAllocationDeltasGivenDeltaT(POOL_ID, 1, ONE);
 
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
-        dfmm.allocate(poolId, data);
+        dfmm.allocate(POOL_ID, data);
     }
 
     function test_4_token_deallocate_given_delta_t() public basic {
-        uint256 poolId = dfmm.nonce() - 1;
         (uint256[] memory dReserves, uint256 dLiquidity) =
-            solver.getAllocationDeltasGivenDeltaT(poolId, 1, 0.5 ether);
+            solver.getDeallocationDeltasGivenDeltaT(POOL_ID, 1, 0.5 ether);
 
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
-        dfmm.deallocate(poolId, data);
+        dfmm.deallocate(POOL_ID, data);
     }
 
     function test_4_token_deallocate_basic() public basic {
-        uint256 poolId = dfmm.nonce() - 1;
         uint256 minTokenDelta = 0.3 ether;
         uint256[] memory minDeltas = createTokenDeltas(minTokenDelta);
         uint256 deltaL = 0.6 ether;
@@ -229,37 +236,55 @@ contract NTokenGeometricMeanTest is Test {
         bytes memory data = abi.encode(minDeltas, deltaL);
 
         (uint256[] memory preReserves, uint256 preL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(POOL_ID);
         console2.log(preReserves[0]);
         console2.log(preL);
 
-        dfmm.deallocate(poolId, data);
+        dfmm.deallocate(POOL_ID, data);
 
         (uint256[] memory postReserves, uint256 postL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(POOL_ID);
         console2.log(postReserves[0]);
         console2.log(postL);
     }
 
-    function test_4_token_simulate_swap() public basic {
-        uint256 poolId = dfmm.nonce() - 1;
-        uint256 amountIn = 0.1 ether;
+    function test_4_token_simulate_swap_uniform() public basic {
+        uint256 amountIn = 1 ether;
         uint256 tokenInIndex = 0;
         uint256 tokenOutIndex = 1;
 
         (bool valid, uint256 amountOut, bytes memory data) =
-            solver.simulateSwap(poolId, tokenInIndex, tokenOutIndex, amountIn);
+            solver.simulateSwap(POOL_ID, tokenInIndex, tokenOutIndex, amountIn);
         console2.log("amountOut", amountOut);
         console2.log("valid", valid);
-        dfmm.swap(poolId, data);
+
+        (uint256[] memory preReserves,) =
+            solver.getReservesAndLiquidity(POOL_ID);
+        NTokenGeometricMeanParams memory params = solver.getPoolParams(POOL_ID);
+
+        console2.log(
+            "price tOut", computePrice(tokenOutIndex, preReserves, params)
+        );
+        console2.log(
+            "price tIn", computePrice(tokenInIndex, preReserves, params)
+        );
+
+        dfmm.swap(POOL_ID, address(this), data);
+        (uint256[] memory postReserves,) =
+            solver.getReservesAndLiquidity(POOL_ID);
+        console2.log(
+            "price tOut", computePrice(tokenOutIndex, postReserves, params)
+        );
+        console2.log(
+            "price tIn", computePrice(tokenInIndex, postReserves, params)
+        );
     }
 
     function test_4_token_compute_price() public basic {
-        uint256 poolId = dfmm.nonce() - 1;
         uint256 tIndex = 0;
 
-        (uint256[] memory reserves,) = solver.getReservesAndLiquidity(poolId);
-        NTokenGeometricMeanParams memory params = solver.getPoolParams(poolId);
+        (uint256[] memory reserves,) = solver.getReservesAndLiquidity(POOL_ID);
+        NTokenGeometricMeanParams memory params = solver.getPoolParams(POOL_ID);
 
         uint256 price = solver.computePriceOfToken(
             reserves[tIndex],
@@ -273,7 +298,6 @@ contract NTokenGeometricMeanTest is Test {
         public
         basic_70_10_10_10
     {
-        uint256 poolId = dfmm.nonce() - 1;
         uint256 maxTokenDelta = 100e18;
         uint256[] memory maxDeltas = createTokenDeltas(maxTokenDelta);
         uint256 deltaL = ONE;
@@ -281,21 +305,20 @@ contract NTokenGeometricMeanTest is Test {
         bytes memory data = abi.encode(maxDeltas, deltaL);
 
         (uint256[] memory preReserves, uint256 preL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(POOL_ID);
 
-        dfmm.allocate(poolId, data);
+        dfmm.allocate(POOL_ID, data);
 
         (uint256[] memory postReserves, uint256 postL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(POOL_ID);
     }
 
     function test_4_token_allocate_given_delta_t_non_uniform()
         public
         basic_70_10_10_10
     {
-        uint256 poolId = dfmm.nonce() - 1;
         (uint256[] memory dReserves, uint256 dLiquidity) =
-            solver.getAllocationDeltasGivenDeltaT(poolId, 1, ONE);
+            solver.getAllocationDeltasGivenDeltaT(POOL_ID, 1, ONE);
 
         console2.log(dReserves[0]);
         console2.log(dReserves[1]);
@@ -304,27 +327,25 @@ contract NTokenGeometricMeanTest is Test {
 
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
-        dfmm.allocate(poolId, data);
+        dfmm.allocate(POOL_ID, data);
     }
 
     function test_4_token_deallocate_given_delta_t_non_uniform()
         public
         basic_70_10_10_10
     {
-        uint256 poolId = dfmm.nonce() - 1;
         (uint256[] memory dReserves, uint256 dLiquidity) =
-            solver.getAllocationDeltasGivenDeltaT(poolId, 1, 0.2 ether);
+            solver.getDeallocationDeltasGivenDeltaT(POOL_ID, 1, 0.2 ether);
 
         bytes memory data = abi.encode(dReserves, dLiquidity);
 
-        dfmm.deallocate(poolId, data);
+        dfmm.deallocate(POOL_ID, data);
     }
 
     function test_4_token_deallocate_basic_non_uniform()
         public
         basic_70_10_10_10
     {
-        uint256 poolId = dfmm.nonce() - 1;
         uint256 minTokenDelta = 0.1 ether;
         uint256[] memory minDeltas = createTokenDeltas(minTokenDelta);
         uint256 deltaL = 0.4 ether;
@@ -332,14 +353,14 @@ contract NTokenGeometricMeanTest is Test {
         bytes memory data = abi.encode(minDeltas, deltaL);
 
         (uint256[] memory preReserves, uint256 preL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(POOL_ID);
         console2.log(preReserves[0]);
         console2.log(preL);
 
-        dfmm.deallocate(poolId, data);
+        dfmm.deallocate(POOL_ID, data);
 
         (uint256[] memory postReserves, uint256 postL) =
-            dfmm.getReservesAndLiquidity(poolId);
+            solver.getReservesAndLiquidity(POOL_ID);
         console2.log(postReserves[0]);
         console2.log(postL);
     }
@@ -348,26 +369,24 @@ contract NTokenGeometricMeanTest is Test {
         public
         basic_70_10_10_10
     {
-        uint256 poolId = dfmm.nonce() - 1;
         uint256 amountIn = 0.1 ether;
         uint256 tokenInIndex = 0;
         uint256 tokenOutIndex = 1;
 
         (bool valid, uint256 amountOut, bytes memory data) =
-            solver.simulateSwap(poolId, tokenInIndex, tokenOutIndex, amountIn);
+            solver.simulateSwap(POOL_ID, tokenInIndex, tokenOutIndex, amountIn);
 
-        dfmm.swap(poolId, data);
+        dfmm.swap(POOL_ID, address(this), data);
     }
 
     function test_4_token_compute_price_non_uniform()
         public
         basic_70_10_10_10
     {
-        uint256 poolId = dfmm.nonce() - 1;
         uint256 tIndex = 0;
 
-        (uint256[] memory reserves,) = solver.getReservesAndLiquidity(poolId);
-        NTokenGeometricMeanParams memory params = solver.getPoolParams(poolId);
+        (uint256[] memory reserves,) = solver.getReservesAndLiquidity(POOL_ID);
+        NTokenGeometricMeanParams memory params = solver.getPoolParams(POOL_ID);
 
         uint256 price = solver.computePriceOfToken(
             reserves[tIndex],

@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-pragma solidity ^0.8.13;
+pragma solidity 0.8.22;
 
-import "solmate/tokens/ERC20.sol";
-import "src/interfaces/IStrategy.sol";
-import { IDFMM } from "src/interfaces/IDFMM.sol";
+import { IStrategy } from "src/interfaces/IStrategy.sol";
+import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
 import { NTokenGeometricMeanParams } from
     "src/NTokenGeometricMean/NTokenGeometricMean.sol";
 import {
@@ -15,7 +14,8 @@ import {
 import {
     computeAllocationDeltasGivenDeltaT,
     computeDeallocationDeltasGivenDeltaT,
-    computeNextLiquidity
+    computeNextLiquidity,
+    computeSwapDeltaLiquidity
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
@@ -51,7 +51,8 @@ contract NTokenGeometricMeanSolver {
         view
         returns (uint256[] memory, uint256)
     {
-        return IDFMM(IStrategy(strategy).dfmm()).getReservesAndLiquidity(poolId);
+        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        return (pool.reserves, pool.totalLiquidity);
     }
 
     struct SimulateSwapState {
@@ -81,9 +82,14 @@ contract NTokenGeometricMeanSolver {
         state.inWeight = params.weights[tokenInIndex];
         state.outWeight = params.weights[tokenOutIndex];
 
-        state.fees = amountIn.mulWadUp(params.swapFee);
-        state.deltaLiquidity = pool.totalLiquidity.divWadUp(state.inReserve)
-            .mulWadUp(state.fees).mulWadUp(state.inWeight);
+        state.deltaLiquidity = computeSwapDeltaLiquidity(
+            amountIn,
+            state.inReserve,
+            pool.totalLiquidity,
+            state.inWeight,
+            params.swapFee
+        );
+
         {
             uint256 n = (pool.totalLiquidity + state.deltaLiquidity);
             uint256 accumulator = FixedPointMathLib.WAD;
@@ -111,13 +117,8 @@ contract NTokenGeometricMeanSolver {
             state.amountOut = state.outReserve - a;
         }
 
-        bytes memory swapData = abi.encode(
-            tokenInIndex,
-            tokenOutIndex,
-            amountIn,
-            state.amountOut,
-            state.deltaLiquidity
-        );
+        bytes memory swapData =
+            abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut);
 
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData

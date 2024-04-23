@@ -34,6 +34,10 @@ interface SolverLike {
         returns (LogNormalParams memory);
 }
 
+int256 constant I_ONE = int256(ONE);
+int256 constant I_TWO = int256(TWO);
+int256 constant I_HALF = int256(HALF);
+
 contract LogNormalArbitrage {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
@@ -324,8 +328,8 @@ contract LogNormalArbitrage {
         int256 mean = int256(params.mean);
         int256 width = int256(params.width);
 
-        int256 lnSDivK = computeLnSDivK(uint256(S), params.mean);
-        int256 a = lnSDivK.wadDiv(width) - width.wadDiv(I_TWO);
+        int256 lnSDivMean = computeLnSDivMean(uint256(S), params.mean);
+        int256 a = lnSDivMean.wadDiv(width) - width.wadDiv(I_TWO);
         int256 cdfA = Gaussian.cdf(a);
 
         int256 delta = L.wadMul(mean).wadMul(cdfA);
@@ -341,8 +345,8 @@ contract LogNormalArbitrage {
         int256 gamma = I_ONE - int256(params.swapFee);
         int256 width = int256(params.width);
 
-        int256 lnSDivK = computeLnSDivK(uint256(S), params.mean);
-        int256 a = Gaussian.cdf(lnSDivK.wadDiv(width) + width.wadDiv(I_TWO));
+        int256 lnSDivMean = computeLnSDivMean(uint256(S), params.mean);
+        int256 a = Gaussian.cdf(lnSDivMean.wadDiv(width) + width.wadDiv(I_TWO));
 
         int256 delta = L.wadMul(I_ONE - a);
         dx = delta - rX;
@@ -361,7 +365,7 @@ contract LogNormalArbitrage {
         if (lowerBoundOutput < 0) {
             return 0;
         }
-        v = bisection(
+        (v,,) = bisection(
             abi.encode(S, rX, L, params),
             lower,
             upper,
@@ -384,7 +388,7 @@ contract LogNormalArbitrage {
         if (lowerBoundOutput < 0) {
             return 0;
         }
-        v = bisection(
+        (v,,) = bisection(
             abi.encode(S, rY, L, params),
             lower,
             upper,

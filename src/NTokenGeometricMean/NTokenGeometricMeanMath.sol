@@ -4,8 +4,7 @@ pragma solidity ^0.8.13;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { NTokenGeometricMeanParams } from
     "src/NTokenGeometricMean/NTokenGeometricMean.sol";
-
-uint256 constant ONE = 1 ether;
+import { ONE } from "src/lib/StrategyLib.sol";
 
 using FixedPointMathLib for uint256;
 using FixedPointMathLib for int256;
@@ -18,9 +17,9 @@ function computeTradingFunction(
     uint256 accumulator = ONE;
     for (uint256 i = 0; i < reserves.length; i++) {
         uint256 a = uint256(
-            int256(reserves[i].divWadDown(L)).powWad(int256(params.weights[i]))
+            int256(reserves[i].divWadUp(L)).powWad(int256(params.weights[i]))
         );
-        accumulator.mulWadUp(a);
+        accumulator = accumulator.mulWadUp(a);
     }
 
     return int256(accumulator) - int256(ONE);
@@ -31,7 +30,7 @@ function computeDeltaGivenDeltaLRoundUp(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadUp(deltaLiquidity.divWadUp(totalLiquidity));
+    return reserve.mulDivUp(deltaLiquidity, totalLiquidity);
 }
 
 function computeDeltaGivenDeltaLRoundDown(
@@ -39,26 +38,33 @@ function computeDeltaGivenDeltaLRoundDown(
     uint256 deltaLiquidity,
     uint256 totalLiquidity
 ) pure returns (uint256) {
-    return reserve.mulWadDown(deltaLiquidity.divWadDown(totalLiquidity));
+    return reserve.mulDivDown(deltaLiquidity, totalLiquidity);
 }
 
 function computeL(
     uint256[] memory reserves,
     NTokenGeometricMeanParams memory params
 ) pure returns (uint256) {
-    uint256 accumulator;
-
+    uint256 accumulator = ONE;
     for (uint256 i = 0; i < reserves.length; i++) {
         uint256 a =
             uint256(int256(reserves[i]).powWad(int256(params.weights[i])));
-        if (accumulator != 0) {
-            accumulator += a;
-        } else {
-            accumulator.mulWadUp(a);
-        }
+        accumulator = accumulator.mulWadUp(a);
     }
 
     return accumulator;
+}
+
+function computePrice(
+    uint256 indexT,
+    uint256[] memory reserves,
+    NTokenGeometricMeanParams memory params
+) pure returns (uint256 price) {
+    uint256 n = reserves[indexT].divWadDown(params.weights[indexT]);
+    uint256 d = reserves[reserves.length - 1].divWadDown(
+        params.weights[reserves.length - 1]
+    );
+    price = n.divWadUp(d);
 }
 
 function computeReserveFromNumeraire(
@@ -67,7 +73,7 @@ function computeReserveFromNumeraire(
     uint256 wT,
     uint256 wNumeraire
 ) pure returns (uint256) {
-    return wT.divWadDown(wNumeraire.mulWadDown(S)).mulWadDown(amountNumeraire);
+    return wT.mulDivDown(amountNumeraire, wNumeraire.mulWadUp(S));
 }
 
 function computeAllocationDeltasGivenDeltaT(
@@ -85,7 +91,7 @@ function computeAllocationDeltasGivenDeltaT(
         }
     }
 
-    uint256 deltaL = a.mulWadUp(totalLiquidity);
+    uint256 deltaL = a.mulWadDown(totalLiquidity);
 
     return (reserveDeltas, deltaL);
 }
@@ -105,7 +111,7 @@ function computeDeallocationDeltasGivenDeltaT(
         }
     }
 
-    uint256 deltaL = a.mulWadDown(totalLiquidity);
+    uint256 deltaL = a.mulWadUp(totalLiquidity);
 
     return (reserveDeltas, deltaL);
 }
@@ -115,15 +121,23 @@ function computeNextLiquidity(
     uint256[] memory reserves,
     NTokenGeometricMeanParams memory params
 ) pure returns (uint256 L) {
-    uint256 accumulator;
+    uint256 accumulator = ONE;
     for (uint256 i = 0; i < reserves.length; i++) {
         uint256 a =
             uint256(int256(reserves[i]).powWad(int256(params.weights[i])));
-        if (accumulator != 0) {
-            accumulator.mulWadUp(a);
-        } else {
-            accumulator = a;
-        }
+        accumulator = accumulator.mulWadUp(a);
     }
     return accumulator;
+}
+
+function computeSwapDeltaLiquidity(
+    uint256 amountIn,
+    uint256 reserve,
+    uint256 totalLiquidity,
+    uint256 weight,
+    uint256 swapFee
+) pure returns (uint256) {
+    return weight.mulWadUp(swapFee).mulWadUp(totalLiquidity).mulWadUp(
+        amountIn.divWadUp(reserve)
+    );
 }
