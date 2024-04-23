@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
+
 use tracing::warn;
+
 use super::*;
 use crate::bindings::erc20::ERC20;
 
@@ -36,13 +38,18 @@ where
     type Data = Self;
 }
 
+type PoolId = eU256;
+type TokenList = Vec<eAddress>;
+type LiquidityToken = eAddress;
+
 #[derive(Debug)]
 struct UpdateTodo<P: PoolType> {
     deployment_data: Option<DeploymentData>,
+    #[allow(clippy::type_complexity)]
     pool_creation: Option<(
-        eU256,         // Pool ID
-        Vec<eAddress>, // Token List
-        eAddress,      // Liquidity Token
+        PoolId,         // Pool ID
+        TokenList,      // Token List
+        LiquidityToken, // Liquidity Token
         <P as PoolType>::Parameters,
         <P as PoolType>::AllocationData,
     )>,
@@ -103,7 +110,6 @@ where
             P::get_contracts(todo.deployment_data.as_ref().unwrap(), client.clone());
         let dfmm = DFMM::new(todo.deployment_data.unwrap().dfmm, client.clone());
         debug!("Got DFMM and the strategy contracts.");
-
         let pool = Pool::<P> {
             id: todo.pool_creation.clone().unwrap().0,
             dfmm,

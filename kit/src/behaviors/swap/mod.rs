@@ -1,9 +1,4 @@
-use futures_util::future::ok;
-use tracing::warn;
-
-use self::{
-    bindings::erc20::ERC20, creator::PoolCreation, pool::InputToken, update::UpdatoorQuerry,
-};
+use self::{bindings::erc20::ERC20, pool::InputToken};
 use super::*;
 use crate::behaviors::token::Response;
 
@@ -13,7 +8,7 @@ pub trait SwapType<E>: Debug + Serialize + Clone {
     // return a proccess
     fn get_stream(
         &self,
-        messager: Messager,
+        _messager: Messager,
     ) -> Option<Pin<Box<dyn Stream<Item = E> + Send + Sync>>> {
         None
     }
@@ -58,10 +53,11 @@ where
 #[derive(Debug)]
 struct SwapTodo<P: PoolType> {
     deployment_data: Option<DeploymentData>,
+    #[allow(clippy::type_complexity)]
     pool_creation: Option<(
-        eU256,         // Pool ID
-        Vec<eAddress>, // Token List
-        eAddress,      // Liquidity Token
+        PoolId,         // Pool ID
+        TokenList,      // Token List
+        LiquidityToken, // Liquidity Token
         <P as PoolType>::Parameters,
         <P as PoolType>::AllocationData,
     )>,

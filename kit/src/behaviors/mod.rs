@@ -1,6 +1,5 @@
 use std::{boxed::Box, marker::PhantomData, pin::Pin, sync::Arc};
 
-use arbiter_core::events::stream_event;
 use arbiter_engine::{
     machine::{Behavior, ControlFlow, EventStream, Processor, State},
     messager::{Message, Messager, To},
@@ -8,7 +7,7 @@ use arbiter_engine::{
 #[allow(unused)]
 use arbiter_macros::Behaviors;
 use bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
-use futures_util::{Stream, StreamExt};
+use futures_util::Stream;
 pub use token::{MintRequest, TokenAdminQuery};
 
 use self::{
@@ -20,6 +19,10 @@ use self::{
 use super::*;
 
 pub const MAX: eU256 = eU256::MAX;
+
+type PoolId = eU256;
+type TokenList = Vec<eAddress>;
+type LiquidityToken = eAddress;
 
 pub mod allocate;
 pub mod creator;
