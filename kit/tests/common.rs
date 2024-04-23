@@ -12,7 +12,7 @@ use dfmm_kit::{
     bindings::constant_sum_solver::ConstantSumParams,
     pool::{
         constant_sum::{ConstantSumAllocationData, ConstantSumPool},
-        BaseConfig, InputToken,
+        BaseConfig, InputToken, PoolCreation,
     },
     TokenData,
 };
@@ -84,15 +84,7 @@ pub fn spawn_constant_sum_creator(world: &mut World) {
 }
 
 fn mock_swap_behavior() -> Swap<swap::Config<ConstantSumPool>, VanillaSwap, Message> {
-    let data: swap::Config<ConstantSumPool> = swap::Config {
-        base_config: mock_base_config(),
-        params: constant_sum_parameters(),
-        allocation_data: ConstantSumAllocationData {
-            reserve_x: RESERVE_X,
-            reserve_y: RESERVE_Y,
-        },
-        token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
-    };
+    let data = swap::Config::<ConstantSumPool>::default();
 
     Swap::<swap::Config<ConstantSumPool>, VanillaSwap, Message> {
         token_admin: TOKEN_ADMIN.to_owned(),

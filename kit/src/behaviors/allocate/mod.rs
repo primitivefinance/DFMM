@@ -1,6 +1,6 @@
 use super::*;
 
-pub trait AllocateType<E>: Debug + Serialize + Clone
+pub trait AllocateType<E>
 where
     E: Send + 'static,
 {
@@ -44,9 +44,9 @@ where
 #[async_trait::async_trait]
 impl<A, P, E> Behavior<E> for Allocate<A, E, Config<P>>
 where
-    A: AllocateType<E> + Debug + Send + Sync + 'static + for<'a> Deserialize<'a>,
-    P: PoolType + Debug + Send + Sync + 'static,
-    E: Debug + Send + Sync + 'static,
+    A: AllocateType<E> + Send,
+    P: PoolType + Send,
+    E: Send + 'static,
 {
     type Processor = Allocate<A, E, Processing<P, E>>;
     async fn startup(
@@ -61,9 +61,9 @@ where
 #[async_trait::async_trait]
 impl<A, P, E> Processor<E> for Allocate<A, E, Processing<P, E>>
 where
-    A: AllocateType<E> + Debug + Send + Sync + 'static,
-    P: PoolType + Debug + Send + Sync + 'static,
-    E: Debug + Send + Sync + 'static,
+    A: AllocateType<E> + Send,
+    P: PoolType + Send,
+    E: Send + 'static,
 {
     async fn get_stream(&mut self) -> Result<Option<EventStream<E>>> {
         todo!("We have not implemented the 'get_stream' method yet for the 'Allocate' behavior.");

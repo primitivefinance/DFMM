@@ -26,7 +26,7 @@ async fn run_updater_constant_sum() {
             messager
                 .send(
                     To::Agent(UPDATER.to_owned()),
-                    update::UpdaterQuery::ApplyUpdate,
+                    update::UpdateRequest::ApplyUpdate,
                 )
                 .await
                 .unwrap();

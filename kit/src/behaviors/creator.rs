@@ -19,8 +19,6 @@ pub struct Config<P: PoolType> {
 impl<P> Behavior<()> for Create<Config<P>>
 where
     P: PoolType + Send + Sync + 'static,
-    P::StrategyContract: Send,
-    P::SolverContract: Send,
 {
     type Processor = ();
     async fn startup(
@@ -100,23 +98,19 @@ where
 
         debug!("Pool created!\n {:#?}", pool);
 
-        let pool_creation = (
-            pool.id,
-            pool.tokens.iter().map(|t| t.address()).collect::<Vec<_>>(),
-            pool.liquidity_token.address(),
-            params,
-            self.data.allocation_data.clone(),
-        );
-        messager.send(To::All, pool_creation).await.unwrap();
+        messager
+            .send(
+                To::All,
+                PoolCreation::<P> {
+                    id: pool.id,
+                    tokens: pool.tokens.iter().map(|t| t.address()).collect::<Vec<_>>(),
+                    liquidity_token: pool.liquidity_token.address(),
+                    params,
+                    allocation_data: self.data.allocation_data.clone(),
+                },
+            )
+            .await
+            .unwrap();
         Ok(())
     }
-}
-
-// TODO: We should be able to use this but it is currently hard to work with due
-// to `serde::Deserialize`
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
-pub struct PoolCreation<P: PoolType> {
-    pub id: eU256,
-    pub params: P::Parameters,
-    pub allocation_data: P::AllocationData,
 }

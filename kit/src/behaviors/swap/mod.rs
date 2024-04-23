@@ -2,12 +2,16 @@ use self::{bindings::erc20::ERC20, pool::InputToken};
 use super::*;
 use crate::behaviors::token::Response;
 
-pub trait SwapType<E>: Debug + Serialize + Clone {
+pub trait SwapType<E> {
     fn compute_swap_amount(event: E) -> (eU256, InputToken);
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Swap<S: State, T: SwapType<E>, E> {
+pub struct Swap<S, T, E>
+where
+    S: State,
+    T: SwapType<E>,
+{
     // to get tokens on start up
     pub token_admin: String,
     pub update: String,
@@ -16,12 +20,20 @@ pub struct Swap<S: State, T: SwapType<E>, E> {
     pub _phantom: PhantomData<E>,
 }
 
+// TODO: This needs to be configurable in some way to make the `SwapType` become
+// transparent and useful.
+// Should also get some data necessary for mint amounts and what not.
 #[derive(Clone, Debug, Serialize, Deserialize, State)]
 pub struct Config<P: PoolType> {
-    pub base_config: BaseConfig,
-    pub params: P::Parameters,
-    pub allocation_data: P::AllocationData,
-    pub token_list: Vec<String>,
+    phantom: PhantomData<P>,
+}
+
+impl<P: PoolType> Default for Config<P> {
+    fn default() -> Self {
+        Self {
+            phantom: PhantomData,
+        }
+    }
 }
 
 #[derive(Debug, Clone, State)]
@@ -31,27 +43,12 @@ pub struct Processing<P: PoolType> {
     pub pool: Pool<P>,
 }
 
-#[derive(Debug)]
-struct SwapTodo<P: PoolType> {
-    deployment_data: Option<DeploymentData>,
-    #[allow(clippy::type_complexity)]
-    pool_creation: Option<(
-        PoolId,         // Pool ID
-        TokenList,      // Token List
-        LiquidityToken, // Liquidity Token
-        <P as PoolType>::Parameters,
-        <P as PoolType>::AllocationData,
-    )>,
-}
-
 #[async_trait::async_trait]
 impl<P, T, E> Behavior<()> for Swap<Config<P>, T, E>
 where
-    P: PoolType + Send + Sync + 'static,
-    P::StrategyContract: Send,
-    P::SolverContract: Send,
-    T: SwapType<E> + Send + Sync + 'static + for<'a> Deserialize<'a>,
-    E: Debug + Send + Sync + 'static,
+    P: PoolType + Send,
+    T: SwapType<E> + Send,
+    E: Send,
 {
     // type Processor = Swap<Processing<P>, T, E>;
     type Processor = ();
@@ -60,67 +57,28 @@ where
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
     ) -> Result<Self::Processor> {
-        // Make a "TODO" list.
-        // This is the data I need to recieve to do my job
-        let mut todo: SwapTodo<P> = SwapTodo {
-            deployment_data: None,
-            pool_creation: None,
-        };
-
-        // Loop through the messager until we check off the boxes for this TODO list.
-        debug!("Updater is looping through their TODO list.");
-        loop {
-            if let Ok(msg) = messager.get_next::<MessageTypes<P>>().await {
-                match msg.data {
-                    MessageTypes::Deploy(deploy_data) => {
-                        debug!("Updater: Got deployment data: {:?}", deploy_data);
-                        todo.deployment_data = Some(deploy_data);
-                        if todo.pool_creation.is_some() {
-                            debug!("Updater: Got all the data.\n{:#?}", todo);
-                            break;
-                        }
-                    }
-                    MessageTypes::Create(pool_creation) => {
-                        debug!("Updater: Got pool creation data: {:?}", pool_creation);
-                        todo.pool_creation = Some(pool_creation);
-                        if todo.deployment_data.is_some() {
-                            debug!("Updater: Got all the data.\n{:#?}", todo);
-                            break;
-                        }
-                    }
-                    _ => continue,
-                }
-            } else {
-                debug!("Updater got some other message variant it could ignore.");
-                continue;
-            }
-        }
-        debug!("Updater has checked off their TODO list.");
+        // TODO: Here we probably need to filter on the `PoolCreation` so that we get
+        // the correct pool.
+        let completed_todo = GetPoolTodo::<P>::complete(&mut messager).await;
+        let (deployment_data, pool_creation) = (
+            completed_todo.deployment_data.unwrap(),
+            completed_todo.pool_creation.unwrap(),
+        );
 
         let (strategy_contract, solver_contract) =
-            P::get_contracts(todo.deployment_data.as_ref().unwrap(), client.clone());
-        let dfmm = DFMM::new(todo.deployment_data.unwrap().dfmm, client.clone());
-        debug!("Got DFMM and the strategy contracts.");
+            P::get_contracts(&deployment_data, client.clone());
+        let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
 
         // Get the intended tokens for the pool and do approvals.
         let mut tokens: Vec<ArbiterToken<ArbiterMiddleware>> = Vec::new();
-        for tkn in self.data.token_list.drain(..) {
-            messager
-                .send(
-                    To::Agent(self.token_admin.clone()),
-                    TokenAdminQuery::AddressOf(tkn.clone()),
-                )
-                .await
-                .unwrap();
-            let token = ArbiterToken::new(
-                messager.get_next::<eAddress>().await.unwrap().data,
-                client.clone(),
-            );
+        for token_address in pool_creation.tokens.into_iter() {
+            let token = ArbiterToken::new(token_address, client.clone());
+            let name = token.name().call().await?;
             messager
                 .send(
                     To::Agent(self.token_admin.clone()),
                     TokenAdminQuery::MintRequest(MintRequest {
-                        token: tkn,
+                        token: name,
                         mint_to: client.address(),
                         mint_amount: 100_000_000_000,
                     }),
@@ -142,21 +100,13 @@ where
             tokens.push(token);
         }
 
-        let lp_address = todo.pool_creation.clone().unwrap().2;
-        let lp_token = ERC20::new(lp_address, client.clone());
-        let instance = P::create_instance(
-            strategy_contract,
-            solver_contract,
-            todo.pool_creation.clone().unwrap().3,
-        );
-
         // build pool for processor and stream
-        let pool = Pool::<P> {
-            id: todo.pool_creation.clone().unwrap().0,
+        let _pool = Pool::<P> {
+            id: pool_creation.id,
             dfmm,
-            instance,
+            instance: P::create_instance(strategy_contract, solver_contract, pool_creation.params),
             tokens,
-            liquidity_token: lp_token,
+            liquidity_token: ERC20::new(pool_creation.liquidity_token, client.clone()),
         };
         // TODO: We need to come back around and adjust this.
         // match self.swap_type.get_stream(messager.clone()) {
@@ -184,8 +134,8 @@ where
 impl<P, T, E> Processor<E> for Swap<Processing<P>, T, E>
 where
     P: PoolType + Send + Sync,
-    T: SwapType<E> + Send + Sync + 'static,
-    E: Send + Sync + 'static,
+    T: SwapType<E> + Send,
+    E: Send + 'static,
 {
     async fn get_stream(&mut self) -> Result<Option<EventStream<E>>> {
         todo!("We have not implemented the 'get_stream' method yet for the 'Swap' behavior.")

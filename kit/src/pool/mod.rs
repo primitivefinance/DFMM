@@ -36,30 +36,16 @@ pub struct BaseConfig {
 // All the other types will be specific to each pool/strategy type since those
 // will be specific contracts
 #[async_trait::async_trait]
-pub trait PoolType: Clone + Debug + 'static {
-    // This trait provides the interface for people to construct pools from a
-    // `Configuration` state since all of this should be `Serialize` and
-    // `Deserialize`. This stuff ultimately will be what's used to deploy a
-    // `Pool<P: PoolType>` which will hold onto actual instances of contracts
-    // (whereas this just holds config data).
+pub trait PoolType: Debug {
     type Parameters: Clone
         + Debug
-        + Serialize
-        + for<'de> Deserialize<'de>
         + Send
-        + Sync
-        + 'static
+        + for<'de> Deserialize<'de>
+        + Serialize
         + ethers::abi::AbiDecode;
-    // ~~ These are the contracts that are used to interact with the pool. ~~
-    type StrategyContract;
-    type SolverContract;
-    type AllocationData: Clone
-        + Debug
-        + Serialize
-        + for<'de> Deserialize<'de>
-        + Send
-        + Sync
-        + 'static;
+    type StrategyContract: Send;
+    type SolverContract: Send;
+    type AllocationData: Clone + Debug + Send + for<'de> Deserialize<'de> + Serialize;
 
     async fn swap_data(&self, pool_id: eU256, swap: InputToken, amount_in: eU256) -> Result<Bytes>;
     /// Change Parameters
@@ -278,3 +264,69 @@ impl<P: PoolType> Pool<P> {
         Ok(())
     }
 }
+
+#[derive(Clone, Debug, Deserialize, Serialize, Eq, PartialEq)]
+pub struct PoolCreation<P: PoolType> {
+    pub id: eU256,
+    pub tokens: Vec<eAddress>,
+    pub liquidity_token: eAddress,
+    #[serde(bound(deserialize = "P::Parameters: Deserialize<'de>"))]
+    pub params: P::Parameters,
+    #[serde(bound(deserialize = "P::Parameters: Deserialize<'de>"))]
+    pub allocation_data: P::AllocationData,
+}
+
+// impl<'de, P: PoolType> Deserialize<'de> for PoolCreation<P> {
+//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+//     where
+//         D: serde::de::Deserializer<'de>,
+//     {
+//         let mut map = deserializer.deserialize_map(None)?;
+//         let mut id = None;
+//         let mut tokens = None;
+//         let mut liquidity_token = None;
+//         let mut params = None;
+//         let mut allocation_data = None;
+
+//         while let Some(key) = map.next_key()? {
+//             match key {
+//                 "id" => {
+//                     id = Some(map.next_value()?);
+//                 }
+//                 "tokens" => {
+//                     tokens = Some(map.next_value()?);
+//                 }
+//                 "liquidity_token" => {
+//                     liquidity_token = Some(map.next_value()?);
+//                 }
+//                 "params" => {
+//                     params = Some(map.next_value()?);
+//                 }
+//                 "allocation_data" => {
+//                     allocation_data = Some(map.next_value()?);
+//                 }
+//                 _ => {
+//                     // Ignore unknown fields
+//                     let _ = map.next_value::<serde_json::Value>();
+//                 }
+//             }
+//         }
+
+//         let id = id.ok_or_else(|| serde::de::Error::missing_field("id"))?;
+//         let tokens = tokens.ok_or_else(||
+// serde::de::Error::missing_field("tokens"))?;         let liquidity_token =
+//             liquidity_token.ok_or_else(||
+// serde::de::Error::missing_field("liquidity_token"))?;         let params =
+// params.ok_or_else(|| serde::de::Error::missing_field("params"))?;         let
+// allocation_data =             allocation_data.ok_or_else(||
+// serde::de::Error::missing_field("allocation_data"))?;
+
+//         Ok(PoolCreation {
+//             id,
+//             tokens,
+//             liquidity_token,
+//             params,
+//             allocation_data,
+//         })
+//     }
+// }
