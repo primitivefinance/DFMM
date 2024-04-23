@@ -58,20 +58,6 @@ contract ConstantSumSolver is PairSolver {
         return computeInitialPoolData(reserveX, reserveY, params);
     }
 
-    /// @dev Struct to hold state variables for simulating a swap
-    struct SimulateSwapState {
-        uint256 amountOut;
-        uint256 deltaLiquidity;
-    }
-
-    /// @notice Simulates a swap in a Constant Sum pool
-    /// @dev Used by the kit to simulate a swap and check if it's valid
-    /// @param poolId The id of the pool to simulate the swap in
-    /// @param swapXIn Whether the swap is X in for Y out (true) or Y in for X out (false)
-    /// @param amountIn The amount of tokens to swap in
-    /// @return valid Whether the simulated swap is valid
-    /// @return amountOut The amount of tokens that would be received in the swap
-    /// @return swapData The encoded swap data that can be used to perform the actual swap
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
@@ -82,23 +68,21 @@ contract ConstantSumSolver is PairSolver {
             IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
         );
 
-        SimulateSwapState memory state;
+        uint256 amountOut;
 
         if (swapXIn) {
-            computeSwapDeltaLiquidity(amountIn, poolParams, true);
-            state.amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
+            amountOut = amountIn.mulWadDown(poolParams.price).mulWadDown(
                 ONE - poolParams.swapFee
             );
 
-            if (pool.reserves[1] < state.amountOut) {
+            if (pool.reserves[1] < amountOut) {
                 revert NotEnoughLiquidity();
             }
         } else {
-            computeSwapDeltaLiquidity(amountIn, poolParams, false);
-            state.amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
+            amountOut = (ONE - poolParams.swapFee).mulWadDown(amountIn)
                 .divWadDown(poolParams.price);
 
-            if (pool.reserves[0] < state.amountOut) {
+            if (pool.reserves[0] < amountOut) {
                 revert NotEnoughLiquidity();
             }
         }
@@ -106,15 +90,15 @@ contract ConstantSumSolver is PairSolver {
         bytes memory swapData;
 
         if (swapXIn) {
-            swapData = abi.encode(0, 1, amountIn, state.amountOut);
+            swapData = abi.encode(0, 1, amountIn, amountOut);
         } else {
-            swapData = abi.encode(1, 0, amountIn, state.amountOut);
+            swapData = abi.encode(1, 0, amountIn, amountOut);
         }
 
         (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
-        return (valid, state.amountOut, swapData);
+        return (valid, amountOut, swapData);
     }
 
     /// @notice Prepares the data for updating the price
