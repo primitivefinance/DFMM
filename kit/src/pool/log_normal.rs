@@ -1,15 +1,18 @@
 use anyhow::Ok;
 use bindings::{log_normal::LogNormal, log_normal_solver::LogNormalSolver};
 use ethers::abi::Address;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use super::*;
+
+#[derive(Clone, Debug)]
 pub struct LogNormalPool {
     pub strategy_contract: LogNormal<ArbiterMiddleware>,
     pub solver_contract: LogNormalSolver<ArbiterMiddleware>,
     pub parameters: LogNormalUpdateParameters,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum LogNormalUpdateParameters {
     FeeUpdate(eU256),
     ControllerUpdate(Address),
@@ -23,16 +26,13 @@ pub struct LogNormalParams {
     pub width: eU256,
 }
 
-impl PoolConfigurer for LogNormalParams {
-    type PoolParameters = Self;
-    type InitialAllocationData = Bytes;
-}
-
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub enum LogNormalAllocationData {
     GivenX(eU256),
     GivenY(eU256),
 }
 
+#[async_trait::async_trait]
 impl PoolType for LogNormalPool {
     type Parameters = LogNormalParams;
     type StrategyContract = LogNormal<ArbiterMiddleware>;
@@ -99,20 +99,34 @@ impl PoolType for LogNormalPool {
         pool_id: eU256,
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        let data = match allocation_data {
-            LogNormalAllocationData::GivenX(amount_x) => {
-                self.solver_contract
-                    .prepare_allocation_deltas_given_delta_x(pool_id, amount_x)
-                    .call()
-                    .await?
-            }
-            LogNormalAllocationData::GivenY(amount_y) => {
-                self.solver_contract
-                    .prepare_allocation_deltas_given_delta_y(pool_id, amount_y)
-                    .call()
-                    .await?
-            }
-        };
-        Ok(data)
+        todo!()
+    }
+
+    fn get_contracts(
+        deployment: &DeploymentData,
+        client: Arc<ArbiterMiddleware>,
+    ) -> (Self::StrategyContract, Self::SolverContract) {
+        todo!()
+    }
+
+    fn get_strategy_address(strategy_contract: &Self::StrategyContract) -> eAddress {
+        todo!()
+    }
+
+    async fn get_init_data(
+        base_config: &BaseConfig,
+        params: &Self::Parameters,
+        allocation_data: &Self::AllocationData,
+        solver_contract: &Self::SolverContract,
+    ) -> Result<Bytes> {
+        todo!()
+    }
+
+    fn create_instance(
+        strategy_contract: Self::StrategyContract,
+        solver_contract: Self::SolverContract,
+        parameters: Self::Parameters,
+    ) -> Self {
+        todo!()
     }
 }

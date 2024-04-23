@@ -9,10 +9,10 @@ keywords = ["ethereum", "smart-contracts", "automated market makers"]
 readme = "../README.md"
 
 [dependencies]
-arbiter-core = { git = "https://github.com/primitivefinance/arbiter.git", branch = "engine/testing-behavior-update" }
-arbiter-engine = { git = "https://github.com/primitivefinance/arbiter.git", branch = "engine/testing-behavior-update" }
-arbiter-macros = { git = "https://github.com/primitivefinance/arbiter.git", branch = "engine/testing-behavior-update" }
-arbiter-bindings = { git = "https://github.com/primitivefinance/arbiter.git", branch = "engine/testing-behavior-update" }
+arbiter-core = { git = "https://github.com/primitivefinance/arbiter.git", rev = "aff29d30" }
+arbiter-engine = { git = "https://github.com/primitivefinance/arbiter.git", rev = "aff29d30" }
+arbiter-macros = { git = "https://github.com/primitivefinance/arbiter.git", rev = "aff29d30" }
+arbiter-bindings = { git = "https://github.com/primitivefinance/arbiter.git", rev = "aff29d30" }
 
 # Ethereum
 ethers = "2.0.13"

@@ -396,7 +396,7 @@ pub mod idfmm {
                                         ::ethers::core::abi::ethabi::ParamType::Address,
                                     ),
                                 ),
-                                indexed: true,
+                                indexed: false,
                             },
                             ::ethers::core::abi::ethabi::EventParam {
                                 name: ::std::borrow::ToOwned::to_owned("reserves"),
@@ -1205,8 +1205,7 @@ pub mod idfmm {
         pub strategy: ::ethers::core::types::Address,
         pub lp_token: ::ethers::core::types::Address,
         pub pool_id: ::ethers::core::types::U256,
-        #[ethevent(indexed)]
-        pub tokens: ::ethers::core::types::H256,
+        pub tokens: ::std::vec::Vec<::ethers::core::types::Address>,
         pub reserves: ::std::vec::Vec<::ethers::core::types::U256>,
         pub total_liquidity: ::ethers::core::types::U256,
     }

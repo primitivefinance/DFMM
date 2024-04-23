@@ -1,86 +1,68 @@
-use std::sync::Arc;
+use std::{boxed::Box, marker::PhantomData, pin::Pin, sync::Arc};
 
 use arbiter_engine::{
-    agent::Agent,
-    machine::{Behavior, Configuration, ControlFlow, EventStream},
-    messager::{Messager, To},
+    machine::{Behavior, ControlFlow, EventStream, Processor, State},
+    messager::{Message, Messager, To},
 };
+#[allow(unused)]
 use arbiter_macros::Behaviors;
-use bindings::arbiter_token::ArbiterToken;
-use serde::{Deserialize, Serialize};
+use bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
+use futures_util::Stream;
+pub use token::{MintRequest, TokenAdminQuery};
 
 use self::{
-    bindings::constant_sum_solver::ConstantSumParams,
-    creator::{PoolConfig, PoolCreator},
-    deployer::Deployer,
-    pool::{
-        constant_sum::{ConstantSumInitData, ConstantSumPool},
-        PoolType,
-    },
-    token_admin::{TokenAdmin, TokenAdminConfig}, /* token_admin::TokenAdmin,
-                                                  * allocate::InitialAllocation, */
+    creator::Create,
+    deploy::{Deploy, DeploymentData},
+    pool::PoolType,
+    token::TokenAdmin,
 };
 use super::*;
 
-// pub mod allocate;
+pub const MAX: eU256 = eU256::MAX;
+
+type PoolId = eU256;
+type TokenList = Vec<eAddress>;
+type LiquidityToken = eAddress;
+
+pub mod allocate;
 pub mod creator;
-pub mod deployer;
-pub mod token_admin;
+pub mod deploy;
+pub mod swap;
+pub mod token;
+pub mod update;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Behaviors<P: PoolType> {
-    Creator(PoolCreator<Configuration<PoolConfig<P>>>),
-    Deployer(Deployer),
-    TokenAdmin(TokenAdmin<Configuration<TokenAdminConfig>>),
+    Create(Create<creator::Config<P>>),
+    Deployer(Deploy),
+    TokenAdmin(TokenAdmin<token::Config>),
+    Swap(swap::Config<P>),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TokenData {
-    pub name: String,
-    pub symbol: String,
-    pub decimals: u8,
-}
-
-pub(crate) fn default_admin_config() -> TokenAdmin<Configuration<TokenAdminConfig>> {
-    let token1 = TokenData {
-        name: "US Dollar Coin".to_owned(),
-        symbol: "USDC".to_owned(),
-        decimals: 18,
-    };
-
-    let token2 = TokenData {
-        name: "ShibaInuObamaSonic Coin".to_owned(),
-        symbol: "SIOS".to_owned(),
-        decimals: 18,
-    };
-    let config = TokenAdminConfig {
-        token_data: vec![token1, token2],
-    };
-    TokenAdmin::<Configuration<TokenAdminConfig>> { data: config }
-}
-
-pub(crate) fn default_creator_config() -> PoolCreator<Configuration<PoolConfig<ConstantSumPool>>> {
-    PoolCreator::<Configuration<PoolConfig<ConstantSumPool>>> {
-        data: PoolConfig {
-            params: ConstantSumParams {
-                price: WAD,
-                swap_fee: 0.into(),
-                controller: eAddress::random(),
-            },
-            initial_allocation_data: ConstantSumInitData {
-                name: "Test Pool".to_string(),
-                symbol: "TP".to_string(),
-                reserve_x: WAD,
-                reserve_y: WAD,
-                token_x_name: "Token X".to_string(),
-                token_y_name: "Token Y".to_string(),
-                params: ConstantSumParams {
-                    price: WAD,
-                    swap_fee: 10000.into(),
-                    controller: eAddress::zero(),
-                },
-            },
-            token_list: vec![eAddress::zero(), eAddress::zero()],
-        },
-    }
+#[derive(Debug, Deserialize, Serialize)]
+pub enum MessageTypes<P>
+where
+    P: PoolType,
+{
+    #[serde(untagged)]
+    Deploy(DeploymentData),
+    #[serde(untagged)]
+    // TODO: This is super weird. The following commented out version with `PoolCreation<P>`
+    // doesn't compile. Create(creator::PoolCreation<P>),
+    // TODO: BUT, this line where the tuple struct has the exact same data as `PoolCreation<P>`
+    // DOES compile. I'm not sure how to go about making this work nicely, but at least this works
+    // for now.
+    Create(
+        (
+            eU256,         // Pool ID
+            Vec<eAddress>, // Token List
+            eAddress,      // Liquidity Token
+            P::Parameters,
+            P::AllocationData,
+        ),
+    ),
+    #[serde(untagged)]
+    TokenAdmin(token::Response),
+    #[serde(untagged)]
+    Update(P::Parameters),
 }

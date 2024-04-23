@@ -1,3 +1,4 @@
+#[allow(unused)]
 use dfmm_kit::behaviors::*;
 
 // #[arbiter_macros::main(
