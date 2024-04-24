@@ -83,24 +83,27 @@ pub fn spawn_constant_sum_updater(world: &mut World) {
     )
 }
 
-fn mock_swap_behavior() -> Swap<swap::Config<ConstantSumPool>, SwapOne, Message> {
-    let data = swap::Config::<ConstantSumPool>::default();
-
-    Swap::<swap::Config<ConstantSumPool>, SwapOne, Message> {
+fn mock_swap_behavior() -> Swap::<swap::Config::<ConstantSumPool>, SwapOnce, Message> {
+    let config = swap::Config::<ConstantSumPool> {
         token_admin: TOKEN_ADMIN.to_owned(),
-        update: UPDATER.to_owned(),
-        data,
-        swap_type: SwapOne {},
+        _phantom: PhantomData,
+    };
+    Swap::<swap::Config::<ConstantSumPool>, SwapOnce, Message> {
+        data: config,
+        swap_type: SwapOnce { amount: ethers::utils::parse_ether(0.5).unwrap(), input: InputToken::TokenX },
         _phantom: PhantomData,
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SwapOne {}
+#[derive(Deserialize, Clone)]
+pub struct SwapOnce {
+    pub amount: eU256,
+    pub input: InputToken,
+}
 
-impl SwapType<Message> for SwapOne {
-    fn compute_swap_amount(_event: Message) -> (eU256, dfmm_kit::pool::InputToken) {
-        (ethers::utils::parse_ether(1).unwrap(), InputToken::TokenY)
+impl SwapType<Message> for SwapOnce {
+    fn compute_swap_amount(&self, _event: Message) -> (eU256, InputToken) {
+        (self.amount, self.input.clone())
     }
 }
 

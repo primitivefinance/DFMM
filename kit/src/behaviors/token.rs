@@ -1,7 +1,4 @@
 use std::collections::HashMap;
-
-use ethers::utils::parse_ether;
-
 use super::*;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

@@ -2,77 +2,54 @@ use self::{bindings::erc20::ERC20, pool::InputToken};
 use super::*;
 use crate::behaviors::token::Response;
 
-pub trait SwapType<E, T: for<'a> Deserialize<'a>>: Configurable<T> {
-    fn compute_swap_amount(event: E) -> (eU256, InputToken);
+pub trait SwapType<E> {
+    fn compute_swap_amount(&self, event: E) -> (eU256, InputToken);
 }
 
-#[derive(Deserialize)]
-pub struct SwapOnce {
-    pub amount: eU256,
-    pub input: InputToken,
-}
-
-impl Configurable<SwapOnce> for SwapOnce {
-    fn configure(data: SwapOnce) -> Self {
-        SwapOnce {
-            amount: data.amount,
-            input: data.input,
-        }
-    }
-}
-
-impl SwapType<Message, SwapOnce> for SwapOnce {
-    fn compute_swap_amount(_event: Message) -> (eU256, InputToken) {
-        (ethers::utils::parse_ether(1).unwrap(), InputToken::TokenY)
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Swap<S>
+#[derive(Clone, Debug, Serialize, Deserialize, State)]
+pub struct Swap<S, T: SwapType<E>, E>
 where
     S: State,
 {
     pub data: S::Data,
+    pub swap_type: T,
+    pub _phantom: PhantomData<E>,
 }
 
 // TODO: This needs to be configurable in some way to make the `SwapType` become
 // transparent and useful.
 // Should also get some data necessary for mint amounts and what not.
 #[derive(Clone, Debug, Serialize, Deserialize, State)]
-pub struct Config<P, T, E, C>
+pub struct Config<P>
 where
     P: PoolType,
-    T: SwapType<E>,
-    C: Configurable<SwapType<E>>,
 {
     pub token_admin: String,
-    swap_type_configuration: C,
-    _phantom_p: PhantomData<P>,
-    _phantom_e: PhantomData<E>,
-    _phantom_t: PhantomData<T>,
+    pub _phantom: PhantomData<P>,
 }
 
 #[derive(Debug, Clone, State)]
-pub struct Processing<P, T, E>
+pub struct Processing<P>
 where
     P: PoolType,
-    T: SwapType<E>,
+    // T: SwapType<E>,
+    // E: Send + 'static,
 {
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
     pub pool: Pool<P>,
-    pub swap_type: T,
-    _phantom: PhantomData<E>,
+    // pub swap_type: T,
+    // _phantom: PhantomData<E>,
 }
 
 #[async_trait::async_trait]
-impl<P, T, E> Behavior<E> for Swap<Config<P, T, E>>
+impl<P, T, E> Behavior<E> for Swap<Config<P>, T, E>
 where
     P: PoolType + Send + Sync,
     T: SwapType<E> + Send,
     E: Send + 'static,
 {
-    type Processor = Swap<Processing<P, T, E>>;
+    type Processor = Swap<Processing<P>, T, E>;
     async fn startup(
         mut self,
         client: Arc<ArbiterMiddleware>,
@@ -131,14 +108,13 @@ where
         };
 
         let processor = Self::Processor {
-            token_admin: self.token_admin,
             data: Processing {
                 messager,
                 client,
                 pool,
             },
             swap_type: self.swap_type,
-            _phantom: PhantomData::<E>,
+            _phantom: PhantomData,
         };
 
         Ok(processor)
@@ -146,7 +122,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<P, T, E> Processor<E> for Swap<Processing<P, T, E>>
+impl<P, T, E> Processor<E> for Swap<Processing<P>, T, E>
 where
     P: PoolType + Send + Sync,
     T: SwapType<E> + Send,
@@ -156,7 +132,7 @@ where
         todo!("We have not implemented the 'get_stream' method yet for the 'Swap' behavior.")
     }
     async fn process(&mut self, event: E) -> Result<ControlFlow> {
-        let (swap_amount, input) = T::compute_swap_amount(event);
+        let (swap_amount, input) = self.swap_type.compute_swap_amount(event);
         self.data.pool.swap(swap_amount, input).await?;
         Ok(ControlFlow::Continue)
     }
