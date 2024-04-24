@@ -16,6 +16,28 @@ where
     pub _phantom: PhantomData<E>,
 }
 
+pub trait SwapStream<SwapType, E> where E: Send + 'static {
+    fn get_typed_stream(swap_type: SwapType, channel: Messager, client: Arc<ArbiterMiddleware>) -> Result<Option<EventStream<E>>>;
+}
+
+
+#[derive(Deserialize, Clone)]
+pub struct SwapOnce {
+    pub amount: eU256,
+    pub input: InputToken,
+}
+
+
+impl<P, SwapOnce, Message> SwapStream<SwapOnce, Message> for Swap<Processing<P>, SwapOnce, Message>
+where
+    P: PoolType + Send + Sync,
+{
+    fn get_typed_stream(swap_type: SwapOnce, channel: Messager, client: Arc<ArbiterMiddleware>) -> Result<Option<EventStream<Message>>> {
+        let thing = channel.stream()?;
+        Ok(Some(thing))
+    }
+}
+
 // TODO: This needs to be configurable in some way to make the `SwapType` become
 // transparent and useful.
 // Should also get some data necessary for mint amounts and what not.
@@ -46,7 +68,7 @@ where
 impl<P, T, E> Behavior<E> for Swap<Config<P>, T, E>
 where
     P: PoolType + Send + Sync,
-    T: SwapType<E> + Send,
+    T: SwapType<E> + Send + Clone,
     E: Send + 'static,
 {
     type Processor = Swap<Processing<P>, T, E>;
@@ -125,11 +147,12 @@ where
 impl<P, T, E> Processor<E> for Swap<Processing<P>, T, E>
 where
     P: PoolType + Send + Sync,
-    T: SwapType<E> + Send,
+    T: SwapType<E> + Send + Clone,
     E: Send + 'static,
+    Swap<Processing<P>, T, E>: SwapStream<T, E>,
 {
     async fn get_stream(&mut self) -> Result<Option<EventStream<E>>> {
-        todo!("We have not implemented the 'get_stream' method yet for the 'Swap' behavior.")
+        behaviors::swap::Swap::<behaviors::swap::Processing<P>, T, E>::get_typed_stream(self.swap_type.clone(), self.data.messager.clone(), self.data.client)
     }
     async fn process(&mut self, event: E) -> Result<ControlFlow> {
         let (swap_amount, input) = self.swap_type.compute_swap_amount(event);
