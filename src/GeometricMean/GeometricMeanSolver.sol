@@ -20,15 +20,13 @@ import {
     computeDeallocationGivenDeltaX,
     computeDeallocationGivenDeltaY,
     computePrice,
-    computeSwapDeltaLiquidity
+    computeSwapDeltaLiquidity,
+    computeDeltaGivenDeltaLRoundUp
 } from "./G3MMath.sol";
 import { ISolver } from "src/interfaces/ISolver.sol";
-import {
-    encodeAllocationDeltasGivenDeltaX,
-    encodeAllocationDeltasGivenDeltaY
-} from "src/lib/StrategyLib.sol";
 
 error InvalidTokenIndex();
+error InvalidDeltasLength();
 
 contract GeometricMeanSolver is ISolver {
     using FixedPointMathLib for uint256;
@@ -41,56 +39,55 @@ contract GeometricMeanSolver is ISolver {
     }
 
     function prepareInit(
-        bytes calldata params,
-        bytes calldata poolParams
+        uint256 reserveX,
+        uint256 S,
+        GeometricMeanParams memory poolParams
     ) external pure returns (bytes memory) {
-        (uint256 reserveX, uint256 S) = abi.decode(params, (uint256, uint256));
-
-        return computeInitialPoolData(
-            reserveX, S, abi.decode(poolParams, (GeometricMeanParams))
-        );
+        return computeInitialPoolData(reserveX, S, poolParams);
     }
 
     function prepareAllocation(
         uint256 poolId,
-        uint256 tokenIndex,
-        uint256 amount
+        uint256[] memory deltas
     ) external view returns (bytes memory) {
-        (uint256[] memory reserves, uint256 liquidity) =
+        if (deltas.length != 2) revert InvalidDeltasLength();
+
+        (uint256[] memory reserves, uint256 totalLiquidity) =
             getReservesAndLiquidity(poolId);
 
-        if (tokenIndex == 0) {
-            return encodeAllocationDeltasGivenDeltaX(
-                amount, reserves[0], reserves[1], liquidity
-            );
-        } else if (tokenIndex == 1) {
-            return encodeAllocationDeltasGivenDeltaY(
-                amount, reserves[0], reserves[1], liquidity
-            );
+        (uint256 deltaYGivenX, uint256 deltaLGivenX) =
+        computeAllocationGivenDeltaX(
+            deltas[0], reserves[0], reserves[1], totalLiquidity
+        );
+
+        (uint256 deltaXGivenY, uint256 deltaLGivenY) =
+        computeAllocationGivenDeltaY(
+            deltas[1], reserves[0], reserves[1], totalLiquidity
+        );
+
+        if (deltaLGivenX < deltaLGivenY) {
+            return abi.encode(deltas[0], deltaYGivenX, deltaLGivenX);
         } else {
-            revert InvalidTokenIndex();
+            return abi.encode(deltaXGivenY, deltas[1], deltaLGivenY);
         }
     }
 
     function prepareDeallocation(
         uint256 poolId,
-        uint256 tokenIndex,
-        uint256 amount
+        uint256 deltaLiquidity
     ) external view returns (bytes memory) {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
 
-        if (tokenIndex == 0) {
-            return encodeAllocationDeltasGivenDeltaX(
-                amount, reserves[0], reserves[1], liquidity
-            );
-        } else if (tokenIndex == 1) {
-            return encodeAllocationDeltasGivenDeltaY(
-                amount, reserves[0], reserves[1], liquidity
-            );
-        } else {
-            revert InvalidTokenIndex();
-        }
+        uint256 deltaX = computeDeltaGivenDeltaLRoundUp(
+            reserves[0], deltaLiquidity, liquidity
+        );
+
+        uint256 deltaY = computeDeltaGivenDeltaLRoundUp(
+            reserves[1], deltaLiquidity, liquidity
+        );
+
+        return abi.encode(deltaX, deltaY, deltaLiquidity);
     }
 
     struct SimulateSwapState {
@@ -161,7 +158,7 @@ contract GeometricMeanSolver is ISolver {
     }
 
     /// @dev Computes the internal price using this strategie's slot parameters.
-    function getPrice(
+    function getEstimatedPrice(
         uint256 poolId,
         uint256 tokenInIndex,
         uint256 tokenOutIndex
