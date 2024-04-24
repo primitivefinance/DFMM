@@ -50,7 +50,7 @@ where
 {
     type Processor = Allocate<A, E, Processing<P, E>>;
     async fn startup(
-        &mut self,
+        mut self,
         client: Arc<ArbiterMiddleware>,
         messager: Messager,
     ) -> Result<Self::Processor> {

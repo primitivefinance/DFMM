@@ -2,58 +2,79 @@ use self::{bindings::erc20::ERC20, pool::InputToken};
 use super::*;
 use crate::behaviors::token::Response;
 
-pub trait SwapType<E> {
+pub trait SwapType<E, T: for<'a> Deserialize<'a>>: Configurable<T> {
     fn compute_swap_amount(event: E) -> (eU256, InputToken);
 }
 
+#[derive(Deserialize)]
+pub struct SwapOnce {
+    pub amount: eU256,
+    pub input: InputToken,
+}
+
+impl Configurable<SwapOnce> for SwapOnce {
+    fn configure(data: SwapOnce) -> Self {
+        SwapOnce {
+            amount: data.amount,
+            input: data.input,
+        }
+    }
+}
+
+impl SwapType<Message, SwapOnce> for SwapOnce {
+    fn compute_swap_amount(_event: Message) -> (eU256, InputToken) {
+        (ethers::utils::parse_ether(1).unwrap(), InputToken::TokenY)
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Swap<S, T, E>
+pub struct Swap<S>
 where
     S: State,
-    T: SwapType<E>,
 {
-    // to get tokens on start up
-    pub token_admin: String,
-    pub update: String,
     pub data: S::Data,
-    pub swap_type: T,
-    pub _phantom: PhantomData<E>,
 }
 
 // TODO: This needs to be configurable in some way to make the `SwapType` become
 // transparent and useful.
 // Should also get some data necessary for mint amounts and what not.
 #[derive(Clone, Debug, Serialize, Deserialize, State)]
-pub struct Config<P: PoolType> {
-    phantom: PhantomData<P>,
-}
-
-impl<P: PoolType> Default for Config<P> {
-    fn default() -> Self {
-        Self {
-            phantom: PhantomData,
-        }
-    }
+pub struct Config<P, T, E, C>
+where
+    P: PoolType,
+    T: SwapType<E>,
+    C: Configurable<SwapType<E>>,
+{
+    pub token_admin: String,
+    swap_type_configuration: C,
+    _phantom_p: PhantomData<P>,
+    _phantom_e: PhantomData<E>,
+    _phantom_t: PhantomData<T>,
 }
 
 #[derive(Debug, Clone, State)]
-pub struct Processing<P: PoolType> {
+pub struct Processing<P, T, E>
+where
+    P: PoolType,
+    T: SwapType<E>,
+{
     pub messager: Messager,
     pub client: Arc<ArbiterMiddleware>,
     pub pool: Pool<P>,
+    pub swap_type: T,
+    _phantom: PhantomData<E>,
 }
 
 #[async_trait::async_trait]
-impl<P, T, E> Behavior<()> for Swap<Config<P>, T, E>
+impl<P, T, E> Behavior<E> for Swap<Config<P, T, E>>
 where
-    P: PoolType + Send,
+    P: PoolType + Send + Sync,
     T: SwapType<E> + Send,
-    E: Send,
+    E: Send + 'static,
 {
-    // type Processor = Swap<Processing<P>, T, E>;
-    type Processor = ();
+    type Processor = Swap<Processing<P, T, E>>;
     async fn startup(
-        &mut self,
+        mut self,
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
     ) -> Result<Self::Processor> {
@@ -76,11 +97,11 @@ where
             let name = token.name().call().await?;
             messager
                 .send(
-                    To::Agent(self.token_admin.clone()),
+                    To::Agent(self.data.token_admin.clone()),
                     TokenAdminQuery::MintRequest(MintRequest {
                         token: name,
                         mint_to: client.address(),
-                        mint_amount: 100_000_000_000,
+                        mint_amount: parse_ether(100)?,
                     }),
                 )
                 .await
@@ -101,37 +122,31 @@ where
         }
 
         // build pool for processor and stream
-        let _pool = Pool::<P> {
+        let pool = Pool::<P> {
             id: pool_creation.id,
             dfmm,
             instance: P::create_instance(strategy_contract, solver_contract, pool_creation.params),
             tokens,
             liquidity_token: ERC20::new(pool_creation.liquidity_token, client.clone()),
         };
-        // TODO: We need to come back around and adjust this.
-        // match self.swap_type.get_stream(messager.clone()) {
-        //     Some(stream) => {
-        //         let process = Self::Processor {
-        //             token_admin: self.token_admin.clone(),
-        //             update: self.update.clone(),
-        //             data: Processing {
-        //                 messager,
-        //                 client,
-        //                 pool,
-        //             },
-        //             swap_type: self.swap_type.clone(),
-        //             _phantom: PhantomData::<E>,
-        //         };
-        //         Ok(Some((process, stream)))
-        //     }
-        //     None => Ok(None),
-        // }
-        Ok(())
+
+        let processor = Self::Processor {
+            token_admin: self.token_admin,
+            data: Processing {
+                messager,
+                client,
+                pool,
+            },
+            swap_type: self.swap_type,
+            _phantom: PhantomData::<E>,
+        };
+
+        Ok(processor)
     }
 }
 
 #[async_trait::async_trait]
-impl<P, T, E> Processor<E> for Swap<Processing<P>, T, E>
+impl<P, T, E> Processor<E> for Swap<Processing<P, T, E>>
 where
     P: PoolType + Send + Sync,
     T: SwapType<E> + Send,

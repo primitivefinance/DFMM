@@ -32,7 +32,7 @@ pub struct DeploymentData {
 impl Behavior<()> for Deploy {
     type Processor = ();
     async fn startup(
-        &mut self,
+        mut self,
         client: Arc<ArbiterMiddleware>,
         messager: Messager,
     ) -> Result<Self::Processor> {

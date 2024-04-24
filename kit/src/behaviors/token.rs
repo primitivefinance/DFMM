@@ -25,7 +25,7 @@ pub struct Processing {
 impl Behavior<Message> for TokenAdmin<Config> {
     type Processor = TokenAdmin<Processing>;
     async fn startup(
-        &mut self,
+        mut self,
         client: Arc<ArbiterMiddleware>,
         messager: Messager,
     ) -> Result<Self::Processor> {
@@ -120,10 +120,7 @@ impl TokenAdmin<Processing> {
     async fn reply_mint_request(&self, mint_request: MintRequest, to: String) -> Result<()> {
         let token = &self.data.tokens.get(&mint_request.token).unwrap().1;
         token
-            .mint(
-                mint_request.mint_to,
-                parse_ether(mint_request.mint_amount).unwrap(),
-            )
+            .mint(mint_request.mint_to, mint_request.mint_amount)
             .send()
             .await?
             .await?;
@@ -163,7 +160,7 @@ pub struct MintRequest {
     pub mint_to: eAddress,
 
     /// The amount to mint.
-    pub mint_amount: u64,
+    pub mint_amount: eU256,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]

@@ -6,6 +6,12 @@ use futures_util::StreamExt;
 use tracing::{info, warn};
 include!("common.rs");
 
+// TODO: It is a bit odd in this test that when we see the `ConstantSumParams`
+// we see that the controller is the 0 address. This is not actually correct
+// though as it should be: "0x62007c61825f5052695f5de39baab5c23299876b".
+// This is just due to the redundancy we have with the `ConstantSumParams` in
+// and `BaseConfig` that we are currently using.
+
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
 async fn run_updater_constant_sum() {
     log(Level::DEBUG);
@@ -42,7 +48,7 @@ async fn run_updater_constant_sum() {
                         MessageTypes::Create(_) => continue,
                         MessageTypes::TokenAdmin(_) => continue,
                         MessageTypes::Update(params) => {
-                            info!("successfully updated the params to {:?}", params);
+                            info!("TEST SEES updated params: {:#?}", params);
                             let mock_data = constant_sum_parameters_vec();
                             assert_eq!(params, mock_data[count]);
                             if count >= 2 {

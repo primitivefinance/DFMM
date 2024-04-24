@@ -22,7 +22,7 @@ where
 {
     type Processor = ();
     async fn startup(
-        &mut self,
+        mut self,
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
     ) -> Result<Self::Processor> {
@@ -56,7 +56,7 @@ where
                     TokenAdminQuery::MintRequest(MintRequest {
                         token: tkn,
                         mint_to: client.address(),
-                        mint_amount: 100_000_000_000,
+                        mint_amount: parse_ether(100)?,
                     }),
                 )
                 .await

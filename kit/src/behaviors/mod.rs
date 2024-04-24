@@ -7,6 +7,7 @@ use arbiter_engine::{
 #[allow(unused)]
 use arbiter_macros::{Behaviors, State};
 use bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
+use ethers::utils::parse_ether;
 pub use token::{MintRequest, TokenAdminQuery};
 
 use self::{
@@ -32,6 +33,10 @@ pub enum Behaviors<P: PoolType> {
     Deployer(Deploy),
     TokenAdmin(TokenAdmin<token::Config>),
     Swap(swap::Config<P>),
+}
+
+pub trait Configurable<T: for<'a> Deserialize<'a>> {
+    fn configure(data: T) -> Self;
 }
 
 #[derive(Debug, Deserialize, Serialize)]

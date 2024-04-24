@@ -34,7 +34,7 @@ where
 {
     type Processor = Update<Processing<P>>;
     async fn startup(
-        &mut self,
+        mut self,
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
     ) -> Result<Self::Processor> {

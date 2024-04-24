@@ -59,18 +59,6 @@ pub fn log(level: Level) {
     .unwrap();
 }
 
-pub fn spawn_constant_sum_swapper(world: &mut World) {
-    world.add_agent(Agent::builder(SWAPPER).with_behavior(mock_swap_behavior()))
-}
-
-pub fn spawn_constant_sum_updater(world: &mut World) {
-    world.add_agent(
-        Agent::builder(UPDATER)
-            .with_behavior(mock_update_behavior())
-            .with_behavior(mock_creator_behavior()),
-    )
-}
-
 pub fn spawn_deployer(world: &mut World) {
     world.add_agent(Agent::builder(DEPLOYER).with_behavior(Deploy {}));
 }
@@ -83,24 +71,36 @@ pub fn spawn_constant_sum_creator(world: &mut World) {
     world.add_agent(Agent::builder(CREATOR).with_behavior(mock_creator_behavior()));
 }
 
-fn mock_swap_behavior() -> Swap<swap::Config<ConstantSumPool>, VanillaSwap, Message> {
+pub fn spawn_constant_sum_swapper(world: &mut World) {
+    world.add_agent(Agent::builder(SWAPPER).with_behavior(mock_swap_behavior()))
+}
+
+pub fn spawn_constant_sum_updater(world: &mut World) {
+    world.add_agent(
+        Agent::builder(UPDATER)
+            .with_behavior(mock_update_behavior())
+            .with_behavior(mock_creator_behavior()),
+    )
+}
+
+fn mock_swap_behavior() -> Swap<swap::Config<ConstantSumPool>, SwapOne, Message> {
     let data = swap::Config::<ConstantSumPool>::default();
 
-    Swap::<swap::Config<ConstantSumPool>, VanillaSwap, Message> {
+    Swap::<swap::Config<ConstantSumPool>, SwapOne, Message> {
         token_admin: TOKEN_ADMIN.to_owned(),
         update: UPDATER.to_owned(),
         data,
-        swap_type: VanillaSwap {},
+        swap_type: SwapOne {},
         _phantom: PhantomData,
     }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct VanillaSwap {}
+pub struct SwapOne {}
 
-impl SwapType<Message> for VanillaSwap {
+impl SwapType<Message> for SwapOne {
     fn compute_swap_amount(_event: Message) -> (eU256, dfmm_kit::pool::InputToken) {
-        (ethers::utils::parse_ether(0.5).unwrap(), InputToken::TokenY)
+        (ethers::utils::parse_ether(1).unwrap(), InputToken::TokenY)
     }
 }
 
