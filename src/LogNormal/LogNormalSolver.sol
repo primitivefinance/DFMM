@@ -26,10 +26,21 @@ import {
 } from "src/LogNormal/LogNormalMath.sol";
 import { ISolver, InvalidTokenIndex } from "src/interfaces/ISolver.sol";
 import {
-    encodeAllocationDeltasGivenDeltaX,
-    encodeAllocationDeltasGivenDeltaY
+    computeDeltaLGivenDeltaX,
+    computeDeltaLGivenDeltaY,
+    computeDeltaYGivenDeltaL,
+    computeDeltaXGivenDeltaL
 } from "src/lib/StrategyLib.sol";
 
+/**
+ * @dev Thrown when an array of deltas is not of length 2.
+ */
+error InvalidDeltasLength();
+
+/**
+ * @title Solver contract for the LogNormal strategy.
+ * @author Primitive
+ */
 contract LogNormalSolver is ISolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
@@ -41,163 +52,73 @@ contract LogNormalSolver is ISolver {
         uint256 L;
     }
 
-    uint256 public constant BISECTION_EPSILON = 0;
-    uint256 public constant MAX_BISECTION_ITERS = 120;
+    /// @inheritdoc ISolver
+    IStrategy public strategy;
 
-    address public strategy;
-
-    constructor(address _strategy) {
-        strategy = _strategy;
+    /**
+     * @param strategy_ Address of the LogNormal strategy.
+     */
+    constructor(IStrategy strategy_) {
+        strategy = strategy_;
     }
 
+    /**
+     * @notice Prepares the data to initialize a new LogNormal pool.
+     * @param reserveX Initial reserve of token X, expressed in WAD.
+     * @param S Strike price of the pool, expressed in WAD.
+     * @param poolParams Parameters as defined in the LogNormal strategy.
+     */
     function prepareInit(
-        bytes calldata params,
-        bytes calldata poolParams
+        uint256 reserveX,
+        uint256 S,
+        LogNormalParams calldata poolParams
     ) external pure returns (bytes memory) {
-        (uint256 reserveX, uint256 S) = abi.decode(params, (uint256, uint256));
-        return computeInitialPoolData(
-            reserveX, S, abi.decode(poolParams, (LogNormalParams))
-        );
+        return computeInitialPoolData(reserveX, S, poolParams);
     }
 
+    /// @inheritdoc ISolver
     function prepareAllocation(
         uint256 poolId,
-        uint256 tokenIndex,
-        uint256 delta
+        uint256[] calldata deltas
     ) external view override returns (bytes memory) {
-        (uint256[] memory reserves, uint256 liquidity) =
+        if (deltas.length != 2) revert InvalidDeltasLength();
+
+        (uint256[] memory reserves, uint256 totalLiquidity) =
             getReservesAndLiquidity(poolId);
-        if (tokenIndex == 0) {
-            return encodeAllocationDeltasGivenDeltaX(
-                delta, reserves[0], reserves[1], liquidity
-            );
-        } else if (tokenIndex == 1) {
-            return encodeAllocationDeltasGivenDeltaY(
-                delta, reserves[0], reserves[1], liquidity
-            );
+
+        uint256 deltaLGivenDeltaX =
+            computeDeltaLGivenDeltaX(deltas[0], totalLiquidity, reserves[0]);
+        uint256 deltaYGivenDeltaX = computeDeltaYGivenDeltaL(
+            deltaLGivenDeltaX, totalLiquidity, reserves[1]
+        );
+
+        uint256 deltaLGivenDeltaY =
+            computeDeltaLGivenDeltaY(deltas[1], totalLiquidity, reserves[1]);
+        uint256 deltaXGivenDeltaL = computeDeltaXGivenDeltaL(
+            deltaLGivenDeltaY, totalLiquidity, reserves[0]
+        );
+
+        if (deltaLGivenDeltaX < deltaLGivenDeltaY) {
+            return abi.encode(deltas[0], deltaYGivenDeltaX, deltaLGivenDeltaX);
         } else {
-            revert InvalidTokenIndex();
+            return abi.encode(deltaXGivenDeltaL, deltas[1], deltaLGivenDeltaY);
         }
     }
 
+    /// @inheritdoc ISolver
     function prepareDeallocation(
         uint256 poolId,
-        uint256 tokenIndex,
-        uint256 delta
+        uint256 deltaLiquidity
     ) external view override returns (bytes memory) {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
-        if (tokenIndex == 0) {
-            return encodeAllocationDeltasGivenDeltaX(
-                delta, reserves[0], reserves[1], liquidity
-            );
-        } else if (tokenIndex == 1) {
-            return encodeAllocationDeltasGivenDeltaY(
-                delta, reserves[0], reserves[1], liquidity
-            );
-        } else {
-            revert InvalidTokenIndex();
-        }
-    }
 
-    function getInitialPoolData(
-        uint256 rx,
-        uint256 S,
-        LogNormalParams memory params
-    ) public pure returns (bytes memory) {
-        return computeInitialPoolData(rx, S, params);
-    }
+        uint256 deltaX =
+            computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
+        uint256 deltaY =
+            computeDeltaYGivenDeltaL(deltaLiquidity, liquidity, reserves[1]);
 
-    function getPoolParams(uint256 poolId)
-        public
-        view
-        returns (LogNormalParams memory)
-    {
-        return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (LogNormalParams)
-        );
-    }
-
-    /// @notice used by kit
-    function prepareFeeUpdate(uint256 swapFee)
-        external
-        pure
-        returns (bytes memory)
-    {
-        return encodeFeeUpdate(swapFee);
-    }
-
-    /// @notice used by kit
-    function prepareMeanUpdate(
-        uint256 targetMean,
-        uint256 targetTimestamp
-    ) external pure returns (bytes memory) {
-        return encodeMeanUpdate(targetMean, targetTimestamp);
-    }
-
-    /// @notice used by kit
-    function prepareWidthUpdate(
-        uint256 targetWidth,
-        uint256 targetTimestamp
-    ) external pure returns (bytes memory) {
-        return encodeWidthUpdate(targetWidth, targetTimestamp);
-    }
-
-    /// @notice used by kit
-    function prepareControllerUpdate(address controller)
-        external
-        pure
-        returns (bytes memory)
-    {
-        return encodeControllerUpdate(controller);
-    }
-
-    function getReservesAndLiquidity(uint256 poolId)
-        public
-        view
-        override
-        returns (uint256[] memory reserves, uint256)
-    {
-        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
-        return (pool.reserves, pool.totalLiquidity);
-    }
-
-    function getNextLiquidity(
-        uint256 poolId,
-        uint256 rx,
-        uint256 ry,
-        uint256 L
-    ) public view returns (uint256) {
-        LogNormalParams memory poolParams = getPoolParams(poolId);
-
-        int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
-        return computeNextLiquidity(rx, ry, invariant, L, poolParams);
-    }
-
-    function getNextReserveX(
-        uint256 poolId,
-        uint256 ry,
-        uint256 L,
-        uint256 S
-    ) public view returns (uint256) {
-        LogNormalParams memory poolParams = getPoolParams(poolId);
-        uint256 approximatedRx = computeXGivenL(L, S, poolParams);
-        int256 invariant =
-            computeTradingFunction(approximatedRx, ry, L, poolParams);
-        return computeNextRx(ry, L, invariant, approximatedRx, poolParams);
-    }
-
-    function getNextReserveY(
-        uint256 poolId,
-        uint256 rx,
-        uint256 L,
-        uint256 S
-    ) public view returns (uint256) {
-        LogNormalParams memory poolParams = getPoolParams(poolId);
-        uint256 approximatedRy = computeYGivenL(L, S, poolParams);
-        int256 invariant =
-            computeTradingFunction(rx, approximatedRy, L, poolParams);
-        return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
+        return abi.encode(deltaX, deltaY, deltaLiquidity);
     }
 
     struct SimulateSwapState {
@@ -206,14 +127,15 @@ contract LogNormalSolver is ISolver {
         uint256 fees;
     }
 
-    /// @notice used by kit
-    /// @dev Estimates a swap's reserves and adjustments and returns its validity.
+    /// @inheritdoc ISolver
     function prepareSwap(
         uint256 poolId,
-        uint256 tokenIndexIn,
-        uint256 tokenIndexOut,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
+        if (tokenInIndex > 1 || tokenOutIndex > 1) revert InvalidTokenIndex();
+
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
@@ -226,7 +148,7 @@ contract LogNormalSolver is ISolver {
                 poolId, preReserves[0], preReserves[1], preTotalLiquidity
             );
 
-            if (tokenIndexIn == 0) {
+            if (tokenInIndex == 0) {
                 state.deltaLiquidity = computeDeltaLXIn(
                     amountIn,
                     preReserves[0],
@@ -283,17 +205,129 @@ contract LogNormalSolver is ISolver {
 
         bytes memory swapData;
 
-        if (tokenIndexIn == 0) {
+        if (tokenInIndex == 0) {
             swapData = abi.encode(0, 1, amountIn, state.amountOut);
         } else {
             swapData = abi.encode(1, 0, amountIn, state.amountOut);
         }
 
         uint256 poolId = poolId;
-        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
-            address(this), poolId, pool, swapData
-        );
+        (bool valid,,,,,,) =
+            strategy.validateSwap(address(this), poolId, pool, swapData);
         return (valid, state.amountOut, swapData);
+    }
+
+    /// @inheritdoc ISolver
+    function getEstimatedPrice(
+        uint256 poolId,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex
+    ) public view returns (uint256 price) {
+        if (tokenInIndex > 1 || tokenOutIndex > 1) revert InvalidTokenIndex();
+
+        if (tokenInIndex == 0) {
+            (uint256[] memory reserves, uint256 L) =
+                getReservesAndLiquidity(poolId);
+            price = computePriceGivenX(reserves[0], L, getPoolParams(poolId));
+        } else {
+            // TODO: Implement this.
+        }
+    }
+
+    /// @inheritdoc ISolver
+    function getReservesAndLiquidity(uint256 poolId)
+        public
+        view
+        override
+        returns (uint256[] memory reserves, uint256)
+    {
+        Pool memory pool = IDFMM(strategy.dfmm()).pools(poolId);
+        return (pool.reserves, pool.totalLiquidity);
+    }
+
+    /**
+     * @notice Returns the pool parameters of pool `poolId`.
+     * @param poolId Id of the target pool.
+     * @return Pool parameters as defined in the LogNormal strategy.
+     */
+    function getPoolParams(uint256 poolId)
+        public
+        view
+        returns (LogNormalParams memory)
+    {
+        return abi.decode(strategy.getPoolParams(poolId), (LogNormalParams));
+    }
+
+    /// @notice used by kit
+    function prepareFeeUpdate(uint256 swapFee)
+        external
+        pure
+        returns (bytes memory)
+    {
+        return encodeFeeUpdate(swapFee);
+    }
+
+    /// @notice used by kit
+    function prepareMeanUpdate(
+        uint256 targetMean,
+        uint256 targetTimestamp
+    ) external pure returns (bytes memory) {
+        return encodeMeanUpdate(targetMean, targetTimestamp);
+    }
+
+    /// @notice used by kit
+    function prepareWidthUpdate(
+        uint256 targetWidth,
+        uint256 targetTimestamp
+    ) external pure returns (bytes memory) {
+        return encodeWidthUpdate(targetWidth, targetTimestamp);
+    }
+
+    /// @notice used by kit
+    function prepareControllerUpdate(address controller)
+        external
+        pure
+        returns (bytes memory)
+    {
+        return encodeControllerUpdate(controller);
+    }
+
+    function getNextLiquidity(
+        uint256 poolId,
+        uint256 rx,
+        uint256 ry,
+        uint256 L
+    ) public view returns (uint256) {
+        LogNormalParams memory poolParams = getPoolParams(poolId);
+
+        int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
+        return computeNextLiquidity(rx, ry, invariant, L, poolParams);
+    }
+
+    function getNextReserveX(
+        uint256 poolId,
+        uint256 ry,
+        uint256 L,
+        uint256 S
+    ) public view returns (uint256) {
+        LogNormalParams memory poolParams = getPoolParams(poolId);
+        uint256 approximatedRx = computeXGivenL(L, S, poolParams);
+        int256 invariant =
+            computeTradingFunction(approximatedRx, ry, L, poolParams);
+        return computeNextRx(ry, L, invariant, approximatedRx, poolParams);
+    }
+
+    function getNextReserveY(
+        uint256 poolId,
+        uint256 rx,
+        uint256 L,
+        uint256 S
+    ) public view returns (uint256) {
+        LogNormalParams memory poolParams = getPoolParams(poolId);
+        uint256 approximatedRy = computeYGivenL(L, S, poolParams);
+        int256 invariant =
+            computeTradingFunction(rx, approximatedRy, L, poolParams);
+        return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
     }
 
     function getPriceGivenYL(
@@ -310,11 +344,5 @@ contract LogNormalSolver is ISolver {
         uint256 L
     ) public view returns (uint256 price) {
         price = computePriceGivenX(rx, L, getPoolParams(poolId));
-    }
-
-    /// @dev Computes the internal price using this strategie's slot parameters.
-    function getPrice(uint256 poolId) public view returns (uint256 price) {
-        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        price = computePriceGivenX(reserves[0], L, getPoolParams(poolId));
     }
 }
