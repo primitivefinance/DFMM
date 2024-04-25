@@ -17,83 +17,86 @@ import {
     ONE,
     computeInitialPoolData,
     FixedPointMathLib,
-    computeSwapDeltaLiquidity
+    computeSwapDeltaLiquidity,
+    computeDeltaLiquidityRoundDown
 } from "./ConstantSumMath.sol";
 import { ISolver, InvalidTokenIndex } from "src/interfaces/ISolver.sol";
 
-contract ConstantSumSolver is ISolver {
-    error NotEnoughLiquidity();
+error NotEnoughLiquidity();
+error InvalidDeltasLength();
 
+contract ConstantSumSolver is ISolver {
     using FixedPointMathLib for uint256;
 
-    /// @dev Total liquidity
+    /// @inheritdoc ISolver
+    IStrategy public strategy;
 
-    /// @dev Address of the strategy contract
-    address public strategy;
-
-    /// @notice Constructor to set the strategy address
-    /// @param strategy_ Address of the strategy contract
-    constructor(address strategy_) {
+    /// @param strategy_ Address of the ConstantSum strategy contract.
+    constructor(IStrategy strategy_) {
         strategy = strategy_;
     }
 
-    /// @notice Computes the initial pool data for a Constant Sum pool
-    /// @param reserveX The reserve amount of token X
-    /// @param reserveY The reserve amount of token Y
-    /// @param params The Constant Sum pool parameters
-    /// @return The initial pool data encoded as bytes
-    function getInitialPoolData(
+    /**
+     * @notice Prepares the data to initialize a new Constant Sum pool.
+     * @param reserveX Initial reserve of token X.
+     * @param reserveY Initial reserve of token Y.
+     * @param poolParams Parameters as defined by the ConstantSum strategy.
+     */
+    function prepareInit(
         uint256 reserveX,
         uint256 reserveY,
-        ConstantSumParams memory params
+        ConstantSumParams calldata poolParams
     ) public pure returns (bytes memory) {
-        return computeInitialPoolData(reserveX, reserveY, params);
+        return computeInitialPoolData(reserveX, reserveY, poolParams);
     }
 
-    function prepareInit(
-        bytes calldata params,
-        bytes calldata poolParams
-    ) public pure returns (bytes memory) {
-        (uint256 reserveX, uint256 reserveY) =
-            abi.decode(params, (uint256, uint256));
-        return getInitialPoolData(
-            reserveX, reserveY, abi.decode(poolParams, (ConstantSumParams))
-        );
-    }
-
+    /// @inheritdoc ISolver
     function prepareAllocation(
         uint256 poolId,
-        uint256 tokenIndex,
-        uint256 delta
+        uint256[] memory deltas
     ) external view returns (bytes memory) {
+        if (deltas.length != 2) revert InvalidDeltasLength();
+
         ConstantSumParams memory params = getPoolParams(poolId);
 
-        if (tokenIndex == 0) {
-            uint256 deltaL = delta.mulWadDown(params.price);
-            return abi.encode(delta, 0, deltaL);
-        } else if (tokenIndex == 1) {
-            return abi.encode(0, delta, delta);
+        uint256 deltaLGivenDeltaX =
+            computeDeltaLiquidityRoundDown(deltas[0], 0, params.price);
+
+        uint256 deltaLGivenDeltaY =
+            computeDeltaLiquidityRoundDown(0, deltas[1], params.price);
+
+        if (deltaLGivenDeltaX < deltaLGivenDeltaY) {
+            return abi.encode(deltas[0], 0, deltaLGivenDeltaX);
         } else {
-            revert InvalidTokenIndex();
+            return abi.encode(0, deltas[1], deltaLGivenDeltaY);
         }
     }
 
+    /// @inheritdoc ISolver
     function prepareDeallocation(
         uint256 poolId,
-        uint256 tokenIndex,
-        uint256 delta
-    ) external view returns (bytes memory) { }
+        uint256 deltaLiquidity
+    ) external view returns (bytes memory) {
+        // TODO: Implement this.
+    }
 
+    /// @inheritdoc ISolver
     function prepareSwap(
         uint256 poolId,
         uint256 tokenInIndex,
         uint256 tokenOutIndex,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
-        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
-        ConstantSumParams memory poolParams = abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
-        );
+        if (
+            tokenInIndex > 1 || tokenOutIndex > 1
+                || tokenInIndex == tokenOutIndex
+        ) {
+            revert InvalidTokenIndex();
+        }
+
+        Pool memory pool = IDFMM(strategy.dfmm()).pools(poolId);
+        ConstantSumParams memory poolParams =
+            abi.decode(strategy.getPoolParams(poolId), (ConstantSumParams));
 
         uint256 amountOut;
 
@@ -122,9 +125,8 @@ contract ConstantSumSolver is ISolver {
             swapData = abi.encode(1, 0, amountIn, amountOut);
         }
 
-        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
-            address(this), poolId, pool, swapData
-        );
+        (bool valid,,,,,,) =
+            strategy.validateSwap(address(this), poolId, pool, swapData);
         return (valid, amountOut, swapData);
     }
 
@@ -164,16 +166,14 @@ contract ConstantSumSolver is ISolver {
         return encodeControllerUpdate(newController);
     }
 
-    /// @notice Gets the reserves and liquidity for a given pool
-    /// @param poolId The id of the pool
-    /// @return The reserve of token X, the reserve of token Y, and the total liquidity
+    /// @inheritdoc ISolver
     function getReservesAndLiquidity(uint256 poolId)
         public
         view
         override
         returns (uint256[] memory, uint256)
     {
-        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        Pool memory pool = IDFMM(strategy.dfmm()).pools(poolId);
         return (pool.reserves, pool.totalLiquidity);
     }
 
@@ -185,16 +185,26 @@ contract ConstantSumSolver is ISolver {
         view
         returns (ConstantSumParams memory)
     {
-        return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (ConstantSumParams)
-        );
+        return abi.decode(strategy.getPoolParams(poolId), (ConstantSumParams));
     }
 
-    function getPrice(
+    /// @inheritdoc ISolver
+    function getEstimatedPrice(
         uint256 poolId,
         uint256 tokenInIndex,
         uint256 tokenOutIndex
     ) external view override returns (uint256) {
-        // TODO: Does it make sense to return a price here since it's a parameter.
+        if (
+            tokenInIndex > 1 || tokenOutIndex > 1
+                || tokenInIndex == tokenOutIndex
+        ) {
+            revert InvalidTokenIndex();
+        }
+
+        if (tokenInIndex == 0) {
+            return getPoolParams(poolId).price;
+        } else {
+            return ONE.divWadDown(getPoolParams(poolId).price);
+        }
     }
 }
