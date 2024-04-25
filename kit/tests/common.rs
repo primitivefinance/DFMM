@@ -1,10 +1,6 @@
 use std::{collections::VecDeque, marker::PhantomData};
 
-use arbiter_engine::{
-    agent::Agent,
-    messager::Message,
-    world::World,
-};
+use arbiter_engine::{agent::Agent, messager::Message, world::World};
 use dfmm_kit::{
     behaviors::{
         creator::{self, Create},

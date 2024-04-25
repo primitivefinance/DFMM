@@ -2,8 +2,7 @@ use std::{str::FromStr, time::Duration};
 
 use arbiter_core::{events::stream_event, middleware::ArbiterMiddleware};
 use arbiter_engine::messager::To;
-use dfmm_kit::{behaviors::MessageTypes, bindings::dfmm::DFMM};
-use ethers::{abi::Address, types::H160};
+use dfmm_kit::bindings::dfmm::DFMM;
 use futures_util::StreamExt;
 use tracing::{info, warn};
 include!("common.rs");
@@ -26,7 +25,6 @@ async fn run_swapper_constant_sum() {
         // receivers. TODO: This is a bit of a hack and we could honestly make
         // the `World::run` better to handle this, but this works for now.
         tokio::time::sleep(Duration::from_millis(2000)).await;
-        let mut stream = messager.stream().unwrap();
 
         // TODO: Send a specific message and see if we get the swap.
         messager

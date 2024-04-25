@@ -1,7 +1,4 @@
-use self::{
-    bindings::erc20::ERC20,
-    pool::InputToken,
-};
+use self::{bindings::erc20::ERC20, pool::InputToken};
 use super::*;
 use crate::behaviors::token::Response;
 
