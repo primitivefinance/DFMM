@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use arbiter_engine::messager::To;
 use dfmm_kit::behaviors::MessageTypes;
 use futures_util::StreamExt;
 use tracing::{info, warn};
@@ -7,7 +8,7 @@ include!("common.rs");
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
 async fn run_swapper_constant_sum() {
-    log(Level::DEBUG);
+    log(Level::TRACE);
 
     let mut world = World::new("test");
     let mut messager = world.messager.for_agent("test");
@@ -25,6 +26,11 @@ async fn run_swapper_constant_sum() {
         let mut stream = messager.stream().unwrap();
 
         // TODO: Send a specific message and see if we get the swap.
+        messager
+            .send(To::Agent(SWAPPER.to_owned()), ExecuteSwap)
+            .await
+            .unwrap();
+        debug!("message sent to swapper");
 
         while let Some(message) = stream.next().await {
             match serde_json::from_str::<MessageTypes<ConstantSumPool>>(&message.data) {

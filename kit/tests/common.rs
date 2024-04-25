@@ -1,11 +1,17 @@
 use std::{collections::VecDeque, marker::PhantomData};
 
-use arbiter_engine::{agent::Agent, machine::State, messager::{Message, Messager}, world::World};
+use anyhow::Result;
+use arbiter_engine::{
+    agent::Agent,
+    machine::State,
+    messager::{Message, Messager},
+    world::World,
+};
 use dfmm_kit::{
     behaviors::{
         creator::{self, Create},
         deploy::Deploy,
-        swap::{self, Swap, SwapType, SwapOnce},
+        swap::{self, Swap, SwapType},
         token::{self, TokenAdmin},
         update::{self, Update},
     },
@@ -16,11 +22,12 @@ use dfmm_kit::{
     },
     TokenData,
 };
-
-use anyhow::Result;
-use ethers::types::{Address as eAddress, U256 as eU256};
-use serde::Deserialize;
-use tracing::Level;
+use ethers::{
+    types::{Address as eAddress, U256 as eU256},
+    utils::parse_ether,
+};
+use serde::{Deserialize, Serialize};
+use tracing::{debug, Level};
 use tracing_subscriber::FmtSubscriber;
 
 pub const WAD: eU256 = eU256([1_000_000_000_000_000_000, 0, 0, 0]);
@@ -85,14 +92,39 @@ pub fn spawn_constant_sum_updater(world: &mut World) {
     )
 }
 
-fn mock_swap_behavior() -> Swap::<swap::Config::<ConstantSumPool>, SwapOnce, Message> {
+#[derive(Deserialize, Clone)]
+pub struct SwapOnCommand {
+    pub amount: eU256,
+    pub input: InputToken,
+}
+
+impl SwapType<Message> for SwapOnCommand {
+    fn compute_swap_amount(&self, event: Message) -> Option<(eU256, InputToken)> {
+        debug!("Inside compute swap amount for `SwapOnCommand`");
+        match serde_json::from_str::<ExecuteSwap>(&event.data) {
+            Ok(_) => {
+                debug!("Successfully deserialized message data for `SwapOnCommand`");
+                Some((self.amount, self.input))
+            }
+            Err(_) => None,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ExecuteSwap;
+
+fn mock_swap_behavior() -> Swap<swap::Config<ConstantSumPool>, SwapOnCommand, Message> {
     let config = swap::Config::<ConstantSumPool> {
         token_admin: TOKEN_ADMIN.to_owned(),
         _phantom: PhantomData,
     };
-    Swap::<swap::Config::<ConstantSumPool>, SwapOnce, Message> {
+    Swap::<swap::Config<ConstantSumPool>, SwapOnCommand, Message> {
         data: config,
-        swap_type: SwapOnce { amount: ethers::utils::parse_ether(0.5).unwrap(), input: InputToken::TokenX },
+        swap_type: SwapOnCommand {
+            amount: parse_ether(0.5).unwrap(),
+            input: InputToken::TokenX,
+        },
         _phantom: PhantomData,
     }
 }
@@ -140,7 +172,7 @@ fn mock_creator_behavior() -> Create<creator::Config<ConstantSumPool>> {
         data: creator::Config {
             params: ConstantSumParams {
                 price: PRICE,
-                swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+                swap_fee: parse_ether(0.003).unwrap(),
                 controller: eAddress::zero(),
             },
             token_list: vec![TOKEN_X_NAME.to_owned(), TOKEN_Y_NAME.to_owned()],
@@ -157,24 +189,20 @@ fn mock_base_config() -> BaseConfig {
     BaseConfig {
         name: POOL_NAME.to_owned(),
         symbol: POOL_SYMBOL.to_owned(),
-        swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+        swap_fee: parse_ether(0.003).unwrap(),
         controller_fee: 0.into(),
         controller: eAddress::zero(),
     }
 }
 
 pub fn constant_sum_parameters_vec() -> VecDeque<ConstantSumParams> {
-    let prices: VecDeque<eU256> = vec![
-        PRICE,
-        ethers::utils::parse_ether(2).unwrap(),
-        ethers::utils::parse_ether(3).unwrap(),
-    ]
-    .into();
+    let prices: VecDeque<eU256> =
+        vec![PRICE, parse_ether(2).unwrap(), parse_ether(3).unwrap()].into();
     let mut params = VecDeque::new();
     for price in prices {
         let parameter = ConstantSumParams {
             price,
-            swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+            swap_fee: parse_ether(0.003).unwrap(),
             controller: eAddress::zero(),
         };
         params.push_back(parameter);
@@ -184,8 +212,8 @@ pub fn constant_sum_parameters_vec() -> VecDeque<ConstantSumParams> {
 
 fn constant_sum_parameters() -> ConstantSumParams {
     ConstantSumParams {
-        price: ethers::utils::parse_ether(1).unwrap(),
-        swap_fee: ethers::utils::parse_ether(0.003).unwrap(),
+        price: parse_ether(1).unwrap(),
+        swap_fee: parse_ether(0.003).unwrap(),
         controller: eAddress::zero(),
     }
 }

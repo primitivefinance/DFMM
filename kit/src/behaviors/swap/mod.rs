@@ -1,12 +1,15 @@
-use self::{bindings::erc20::ERC20, pool::InputToken};
+use self::{
+    bindings::{dfmm::dfmm, erc20::ERC20},
+    pool::InputToken,
+};
 use super::*;
 use crate::behaviors::token::Response;
 
 pub trait SwapType<E> {
-    fn compute_swap_amount(&self, event: E) -> (eU256, InputToken);
+    fn compute_swap_amount(&self, event: E) -> Option<(eU256, InputToken)>;
 }
 
-// this is somewhat all encompassing. It has everything. 
+// this is somewhat all encompassing. It has everything.
 #[derive(Clone, Debug, Serialize, Deserialize, State)]
 pub struct Swap<S, T: SwapType<E>, E>
 where
@@ -15,19 +18,6 @@ where
     pub data: S::Data,
     pub swap_type: T,
     pub _phantom: PhantomData<E>,
-}
-
-
-#[derive(Deserialize, Clone)]
-pub struct SwapOnce {
-    pub amount: eU256,
-    pub input: InputToken,
-}
-
-impl SwapType<Message> for SwapOnce {
-    fn compute_swap_amount(&self, _event: Message) -> (eU256, InputToken) {
-        (self.amount, self.input)
-    }
 }
 
 // Should also get some data necessary for mint amounts and what not.
@@ -133,7 +123,8 @@ where
     }
 }
 
-/// This is the default implementation for any processor that takes in some event E and will work for the `Swap` struct.
+/// This is the default implementation for any processor that takes in some
+/// event E and will work for the `Swap` struct.
 #[async_trait::async_trait]
 impl<P, T, E> Processor<E> for Swap<Processing<P>, T, E>
 where
@@ -146,22 +137,29 @@ where
     }
 
     default async fn process(&mut self, event: E) -> Result<ControlFlow> {
-        let (swap_amount, input) = self.swap_type.compute_swap_amount(event);
-        self.data.pool.swap(swap_amount, input).await?;
+        if let Some((swap_amount, input)) = self.swap_type.compute_swap_amount(event) {
+            self.data.pool.swap(swap_amount, input).await?;
+        }
+
         Ok(ControlFlow::Continue)
     }
 }
 
-/// With the `specialization` feature in Rust, we can take the above trait and use it as a default when we don't want to have some specific kind of stream come with it.
-/// Sadly, we still have to copy the `process` method along with the `get_stream`, ideally, in the future, all you have to do is just implement your own `get_stream` given whatever event `E` you want to produce, and this will be a very straightforward specialization
-/// that allows you to easily extend `Swap` for whatever swap type you want. See this tracking RFC for trait `specialization` https://github.com/rust-lang/rust/issues/31844 
+/// With the `specialization` feature in Rust, we can take the above trait and
+/// use it as a default when we don't want to have some specific kind of stream
+/// come with it. Sadly, we still have to copy the `process` method along with
+/// the `get_stream`, ideally, in the future, all you have to do is just
+/// implement your own `get_stream` given whatever event `E` you want to
+/// produce, and this will be a very straightforward specialization that allows you to easily extend `Swap` for whatever swap type you want. See this tracking RFC for trait `specialization` https://github.com/rust-lang/rust/issues/31844
 ///
-/// Just to be clear, this now will allow you to work with any `Swap` and `SwapType` as long as it streams `Message`s. If you need to stream something else, just copy this specialization and use whatever stream item you'd like!
+/// Just to be clear, this now will allow you to work with any `Swap` and
+/// `SwapType` as long as it streams `Message`s. If you need to stream something
+/// else, just copy this specialization and use whatever stream item you'd like!
 #[async_trait::async_trait]
-impl<P, T> Processor<Message> for Swap<Processing<P>, T, Message> 
+impl<P, T> Processor<Message> for Swap<Processing<P>, T, Message>
 where
-P: PoolType + Send + Sync,
-T: SwapType<Message> + Send + Clone,
+    P: PoolType + Send + Sync,
+    T: SwapType<Message> + Send + Clone,
 {
     // This is the specialized trait for the specific type E = Message. Cool!
     async fn get_stream(&mut self) -> Result<Option<EventStream<Message>>> {
@@ -169,9 +167,11 @@ T: SwapType<Message> + Send + Clone,
     }
 
     // Would be nice to nice to not have to rewrite this every time see above... RIP
-    async fn process(&mut self, event: Message) -> Result<ControlFlow> {
-        let (swap_amount, input) = self.swap_type.compute_swap_amount(event);
-        self.data.pool.swap(swap_amount, input).await?;
+    default async fn process(&mut self, event: Message) -> Result<ControlFlow> {
+        if let Some((swap_amount, input)) = self.swap_type.compute_swap_amount(event) {
+            self.data.pool.swap(swap_amount, input).await?;
+        }
+
         Ok(ControlFlow::Continue)
     }
 }
