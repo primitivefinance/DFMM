@@ -1,10 +1,8 @@
 use std::{collections::VecDeque, marker::PhantomData};
 
-use anyhow::Result;
 use arbiter_engine::{
     agent::Agent,
-    machine::State,
-    messager::{Message, Messager},
+    messager::Message,
     world::World,
 };
 use dfmm_kit::{
@@ -210,7 +208,7 @@ pub fn constant_sum_parameters_vec() -> VecDeque<ConstantSumParams> {
     params
 }
 
-fn constant_sum_parameters() -> ConstantSumParams {
+fn _constant_sum_parameters() -> ConstantSumParams {
     ConstantSumParams {
         price: parse_ether(1).unwrap(),
         swap_fee: parse_ether(0.003).unwrap(),

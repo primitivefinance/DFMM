@@ -1,5 +1,5 @@
 use self::{
-    bindings::{dfmm::dfmm, erc20::ERC20},
+    bindings::erc20::ERC20,
     pool::InputToken,
 };
 use super::*;
@@ -138,6 +138,7 @@ where
 
     default async fn process(&mut self, event: E) -> Result<ControlFlow> {
         if let Some((swap_amount, input)) = self.swap_type.compute_swap_amount(event) {
+            debug!("Found the swap amounts: {:?}", swap_amount);
             self.data.pool.swap(swap_amount, input).await?;
         }
 

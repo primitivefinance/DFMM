@@ -41,26 +41,28 @@ impl Behavior<()> for Deploy {
         let geometric_mean = GeometricMean::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
-        let geometric_mean_solver = GeometricMeanSolver::deploy(client.clone(), dfmm.address())?
-            .send()
-            .await?;
+        let geometric_mean_solver =
+            GeometricMeanSolver::deploy(client.clone(), geometric_mean.address())?
+                .send()
+                .await?;
         let log_normal = LogNormal::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
-        let log_normal_solver = LogNormalSolver::deploy(client.clone(), dfmm.address())?
+        let log_normal_solver = LogNormalSolver::deploy(client.clone(), log_normal.address())?
             .send()
             .await?;
         let constant_sum = ConstantSum::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
-        let constant_sum_solver = ConstantSumSolver::deploy(client.clone(), dfmm.address())?
-            .send()
-            .await?;
+        let constant_sum_solver =
+            ConstantSumSolver::deploy(client.clone(), constant_sum.address())?
+                .send()
+                .await?;
         let n_token_geometric_mean = NTokenGeometricMean::deploy(client.clone(), dfmm.address())?
             .send()
             .await?;
         let n_token_geometric_mean_solver =
-            NTokenGeometricMeanSolver::deploy(client.clone(), dfmm.address())?
+            NTokenGeometricMeanSolver::deploy(client.clone(), n_token_geometric_mean.address())?
                 .send()
                 .await?;
         let deployment_data = DeploymentData {

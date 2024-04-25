@@ -23,6 +23,8 @@ async fn run_updater_constant_sum() {
     spawn_token_admin(&mut world);
     spawn_constant_sum_updater(&mut world);
 
+    // NOTE: This test should be improved so that we check the contract state was
+    // actually changed and updated correctly
     let task: tokio::task::JoinHandle<()> = tokio::spawn(async move {
         // Sleep because the world needs to give all of the agents time to build their
         // receivers. TODO: This is a bit of a hack and we could honestly make

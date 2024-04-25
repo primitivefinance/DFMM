@@ -79,8 +79,12 @@ impl PoolType for ConstantSumPool {
         );
         let (valid, _, data) = match input_token {
             InputToken::TokenX => {
-                let params = self.solver_contract.get_pool_params(pool_id).call().await?;
-                debug!("Params are: {:?}", params);
+                // let params = self.solver_contract.get_pool_params(pool_id).call().await?;
+                // debug!("Params are: {:?}", params);
+                debug!(
+                    "Matched token x with pool id : {:?}, and amount in :{:?}",
+                    pool_id, amount_in
+                );
                 self.solver_contract
                     .simulate_swap(pool_id, true, amount_in)
                     .call()
