@@ -16,7 +16,7 @@ jobs:
         with:
           toolchain: nightly
       - name: test
-        run: cargo test --workspace --all-features
+        run: cargo +nightly test --workspace --all-features
 
   clippy:
     name: clippy
