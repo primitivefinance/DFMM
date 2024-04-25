@@ -21,7 +21,8 @@ import {
     computeDeallocationGivenDeltaY,
     computePrice,
     computeSwapDeltaLiquidity,
-    computeDeltaGivenDeltaLRoundUp
+    computeDeltaGivenDeltaLRoundUp,
+    ONE
 } from "./G3MMath.sol";
 import { ISolver } from "src/interfaces/ISolver.sol";
 
@@ -32,10 +33,12 @@ contract GeometricMeanSolver is ISolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
+    /// @inheritdoc ISolver
     IStrategy public strategy;
 
-    constructor(address strategy_) {
-        strategy = IStrategy(strategy_);
+    /// @param strategy_ Address of the ConstantSum strategy contract.
+    constructor(IStrategy strategy_) {
+        strategy = strategy_;
     }
 
     function prepareInit(
@@ -46,6 +49,7 @@ contract GeometricMeanSolver is ISolver {
         return computeInitialPoolData(reserveX, S, poolParams);
     }
 
+    /// @inheritdoc ISolver
     function prepareAllocation(
         uint256 poolId,
         uint256[] memory deltas
@@ -72,6 +76,7 @@ contract GeometricMeanSolver is ISolver {
         }
     }
 
+    /// @inheritdoc ISolver
     function prepareDeallocation(
         uint256 poolId,
         uint256 deltaLiquidity
@@ -101,7 +106,7 @@ contract GeometricMeanSolver is ISolver {
         uint256 fees;
     }
 
-    /// @dev Estimates a swap's reserves and adjustments and returns its validity.
+    /// @inheritdoc ISolver
     function prepareSwap(
         uint256 poolId,
         uint256 tokenInIndex,
@@ -157,26 +162,43 @@ contract GeometricMeanSolver is ISolver {
         return (valid, state.amountOut, swapData);
     }
 
-    /// @dev Computes the internal price using this strategie's slot parameters.
+    /// @inheritdoc ISolver
     function getEstimatedPrice(
         uint256 poolId,
         uint256 tokenInIndex,
         uint256 tokenOutIndex
-    ) public view returns (uint256 price) {
+    ) public view returns (uint256) {
+        if (
+            tokenInIndex > 1 || tokenOutIndex > 1
+                || tokenInIndex == tokenOutIndex
+        ) {
+            revert InvalidTokenIndex();
+        }
+
         GeometricMeanParams memory params = getPoolParams(poolId);
         (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
-        price = computePrice(
-            reserves[tokenInIndex], reserves[tokenOutIndex], params
-        );
+
+        if (tokenInIndex == 0) {
+            return computePrice(
+                reserves[tokenInIndex], reserves[tokenOutIndex], params
+            );
+        } else {
+            return ONE.divWadUp(
+                computePrice(
+                    reserves[tokenOutIndex], reserves[tokenInIndex], params
+                )
+            );
+        }
     }
 
+    /// @inheritdoc ISolver
     function getReservesAndLiquidity(uint256 poolId)
         public
         view
         override
         returns (uint256[] memory, uint256)
     {
-        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        Pool memory pool = IDFMM(strategy.dfmm()).pools(poolId);
         return (pool.reserves, pool.totalLiquidity);
     }
 
@@ -185,9 +207,7 @@ contract GeometricMeanSolver is ISolver {
         view
         returns (GeometricMeanParams memory params)
     {
-        return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (GeometricMeanParams)
-        );
+        return abi.decode(strategy.getPoolParams(poolId), (GeometricMeanParams));
     }
 
     function prepareFeeUpdate(uint256 swapFee)
@@ -211,16 +231,6 @@ contract GeometricMeanSolver is ISolver {
         returns (bytes memory)
     {
         return encodeControllerUpdate(controller);
-    }
-
-    // TODO: Let's see if we can remove the following functions
-
-    function getInitialPoolData(
-        uint256 rx,
-        uint256 S,
-        GeometricMeanParams memory params
-    ) public pure returns (bytes memory) {
-        return computeInitialPoolData(rx, S, params);
     }
 
     function getNextReserveX(
