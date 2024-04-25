@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.13;
 
+import { IStrategy } from "src/interfaces/IStrategy.sol";
+
 /**
  * @notice Thrown when the provided token index is not available in the
  * current pool.
@@ -93,7 +95,7 @@ interface ISolver {
     /**
      * @notice Returns the address of the associated strategy contract.
      */
-    function strategy() external view returns (address);
+    function strategy() external view returns (IStrategy);
 
     // TODO: This function might get removed because `swapFee` might be
     // merged into default DFMM pool parameters.
