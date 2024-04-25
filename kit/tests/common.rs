@@ -1,12 +1,11 @@
 use std::{collections::VecDeque, marker::PhantomData};
 
-use arbiter_core::middleware::ArbiterMiddleware;
 use arbiter_engine::{agent::Agent, machine::State, messager::{Message, Messager}, world::World};
 use dfmm_kit::{
     behaviors::{
         creator::{self, Create},
         deploy::Deploy,
-        swap::{self, Swap, SwapStream, SwapType},
+        swap::{self, Swap, SwapType, SwapOnce},
         token::{self, TokenAdmin},
         update::{self, Update},
     },
@@ -95,24 +94,6 @@ fn mock_swap_behavior() -> Swap::<swap::Config::<ConstantSumPool>, SwapOnce, Mes
         data: config,
         swap_type: SwapOnce { amount: ethers::utils::parse_ether(0.5).unwrap(), input: InputToken::TokenX },
         _phantom: PhantomData,
-    }
-}
-
-#[derive(Deserialize, Clone)]
-pub struct SwapOnce {
-    pub amount: eU256,
-    pub input: InputToken,
-}
-
-impl SwapType<Message> for SwapOnce {
-    fn compute_swap_amount(&self, _event: Message) -> (eU256, InputToken) {
-        (self.amount, self.input.clone())
-    }
-}
-impl<S> SwapStream<SwapOnce, Message> for Swap<S, SwapOnce, Message> where S: State{
-    fn get_typed_stream(_swap_type: SwapOnce, mut channel: Messager, _client: Arc<ArbiterMiddleware>) -> Result<Option<arbiter_engine::machine::EventStream<Message>>> {
-        let thing = channel.stream()?;
-        Ok(Some(thing))
     }
 }
 

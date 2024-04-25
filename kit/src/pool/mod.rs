@@ -98,7 +98,7 @@ pub enum UpdateParameters<P: PoolType> {
 // Notes:
 // This is used in the `swap_data` function of the poolType trait to determine
 // which token to swap in.
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy)]
 pub enum InputToken {
     TokenX,
     TokenY,

@@ -6,7 +6,7 @@ use tracing::{info, warn};
 include!("common.rs");
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
-async fn run_updater_constant_sum() {
+async fn run_swapper_constant_sum() {
     log(Level::DEBUG);
 
     let mut world = World::new("test");

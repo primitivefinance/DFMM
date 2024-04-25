@@ -6,6 +6,7 @@ pub trait SwapType<E> {
     fn compute_swap_amount(&self, event: E) -> (eU256, InputToken);
 }
 
+// this is somewhat all encompassing. It has everything. 
 #[derive(Clone, Debug, Serialize, Deserialize, State)]
 pub struct Swap<S, T: SwapType<E>, E>
 where
@@ -16,10 +17,6 @@ where
     pub _phantom: PhantomData<E>,
 }
 
-pub trait SwapStream<SwapType, E> where E: Send + 'static {
-    fn get_typed_stream(swap_type: SwapType, channel: Messager, client: Arc<ArbiterMiddleware>) -> Result<Option<EventStream<E>>>;
-}
-
 
 #[derive(Deserialize, Clone)]
 pub struct SwapOnce {
@@ -27,19 +24,12 @@ pub struct SwapOnce {
     pub input: InputToken,
 }
 
-
-impl<P, SwapOnce, Message> SwapStream<SwapOnce, Message> for Swap<Processing<P>, SwapOnce, Message>
-where
-    P: PoolType + Send + Sync,
-{
-    fn get_typed_stream(swap_type: SwapOnce, channel: Messager, client: Arc<ArbiterMiddleware>) -> Result<Option<EventStream<Message>>> {
-        let thing = channel.stream()?;
-        Ok(Some(thing))
+impl SwapType<Message> for SwapOnce {
+    fn compute_swap_amount(&self, _event: Message) -> (eU256, InputToken) {
+        (self.amount, self.input)
     }
 }
 
-// TODO: This needs to be configurable in some way to make the `SwapType` become
-// transparent and useful.
 // Should also get some data necessary for mint amounts and what not.
 #[derive(Clone, Debug, Serialize, Deserialize, State)]
 pub struct Config<P>
@@ -143,18 +133,43 @@ where
     }
 }
 
+/// This is the default implementation for any processor that takes in some event E and will work for the `Swap` struct.
 #[async_trait::async_trait]
 impl<P, T, E> Processor<E> for Swap<Processing<P>, T, E>
 where
     P: PoolType + Send + Sync,
     T: SwapType<E> + Send + Clone,
     E: Send + 'static,
-    Swap<Processing<P>, T, E>: SwapStream<T, E>,
 {
-    async fn get_stream(&mut self) -> Result<Option<EventStream<E>>> {
-        behaviors::swap::Swap::<behaviors::swap::Processing<P>, T, E>::get_typed_stream(self.swap_type.clone(), self.data.messager.clone(), self.data.client)
+    default async fn get_stream(&mut self) -> Result<Option<EventStream<E>>> {
+        Ok(None)
     }
-    async fn process(&mut self, event: E) -> Result<ControlFlow> {
+
+    default async fn process(&mut self, event: E) -> Result<ControlFlow> {
+        let (swap_amount, input) = self.swap_type.compute_swap_amount(event);
+        self.data.pool.swap(swap_amount, input).await?;
+        Ok(ControlFlow::Continue)
+    }
+}
+
+/// With the `specialization` feature in Rust, we can take the above trait and use it as a default when we don't want to have some specific kind of stream come with it.
+/// Sadly, we still have to copy the `process` method along with the `get_stream`, ideally, in the future, all you have to do is just implement your own `get_stream` given whatever event `E` you want to produce, and this will be a very straightforward specialization
+/// that allows you to easily extend `Swap` for whatever swap type you want. See this tracking RFC for trait `specialization` https://github.com/rust-lang/rust/issues/31844 
+///
+/// Just to be clear, this now will allow you to work with any `Swap` and `SwapType` as long as it streams `Message`s. If you need to stream something else, just copy this specialization and use whatever stream item you'd like!
+#[async_trait::async_trait]
+impl<P, T> Processor<Message> for Swap<Processing<P>, T, Message> 
+where
+P: PoolType + Send + Sync,
+T: SwapType<Message> + Send + Clone,
+{
+    // This is the specialized trait for the specific type E = Message. Cool!
+    async fn get_stream(&mut self) -> Result<Option<EventStream<Message>>> {
+        Ok(Some(self.data.messager.stream()?))
+    }
+
+    // Would be nice to nice to not have to rewrite this every time see above... RIP
+    async fn process(&mut self, event: Message) -> Result<ControlFlow> {
         let (swap_amount, input) = self.swap_type.compute_swap_amount(event);
         self.data.pool.swap(swap_amount, input).await?;
         Ok(ControlFlow::Continue)
