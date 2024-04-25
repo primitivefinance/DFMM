@@ -24,6 +24,8 @@ async fn run_swapper_constant_sum() {
         tokio::time::sleep(Duration::from_millis(2000)).await;
         let mut stream = messager.stream().unwrap();
 
+        // TODO: Send a specific message and see if we get the swap.
+
         while let Some(message) = stream.next().await {
             match serde_json::from_str::<MessageTypes<ConstantSumPool>>(&message.data) {
                 Ok(data) => {
