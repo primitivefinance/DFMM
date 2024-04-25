@@ -12,6 +12,12 @@ error InvalidTokenIndex();
  * @author Primitive
  * @notice This interface contains generic functions that DFMM solvers must
  * implement in order to simplify offchain interactions.
+ * @dev Note that in addition to the functions defined in this interface,
+ * solvers should also implement the two following functions:
+ * - `prepareInit`: This function should accept any parameters required to
+ * initialize a pool and return the encoded data to execute the initialization.
+ * - `getPoolParams`: This function should accept a `poolId` parameter and
+ * return the decoded pool parameters as defined by the strategy contract.
  */
 interface ISolver {
     /**
