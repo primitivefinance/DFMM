@@ -26,8 +26,16 @@ import {
     InvalidDeltasLength
 } from "src/interfaces/ISolver.sol";
 
+/**
+ * @notice Thrown when not enough liquidity is present to swap in
+ * a pool.
+ */
 error NotEnoughLiquidity();
 
+/**
+ * @title Solver for the ConstantSum strategy.
+ * @author Primitive
+ */
 contract ConstantSumSolver is ISolver {
     using FixedPointMathLib for uint256;
 
