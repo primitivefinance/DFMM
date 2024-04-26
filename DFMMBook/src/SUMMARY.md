@@ -1,3 +1,5 @@
 # Summary
 
-- [Chapter 1](./chapter_1.md)
+- [Kit Architecture](./architecture.md)
+- [Pools](./pools.md)
+- [Behaviors](./behaviors.md)
