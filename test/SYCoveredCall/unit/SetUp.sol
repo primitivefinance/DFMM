@@ -60,7 +60,7 @@ contract SYCoveredCallSetUp is SetUp {
         (SY, PT, YT) = IPMarket(market).readTokens();
         pendleMarketState = market.readState(address(router));
         coveredCall = new SYCoveredCall(address(dfmm));
-        solver = new SYCoveredCallSolver(address(coveredCall));
+        solver = new SYCoveredCallSolver(coveredCall);
         timeToExpiry = pendleMarketState.expiry - block.timestamp;
         pendleRateScalar = pendleMarketState._getRateScalar(timeToExpiry);
 
@@ -105,9 +105,8 @@ contract SYCoveredCallSetUp is SetUp {
             YT: YT
         });
 
-        bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
-            defaultReserveX, defaultPrice, defaultParams
-        );
+        bytes memory initialPoolData =
+            solver.prepareInit(defaultReserveX, defaultPrice, defaultParams);
 
         InitParams memory defaultInitParams = InitParams({
             name: "",

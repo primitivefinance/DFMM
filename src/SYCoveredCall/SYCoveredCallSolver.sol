@@ -35,9 +35,19 @@ import {
     YEAR,
     ONE
 } from "src/SYCoveredCall/SYCoveredCallMath.sol";
-import "forge-std/console2.sol";
+import {
+    ISolver,
+    InvalidTokenIndex,
+    InvalidDeltasLength
+} from "src/interfaces/ISolver.sol";
+import {
+    computeDeltaLGivenDeltaX,
+    computeDeltaLGivenDeltaY,
+    computeDeltaYGivenDeltaL,
+    computeDeltaXGivenDeltaL
+} from "src/lib/StrategyLib.sol";
 
-contract SYCoveredCallSolver {
+contract SYCoveredCallSolver is ISolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using SignedWadMathLib for int256;
@@ -52,9 +62,9 @@ contract SYCoveredCallSolver {
     uint256 public constant BISECTION_EPSILON = 0;
     uint256 public constant MAX_BISECTION_ITERS = 120;
 
-    address public strategy;
+    IStrategy public strategy;
 
-    constructor(address _strategy) {
+    constructor(IStrategy _strategy) {
         strategy = _strategy;
     }
 
@@ -102,71 +112,221 @@ contract SYCoveredCallSolver {
         return (pool.reserves, pool.totalLiquidity);
     }
 
-    function getInitialPoolDataGivenX(
-        uint256 rX,
+    function prepareInit(
+        uint256 reserveX,
         uint256 S,
         SYCoveredCallParams memory params
     ) public pure returns (bytes memory) {
-        return computeInitialPoolData(rX, S, params);
+        return computeInitialPoolData(reserveX, S, params);
     }
 
-    function getInitialPoolDataGivenY(
-        uint256 rY,
+    function prepareInitGivenX(
+        uint256 reserveX,
         uint256 S,
         SYCoveredCallParams memory params
     ) public pure returns (bytes memory) {
-        return computeInitialPoolDataGivenY(rY, S, params);
+        return computeInitialPoolData(reserveX, S, params);
     }
 
-    function prepareInitialPoolDataGivenY(
-        uint256 rY,
+    function prepareInitGivenY(
+        uint256 reserveY,
         uint256 S,
         SYCoveredCallParams memory params
     ) public pure returns (bytes memory) {
-        return computeInitialPoolDataGivenY(rY, S, params);
+        return computeInitialPoolDataGivenY(reserveY, S, params);
     }
 
-    function allocateGivenDeltaX(
+    function prepareAllocation(
         uint256 poolId,
-        uint256 deltaX
-    ) public view returns (uint256 deltaY, uint256 deltaLiquidity) {
-        (uint256[] memory reserves, uint256 liquidity) =
+        uint256[] calldata deltas
+    ) public view returns (bytes memory) {
+        if (deltas.length != 2) revert InvalidDeltasLength();
+
+        (uint256[] memory reserves, uint256 totalLiquidity) =
             getReservesAndLiquidity(poolId);
-        (deltaY, deltaLiquidity) = computeAllocationGivenDeltaX(
-            deltaX, reserves[0], reserves[1], liquidity
+
+        uint256 deltaLGivenDeltaX =
+            computeDeltaLGivenDeltaX(deltas[0], totalLiquidity, reserves[0]);
+        uint256 deltaYGivenDeltaX = computeDeltaYGivenDeltaL(
+            deltaLGivenDeltaX, totalLiquidity, reserves[1]
         );
-    }
 
-    function allocateGivenDeltaY(
-        uint256 poolId,
-        uint256 deltaY
-    ) public view returns (uint256 deltaX, uint256 deltaLiquidity) {
-        (uint256[] memory reserves, uint256 liquidity) =
-            getReservesAndLiquidity(poolId);
-        (deltaX, deltaLiquidity) = computeAllocationGivenDeltaY(
-            deltaY, reserves[0], reserves[1], liquidity
+        uint256 deltaLGivenDeltaY =
+            computeDeltaLGivenDeltaY(deltas[1], totalLiquidity, reserves[1]);
+        uint256 deltaXGivenDeltaL = computeDeltaXGivenDeltaL(
+            deltaLGivenDeltaY, totalLiquidity, reserves[0]
         );
+
+        if (deltaLGivenDeltaX < deltaLGivenDeltaY) {
+            return abi.encode(deltas[0], deltaYGivenDeltaX, deltaLGivenDeltaX);
+        } else {
+            return abi.encode(deltaXGivenDeltaL, deltas[1], deltaLGivenDeltaY);
+        }
     }
 
-    function deallocateGivenDeltaX(
+    /// @inheritdoc ISolver
+    function prepareDeallocation(
         uint256 poolId,
-        uint256 deltaX
-    ) public view returns (uint256 deltaY, uint256 deltaLiquidity) {
+        uint256 deltaLiquidity
+    ) external view override returns (bytes memory) {
         (uint256[] memory reserves, uint256 liquidity) =
             getReservesAndLiquidity(poolId);
-        (deltaY, deltaLiquidity) = computeDeallocationGivenDeltaX(
-            deltaX, reserves[0], reserves[1], liquidity
+
+        uint256 deltaX =
+            computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
+        uint256 deltaY =
+            computeDeltaYGivenDeltaL(deltaLiquidity, liquidity, reserves[1]);
+
+        return abi.encode(deltaX, deltaY, deltaLiquidity);
+    }
+
+    struct SimulateSwapState {
+        uint256 amountOut;
+        uint256 deltaLiquidity;
+        uint256 fees;
+        uint256 timestamp;
+    }
+
+    function prepareSwap(
+        uint256 poolId,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex,
+        uint256 amountIn
+    ) public view returns (bool, uint256, bytes memory) {
+        Reserves memory endReserves;
+        (uint256[] memory preReserves, uint256 preTotalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        SYCoveredCallParams memory poolParams =
+            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+
+        SimulateSwapState memory state;
+        state.timestamp = block.timestamp;
+
+        uint256 startComputedL = getNextLiquidity(
+            poolId, preReserves[0], preReserves[1], preTotalLiquidity
         );
+        poolParams.mean = computeKGivenLastPrice(
+            preReserves[0], preTotalLiquidity, poolParams
+        );
+
+        uint256 poolId = poolId;
+        uint256 swapAmountIn = amountIn;
+        {
+            if (tokenInIndex == 0) {
+                state.deltaLiquidity = computeDeltaLXIn(
+                    swapAmountIn,
+                    preReserves[0],
+                    preReserves[1],
+                    preTotalLiquidity,
+                    poolParams
+                );
+
+                endReserves.rx = preReserves[0] + swapAmountIn;
+                endReserves.L = startComputedL + state.deltaLiquidity;
+                uint256 approxPrice = getEstimatedPrice(poolId, 0, 1);
+
+                endReserves.ry = getNextReserveY(
+                    poolId, endReserves.rx, endReserves.L, approxPrice
+                );
+
+                require(
+                    endReserves.ry < preReserves[1],
+                    "invalid swap: y reserve increased!"
+                );
+                state.amountOut = preReserves[1] - endReserves.ry;
+            } else {
+                state.deltaLiquidity = computeDeltaLYIn(
+                    swapAmountIn,
+                    preReserves[0],
+                    preReserves[1],
+                    preTotalLiquidity,
+                    poolParams
+                );
+
+                endReserves.ry = preReserves[1] + swapAmountIn;
+                endReserves.L = startComputedL + state.deltaLiquidity;
+                uint256 approxPrice = getEstimatedPrice(poolId, 1, 0);
+
+                endReserves.rx = getNextReserveX(
+                    poolId, endReserves.ry, endReserves.L, approxPrice
+                );
+
+                require(
+                    endReserves.rx < preReserves[0],
+                    "invalid swap: x reserve increased!"
+                );
+                state.amountOut = preReserves[0] - endReserves.rx;
+            }
+        }
+
+        Pool memory pool;
+        pool.reserves = preReserves;
+        pool.totalLiquidity = preTotalLiquidity;
+
+        bytes memory swapData;
+
+        if (tokenInIndex == 0) {
+            swapData = abi.encode(
+                0,
+                1,
+                swapAmountIn,
+                state.amountOut,
+                startComputedL,
+                state.timestamp
+            );
+        } else {
+            swapData = abi.encode(
+                1,
+                0,
+                swapAmountIn,
+                state.amountOut,
+                startComputedL,
+                state.timestamp
+            );
+        }
+
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
+            address(this), poolId, pool, swapData
+        );
+
+        return (valid, state.amountOut, swapData);
     }
 
-    function deallocateGivenDeltaY(
+    /// @inheritdoc ISolver
+    function getEstimatedPrice(
         uint256 poolId,
-        uint256 deltaY
-    ) public view returns (uint256 deltaX, uint256 deltaLiquidity) {
-        (uint256[] memory reserves, uint256 liquidity) =
-            getReservesAndLiquidity(poolId);
-        (deltaX, deltaLiquidity) = computeDeallocationGivenDeltaY(
-            deltaY, reserves[0], reserves[1], liquidity
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex
+    ) public view returns (uint256 price) {
+        SYCoveredCallParams memory params =
+            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
+        if (
+            tokenInIndex > 1 || tokenOutIndex > 1
+                || tokenInIndex == tokenOutIndex
+        ) revert InvalidTokenIndex();
+
+        if (tokenInIndex == 0) {
+            price = computePriceGivenX(reserves[0], L, params);
+        } else {
+            price = computePriceGivenY(reserves[1], L, params);
+        }
+    }
+
+    /// @dev Computes the internal price using this strategie's slot parameters.
+    function internalPrice(uint256 poolId)
+        public
+        view
+        returns (uint256 price)
+    {
+        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
+        price = computePriceGivenX(reserves[0], L, getPoolParams(poolId));
+    }
+
+    function getInvariant(uint256 poolId) public view returns (int256) {
+        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
+        return computeTradingFunction(
+            reserves[0], reserves[1], L, getPoolParams(poolId)
         );
     }
 
@@ -209,165 +369,5 @@ contract SYCoveredCallSolver {
         int256 invariant =
             computeTradingFunction(rx, approximatedRy, L, poolParams);
         return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
-    }
-
-    struct SimulateSwapState {
-        uint256 amountOut;
-        uint256 deltaLiquidity;
-        uint256 fees;
-        uint256 timestamp;
-    }
-
-    function simulateSwap(
-        uint256 poolId,
-        bool swapXIn,
-        uint256 amountIn,
-        uint256 timestamp
-    ) public view returns (bool, uint256, uint256, bytes memory) {
-        Reserves memory endReserves;
-        (uint256[] memory preReserves, uint256 preTotalLiquidity) =
-            getReservesAndLiquidity(poolId);
-        SYCoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, timestamp);
-
-        SimulateSwapState memory state;
-        state.timestamp = timestamp;
-        console2.log("preTotalLiquidity", preTotalLiquidity);
-        console2.log("preReserves[0]", preReserves[0]);
-        console2.log("preReserves[1]", preReserves[1]);
-
-        uint256 startComputedL = getNextLiquidity(
-            poolId, preReserves[0], preReserves[1], preTotalLiquidity
-        );
-        poolParams.mean = computeKGivenLastPrice(
-            preReserves[0], preTotalLiquidity, poolParams
-        );
-
-        uint256 poolId = poolId;
-        uint256 swapAmountIn = amountIn;
-        bool swapXToY = swapXIn;
-        {
-            if (swapXToY) {
-                state.deltaLiquidity = computeDeltaLXIn(
-                    swapAmountIn,
-                    preReserves[0],
-                    preReserves[1],
-                    preTotalLiquidity,
-                    poolParams
-                );
-
-                endReserves.rx = preReserves[0] + swapAmountIn;
-                endReserves.L = startComputedL + state.deltaLiquidity;
-                uint256 approxPrice =
-                    getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
-
-                endReserves.ry = getNextReserveY(
-                    poolId, endReserves.rx, endReserves.L, approxPrice
-                );
-
-                require(
-                    endReserves.ry < preReserves[1],
-                    "invalid swap: y reserve increased!"
-                );
-                state.amountOut = preReserves[1] - endReserves.ry;
-            } else {
-                state.deltaLiquidity = computeDeltaLYIn(
-                    swapAmountIn,
-                    preReserves[0],
-                    preReserves[1],
-                    preTotalLiquidity,
-                    poolParams
-                );
-
-                endReserves.ry = preReserves[1] + swapAmountIn;
-                endReserves.L = startComputedL + state.deltaLiquidity;
-                uint256 approxPrice =
-                    getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
-
-                endReserves.rx = getNextReserveX(
-                    poolId, endReserves.ry, endReserves.L, approxPrice
-                );
-
-                require(
-                    endReserves.rx < preReserves[0],
-                    "invalid swap: x reserve increased!"
-                );
-                state.amountOut = preReserves[0] - endReserves.rx;
-            }
-        }
-
-        Pool memory pool;
-        pool.reserves = preReserves;
-        pool.totalLiquidity = preTotalLiquidity;
-
-        bytes memory swapData;
-
-        if (swapXToY) {
-            swapData = abi.encode(
-                0,
-                1,
-                swapAmountIn,
-                state.amountOut,
-                startComputedL,
-                state.timestamp
-            );
-        } else {
-            swapData = abi.encode(
-                1,
-                0,
-                swapAmountIn,
-                state.amountOut,
-                startComputedL,
-                state.timestamp
-            );
-        }
-
-        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
-            address(this), poolId, pool, swapData
-        );
-
-        return (
-            valid,
-            state.amountOut,
-            computePriceGivenX(endReserves.rx, endReserves.L, poolParams),
-            swapData
-        );
-    }
-
-    function getPriceGivenYL(
-        uint256 poolId,
-        uint256 ry,
-        uint256 L
-    ) public view returns (uint256 price) {
-        SYCoveredCallParams memory params =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        price = computePriceGivenY(ry, L, params);
-    }
-
-    function getPriceGivenXL(
-        uint256 poolId,
-        uint256 rx,
-        uint256 L
-    ) public view returns (uint256 price) {
-        SYCoveredCallParams memory params =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        price = computePriceGivenX(rx, L, params);
-    }
-
-    /// @dev Computes the internal price using this strategie's slot parameters.
-    function internalPrice(uint256 poolId)
-        public
-        view
-        returns (uint256 price)
-    {
-        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        price = computePriceGivenX(reserves[0], L, getPoolParams(poolId));
-    }
-
-    function getInvariant(uint256 poolId) public view returns (int256) {
-        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
-        return computeTradingFunction(
-            reserves[0], reserves[1], L, getPoolParams(poolId)
-        );
     }
 }
