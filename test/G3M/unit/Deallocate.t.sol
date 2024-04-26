@@ -39,7 +39,6 @@ contract G3MDeallocateTest is G3MSetUp {
     }
 
     function test_G3M_deallocate_TransfersTokens() public init {
-        uint256 minDeltaX = 0.1 ether;
         uint256 preBalanceX = tokenX.balanceOf(address(this));
         uint256 preBalanceY = tokenY.balanceOf(address(this));
         uint256 preBalanceXDFMM = tokenX.balanceOf(address(dfmm));
@@ -48,13 +47,15 @@ contract G3MDeallocateTest is G3MSetUp {
         // TODO: Use an actual amount of liquidity here
         bytes memory deallocateData =
             solver.prepareDeallocation(POOL_ID, 0.5 ether);
-        (, uint256 deltaY,) =
-            abi.decode(deallocateData, (uint256, uint256, uint256));
-        dfmm.deallocate(POOL_ID, deallocateData);
+        (uint256[] memory usedDeltas) = dfmm.deallocate(POOL_ID, deallocateData);
 
-        assertEq(preBalanceX + minDeltaX, tokenX.balanceOf(address(this)));
-        assertEq(preBalanceY + deltaY, tokenY.balanceOf(address(this)));
-        assertEq(preBalanceXDFMM - minDeltaX, tokenX.balanceOf(address(dfmm)));
-        assertEq(preBalanceYDFMM - deltaY, tokenY.balanceOf(address(dfmm)));
+        assertEq(preBalanceX + usedDeltas[0], tokenX.balanceOf(address(this)));
+        assertEq(preBalanceY + usedDeltas[1], tokenY.balanceOf(address(this)));
+        assertEq(
+            preBalanceXDFMM - usedDeltas[0], tokenX.balanceOf(address(dfmm))
+        );
+        assertEq(
+            preBalanceYDFMM - usedDeltas[1], tokenY.balanceOf(address(dfmm))
+        );
     }
 }
