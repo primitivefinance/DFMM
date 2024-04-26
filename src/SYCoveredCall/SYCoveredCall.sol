@@ -25,6 +25,7 @@ import { IPPrincipalToken } from "pendle/interfaces/IPPrincipalToken.sol";
 import { IStandardizedYield } from "pendle/interfaces/IStandardizedYield.sol";
 import { IPYieldToken } from "pendle/interfaces/IPYieldToken.sol";
 import { Gaussian } from "solstat/Gaussian.sol";
+import "forge-std/console2.sol";
 
 enum UpdateCode {
     Invalid,
@@ -39,6 +40,7 @@ struct InternalParams {
     uint256 swapFee;
     address controller;
     uint256 lastTimestamp;
+    uint256 lastImpliedPrice;
     IStandardizedYield SY;
     IPPrincipalToken PT;
     IPYieldToken YT;
@@ -52,6 +54,7 @@ struct SYCoveredCallParams {
     uint256 swapFee;
     address controller;
     uint256 lastTimestamp;
+    uint256 lastImpliedPrice;
     IStandardizedYield SY;
     IPPrincipalToken PT;
     IPYieldToken YT;
@@ -149,9 +152,11 @@ contract SYCoveredCall is PairStrategy {
         internalParams[poolId].swapFee = params.swapFee;
         internalParams[poolId].controller = params.controller;
         internalParams[poolId].lastTimestamp = block.timestamp;
+        internalParams[poolId].lastImpliedPrice = computePriceGivenX(reserves[0], totalLiquidity, params);
 
         invariant =
             tradingFunction(reserves, totalLiquidity, abi.encode(params));
+        console2.log("initial invariant after init", invariant);
         valid = invariant >= 0 && invariant <= EPSILON;
     }
 
@@ -187,6 +192,7 @@ contract SYCoveredCall is PairStrategy {
         params.swapFee = internalParams[poolId].swapFee;
         params.maturity = internalParams[poolId].maturity;
         params.lastTimestamp = internalParams[poolId].lastTimestamp;
+        params.lastImpliedPrice = internalParams[poolId].lastImpliedPrice;
 
         return abi.encode(params);
     }
@@ -242,7 +248,7 @@ contract SYCoveredCall is PairStrategy {
         ccParams.lastTimestamp = swapTimestamp;
 
         ccParams.mean =
-            computeKGivenLastPrice(pool.reserves[0], computedL, ccParams);
+            computeKGivenLastPrice(pool.reserves[0], pool.totalLiquidity, ccParams);
 
         int256 computedInvariant =
             tradingFunction(pool.reserves, computedL, abi.encode(ccParams));
@@ -275,7 +281,7 @@ contract SYCoveredCall is PairStrategy {
     function postSwapHook(
         address,
         uint256 poolId,
-        Pool memory,
+        Pool memory pool,
         bytes memory params
     ) external override onlyDFMM {
         SYCoveredCallParams memory ccParams =
@@ -283,6 +289,7 @@ contract SYCoveredCall is PairStrategy {
 
         internalParams[poolId].lastTimestamp = ccParams.lastTimestamp;
         internalParams[poolId].mean = ccParams.mean;
+        internalParams[poolId].lastImpliedPrice = computePriceGivenX(pool.reserves[0], pool.totalLiquidity, ccParams);
     }
 
     /// @inheritdoc IStrategy

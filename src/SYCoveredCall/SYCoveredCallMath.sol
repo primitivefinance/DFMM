@@ -220,8 +220,6 @@ function computeKGivenLastPrice(
     uint256 L,
     SYCoveredCallParams memory params
 ) pure returns (uint256 K) {
-    uint256 price = computePriceGivenX(rX, L, params);
-
     uint256 tau = computeTau(params);
     uint256 a = computeHalfSigmaSquaredTau(params.width, tau);
     // $$\Phi^{-1} (1 - \frac{x}{L})$$
@@ -230,7 +228,7 @@ function computeKGivenLastPrice(
         b.wadMul(int256(computeSigmaSqrtTau(params.width, tau))) - int256(a)
     ).expWad();
 
-    K = price.divWadDown(uint256(exp));
+    K = params.lastImpliedPrice.divWadDown(uint256(exp));
 }
 
 function computePriceGivenY(

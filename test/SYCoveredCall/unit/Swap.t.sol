@@ -49,7 +49,7 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
         (bool valid, uint256 amountOut,, bytes memory payload) =
             solver.simulateSwap(POOL_ID, swapXForY, amountIn, block.timestamp);
         assertEq(valid, true);
-
+        console2.log("swapIsValid", valid);
         console2.log("out", amountOut);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
@@ -131,16 +131,16 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
 
         SYCoveredCallParams memory poolParams = solver.getPoolParams(POOL_ID);
         uint256 startL = solver.getNextLiquidity(
-            POOL_ID, preReserves[0], preReserves[1], preTotalLiquidity
+            preReserves[0], preReserves[1], preTotalLiquidity, poolParams
         );
         uint256 deltaLiquidity =
             amountIn.mulWadUp(poolParams.swapFee).divWadUp(poolParams.mean);
 
         uint256 ry = preReserves[1] + amountIn;
         uint256 L = startL + deltaLiquidity;
-        uint256 approxPrice = solver.getPriceGivenYL(POOL_ID, ry, L);
+        uint256 approxPrice = solver.getPriceGivenYL(ry, L, poolParams);
 
-        uint256 rx = solver.getNextReserveX(POOL_ID, ry, L, approxPrice);
+        uint256 rx = solver.getNextReserveX(ry, L, approxPrice, poolParams);
 
         int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
         while (invariant >= 0) {

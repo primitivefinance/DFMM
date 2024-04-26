@@ -11,8 +11,10 @@ import "forge-std/console2.sol";
 import { IPMarket } from "pendle/interfaces/IPMarket.sol";
 import "pendle/core/Market/MarketMathCore.sol";
 import "pendle/interfaces/IPAllActionV3.sol";
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
 contract SYCoveredCallSetUp is SetUp {
+    using FixedPointMathLib for uint256;
     using MarketMathCore for MarketState;
     using MarketMathCore for int256;
     using MarketMathCore for uint256;
@@ -42,6 +44,8 @@ contract SYCoveredCallSetUp is SetUp {
     MarketState public pendleMarketState;
     int256 pendleRateAnchor;
     int256 pendleRateScalar;
+    int256 pendleExchangeRate;
+    uint256 ptRate;
     uint256 timeToExpiry;
 
     function mintSY(uint256 amount) public {
@@ -58,6 +62,7 @@ contract SYCoveredCallSetUp is SetUp {
         vm.createSelectFork({ urlOrAlias: "mainnet", blockNumber: 19_662_269 });
         SetUp.setUp();
         (SY, PT, YT) = IPMarket(market).readTokens();
+        ptRate = SY.exchangeRate();
         pendleMarketState = market.readState(address(router));
         coveredCall = new SYCoveredCall(address(dfmm));
         solver = new SYCoveredCallSolver(address(coveredCall));
@@ -93,19 +98,22 @@ contract SYCoveredCallSetUp is SetUp {
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
+        pendleExchangeRate = pendleMarketState.totalPt._getExchangeRate(pendleMarketState.totalSy, pendleRateScalar, pendleRateAnchor, 0);
+        defaultPrice = ptRate.mulWadDown(uint256(pendleExchangeRate));
+
         SYCoveredCallParams memory defaultParams = SYCoveredCallParams({
-            mean: uint256(pendleRateAnchor),
+            mean: defaultPrice,
             width: 0.1 ether,
             maturity: PT.expiry(),
             swapFee: 0.0005 ether,
             lastTimestamp: block.timestamp,
+            lastImpliedPrice: 0,
             controller: address(this),
             SY: SY,
             PT: PT,
             YT: YT
         });
 
-        defaultPrice = uint256(pendleRateAnchor);
 
         bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
             defaultReserveX, defaultPrice, defaultParams

@@ -35,6 +35,7 @@ import {
     YEAR,
     ONE
 } from "src/SYCoveredCall/SYCoveredCallMath.sol";
+import "forge-std/console2.sol";
 
 contract SYCoveredCallSolver {
     using FixedPointMathLib for uint256;
@@ -170,44 +171,37 @@ contract SYCoveredCallSolver {
     }
 
     function getNextLiquidity(
-        uint256 poolId,
         uint256 rx,
         uint256 ry,
-        uint256 L
-    ) public view returns (uint256) {
-        SYCoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-
-        int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
-        return computeNextLiquidity(rx, ry, invariant, L, poolParams);
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256) {
+        int256 invariant = computeTradingFunction(rx, ry, L, params);
+        return computeNextLiquidity(rx, ry, invariant, L, params);
     }
 
     function getNextReserveX(
-        uint256 poolId,
         uint256 ry,
         uint256 L,
-        uint256 S
-    ) public view returns (uint256) {
-        SYCoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        uint256 approximatedRx = computeXGivenL(L, S, poolParams);
+        uint256 S,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256) {
+        uint256 approximatedRx = computeXGivenL(L, S, params);
         int256 invariant =
-            computeTradingFunction(approximatedRx, ry, L, poolParams);
-        return computeNextRx(ry, L, invariant, approximatedRx, poolParams);
+            computeTradingFunction(approximatedRx, ry, L, params);
+        return computeNextRx(ry, L, invariant, approximatedRx, params);
     }
 
     function getNextReserveY(
-        uint256 poolId,
         uint256 rx,
         uint256 L,
-        uint256 S
-    ) public view returns (uint256) {
-        SYCoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        uint256 approximatedRy = computeYGivenL(L, S, poolParams);
+        uint256 S,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256) {
+        uint256 approximatedRy = computeYGivenL(L, S, params);
         int256 invariant =
-            computeTradingFunction(rx, approximatedRy, L, poolParams);
-        return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
+            computeTradingFunction(rx, approximatedRy, L, params);
+        return computeNextRy(rx, L, invariant, approximatedRy, params);
     }
 
     struct SimulateSwapState {
@@ -226,18 +220,24 @@ contract SYCoveredCallSolver {
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
-        SYCoveredCallParams memory poolParams =
+        SYCoveredCallParams memory params =
             getPoolParamsCustomTimestamp(poolId, timestamp);
 
         SimulateSwapState memory state;
         state.timestamp = timestamp;
+        params.lastTimestamp = timestamp;
+        console2.log("initial K", params.mean);
 
+        params.mean = computeKGivenLastPrice(
+            preReserves[0], preTotalLiquidity, params 
+        );
+        console2.log("updated K", params.mean);
+
+        console2.log("preL", preTotalLiquidity);
         uint256 startComputedL = getNextLiquidity(
-            poolId, preReserves[0], preReserves[1], preTotalLiquidity
+            preReserves[0], preReserves[1], preTotalLiquidity, params 
         );
-        poolParams.mean = computeKGivenLastPrice(
-            preReserves[0], preTotalLiquidity, poolParams
-        );
+        console2.log("computedL", startComputedL);
 
         uint256 poolId = poolId;
         uint256 swapAmountIn = amountIn;
@@ -248,17 +248,17 @@ contract SYCoveredCallSolver {
                     swapAmountIn,
                     preReserves[0],
                     preReserves[1],
-                    preTotalLiquidity,
-                    poolParams
+                    startComputedL,
+                    params 
                 );
 
                 endReserves.rx = preReserves[0] + swapAmountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
-                    getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
+                    getPriceGivenXL(endReserves.rx, endReserves.L, params);
 
                 endReserves.ry = getNextReserveY(
-                    poolId, endReserves.rx, endReserves.L, approxPrice
+                    endReserves.rx, endReserves.L, approxPrice, params 
                 );
 
                 require(
@@ -271,17 +271,17 @@ contract SYCoveredCallSolver {
                     swapAmountIn,
                     preReserves[0],
                     preReserves[1],
-                    preTotalLiquidity,
-                    poolParams
+                    startComputedL,
+                    params 
                 );
 
                 endReserves.ry = preReserves[1] + swapAmountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
-                    getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
+                    getPriceGivenYL(endReserves.ry, endReserves.L, params);
 
                 endReserves.rx = getNextReserveX(
-                    poolId, endReserves.ry, endReserves.L, approxPrice
+                    endReserves.ry, endReserves.L, approxPrice, params 
                 );
 
                 require(
@@ -325,28 +325,24 @@ contract SYCoveredCallSolver {
         return (
             valid,
             state.amountOut,
-            computePriceGivenX(endReserves.rx, endReserves.L, poolParams),
+            computePriceGivenX(endReserves.rx, endReserves.L, params),
             swapData
         );
     }
 
     function getPriceGivenYL(
-        uint256 poolId,
         uint256 ry,
-        uint256 L
-    ) public view returns (uint256 price) {
-        SYCoveredCallParams memory params =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256 price) {
         price = computePriceGivenY(ry, L, params);
     }
 
     function getPriceGivenXL(
-        uint256 poolId,
         uint256 rx,
-        uint256 L
-    ) public view returns (uint256 price) {
-        SYCoveredCallParams memory params =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256 price) {
         price = computePriceGivenX(rx, L, params);
     }
 
