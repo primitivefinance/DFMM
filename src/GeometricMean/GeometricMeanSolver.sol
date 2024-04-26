@@ -24,10 +24,11 @@ import {
     computeDeltaGivenDeltaLRoundUp,
     ONE
 } from "./G3MMath.sol";
-import { ISolver } from "src/interfaces/ISolver.sol";
-
-error InvalidTokenIndex();
-error InvalidDeltasLength();
+import {
+    ISolver,
+    InvalidTokenIndex,
+    InvalidDeltasLength
+} from "src/interfaces/ISolver.sol";
 
 contract GeometricMeanSolver is ISolver {
     using FixedPointMathLib for uint256;
