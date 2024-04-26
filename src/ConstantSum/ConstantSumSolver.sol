@@ -20,10 +20,13 @@ import {
     computeSwapDeltaLiquidity,
     computeDeltaLiquidityRoundDown
 } from "./ConstantSumMath.sol";
-import { ISolver, InvalidTokenIndex } from "src/interfaces/ISolver.sol";
+import {
+    ISolver,
+    InvalidTokenIndex,
+    InvalidDeltasLength
+} from "src/interfaces/ISolver.sol";
 
 error NotEnoughLiquidity();
-error InvalidDeltasLength();
 
 contract ConstantSumSolver is ISolver {
     using FixedPointMathLib for uint256;
