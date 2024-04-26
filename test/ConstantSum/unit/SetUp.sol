@@ -27,7 +27,7 @@ contract ConstantSumSetUp is SetUp {
     function setUp() public override {
         SetUp.setUp();
         constantSum = new ConstantSum(address(dfmm));
-        solver = new ConstantSumSolver(address(constantSum));
+        solver = new ConstantSumSolver(IStrategy(constantSum));
     }
 
     modifier defaultPool() {
@@ -35,7 +35,7 @@ contract ConstantSumSetUp is SetUp {
         uint256 reserveY = 1 ether;
 
         bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, defaultParams);
+            solver.prepareInit(reserveX, reserveY, defaultParams);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
@@ -61,7 +61,7 @@ contract ConstantSumSetUp is SetUp {
         uint256 reserveY = 1 ether;
 
         bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, zeroFeeParams);
+            solver.prepareInit(reserveX, reserveY, zeroFeeParams);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
