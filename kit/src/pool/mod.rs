@@ -214,7 +214,7 @@ impl<P: PoolType> Pool<P> {
     ///
     /// Returns `Ok(())` if the allocation or deallocation is successful,
     /// otherwise returns an error.
-    pub async fn allocate_or_deallocate(
+    pub async fn change_allocation(
         &self,
         action: AllocateOrDeallocate,
         allocation_data: P::AllocationData,
@@ -277,57 +277,12 @@ pub struct PoolCreation<P: PoolType> {
     pub allocation_data: P::AllocationData,
 }
 
-// impl<'de, P: PoolType> Deserialize<'de> for PoolCreation<P> {
-//     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-//     where
-//         D: serde::de::Deserializer<'de>,
-//     {
-//         let mut map = deserializer.deserialize_map(None)?;
-//         let mut id = None;
-//         let mut tokens = None;
-//         let mut liquidity_token = None;
-//         let mut params = None;
-//         let mut allocation_data = None;
-
-//         while let Some(key) = map.next_key()? {
-//             match key {
-//                 "id" => {
-//                     id = Some(map.next_value()?);
-//                 }
-//                 "tokens" => {
-//                     tokens = Some(map.next_value()?);
-//                 }
-//                 "liquidity_token" => {
-//                     liquidity_token = Some(map.next_value()?);
-//                 }
-//                 "params" => {
-//                     params = Some(map.next_value()?);
-//                 }
-//                 "allocation_data" => {
-//                     allocation_data = Some(map.next_value()?);
-//                 }
-//                 _ => {
-//                     // Ignore unknown fields
-//                     let _ = map.next_value::<serde_json::Value>();
-//                 }
-//             }
-//         }
-
-//         let id = id.ok_or_else(|| serde::de::Error::missing_field("id"))?;
-//         let tokens = tokens.ok_or_else(||
-// serde::de::Error::missing_field("tokens"))?;         let liquidity_token =
-//             liquidity_token.ok_or_else(||
-// serde::de::Error::missing_field("liquidity_token"))?;         let params =
-// params.ok_or_else(|| serde::de::Error::missing_field("params"))?;         let
-// allocation_data =             allocation_data.ok_or_else(||
-// serde::de::Error::missing_field("allocation_data"))?;
-
-//         Ok(PoolCreation {
-//             id,
-//             tokens,
-//             liquidity_token,
-//             params,
-//             allocation_data,
-//         })
-//     }
-// }
+#[derive(Debug, Clone, State)]
+pub struct PoolProcessing<P>
+where
+    P: PoolType,
+{
+    pub pool: Pool<P>,
+    pub client: Arc<ArbiterMiddleware>,
+    pub messager: Messager,
+}

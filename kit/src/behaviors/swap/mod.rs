@@ -1,7 +1,7 @@
-use self::{bindings::erc20::ERC20, pool::InputToken};
 use super::*;
-use crate::behaviors::token::Response;
+use crate::pool::InputToken;
 
+// TODO: This could depend on the `PoolType` as the `AllocateType` does.
 pub trait SwapType<E> {
     fn compute_swap_amount(&self, event: E) -> Option<(eU256, InputToken)>;
 }
@@ -14,7 +14,7 @@ where
 {
     pub data: S::Data,
     pub swap_type: T,
-    pub _phantom: PhantomData<E>,
+    _phantom: PhantomData<E>,
 }
 
 // Should also get some data necessary for mint amounts and what not.
@@ -27,20 +27,10 @@ where
     pub _phantom: PhantomData<P>,
 }
 
-#[derive(Debug, Clone, State)]
-pub struct Processing<P>
-where
-    P: PoolType,
-    // T: SwapType<E>,
-    // E: Send + 'static,
-{
-    pub messager: Messager,
-    pub client: Arc<ArbiterMiddleware>,
-    pub pool: Pool<P>,
-    // pub swap_type: T,
-    // _phantom: PhantomData<E>,
-}
-
+// TODO: This start up is also very much the same as the `Allocate` start up.
+// More than likely, `Update`, `Swap`, and `Allocate` can all be combined into
+// one type of behavior like a `Interact` behavior that just specializes to do
+// different things.
 #[async_trait::async_trait]
 impl<P, T, E> Behavior<E> for Swap<Config<P>, T, E>
 where
@@ -48,7 +38,7 @@ where
     T: SwapType<E> + Send + Clone,
     E: Send + 'static,
 {
-    type Processor = Swap<Processing<P>, T, E>;
+    type Processor = Swap<PoolProcessing<P>, T, E>;
     async fn startup(
         mut self,
         client: Arc<ArbiterMiddleware>,
@@ -66,6 +56,8 @@ where
             P::get_contracts(&deployment_data, client.clone());
         let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
 
+        // TODO: This sort of approval and token loop is also repeated in other places
+        // like `Allocate` and `Create`.
         // Get the intended tokens for the pool and do approvals.
         let mut tokens: Vec<ArbiterToken<ArbiterMiddleware>> = Vec::new();
         for token_address in pool_creation.tokens.into_iter() {
@@ -107,7 +99,7 @@ where
         };
 
         let processor = Self::Processor {
-            data: Processing {
+            data: PoolProcessing {
                 messager,
                 client,
                 pool,
@@ -123,7 +115,7 @@ where
 /// This is the default implementation for any processor that takes in some
 /// event E and will work for the `Swap` struct.
 #[async_trait::async_trait]
-impl<P, T, E> Processor<E> for Swap<Processing<P>, T, E>
+impl<P, T, E> Processor<E> for Swap<PoolProcessing<P>, T, E>
 where
     P: PoolType + Send + Sync,
     T: SwapType<E> + Send + Clone,
@@ -154,7 +146,7 @@ where
 /// `SwapType` as long as it streams `Message`s. If you need to stream something
 /// else, just copy this specialization and use whatever stream item you'd like!
 #[async_trait::async_trait]
-impl<P, T> Processor<Message> for Swap<Processing<P>, T, Message>
+impl<P, T> Processor<Message> for Swap<PoolProcessing<P>, T, Message>
 where
     P: PoolType + Send + Sync,
     T: SwapType<Message> + Send + Clone,

@@ -6,12 +6,12 @@ use arbiter_engine::{
 };
 #[allow(unused)]
 use arbiter_macros::{Behaviors, State};
-use bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
+use bindings::{arbiter_token::ArbiterToken, dfmm::DFMM, erc20::ERC20};
 use ethers::utils::parse_ether;
-pub use token::{MintRequest, TokenAdminQuery};
+pub use token::{MintRequest, Response, TokenAdminQuery};
 
 use self::{
-    creator::Create,
+    create::Create,
     deploy::{Deploy, DeploymentData},
     pool::{PoolCreation, PoolType},
     token::TokenAdmin,
@@ -21,7 +21,7 @@ use super::*;
 pub const MAX: eU256 = eU256::MAX;
 
 pub mod allocate;
-pub mod creator;
+pub mod create;
 pub mod deploy;
 pub mod swap;
 pub mod token;
@@ -29,14 +29,10 @@ pub mod update;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub enum Behaviors<P: PoolType> {
-    Create(Create<creator::Config<P>>),
+    Create(Create<create::Config<P>>),
     Deployer(Deploy),
     TokenAdmin(TokenAdmin<token::Config>),
     Swap(swap::Config<P>),
-}
-
-pub trait Configurable<T: for<'a> Deserialize<'a>> {
-    fn configure(data: T) -> Self;
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -55,6 +51,9 @@ where
     Update(P::Parameters),
 }
 
+// TODO: This is used by `Allocate` and `Swap` at the moment, so it was moved
+// here since it was more central. However, there is likely a better way to
+// combine all of these things.
 #[derive(Debug)]
 struct GetPoolTodo<P: PoolType> {
     deployment_data: Option<DeploymentData>,

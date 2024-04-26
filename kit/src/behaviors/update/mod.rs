@@ -1,38 +1,27 @@
 use std::collections::VecDeque;
 
-use tracing::warn;
-
 use super::*;
-use crate::bindings::erc20::ERC20;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Update<S: State> {
+pub struct Update<S: State, P: PoolType> {
     pub token_admin: String,
+    pub params: VecDeque<P::Parameters>,
     pub data: S::Data,
 }
+// TODO: One could add in an `UpdateType` as we have with `Allocate` and `Swap`.
+// This `Update` only acts with messages for now.
 
-#[derive(Clone, Debug, Serialize, Deserialize, State)]
-pub struct Config<P: PoolType> {
-    pub base_config: BaseConfig,
-    pub allocation_data: P::AllocationData,
-    pub token_list: Vec<String>,
-    pub params: VecDeque<P::Parameters>,
-}
-
-#[derive(Debug, Clone, State)]
-pub struct Processing<P: PoolType> {
-    pub messager: Messager,
-    pub client: Arc<ArbiterMiddleware>,
-    pub pool: Pool<P>,
-    pub pool_params: VecDeque<P::Parameters>,
-}
+// TODO: This could be set up in another way if more state dependent data is
+// needed! Right now it is just a place holder.
+#[derive(Debug, Serialize, Deserialize, State)]
+pub struct Config;
 
 #[async_trait::async_trait]
-impl<P> Behavior<Message> for Update<Config<P>>
+impl<P> Behavior<Message> for Update<Config, P>
 where
     P: PoolType + Send + Sync,
 {
-    type Processor = Update<Processing<P>>;
+    type Processor = Update<PoolProcessing<P>, P>;
     async fn startup(
         mut self,
         client: Arc<ArbiterMiddleware>,
@@ -61,12 +50,12 @@ where
         };
 
         let processor = Self::Processor {
-            token_admin: self.token_admin.clone(),
-            data: Processing {
+            token_admin: self.token_admin,
+            params: self.params,
+            data: PoolProcessing {
                 messager,
                 client,
                 pool,
-                pool_params: self.data.params.clone(),
             },
         };
         Ok(processor)
@@ -74,7 +63,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<P> Processor<Message> for Update<Processing<P>>
+impl<P> Processor<Message> for Update<PoolProcessing<P>, P>
 where
     P: PoolType + Send + Sync,
 {
@@ -84,7 +73,7 @@ where
     async fn process(&mut self, event: Message) -> Result<ControlFlow> {
         match serde_json::from_str(&event.data) {
             Ok(UpdateRequest::ApplyUpdate) => {
-                let params = self.data.pool_params.pop_front().unwrap();
+                let params = self.params.pop_front().unwrap();
                 self.data.pool.update(params.clone()).await?;
                 let _ = self
                     .data
@@ -94,7 +83,11 @@ where
                 info!("Successfully updated!");
             }
             Err(e) => {
-                warn!("Failed to parse message: {}", e);
+                debug!(
+                    "Received message in `Update::process` that agent {:#?} cannot process: {}",
+                    self.data.messager.id.clone(),
+                    e
+                );
             }
         }
         Ok(ControlFlow::Continue)

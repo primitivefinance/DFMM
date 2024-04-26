@@ -1,5 +1,4 @@
 use super::*;
-use crate::behaviors::token::Response;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Create<S: State> {
@@ -28,14 +27,14 @@ where
     ) -> Result<Self::Processor> {
         // Receive the `DeploymentData` from the `Deployer` agent and use it to get the
         // contracts.
-        debug!("Starting the creator");
         let deployment_data = messager.get_next::<DeploymentData>().await?.data;
 
-        debug!("Creator: Received deployment data {:?}", deployment_data);
         let (strategy_contract, solver_contract) =
             P::get_contracts(&deployment_data, client.clone());
         let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
 
+        // TODO: This sort of approval and token loop is also repeated in other places
+        // like `Swap` and `Allocate`.
         // Get the intended tokens for the pool and do approvals.
         let mut tokens = Vec::new();
         for tkn in self.data.token_list.drain(..) {
@@ -75,8 +74,12 @@ where
 
             tokens.push(token);
         }
+        // TODO: There is a bit of a misleading thing happening here. The pool
+        // controller does indeed get set correctly, however, there are some other
+        // structs that may show incorrect data. This should be consolidated and
+        // fixed!!!
         debug!(
-            "Setting Controller Address to self address: {:?}",
+            "Setting controller Address to self address: {:?}",
             client.address()
         );
         if self.data.base_config.controller == eAddress::zero() {
@@ -84,7 +87,6 @@ where
         }
         let params = P::set_controller(self.data.params.clone(), client.address());
 
-        debug!("creating pool...");
         let pool = Pool::<P>::new(
             self.data.base_config.clone(),
             params.clone(),
