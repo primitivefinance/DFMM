@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
-import { DFMM, IDFMM, InitParams, Pool } from "src/DFMM.sol";
+import { DFMM, IDFMM, InitParams, Pool, IStrategy } from "src/DFMM.sol";
 import { GeometricMean } from "src/GeometricMean/GeometricMean.sol";
 import {
     GeometricMeanSolver,
@@ -38,7 +38,7 @@ contract SetUp is Test {
         weth = new WETH();
         dfmm = new DFMM(address(weth));
         g3m = new GeometricMean(address(dfmm));
-        solver = new GeometricMeanSolver(address(g3m));
+        solver = new GeometricMeanSolver(IStrategy(g3m));
 
         tokenX.approve(address(dfmm), type(uint256).max);
         tokenY.approve(address(dfmm), type(uint256).max);
