@@ -10,6 +10,11 @@ import { IStrategy } from "src/interfaces/IStrategy.sol";
 error InvalidTokenIndex();
 
 /**
+ * @dev Thrown when an array of deltas doesn't have the expected length.
+ */
+error InvalidDeltasLength();
+
+/**
  * @title Solver Interface
  * @author Primitive
  * @notice This interface contains generic functions that DFMM solvers must
