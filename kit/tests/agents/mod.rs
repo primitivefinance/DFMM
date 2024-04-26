@@ -5,7 +5,11 @@ use dfmm_kit::{
     behaviors::{
         create::{self, Create},
         deploy::Deploy,
-        swap::{self, Swap, SwapType},
+        swap::{
+            self,
+            on_command::{ExecuteSwap, OnCommand},
+            Swap,
+        },
         token::{self, TokenAdmin},
         update::{self, Update},
     },
@@ -21,7 +25,6 @@ use ethers::{
     utils::parse_ether,
 };
 use futures_util::StreamExt;
-use serde::{Deserialize, Serialize};
 use tracing::{debug, info, Level};
 use tracing_subscriber::FmtSubscriber;
 

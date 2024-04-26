@@ -1,7 +1,10 @@
 use std::{boxed::Box, marker::PhantomData, sync::Arc};
 
 use arbiter_engine::{
-    machine::{Behavior, ControlFlow, EventStream, Processor, State},
+    machine::{
+        Behavior, ControlFlow, CreateStateMachine, Engine, EventStream, Processor, State,
+        StateMachine,
+    },
     messager::{Message, Messager, To},
 };
 #[allow(unused)]
@@ -13,7 +16,8 @@ pub use token::{MintRequest, Response, TokenAdminQuery};
 use self::{
     create::Create,
     deploy::{Deploy, DeploymentData},
-    pool::{PoolCreation, PoolType},
+    pool::{constant_sum::ConstantSumPool, PoolCreation, PoolType},
+    swap::Swap,
     token::TokenAdmin,
 };
 use super::*;
@@ -27,12 +31,20 @@ pub mod swap;
 pub mod token;
 pub mod update;
 
-#[derive(Debug, Deserialize, Serialize)]
-pub enum Behaviors<P: PoolType> {
-    Create(Create<create::Config<P>>),
+// TODO: This should never have generics in it (at least, at the moment until
+// some crazy magic happens in `arbiter_engine`). The reason why is that
+// `World::from_config<C>` will not work with this. It looks for a type
+// parameter, and if you have generics it will need them to be fixed in place.
+// However, this isn't so bad. Extending this enum is super simple and it does
+// not break anything on top of it really (unlike having a `PoolType` as an
+// enum). This is definitely not the most elegant thing though and I think this
+// could be made much better with some TLC.
+#[derive(Behaviors, Debug, Deserialize, Serialize)]
+pub enum Behaviors {
     Deployer(Deploy),
     TokenAdmin(TokenAdmin<token::Config>),
-    Swap(swap::Config<P>),
+    CreateConstantSum(Create<create::Config<ConstantSumPool>>),
+    SwapConstantSum(Swap<swap::Config<ConstantSumPool>, swap::on_command::OnCommand, Message>),
 }
 
 #[derive(Debug, Deserialize, Serialize)]

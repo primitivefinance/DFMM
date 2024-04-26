@@ -25,10 +25,7 @@ async fn run_swapper_constant_sum() {
 
         // TODO: Send a specific message and see if we get the swap.
         messager
-            .send(
-                To::Agent(SWAPPER.to_owned()),
-                mock_agents::swap_agent::ExecuteSwap,
-            )
+            .send(To::Agent(SWAPPER.to_owned()), ExecuteSwap)
             .await
             .unwrap();
         debug!("message sent to swapper");

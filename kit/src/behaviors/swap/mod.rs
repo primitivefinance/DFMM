@@ -1,6 +1,8 @@
 use super::*;
 use crate::pool::InputToken;
 
+pub mod on_command;
+
 // TODO: This could depend on the `PoolType` as the `AllocateType` does.
 pub trait SwapType<E> {
     fn compute_swap_amount(&self, event: E) -> Option<(eU256, InputToken)>;
