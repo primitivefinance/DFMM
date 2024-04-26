@@ -7,6 +7,7 @@ optimized-out
 kit/target
 target
 
+# Tex
 .env
 report/main.aux
 report/main.pyg
@@ -19,3 +20,7 @@ report/img/.DS_Store
 report/summary.aux
 _minted-main/*
 report/assets/img/.DS_Store
+.vscode/*
+
+# Mdbook
+book

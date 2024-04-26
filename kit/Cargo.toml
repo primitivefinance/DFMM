@@ -2,7 +2,7 @@
 name = "dfmm-kit"
 version = "0.0.1"
 edition = "2021"
-authors = ["Colin Roberts <colin@autoparallel.xyz>"]
+authors = ["Colin Roberts <colin@autoparallel.xyz>, Waylon Jepsen <Waylonjepsen1@gmail.com>"]
 description = "The Rust kit for the DFMM contracts."
 license = "Apache-2.0"
 keywords = ["ethereum", "smart-contracts", "automated market makers"]

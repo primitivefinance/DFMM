@@ -1,0 +1,7 @@
+[book]
+authors = ["Waylon Jepsen"]
+language = "en"
+multilingual = false
+src = "DFMMBook/src"
+title = "DFMM Book"
+
