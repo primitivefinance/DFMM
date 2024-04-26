@@ -18,8 +18,8 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         uint256 amountIn = 0.1 ether;
         bool swapXForY = true;
 
-        (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (bool valid,, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
         assertEq(valid, true);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
@@ -48,8 +48,8 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         uint256 amountIn = 99.9999999 ether;
         bool swapXForY = true;
 
-        (bool valid, uint256 amountOut,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (bool valid, uint256 amountOut, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
         assertEq(valid, true);
 
         console2.log("out", amountOut);
@@ -76,8 +76,8 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         uint256 amountIn = 0.1 ether;
         bool swapXForY = false;
 
-        (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (bool valid,, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
         assertEq(valid, true);
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), payload, "");
@@ -109,7 +109,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
 
         uint256 ry = preReserves[1] + amountIn;
         uint256 L = startL + deltaLiquidity;
-        uint256 approxPrice = solver.getPriceGivenYL(POOL_ID, ry, L);
+        uint256 approxPrice = solver.getEstimatedPrice(POOL_ID, 1, 0);
 
         uint256 rx = solver.getNextReserveX(POOL_ID, ry, L, approxPrice);
 
@@ -134,8 +134,8 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         uint256 amountIn = 1 ether;
         bool swapXForY = false;
 
-        (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (bool valid,, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), payload, "");
@@ -148,8 +148,8 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         uint256 amountIn = 1 ether;
         bool swapXForY = true;
 
-        (bool valid,,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, amountIn);
+        (bool valid,, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
 
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), payload, "");

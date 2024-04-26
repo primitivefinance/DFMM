@@ -101,7 +101,7 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
     }
 
     function test_CoveredCall_allocate_x_maintains_price() public init {
-        uint256 startPrice = solver.internalPrice(POOL_ID);
+        uint256 startPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
         uint256 deltaX = 0.77 ether;
 
         (uint256[] memory reserves, uint256 liquidity) =
@@ -115,14 +115,14 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
         bytes memory data = abi.encode(deltaX, deltaYMax, deltaLiquidity);
         dfmm.allocate(POOL_ID, data);
 
-        uint256 endPrice = solver.internalPrice(POOL_ID);
+        uint256 endPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
 
         assertEq(startPrice, endPrice);
     }
 
     function test_CoveredCall_allocate_y_maintains_price() public init {
         uint256 maxDeltaY = 0.77 ether;
-        uint256 startPrice = solver.internalPrice(POOL_ID);
+        uint256 startPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
 
         (uint256[] memory reserves, uint256 liquidity) =
             solver.getReservesAndLiquidity(POOL_ID);
@@ -134,7 +134,7 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         dfmm.allocate(POOL_ID, data);
-        uint256 endPrice = solver.internalPrice(POOL_ID);
+        uint256 endPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
 
         assertEq(startPrice, endPrice);
     }
