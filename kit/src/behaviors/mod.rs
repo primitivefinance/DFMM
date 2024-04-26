@@ -1,28 +1,24 @@
-use std::{boxed::Box, marker::PhantomData, pin::Pin, sync::Arc};
+use std::{boxed::Box, marker::PhantomData, sync::Arc};
 
 use arbiter_engine::{
     machine::{Behavior, ControlFlow, EventStream, Processor, State},
     messager::{Message, Messager, To},
 };
 #[allow(unused)]
-use arbiter_macros::Behaviors;
+use arbiter_macros::{Behaviors, State};
 use bindings::{arbiter_token::ArbiterToken, dfmm::DFMM};
-use futures_util::Stream;
+use ethers::utils::parse_ether;
 pub use token::{MintRequest, TokenAdminQuery};
 
 use self::{
     creator::Create,
     deploy::{Deploy, DeploymentData},
-    pool::PoolType,
+    pool::{PoolCreation, PoolType},
     token::TokenAdmin,
 };
 use super::*;
 
 pub const MAX: eU256 = eU256::MAX;
-
-type PoolId = eU256;
-type TokenList = Vec<eAddress>;
-type LiquidityToken = eAddress;
 
 pub mod allocate;
 pub mod creator;
@@ -39,7 +35,12 @@ pub enum Behaviors<P: PoolType> {
     Swap(swap::Config<P>),
 }
 
+pub trait Configurable<T: for<'a> Deserialize<'a>> {
+    fn configure(data: T) -> Self;
+}
+
 #[derive(Debug, Deserialize, Serialize)]
+#[serde(bound = "P: PoolType")]
 pub enum MessageTypes<P>
 where
     P: PoolType,
@@ -47,22 +48,57 @@ where
     #[serde(untagged)]
     Deploy(DeploymentData),
     #[serde(untagged)]
-    // TODO: This is super weird. The following commented out version with `PoolCreation<P>`
-    // doesn't compile. Create(creator::PoolCreation<P>),
-    // TODO: BUT, this line where the tuple struct has the exact same data as `PoolCreation<P>`
-    // DOES compile. I'm not sure how to go about making this work nicely, but at least this works
-    // for now.
-    Create(
-        (
-            eU256,         // Pool ID
-            Vec<eAddress>, // Token List
-            eAddress,      // Liquidity Token
-            P::Parameters,
-            P::AllocationData,
-        ),
-    ),
+    Create(PoolCreation<P>),
     #[serde(untagged)]
     TokenAdmin(token::Response),
     #[serde(untagged)]
     Update(P::Parameters),
+}
+
+#[derive(Debug)]
+struct GetPoolTodo<P: PoolType> {
+    deployment_data: Option<DeploymentData>,
+    pool_creation: Option<PoolCreation<P>>,
+}
+
+impl<P: PoolType> GetPoolTodo<P> {
+    async fn complete(messager: &mut Messager) -> Self {
+        // Make an undone "TODO" list.
+        let mut todo: GetPoolTodo<P> = GetPoolTodo {
+            deployment_data: None,
+            pool_creation: None,
+        };
+        let id = messager.id.clone();
+        // Loop through the messager until we check off the boxes for this TODO list.
+        debug!("{:#?} is looping through their TODO list.", id.clone());
+        loop {
+            if let Ok(msg) = messager.get_next::<MessageTypes<P>>().await {
+                match msg.data {
+                    MessageTypes::Deploy(deploy_data) => {
+                        debug!("Updater: Got deployment data: {:?}", deploy_data);
+                        todo.deployment_data = Some(deploy_data);
+                        if todo.pool_creation.is_some() {
+                            debug!("{:#?}: Got all the data.\n{:#?}", id.clone(), todo);
+                            break todo;
+                        }
+                    }
+                    MessageTypes::Create(pool_creation) => {
+                        debug!("Updater: Got pool creation data: {:?}", pool_creation);
+                        todo.pool_creation = Some(pool_creation);
+                        if todo.deployment_data.is_some() {
+                            debug!("{:#?}: Got all the data.\n{:#?}", id.clone(), todo);
+                            break todo;
+                        }
+                    }
+                    _ => continue,
+                }
+            } else {
+                debug!(
+                    "{:#?} got some other message variant it could ignore.",
+                    id.clone()
+                );
+                continue;
+            }
+        }
+    }
 }

@@ -2,145 +2,82 @@ use self::{bindings::erc20::ERC20, pool::InputToken};
 use super::*;
 use crate::behaviors::token::Response;
 
-pub trait SwapType<E>: Debug + Serialize + Clone {
-    fn compute_swap_amount(event: E) -> (eU256, InputToken);
-    // TODO: Put this on the processor in arbiter engine so that startups just
-    // return a proccess
-    fn get_stream(
-        &self,
-        _messager: Messager,
-    ) -> Option<Pin<Box<dyn Stream<Item = E> + Send + Sync>>> {
-        None
-    }
+pub trait SwapType<E> {
+    fn compute_swap_amount(&self, event: E) -> Option<(eU256, InputToken)>;
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Swap<S: State, T: SwapType<E>, E> {
-    // to get tokens on start up
-    pub token_admin: String,
-    pub update: String,
+// this is somewhat all encompassing. It has everything.
+#[derive(Clone, Debug, Serialize, Deserialize, State)]
+pub struct Swap<S, T: SwapType<E>, E>
+where
+    S: State,
+{
     pub data: S::Data,
     pub swap_type: T,
     pub _phantom: PhantomData<E>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Config<P: PoolType> {
-    pub base_config: BaseConfig,
-    pub params: P::Parameters,
-    pub allocation_data: P::AllocationData,
-    pub token_list: Vec<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Processing<P: PoolType> {
-    pub messager: Messager,
-    pub client: Arc<ArbiterMiddleware>,
-    pub pool: Pool<P>,
-}
-
-impl<P: PoolType> State for Config<P> {
-    type Data = Self;
-}
-
-impl<P> State for Processing<P>
+// Should also get some data necessary for mint amounts and what not.
+#[derive(Clone, Debug, Serialize, Deserialize, State)]
+pub struct Config<P>
 where
     P: PoolType,
 {
-    type Data = Self;
+    pub token_admin: String,
+    pub _phantom: PhantomData<P>,
 }
 
-#[derive(Debug)]
-struct SwapTodo<P: PoolType> {
-    deployment_data: Option<DeploymentData>,
-    #[allow(clippy::type_complexity)]
-    pool_creation: Option<(
-        PoolId,         // Pool ID
-        TokenList,      // Token List
-        LiquidityToken, // Liquidity Token
-        <P as PoolType>::Parameters,
-        <P as PoolType>::AllocationData,
-    )>,
+#[derive(Debug, Clone, State)]
+pub struct Processing<P>
+where
+    P: PoolType,
+    // T: SwapType<E>,
+    // E: Send + 'static,
+{
+    pub messager: Messager,
+    pub client: Arc<ArbiterMiddleware>,
+    pub pool: Pool<P>,
+    // pub swap_type: T,
+    // _phantom: PhantomData<E>,
 }
 
 #[async_trait::async_trait]
 impl<P, T, E> Behavior<E> for Swap<Config<P>, T, E>
 where
-    P: PoolType + Send + Sync + 'static,
-    P::StrategyContract: Send,
-    P::SolverContract: Send,
-    T: SwapType<E> + Send + Sync + 'static + for<'a> Deserialize<'a>,
-    E: Debug + Send + Sync + 'static,
+    P: PoolType + Send + Sync,
+    T: SwapType<E> + Send + Clone,
+    E: Send + 'static,
 {
     type Processor = Swap<Processing<P>, T, E>;
     async fn startup(
-        &mut self,
+        mut self,
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
-    ) -> Result<Option<(Self::Processor, EventStream<E>)>> {
-        // Make a "TODO" list.
-        // This is the data I need to recieve to do my job
-        let mut todo: SwapTodo<P> = SwapTodo {
-            deployment_data: None,
-            pool_creation: None,
-        };
-
-        // Loop through the messager until we check off the boxes for this TODO list.
-        debug!("Updater is looping through their TODO list.");
-        loop {
-            if let Ok(msg) = messager.get_next::<MessageTypes<P>>().await {
-                match msg.data {
-                    MessageTypes::Deploy(deploy_data) => {
-                        debug!("Updater: Got deployment data: {:?}", deploy_data);
-                        todo.deployment_data = Some(deploy_data);
-                        if todo.pool_creation.is_some() {
-                            debug!("Updater: Got all the data.\n{:#?}", todo);
-                            break;
-                        }
-                    }
-                    MessageTypes::Create(pool_creation) => {
-                        debug!("Updater: Got pool creation data: {:?}", pool_creation);
-                        todo.pool_creation = Some(pool_creation);
-                        if todo.deployment_data.is_some() {
-                            debug!("Updater: Got all the data.\n{:#?}", todo);
-                            break;
-                        }
-                    }
-                    _ => continue,
-                }
-            } else {
-                debug!("Updater got some other message variant it could ignore.");
-                continue;
-            }
-        }
-        debug!("Updater has checked off their TODO list.");
+    ) -> Result<Self::Processor> {
+        // TODO: Here we probably need to filter on the `PoolCreation` so that we get
+        // the correct pool.
+        let completed_todo = GetPoolTodo::<P>::complete(&mut messager).await;
+        let (deployment_data, pool_creation) = (
+            completed_todo.deployment_data.unwrap(),
+            completed_todo.pool_creation.unwrap(),
+        );
 
         let (strategy_contract, solver_contract) =
-            P::get_contracts(todo.deployment_data.as_ref().unwrap(), client.clone());
-        let dfmm = DFMM::new(todo.deployment_data.unwrap().dfmm, client.clone());
-        debug!("Got DFMM and the strategy contracts.");
+            P::get_contracts(&deployment_data, client.clone());
+        let dfmm = DFMM::new(deployment_data.dfmm, client.clone());
 
         // Get the intended tokens for the pool and do approvals.
         let mut tokens: Vec<ArbiterToken<ArbiterMiddleware>> = Vec::new();
-        for tkn in self.data.token_list.drain(..) {
+        for token_address in pool_creation.tokens.into_iter() {
+            let token = ArbiterToken::new(token_address, client.clone());
+            let name = token.name().call().await?;
             messager
                 .send(
-                    To::Agent(self.token_admin.clone()),
-                    TokenAdminQuery::AddressOf(tkn.clone()),
-                )
-                .await
-                .unwrap();
-            let token = ArbiterToken::new(
-                messager.get_next::<eAddress>().await.unwrap().data,
-                client.clone(),
-            );
-            messager
-                .send(
-                    To::Agent(self.token_admin.clone()),
+                    To::Agent(self.data.token_admin.clone()),
                     TokenAdminQuery::MintRequest(MintRequest {
-                        token: tkn,
+                        token: name,
                         mint_to: client.address(),
-                        mint_amount: 100_000_000_000,
+                        mint_amount: parse_ether(100)?,
                     }),
                 )
                 .await
@@ -160,53 +97,79 @@ where
             tokens.push(token);
         }
 
-        let lp_address = todo.pool_creation.clone().unwrap().2;
-        let lp_token = ERC20::new(lp_address, client.clone());
-        let instance = P::create_instance(
-            strategy_contract,
-            solver_contract,
-            todo.pool_creation.clone().unwrap().3,
-        );
-
         // build pool for processor and stream
         let pool = Pool::<P> {
-            id: todo.pool_creation.clone().unwrap().0,
+            id: pool_creation.id,
             dfmm,
-            instance,
+            instance: P::create_instance(strategy_contract, solver_contract, pool_creation.params),
             tokens,
-            liquidity_token: lp_token,
+            liquidity_token: ERC20::new(pool_creation.liquidity_token, client.clone()),
         };
 
-        match self.swap_type.get_stream(messager.clone()) {
-            Some(stream) => {
-                let process = Self::Processor {
-                    token_admin: self.token_admin.clone(),
-                    update: self.update.clone(),
-                    data: Processing {
-                        messager,
-                        client,
-                        pool,
-                    },
-                    swap_type: self.swap_type.clone(),
-                    _phantom: PhantomData::<E>,
-                };
-                Ok(Some((process, stream)))
-            }
-            None => Ok(None),
-        }
+        let processor = Self::Processor {
+            data: Processing {
+                messager,
+                client,
+                pool,
+            },
+            swap_type: self.swap_type,
+            _phantom: PhantomData,
+        };
+
+        Ok(processor)
     }
 }
 
+/// This is the default implementation for any processor that takes in some
+/// event E and will work for the `Swap` struct.
 #[async_trait::async_trait]
 impl<P, T, E> Processor<E> for Swap<Processing<P>, T, E>
 where
     P: PoolType + Send + Sync,
-    T: SwapType<E> + Send + Sync + 'static,
-    E: Send + Sync + 'static,
+    T: SwapType<E> + Send + Clone,
+    E: Send + 'static,
 {
-    async fn process(&mut self, event: E) -> Result<ControlFlow> {
-        let (swap_amount, input) = T::compute_swap_amount(event);
-        self.data.pool.swap(swap_amount, input).await?;
+    default async fn get_stream(&mut self) -> Result<Option<EventStream<E>>> {
+        Ok(None)
+    }
+
+    default async fn process(&mut self, event: E) -> Result<ControlFlow> {
+        if let Some((swap_amount, input)) = self.swap_type.compute_swap_amount(event) {
+            debug!("Found the swap amounts: {:?}", swap_amount);
+            self.data.pool.swap(swap_amount, input).await?;
+        }
+
+        Ok(ControlFlow::Continue)
+    }
+}
+
+/// With the `specialization` feature in Rust, we can take the above trait and
+/// use it as a default when we don't want to have some specific kind of stream
+/// come with it. Sadly, we still have to copy the `process` method along with
+/// the `get_stream`, ideally, in the future, all you have to do is just
+/// implement your own `get_stream` given whatever event `E` you want to
+/// produce, and this will be a very straightforward specialization that allows you to easily extend `Swap` for whatever swap type you want. See this tracking RFC for trait `specialization` https://github.com/rust-lang/rust/issues/31844
+///
+/// Just to be clear, this now will allow you to work with any `Swap` and
+/// `SwapType` as long as it streams `Message`s. If you need to stream something
+/// else, just copy this specialization and use whatever stream item you'd like!
+#[async_trait::async_trait]
+impl<P, T> Processor<Message> for Swap<Processing<P>, T, Message>
+where
+    P: PoolType + Send + Sync,
+    T: SwapType<Message> + Send + Clone,
+{
+    // This is the specialized trait for the specific type E = Message. Cool!
+    async fn get_stream(&mut self) -> Result<Option<EventStream<Message>>> {
+        Ok(Some(self.data.messager.stream()?))
+    }
+
+    // Would be nice to nice to not have to rewrite this every time see above... RIP
+    default async fn process(&mut self, event: Message) -> Result<ControlFlow> {
+        if let Some((swap_amount, input)) = self.swap_type.compute_swap_amount(event) {
+            self.data.pool.swap(swap_amount, input).await?;
+        }
+
         Ok(ControlFlow::Continue)
     }
 }

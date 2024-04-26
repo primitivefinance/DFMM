@@ -7,7 +7,7 @@ pub struct Create<S: State> {
     pub data: S::Data,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, State)]
 pub struct Config<P: PoolType> {
     pub base_config: BaseConfig,
     pub params: P::Parameters,
@@ -15,23 +15,17 @@ pub struct Config<P: PoolType> {
     pub token_list: Vec<String>,
 }
 
-impl<P: PoolType> State for Config<P> {
-    type Data = Self;
-}
-
 #[async_trait::async_trait]
 impl<P> Behavior<()> for Create<Config<P>>
 where
     P: PoolType + Send + Sync + 'static,
-    P::StrategyContract: Send,
-    P::SolverContract: Send,
 {
     type Processor = ();
     async fn startup(
-        &mut self,
+        mut self,
         client: Arc<ArbiterMiddleware>,
         mut messager: Messager,
-    ) -> Result<Option<(Self::Processor, EventStream<()>)>> {
+    ) -> Result<Self::Processor> {
         // Receive the `DeploymentData` from the `Deployer` agent and use it to get the
         // contracts.
         debug!("Starting the creator");
@@ -62,7 +56,7 @@ where
                     TokenAdminQuery::MintRequest(MintRequest {
                         token: tkn,
                         mint_to: client.address(),
-                        mint_amount: 100_000_000_000,
+                        mint_amount: parse_ether(100)?,
                     }),
                 )
                 .await
@@ -104,23 +98,19 @@ where
 
         debug!("Pool created!\n {:#?}", pool);
 
-        let pool_creation = (
-            pool.id,
-            pool.tokens.iter().map(|t| t.address()).collect::<Vec<_>>(),
-            pool.liquidity_token.address(),
-            params,
-            self.data.allocation_data.clone(),
-        );
-        messager.send(To::All, pool_creation).await.unwrap();
-        Ok(None)
+        messager
+            .send(
+                To::All,
+                PoolCreation::<P> {
+                    id: pool.id,
+                    tokens: pool.tokens.iter().map(|t| t.address()).collect::<Vec<_>>(),
+                    liquidity_token: pool.liquidity_token.address(),
+                    params,
+                    allocation_data: self.data.allocation_data.clone(),
+                },
+            )
+            .await
+            .unwrap();
+        Ok(())
     }
-}
-
-// TODO: We should be able to use this but it is currently hard to work with due
-// to `serde::Deserialize`
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
-pub struct PoolCreation<P: PoolType> {
-    pub id: eU256,
-    pub params: P::Parameters,
-    pub allocation_data: P::AllocationData,
 }

@@ -9,10 +9,10 @@ keywords = ["ethereum", "smart-contracts", "automated market makers"]
 readme = "../README.md"
 
 [dependencies]
-arbiter-core = { git = "https://github.com/primitivefinance/arbiter.git", rev = "aff29d30" }
-arbiter-engine = { git = "https://github.com/primitivefinance/arbiter.git", rev = "aff29d30" }
-arbiter-macros = { git = "https://github.com/primitivefinance/arbiter.git", rev = "aff29d30" }
-arbiter-bindings = { git = "https://github.com/primitivefinance/arbiter.git", rev = "aff29d30" }
+arbiter-core = { git = "https://github.com/primitivefinance/arbiter.git", rev = "d5bc1bb3" }
+arbiter-engine = { git = "https://github.com/primitivefinance/arbiter.git", rev = "d5bc1bb3" }
+arbiter-macros = { git = "https://github.com/primitivefinance/arbiter.git", rev = "d5bc1bb3" }
+arbiter-bindings = { git = "https://github.com/primitivefinance/arbiter.git", rev = "d5bc1bb3" }
 
 # Ethereum
 ethers = "2.0.13"
@@ -29,10 +29,9 @@ serde_json = "1.0.114"
 # Errors and tracing
 anyhow = "1.0.81"
 tracing = "0.1.40"
-tracing-subscriber = "0.3.18"
 
-# CLI
-clap = { version = "4.5.1", features = ["derive"] }
+[dev-dependencies]
+tracing-subscriber = "0.3.18"
 
 [[bin]]
 name = "kit"

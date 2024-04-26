@@ -72,8 +72,19 @@ impl PoolType for ConstantSumPool {
         input_token: InputToken,
         amount_in: eU256,
     ) -> Result<Bytes> {
+        debug!("IN THE `swap_data` FUNCTION FOR CONSTANT SUM POOL");
+        debug!(
+            "Inputs are:\n pool_id: {}\n, input_token: {:?}\n, amount_in: {}",
+            pool_id, input_token, amount_in
+        );
         let (valid, _, data) = match input_token {
             InputToken::TokenX => {
+                // let params = self.solver_contract.get_pool_params(pool_id).call().await?;
+                // debug!("Params are: {:?}", params);
+                debug!(
+                    "Matched token x with pool id : {:?}, and amount in :{:?}",
+                    pool_id, amount_in
+                );
                 self.solver_contract
                     .simulate_swap(pool_id, true, amount_in)
                     .call()
@@ -86,6 +97,7 @@ impl PoolType for ConstantSumPool {
                     .await?
             }
         };
+        debug!("Call went through in `swap_data` function");
         if valid {
             Ok(data)
         } else {
