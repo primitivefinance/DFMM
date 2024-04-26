@@ -41,6 +41,12 @@ contract NTokenGeometricMeanSolver is ISolver {
         strategy = strategy_;
     }
 
+    /**
+     * @notice Prepares the data to initialize a new NTokenGeometricMean pool.
+     * @param numeraireAmount Amount of the numeraire token to deposit.
+     * @param prices Prices of the tokens in the pool in WAD units.
+     * @param params Parameters as defined by the NTokenGeometricMean strategy.
+     */
     function prepareInit(
         uint256 numeraireAmount,
         uint256[] memory prices,
@@ -185,6 +191,11 @@ contract NTokenGeometricMeanSolver is ISolver {
         return (valid, state.amountOut, swapData);
     }
 
+    /**
+     * @notice Returns the parameters of the pool `poolId`.
+     * @param poolId Id of the target pool.
+     * @return params Pool parameters as defined by the NTokenGeometricMean strategy.
+     */
     function getPoolParams(uint256 poolId)
         public
         view
@@ -205,14 +216,25 @@ contract NTokenGeometricMeanSolver is ISolver {
         return (pool.reserves, pool.totalLiquidity);
     }
 
-    function prepareFeeUpdate(uint256 swapFee)
+    /**
+     * @notice Prepares the data for updating the swap fee.
+     * @param newSwapFee New swap fee to set.
+     * @return Encoded data for updating the swap fee.
+     */
+    function prepareSwapFeeUpdate(uint256 newSwapFee)
         public
         pure
-        returns (bytes memory data)
+        returns (bytes memory)
     {
-        return encodeFeeUpdate(swapFee);
+        return encodeFeeUpdate(newSwapFee);
     }
 
+    /**
+     * @notice Prepares the data for updating the weights.
+     * @param targetWeights New weights to set.
+     * @param targetTimestamp Timestamp at which the update will end.
+     * @return Encoded data for updating the weights.
+     */
     function prepareWeightsUpdate(
         uint256[] calldata targetWeights,
         uint256 targetTimestamp
@@ -220,17 +242,17 @@ contract NTokenGeometricMeanSolver is ISolver {
         return encodeWeightsUpdate(targetWeights, targetTimestamp);
     }
 
-    function prepareControllerUpdate(address controller)
+    /**
+     * @notice Prepares the data for updating the controller address.
+     * @param newController Address of the new controller.
+     * @return Encoded data for updating the controller.
+     */
+    function prepareControllerUpdate(address newController)
         public
         pure
         returns (bytes memory)
     {
-        return encodeControllerUpdate(controller);
-    }
-
-    function getNextLiquidity(uint256 poolId) public view returns (uint256) {
-        (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
-        return computeNextLiquidity(reserves, getPoolParams(poolId));
+        return encodeControllerUpdate(newController);
     }
 
     /// @inheritdoc ISolver
