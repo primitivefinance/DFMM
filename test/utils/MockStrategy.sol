@@ -96,7 +96,8 @@ contract MockStrategy is IStrategy {
             uint256 tokenOutIndex,
             uint256 amountIn,
             uint256 amountOut,
-            uint256 deltaLiquidity
+            uint256 deltaLiquidity,
+            bytes memory params
         )
     {
         (
@@ -106,11 +107,20 @@ contract MockStrategy is IStrategy {
             tokenOutIndex,
             amountIn,
             amountOut,
-            deltaLiquidity
+            deltaLiquidity,
+            params
         ) = abi.decode(
-            data, (bool, int256, uint256, uint256, uint256, uint256, uint256)
+            data,
+            (bool, int256, uint256, uint256, uint256, uint256, uint256, bytes)
         );
     }
+
+    function postSwapHook(
+        address,
+        uint256,
+        Pool calldata,
+        bytes calldata
+    ) external pure override { }
 
     function update(
         address sender,

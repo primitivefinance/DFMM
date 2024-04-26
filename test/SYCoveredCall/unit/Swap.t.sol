@@ -2,13 +2,13 @@
 pragma solidity ^0.8.13;
 
 import "./SetUp.sol";
-import { computeTradingFunction } from "src/CoveredCall/CoveredCallMath.sol";
+import { computeTradingFunction } from "src/SYCoveredCall/SYCoveredCallMath.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 
-contract CoveredCallSwapTest is CoveredCallSetUp {
+contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
     using FixedPointMathLib for uint256;
 
-    function test_CoveredCall_swap_SwapsXforY() public init {
+    function test_SYCoveredCall_swap_SwapsXforY() public init {
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
 
@@ -34,18 +34,16 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         );
     }
 
-    function test_CoveredCall_swap_SwapsXforY_WarpToMaturity()
-        public
-        init_no_fee
-    {
-        vm.warp(370 days);
+    function test_SYCoveredCall_swap_SwapsXforY_Warp2Days() public init {
+        vm.warp(block.timestamp + 2 days);
+
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
 
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        uint256 amountIn = 99.9999999 ether;
+        uint256 amountIn = 0.1 ether;
         bool swapXForY = true;
 
         (bool valid, uint256 amountOut, bytes memory payload) =
@@ -66,7 +64,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         );
     }
 
-    function test_CoveredCall_swap_SwapsYforX() public init {
+    function test_SYCoveredCall_swap_SwapsYforX() public init {
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
 
@@ -77,7 +75,7 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         bool swapXForY = false;
 
         (bool valid,, bytes memory payload) =
-            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
+            solver.prepareSwap(POOL_ID, 1, 0, amountIn);
         assertEq(valid, true);
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), payload, "");
@@ -94,13 +92,13 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
     }
 
     // TODO: force payload to yield negative invariant and assert on revert
-    function test_CoveredCall_swap_RevertsIfInvariantNegative() public init {
+    function test_SYCoveredCall_swap_RevertsIfInvariantNegative() public init {
         uint256 amountIn = 0.23 ether;
 
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             solver.getReservesAndLiquidity(POOL_ID);
 
-        CoveredCallParams memory poolParams = solver.getPoolParams(POOL_ID);
+        SYCoveredCallParams memory poolParams = solver.getPoolParams(POOL_ID);
         uint256 startL = solver.getNextLiquidity(
             POOL_ID, preReserves[0], preReserves[1], preTotalLiquidity
         );
@@ -130,31 +128,28 @@ contract CoveredCallSwapTest is CoveredCallSetUp {
         dfmm.swap(POOL_ID, address(this), payload, "");
     }
 
-    function test_CoveredCall_swap_ChargesCorrectFeesYIn() public deep {
-        uint256 amountIn = 1 ether;
-        bool swapXForY = false;
-
-        (bool valid,, bytes memory payload) =
-            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
-
-        (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), payload, "");
-
-        console2.log(inputAmount);
-        console2.log(outputAmount);
+    function _computeDeltaLXIn(
+        uint256 amountIn,
+        uint256 rx,
+        uint256 ry,
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) external view returns (uint256 deltaL) {
+        uint256 fees = params.swapFee.mulWadUp(amountIn);
+        uint256 px = computePriceGivenX(rx, L, params);
+        deltaL =
+            px.mulWadUp(L).mulWadUp(fees).divWadDown(px.mulWadDown(rx) + ry);
     }
 
-    function test_CoveredCall_swap_ChargesCorrectFeesXIn() public deep {
-        uint256 amountIn = 1 ether;
-        bool swapXForY = true;
-
-        (bool valid,, bytes memory payload) =
-            solver.prepareSwap(POOL_ID, 0, 1, amountIn);
-
-        (,, uint256 inputAmount, uint256 outputAmount) =
-            dfmm.swap(POOL_ID, address(this), payload, "");
-
-        console2.log(inputAmount);
-        console2.log(outputAmount);
+    function _computeDeltaLYIn(
+        uint256 amountIn,
+        uint256 rx,
+        uint256 ry,
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) external returns (uint256 deltaL) {
+        uint256 fees = params.swapFee.mulWadUp(amountIn);
+        uint256 px = computePriceGivenX(rx, L, params);
+        deltaL = L.mulWadUp(fees).divWadDown(px.mulWadDown(rx) + ry);
     }
 }

@@ -14,8 +14,8 @@ import {
     encodeControllerUpdate,
     computeInitialPoolData,
     computeInitialPoolDataGivenY
-} from "src/CoveredCall/CoveredCallUtils.sol";
-import { CoveredCallParams } from "src/CoveredCall/CoveredCall.sol";
+} from "src/SYCoveredCall/SYCoveredCallUtils.sol";
+import { SYCoveredCallParams } from "src/SYCoveredCall/SYCoveredCall.sol";
 import {
     computeTradingFunction,
     computeNextLiquidity,
@@ -31,9 +31,10 @@ import {
     computeAllocationGivenDeltaY,
     computeDeallocationGivenDeltaX,
     computeDeallocationGivenDeltaY,
+    computeKGivenLastPrice,
     YEAR,
     ONE
-} from "src/CoveredCall/CoveredCallMath.sol";
+} from "src/SYCoveredCall/SYCoveredCallMath.sol";
 import {
     ISolver,
     InvalidTokenIndex,
@@ -46,7 +47,7 @@ import {
     computeDeltaXGivenDeltaL
 } from "src/lib/StrategyLib.sol";
 
-contract CoveredCallSolver is ISolver {
+contract SYCoveredCallSolver is ISolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using SignedWadMathLib for int256;
@@ -70,18 +71,18 @@ contract CoveredCallSolver is ISolver {
     function getPoolParams(uint256 poolId)
         public
         view
-        returns (CoveredCallParams memory)
+        returns (SYCoveredCallParams memory)
     {
         return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (CoveredCallParams)
+            IStrategy(strategy).getPoolParams(poolId), (SYCoveredCallParams)
         );
     }
 
     function getPoolParamsCustomTimestamp(
         uint256 poolId,
         uint256 timestamp
-    ) public view returns (CoveredCallParams memory) {
-        CoveredCallParams memory params = getPoolParams(poolId);
+    ) public view returns (SYCoveredCallParams memory) {
+        SYCoveredCallParams memory params = getPoolParams(poolId);
         params.lastTimestamp = timestamp;
         return params;
     }
@@ -114,7 +115,7 @@ contract CoveredCallSolver is ISolver {
     function prepareInit(
         uint256 reserveX,
         uint256 S,
-        CoveredCallParams memory params
+        SYCoveredCallParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolData(reserveX, S, params);
     }
@@ -122,7 +123,7 @@ contract CoveredCallSolver is ISolver {
     function prepareInitGivenX(
         uint256 reserveX,
         uint256 S,
-        CoveredCallParams memory params
+        SYCoveredCallParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolData(reserveX, S, params);
     }
@@ -130,7 +131,7 @@ contract CoveredCallSolver is ISolver {
     function prepareInitGivenY(
         uint256 reserveY,
         uint256 S,
-        CoveredCallParams memory params
+        SYCoveredCallParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolDataGivenY(reserveY, S, params);
     }
@@ -183,9 +184,9 @@ contract CoveredCallSolver is ISolver {
         uint256 amountOut;
         uint256 deltaLiquidity;
         uint256 fees;
+        uint256 timestamp;
     }
 
-    /// @dev Estimates a swap's reserves and adjustments and returns its validity.
     function prepareSwap(
         uint256 poolId,
         uint256 tokenInIndex,
@@ -195,25 +196,32 @@ contract CoveredCallSolver is ISolver {
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
-        CoveredCallParams memory poolParams =
+        SYCoveredCallParams memory poolParams =
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
 
         SimulateSwapState memory state;
+        state.timestamp = block.timestamp;
 
         uint256 startComputedL = getNextLiquidity(
             poolId, preReserves[0], preReserves[1], preTotalLiquidity
         );
+        poolParams.mean = computeKGivenLastPrice(
+            preReserves[0], preTotalLiquidity, poolParams
+        );
+
+        uint256 poolId = poolId;
+        uint256 swapAmountIn = amountIn;
         {
             if (tokenInIndex == 0) {
                 state.deltaLiquidity = computeDeltaLXIn(
-                    amountIn,
+                    swapAmountIn,
                     preReserves[0],
                     preReserves[1],
                     preTotalLiquidity,
                     poolParams
                 );
 
-                endReserves.rx = preReserves[0] + amountIn;
+                endReserves.rx = preReserves[0] + swapAmountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice = getEstimatedPrice(poolId, 0, 1);
 
@@ -228,14 +236,14 @@ contract CoveredCallSolver is ISolver {
                 state.amountOut = preReserves[1] - endReserves.ry;
             } else {
                 state.deltaLiquidity = computeDeltaLYIn(
-                    amountIn,
+                    swapAmountIn,
                     preReserves[0],
                     preReserves[1],
                     preTotalLiquidity,
                     poolParams
                 );
 
-                endReserves.ry = preReserves[1] + amountIn;
+                endReserves.ry = preReserves[1] + swapAmountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice = getEstimatedPrice(poolId, 1, 0);
 
@@ -258,14 +266,25 @@ contract CoveredCallSolver is ISolver {
         bytes memory swapData;
 
         if (tokenInIndex == 0) {
-            swapData =
-                abi.encode(0, 1, amountIn, state.amountOut, startComputedL);
+            swapData = abi.encode(
+                0,
+                1,
+                swapAmountIn,
+                state.amountOut,
+                startComputedL,
+                state.timestamp
+            );
         } else {
-            swapData =
-                abi.encode(1, 0, amountIn, state.amountOut, startComputedL);
+            swapData = abi.encode(
+                1,
+                0,
+                swapAmountIn,
+                state.amountOut,
+                startComputedL,
+                state.timestamp
+            );
         }
 
-        uint256 poolId = poolId;
         (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
@@ -279,7 +298,7 @@ contract CoveredCallSolver is ISolver {
         uint256 tokenInIndex,
         uint256 tokenOutIndex
     ) public view returns (uint256 price) {
-        CoveredCallParams memory params =
+        SYCoveredCallParams memory params =
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
         (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
         if (
@@ -292,6 +311,16 @@ contract CoveredCallSolver is ISolver {
         } else {
             price = computePriceGivenY(reserves[1], L, params);
         }
+    }
+
+    /// @dev Computes the internal price using this strategie's slot parameters.
+    function internalPrice(uint256 poolId)
+        public
+        view
+        returns (uint256 price)
+    {
+        (uint256[] memory reserves, uint256 L) = getReservesAndLiquidity(poolId);
+        price = computePriceGivenX(reserves[0], L, getPoolParams(poolId));
     }
 
     function getInvariant(uint256 poolId) public view returns (int256) {
@@ -307,7 +336,7 @@ contract CoveredCallSolver is ISolver {
         uint256 ry,
         uint256 L
     ) public view returns (uint256) {
-        CoveredCallParams memory poolParams =
+        SYCoveredCallParams memory poolParams =
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
 
         int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
@@ -320,7 +349,7 @@ contract CoveredCallSolver is ISolver {
         uint256 L,
         uint256 S
     ) public view returns (uint256) {
-        CoveredCallParams memory poolParams =
+        SYCoveredCallParams memory poolParams =
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
         uint256 approximatedRx = computeXGivenL(L, S, poolParams);
         int256 invariant =
@@ -334,7 +363,7 @@ contract CoveredCallSolver is ISolver {
         uint256 L,
         uint256 S
     ) public view returns (uint256) {
-        CoveredCallParams memory poolParams =
+        SYCoveredCallParams memory poolParams =
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
         uint256 approximatedRy = computeYGivenL(L, S, poolParams);
         int256 invariant =

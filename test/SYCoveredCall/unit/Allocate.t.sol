@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "./SetUp.sol";
 import { computeDeltaGivenDeltaLRoundUp } from
-    "src/CoveredCall/CoveredCallMath.sol";
+    "src/SYCoveredCall/SYCoveredCallMath.sol";
 import {
     computeDeltaLGivenDeltaY,
     computeDeltaLGivenDeltaX,
@@ -11,8 +11,8 @@ import {
     computeDeltaYGivenDeltaL
 } from "src/lib/StrategyLib.sol";
 
-contract CoveredCallAllocateTest is CoveredCallSetUp {
-    function test_CoveredCall_allocate_GivenL() public init {
+contract SYCoveredCallAllocateTest is SYCoveredCallSetUp {
+    function test_SYCoveredCall_allocate_GivenL() public init {
         (uint256[] memory reserves, uint256 totalLiquidity) =
             solver.getReservesAndLiquidity(POOL_ID);
 
@@ -44,7 +44,7 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
         assertEq(deltaTotalLiquidity, deltaLiquidityBalance);
     }
 
-    function test_CoveredCall_allocate_GivenX() public init {
+    function test_SYCoveredCall_allocate_GivenX() public init {
         uint256 deltaX = 0.1 ether;
 
         (uint256[] memory reserves, uint256 liquidity) =
@@ -72,7 +72,7 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
 
     // if we assert positive invariant, not less than epsilon, can someone sandwich a tx whereby the put the invariant to some extremely large number in front of an allocate?
 
-    function test_CoveredCall_allocate_GivenY() public init {
+    function test_SYCoveredCall_allocate_GivenY() public init {
         uint256 maxDeltaY = 0.1 ether;
 
         (uint256[] memory reserves, uint256 liquidity) =
@@ -100,8 +100,8 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
         */
     }
 
-    function test_CoveredCall_allocate_x_maintains_price() public init {
-        uint256 startPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
+    function test_SYCoveredCall_allocate_x_maintains_price() public init {
+        uint256 startPrice = solver.internalPrice(POOL_ID);
         uint256 deltaX = 0.77 ether;
 
         (uint256[] memory reserves, uint256 liquidity) =
@@ -115,14 +115,14 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
         bytes memory data = abi.encode(deltaX, deltaYMax, deltaLiquidity);
         dfmm.allocate(POOL_ID, data);
 
-        uint256 endPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
+        uint256 endPrice = solver.internalPrice(POOL_ID);
 
         assertEq(startPrice, endPrice);
     }
 
-    function test_CoveredCall_allocate_y_maintains_price() public init {
+    function test_SYCoveredCall_allocate_y_maintains_price() public init {
         uint256 maxDeltaY = 0.77 ether;
-        uint256 startPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
+        uint256 startPrice = solver.internalPrice(POOL_ID);
 
         (uint256[] memory reserves, uint256 liquidity) =
             solver.getReservesAndLiquidity(POOL_ID);
@@ -134,7 +134,7 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
 
         bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
         dfmm.allocate(POOL_ID, data);
-        uint256 endPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
+        uint256 endPrice = solver.internalPrice(POOL_ID);
 
         assertEq(startPrice, endPrice);
     }

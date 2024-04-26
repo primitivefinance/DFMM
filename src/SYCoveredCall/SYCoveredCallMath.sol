@@ -4,9 +4,9 @@ pragma solidity ^0.8.13;
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SignedWadMathLib } from "src/lib/SignedWadMath.sol";
 import { ONE, HALF } from "src/lib/StrategyLib.sol";
-import { CoveredCallParams } from "src/CoveredCall/CoveredCall.sol";
+import { SYCoveredCallParams } from "src/SYCoveredCall/SYCoveredCall.sol";
 import { Gaussian } from "solstat/Gaussian.sol";
-import { toUint } from "src/CoveredCall/CoveredCallUtils.sol";
+import { toUint } from "src/SYCoveredCall/SYCoveredCallUtils.sol";
 import { bisection } from "src/lib/BisectionLib.sol";
 import "forge-std/console2.sol";
 
@@ -21,7 +21,7 @@ function computeTradingFunction(
     uint256 rX,
     uint256 rY,
     uint256 L,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (int256) {
     int256 a = Gaussian.ppf(int256(rX.divWadUp(L)));
     int256 b = Gaussian.ppf(int256(rY.divWadUp(L.mulWadUp(params.mean))));
@@ -30,7 +30,7 @@ function computeTradingFunction(
     return a + b + c;
 }
 
-function computeTau(CoveredCallParams memory params) pure returns (uint256) {
+function computeTau(SYCoveredCallParams memory params) pure returns (uint256) {
     if (params.lastTimestamp >= params.maturity) {
         return 0;
     } else {
@@ -96,7 +96,7 @@ function computeSigmaSqrtTau(
 function computeLGivenX(
     uint256 rx,
     uint256 S,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256 L) {
     int256 d1 = computeD1({ S: S, params: params });
     uint256 cdf = toUint(Gaussian.cdf(d1));
@@ -107,7 +107,7 @@ function computeLGivenX(
 function computeLGivenY(
     uint256 ry,
     uint256 S,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256 L) {
     int256 d2 = computeD2({ S: S, params: params });
     uint256 cdf = toUint(Gaussian.cdf(d2));
@@ -120,7 +120,7 @@ function computeLGivenY(
 function computeYGivenL(
     uint256 L,
     uint256 S,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256 ry) {
     int256 d2 = computeD2({ S: S, params: params });
     uint256 cdf = toUint(Gaussian.cdf(d2));
@@ -133,7 +133,7 @@ function computeYGivenL(
 function computeXGivenL(
     uint256 L,
     uint256 S,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256 rx) {
     int256 d1 = computeD1({ S: S, params: params });
     uint256 cdf = toUint(Gaussian.cdf(d1));
@@ -150,7 +150,7 @@ function computeXGivenL(
  */
 function computeD1(
     uint256 S,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (int256 d1) {
     uint256 tau = computeTau(params);
     if (tau == 0) {
@@ -173,7 +173,7 @@ function computeD1(
 /// @return d2 = d1 - sigma * sqrt(tau), alternatively d2 = (ln(S/K) - tau * sigma^2 / 2) / (sigma * sqrt(tau))
 function computeD2(
     uint256 S,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (int256 d2) {
     uint256 tau = computeTau(params);
     if (tau == 0) {
@@ -198,7 +198,7 @@ function computeD2(
 function computePriceGivenX(
     uint256 rX,
     uint256 L,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256) {
     uint256 tau = computeTau(params);
     uint256 a = computeHalfSigmaSquaredTau(params.width, tau);
@@ -214,10 +214,29 @@ function computePriceGivenX(
     return params.mean.mulWadUp(uint256(exp));
 }
 
+// K = P1(x) / exp[ni(x/L)√(L + (1/2)v²t)]
+function computeKGivenLastPrice(
+    uint256 rX,
+    uint256 L,
+    SYCoveredCallParams memory params
+) pure returns (uint256 K) {
+    uint256 price = computePriceGivenX(rX, L, params);
+
+    uint256 tau = computeTau(params);
+    uint256 a = computeHalfSigmaSquaredTau(params.width, tau);
+    // $$\Phi^{-1} (1 - \frac{x}{L})$$
+    int256 b = Gaussian.ppf(int256(ONE - rX.divWadDown(L)));
+    int256 exp = (
+        b.wadMul(int256(computeSigmaSqrtTau(params.width, tau))) - int256(a)
+    ).expWad();
+
+    K = price.divWadDown(uint256(exp));
+}
+
 function computePriceGivenY(
     uint256 rY,
     uint256 L,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256) {
     uint256 tau = computeTau(params);
     uint256 a = computeHalfSigmaSquaredTau(params.width, tau);
@@ -239,7 +258,7 @@ function computeDeltaLXIn(
     uint256 rx,
     uint256 ry,
     uint256 L,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256 deltaL) {
     uint256 fees = params.swapFee.mulWadUp(amountIn);
     uint256 px = computePriceGivenX(rx, L, params);
@@ -251,7 +270,7 @@ function computeDeltaLYIn(
     uint256 rx,
     uint256 ry,
     uint256 L,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256 deltaL) {
     uint256 fees = params.swapFee.mulWadUp(amountIn);
     uint256 px = computePriceGivenX(rx, L, params);
@@ -306,8 +325,8 @@ function computeDeallocationGivenDeltaY(
 /// it to be passed as an argument to another function. BisectionLib.sol takes this
 /// function as an argument to find the root of the trading function given the reserveYWad.
 function findRootY(bytes memory data, uint256 ry) pure returns (int256) {
-    (uint256 rx, uint256 L, CoveredCallParams memory params) =
-        abi.decode(data, (uint256, uint256, CoveredCallParams));
+    (uint256 rx, uint256 L, SYCoveredCallParams memory params) =
+        abi.decode(data, (uint256, uint256, SYCoveredCallParams));
     return computeTradingFunction(rx, ry, L, params);
 }
 
@@ -315,8 +334,8 @@ function findRootY(bytes memory data, uint256 ry) pure returns (int256) {
 /// it to be passed as an argument to another function. BisectionLib.sol takes this
 /// function as an argument to find the root of the trading function given the reserveXWad.
 function findRootX(bytes memory data, uint256 rx) pure returns (int256) {
-    (uint256 ry, uint256 L, CoveredCallParams memory params) =
-        abi.decode(data, (uint256, uint256, CoveredCallParams));
+    (uint256 ry, uint256 L, SYCoveredCallParams memory params) =
+        abi.decode(data, (uint256, uint256, SYCoveredCallParams));
     return computeTradingFunction(rx, ry, L, params);
 }
 
@@ -327,8 +346,8 @@ function findRootLiquidity(
     bytes memory data,
     uint256 L
 ) pure returns (int256) {
-    (uint256 rx, uint256 ry, CoveredCallParams memory params) =
-        abi.decode(data, (uint256, uint256, CoveredCallParams));
+    (uint256 rx, uint256 ry, SYCoveredCallParams memory params) =
+        abi.decode(data, (uint256, uint256, SYCoveredCallParams));
     return computeTradingFunction(rx, ry, L, params);
 }
 
@@ -337,7 +356,7 @@ function computeNextLiquidity(
     uint256 rY,
     int256 invariant,
     uint256 approximatedL,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256 L) {
     uint256 upper = approximatedL;
     uint256 lower = approximatedL;
@@ -386,7 +405,7 @@ function computeNextRx(
     uint256 L,
     int256 invariant,
     uint256 approximatedRx,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256 rX) {
     uint256 upper = approximatedRx;
     uint256 lower = approximatedRx;
@@ -433,7 +452,7 @@ function computeNextRy(
     uint256 L,
     int256 invariant,
     uint256 approximatedRy,
-    CoveredCallParams memory params
+    SYCoveredCallParams memory params
 ) pure returns (uint256 rY) {
     uint256 upper = approximatedRy;
     uint256 lower = approximatedRy;

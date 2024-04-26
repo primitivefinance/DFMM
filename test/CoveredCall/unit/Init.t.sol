@@ -9,8 +9,8 @@ contract CoveredCallInitTest is CoveredCallSetUp {
     function test_CoveredCall_init_ReturnsPriceOfOne() public init_quarterly {
         (uint256[] memory reserves, uint256 L) =
             solver.getReservesAndLiquidity(POOL_ID);
-        uint256 priceGivenYL = solver.getPriceGivenYL(POOL_ID, reserves[1], L);
-        uint256 priceGivenXL = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
+        uint256 priceGivenYL = solver.getEstimatedPrice(POOL_ID, 1, 0);
+        uint256 priceGivenXL = solver.getEstimatedPrice(POOL_ID, 0, 1);
         console2.log("priceGivenYL", priceGivenYL);
         console2.log("priceGivenXL", priceGivenXL);
 
@@ -25,15 +25,14 @@ contract CoveredCallInitTest is CoveredCallSetUp {
             width: 0.1 ether,
             maturity: YEAR * 2,
             swapFee: FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
         uint256 rY = 1_000_000 ether;
         uint256 price = 0.84167999326 ether;
 
-        bytes memory poolData =
-            solver.prepareInitialPoolDataGivenY(rY, price, ccParams);
+        bytes memory poolData = solver.prepareInitGivenY(rY, price, ccParams);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
@@ -56,7 +55,7 @@ contract CoveredCallInitTest is CoveredCallSetUp {
 
         console2.log("rX", reserves[0]);
         console2.log("rY", reserves[1]);
-        uint256 postInitPrice = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
+        uint256 postInitPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
         console2.log("initial price", postInitPrice);
     }
 
@@ -69,7 +68,7 @@ contract CoveredCallInitTest is CoveredCallSetUp {
         uint256 maxRange = 0.69444444444 ether;
         uint256 amountIn = 5000 ether;
         bool xIn = true;
-        uint256 price = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
+        uint256 price = solver.getEstimatedPrice(POOL_ID, 0, 1);
         console2.log("initial price", price);
 
         int256 invariant = solver.getInvariant(POOL_ID);
@@ -77,10 +76,9 @@ contract CoveredCallInitTest is CoveredCallSetUp {
         uint256 acc = 0;
         while (price > defaultPricePoin11Rate) {
             (reserves, L) = solver.getReservesAndLiquidity(POOL_ID);
-            (,,, bytes memory data) =
-                solver.simulateSwap(POOL_ID, xIn, amountIn);
+            (,, bytes memory data) = solver.prepareSwap(POOL_ID, 0, 1, amountIn);
             dfmm.swap(POOL_ID, address(this), data, "");
-            price = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
+            price = solver.getEstimatedPrice(POOL_ID, 0, 1);
             invariant = solver.getInvariant(POOL_ID);
             acc += amountIn;
             console2.log("invariant", invariant);

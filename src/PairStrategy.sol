@@ -134,10 +134,11 @@ abstract contract PairStrategy is IStrategy {
             uint256 tokenOutIndex,
             uint256 amountIn,
             uint256 amountOut,
-            uint256 deltaLiquidity
+            uint256 deltaLiquidity,
+            bytes memory params
         )
     {
-        bytes memory params = getPoolParams(poolId);
+        params = getPoolParams(poolId);
 
         (tokenInIndex, tokenOutIndex, amountIn, amountOut) =
             abi.decode(data, (uint256, uint256, uint256, uint256));
@@ -155,6 +156,13 @@ abstract contract PairStrategy is IStrategy {
 
         valid = invariant >= 0;
     }
+
+    function postSwapHook(
+        address,
+        uint256,
+        Pool memory,
+        bytes calldata
+    ) external virtual onlyDFMM { }
 
     /// @inheritdoc IStrategy
     function getPoolParams(uint256 poolId)

@@ -26,7 +26,7 @@ contract CoveredCallSetUp is SetUp {
     function setUp() public override {
         SetUp.setUp();
         coveredCall = new CoveredCall(address(dfmm));
-        solver = new CoveredCallSolver(address(coveredCall));
+        solver = new CoveredCallSolver(coveredCall);
     }
 
     modifier init() {
@@ -41,13 +41,12 @@ contract CoveredCallSetUp is SetUp {
             width: 0.1 ether,
             maturity: YEAR,
             swapFee: TEST_SWAP_FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
-        bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
-            defaultReserveX, defaultPrice, defaultParams
-        );
+        bytes memory initialPoolData =
+            solver.prepareInit(defaultReserveX, defaultPrice, defaultParams);
 
         InitParams memory defaultInitParams = InitParams({
             name: "",
@@ -76,11 +75,11 @@ contract CoveredCallSetUp is SetUp {
             width: 0.05 ether,
             maturity: YEAR * 2,
             swapFee: FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
-        bytes memory initialPoolData = solver.getInitialPoolDataGivenY(
+        bytes memory initialPoolData = solver.prepareInitGivenY(
             defaultReserveXMil, defaultPricePoint9Rate, defaultParamsMil
         );
 
@@ -113,11 +112,11 @@ contract CoveredCallSetUp is SetUp {
             width: 0.00001 ether,
             maturity: YEAR,
             swapFee: 0,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
-        bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
+        bytes memory initialPoolData = solver.prepareInit(
             defaultReserveX, defaultPrice, defaultParamsFeeless
         );
 
@@ -148,11 +147,11 @@ contract CoveredCallSetUp is SetUp {
             width: 0.1 ether,
             maturity: YEAR / 4,
             swapFee: TEST_SWAP_FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
-        bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
+        bytes memory initialPoolData = solver.prepareInit(
             defaultReserveX, defaultPrice, defaultParamsQuarterly
         );
 
@@ -183,11 +182,11 @@ contract CoveredCallSetUp is SetUp {
             width: 0.25 ether,
             maturity: YEAR,
             swapFee: TEST_SWAP_FEE,
-            timestamp: block.timestamp,
+            lastTimestamp: block.timestamp,
             controller: address(this)
         });
 
-        bytes memory initialPoolData = solver.getInitialPoolDataGivenX(
+        bytes memory initialPoolData = solver.prepareInit(
             defaultReserveXDeep, defaultPrice, defaultParamsDeep
         );
 
@@ -202,37 +201,6 @@ contract CoveredCallSetUp is SetUp {
         });
 
         (POOL_ID,,) = dfmm.init(defaultInitParamsDeep);
-
-        _;
-    }
-
-    modifier initRealistic() {
-        vm.warp(0);
-
-        CoveredCallParams memory params = CoveredCallParams({
-            mean: 0,
-            width: 0,
-            maturity: YEAR,
-            swapFee: TEST_SWAP_FEE,
-            timestamp: block.timestamp,
-            controller: address(this)
-        });
-
-        address[] memory tokens = new address[](2);
-        tokens[0] = address(tokenX);
-        tokens[1] = address(tokenY);
-
-        InitParams memory defaultInitParams = InitParams({
-            name: "",
-            symbol: "",
-            strategy: address(coveredCall),
-            tokens: tokens,
-            data: computeInitialPoolData(1 ether, 2500 ether, params),
-            feeCollector: address(0),
-            controllerFee: 0
-        });
-
-        (POOL_ID,,) = dfmm.init(defaultInitParams);
 
         _;
     }

@@ -81,8 +81,7 @@ contract DFMM is IDFMM {
             totalLiquidity: 0,
             liquidityToken: address(liquidityToken),
             feeCollector: params.feeCollector,
-            controllerFee: params.controllerFee,
-            lastSwapTimestamp: block.timestamp
+            controllerFee: params.controllerFee
         });
 
         (
@@ -216,9 +215,9 @@ contract DFMM is IDFMM {
         uint256 amountIn;
         uint256 amountOut;
         uint256 deltaLiquidity;
+        bytes postSwapHookData;
     }
 
-    /// @inheritdoc IDFMM
     function swap(
         uint256 poolId,
         address recipient,
@@ -227,8 +226,6 @@ contract DFMM is IDFMM {
     ) external payable lock returns (address, address, uint256, uint256) {
         SwapState memory state;
 
-        _pools[poolId].lastSwapTimestamp = block.timestamp;
-
         (
             state.valid,
             state.invariant,
@@ -236,10 +233,13 @@ contract DFMM is IDFMM {
             state.tokenOutIndex,
             state.amountIn,
             state.amountOut,
-            state.deltaLiquidity
+            state.deltaLiquidity,
+            state.postSwapHookData
         ) = IStrategy(_pools[poolId].strategy).validateSwap(
             msg.sender, poolId, _pools[poolId], data
         );
+
+        uint256 poolId = poolId;
 
         if (!state.valid) revert InvalidInvariant(state.invariant);
 
@@ -259,16 +259,19 @@ contract DFMM is IDFMM {
         state.tokenIn = _pools[poolId].tokens[state.tokenInIndex];
         state.tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
-        address[] memory tokens = new address[](1);
-        tokens[0] = state.tokenIn;
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = state.amountIn;
-
         // Optimistically transfer the output tokens to the recipient.
         _transfer(state.tokenOut, recipient, state.amountOut);
 
+        IStrategy(_pools[poolId].strategy).postSwapHook(
+            msg.sender, poolId, _pools[poolId], state.postSwapHookData
+        );
+
         // If the callbackData is empty, do a regular `_transferFrom()` call, as in the other operations.
         if (callbackData.length == 0) {
+            address[] memory tokens = new address[](1);
+            tokens[0] = state.tokenIn;
+            uint256[] memory amounts = new uint256[](1);
+            amounts[0] = state.amountIn;
             _transferFrom(tokens, amounts);
         } else {
             // Otherwise, execute the callback and assert the input amount has been paid
