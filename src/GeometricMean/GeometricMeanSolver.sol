@@ -119,8 +119,15 @@ contract GeometricMeanSolver is ISolver {
         uint256 tokenOutIndex,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
+        if (
+            tokenInIndex > 1 || tokenOutIndex > 1
+                || tokenInIndex == tokenOutIndex
+        ) {
+            revert InvalidTokenIndex();
+        }
+
         GeometricMeanParams memory params = getPoolParams(poolId);
-        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        Pool memory pool = IDFMM(strategy.dfmm()).pools(poolId);
 
         SimulateSwapState memory state;
 
@@ -161,9 +168,8 @@ contract GeometricMeanSolver is ISolver {
         bytes memory swapData =
             abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut);
 
-        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
-            address(this), poolId, pool, swapData
-        );
+        (bool valid,,,,,,) =
+            strategy.validateSwap(address(this), poolId, pool, swapData);
 
         return (valid, state.amountOut, swapData);
     }
