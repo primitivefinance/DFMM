@@ -10,14 +10,9 @@ import {
     encodeControllerUpdate
 } from "./ConstantSumUtils.sol";
 import {
-    computeAllocationGivenX,
-    computeAllocationGivenY
-} from "src/lib/StrategyLib.sol";
-import {
     ONE,
     computeInitialPoolData,
     FixedPointMathLib,
-    computeSwapDeltaLiquidity,
     computeDeltaLiquidityRoundDown
 } from "./ConstantSumMath.sol";
 import {
@@ -141,42 +136,6 @@ contract ConstantSumSolver is ISolver {
         return (valid, amountOut, swapData);
     }
 
-    /// @notice Prepares the data for updating the price
-    /// @dev Used by the kit to update the price
-    /// @param newPrice The new price to set
-    /// @return The encoded data for updating the price
-    function preparePriceUpdate(uint256 newPrice)
-        public
-        pure
-        returns (bytes memory)
-    {
-        return encodePriceUpdate(newPrice);
-    }
-
-    /// @notice Prepares the data for updating the swap fee
-    /// @dev Used by the kit to update the swap fee
-    /// @param newSwapFee The new swap fee to set
-    /// @return The encoded data for updating the swap fee
-    function prepareSwapFeeUpdate(uint256 newSwapFee)
-        public
-        pure
-        returns (bytes memory)
-    {
-        return encodeFeeUpdate(newSwapFee);
-    }
-
-    /// @notice Prepares the data for updating the controller address
-    /// @dev Used by the kit to update the controller
-    /// @param newController The address of the new controller
-    /// @return The encoded data for updating the controller
-    function prepareControllerUpdate(address newController)
-        public
-        pure
-        returns (bytes memory)
-    {
-        return encodeControllerUpdate(newController);
-    }
-
     /// @inheritdoc ISolver
     function getReservesAndLiquidity(uint256 poolId)
         public
@@ -186,17 +145,6 @@ contract ConstantSumSolver is ISolver {
     {
         Pool memory pool = IDFMM(strategy.dfmm()).pools(poolId);
         return (pool.reserves, pool.totalLiquidity);
-    }
-
-    /// @dev gets the pool params
-    /// @param poolId The pool id
-    /// @return params The pool params
-    function getPoolParams(uint256 poolId)
-        public
-        view
-        returns (ConstantSumParams memory)
-    {
-        return abi.decode(strategy.getPoolParams(poolId), (ConstantSumParams));
     }
 
     /// @inheritdoc ISolver
@@ -217,5 +165,57 @@ contract ConstantSumSolver is ISolver {
         } else {
             return ONE.divWadDown(getPoolParams(poolId).price);
         }
+    }
+
+    /**
+     * @notice Returns the parameters of the pool `poolId`.
+     * @param poolId Id of the target pool.
+     * @return Parameters as defined by the ConstantSum strategy.
+     */
+    function getPoolParams(uint256 poolId)
+        public
+        view
+        returns (ConstantSumParams memory)
+    {
+        return abi.decode(strategy.getPoolParams(poolId), (ConstantSumParams));
+    }
+
+    /**
+     * @notice Prepares the data for updating the price.
+     * @param newPrice New price to set for the pool.
+     * @return Encoded data for updating the price.
+     */
+    function preparePriceUpdate(uint256 newPrice)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodePriceUpdate(newPrice);
+    }
+
+    /**
+     * @notice Prepares the data for updating the swap fee.
+     * @param newSwapFee New swap fee to set.
+     * @return Encoded data for updating the swap fee.
+     */
+    function prepareSwapFeeUpdate(uint256 newSwapFee)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodeFeeUpdate(newSwapFee);
+    }
+
+    /**
+     * @notice Prepares the data for updating the controller address.
+     * @param newController Address of the new controller.
+     * @return Encoded data for updating the controller.
+     */
+    function prepareControllerUpdate(address newController)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodeControllerUpdate(newController);
     }
 }
