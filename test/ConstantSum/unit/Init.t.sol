@@ -18,8 +18,7 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         uint256 reserveX = 1 ether;
         uint256 reserveY = 1 ether;
 
-        bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, params);
+        bytes memory initData = solver.prepareInit(reserveX, reserveY, params);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
@@ -42,10 +41,10 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         assertEq(pool.reserves[1], reserveY);
     }
 
-    // This test doesn't pass because the `controller` param is not stored 
+    // This test doesn't pass because the `controller` param is not stored
     function test_ConstantSum_init_StoresPoolParams() public {
         skip();
-        
+
         uint256 price = 1 ether;
 
         ConstantSumParams memory params = ConstantSumParams({
@@ -57,8 +56,7 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         uint256 reserveX = 1 ether;
         uint256 reserveY = 1 ether;
 
-        bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, params);
+        bytes memory initData = solver.prepareInit(reserveX, reserveY, params);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
@@ -95,8 +93,7 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         uint256 reserveX = 1 ether;
         uint256 reserveY = 1 ether;
 
-        bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, params);
+        bytes memory initData = solver.prepareInit(reserveX, reserveY, params);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
