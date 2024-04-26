@@ -219,10 +219,10 @@ contract LogNormalSolver is ISolver {
         (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
+
         return (
             valid,
             state.amountOut,
-            computePriceGivenX(endReserves.rx, endReserves.L, poolParams),
             swapData
         );
     }
