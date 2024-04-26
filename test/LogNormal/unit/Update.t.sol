@@ -9,7 +9,7 @@ contract LogNormalUpdateTest is LogNormalSetUp {
         assertEq(params.swapFee, TEST_SWAP_FEE);
 
         uint256 newSwapFee = 0.004 ether;
-        bytes memory data = solver.prepareFeeUpdate(newSwapFee);
+        bytes memory data = solver.prepareSwapFeeUpdate(newSwapFee);
         dfmm.update(POOL_ID, data);
 
         params = solver.getPoolParams(POOL_ID);

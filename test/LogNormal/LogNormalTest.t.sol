@@ -11,7 +11,9 @@ import {
     computeNextLiquidity,
     computeLGivenX,
     computeYGivenL,
-    computeTradingFunction
+    computeTradingFunction,
+    computePriceGivenY,
+    computePriceGivenX
 } from "src/LogNormal/LogNormalMath.sol";
 
 contract LogNormalTest is Test {
@@ -177,8 +179,10 @@ contract LogNormalTest is Test {
     function test_price_formulas() public basic {
         (uint256[] memory reserves, uint256 L) =
             solver.getReservesAndLiquidity(POOL_ID);
-        uint256 priceGivenX = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
-        uint256 priceGivenY = solver.getPriceGivenYL(POOL_ID, reserves[1], L);
+        uint256 priceGivenX =
+            computePriceGivenX(reserves[0], L, solver.getPoolParams(POOL_ID));
+        uint256 priceGivenY =
+            computePriceGivenY(reserves[1], L, solver.getPoolParams(POOL_ID));
         assertApproxEqAbs(priceGivenY, priceGivenX, 100);
     }
 

@@ -77,7 +77,8 @@ contract LogNormalSwapTest is LogNormalSetUp {
 
         uint256 ry = reserves[1] + amountIn;
         uint256 L = startL + deltaLiquidity;
-        uint256 approxPrice = solver.getPriceGivenYL(POOL_ID, ry, L);
+        uint256 approxPrice =
+            computePriceGivenY(ry, L, solver.getPoolParams(POOL_ID));
 
         uint256 rx = solver.getNextReserveX(POOL_ID, ry, L, approxPrice);
 
