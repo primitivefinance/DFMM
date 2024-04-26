@@ -13,7 +13,6 @@ import {
     downscaleUp
 } from "./lib/ScalingLib.sol";
 import { LPToken } from "./LPToken.sol";
-import "forge-std/console2.sol";
 
 /**
  * @title DFMM
