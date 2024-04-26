@@ -3,7 +3,8 @@ pragma solidity ^0.8.13;
 
 import {
     GeometricMean,
-    GeometricMeanParams
+    GeometricMeanParams,
+    IStrategy
 } from "src/GeometricMean/GeometricMean.sol";
 import { GeometricMeanSolver } from "src/GeometricMean/GeometricMeanSolver.sol";
 import "test/utils/SetUp.sol";
@@ -38,7 +39,7 @@ contract G3MSetUp is SetUp {
     function setUp() public override {
         SetUp.setUp();
         g3m = new GeometricMean(address(dfmm));
-        solver = new GeometricMeanSolver(address(g3m));
+        solver = new GeometricMeanSolver(IStrategy(g3m));
     }
 
     modifier init() {

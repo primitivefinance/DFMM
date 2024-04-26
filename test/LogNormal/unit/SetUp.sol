@@ -41,7 +41,7 @@ contract LogNormalSetUp is SetUp {
     function setUp() public override {
         SetUp.setUp();
         logNormal = new LogNormal(address(dfmm));
-        solver = new LogNormalSolver(address(logNormal));
+        solver = new LogNormalSolver(IStrategy(logNormal));
     }
 
     modifier init() {

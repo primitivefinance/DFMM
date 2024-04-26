@@ -18,8 +18,7 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         uint256 reserveX = 1 ether;
         uint256 reserveY = 1 ether;
 
-        bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, params);
+        bytes memory initData = solver.prepareInit(reserveX, reserveY, params);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
@@ -57,8 +56,7 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         uint256 reserveX = 1 ether;
         uint256 reserveY = 1 ether;
 
-        bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, params);
+        bytes memory initData = solver.prepareInit(reserveX, reserveY, params);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
@@ -95,8 +93,7 @@ contract ConstantSumInitTest is ConstantSumSetUp {
         uint256 reserveX = 1 ether;
         uint256 reserveY = 1 ether;
 
-        bytes memory initData =
-            solver.getInitialPoolData(reserveX, reserveY, params);
+        bytes memory initData = solver.prepareInit(reserveX, reserveY, params);
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);

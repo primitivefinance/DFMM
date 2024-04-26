@@ -11,7 +11,9 @@ import {
     computeNextLiquidity,
     computeLGivenX,
     computeYGivenL,
-    computeTradingFunction
+    computeTradingFunction,
+    computePriceGivenY,
+    computePriceGivenX
 } from "src/LogNormal/LogNormalMath.sol";
 
 contract LogNormalTest is Test {
@@ -35,7 +37,7 @@ contract LogNormalTest is Test {
 
         dfmm = new DFMM(address(0));
         logNormal = new LogNormal(address(dfmm));
-        solver = new LogNormalSolver(address(logNormal));
+        solver = new LogNormalSolver(IStrategy(logNormal));
         MockERC20(tokenX).approve(address(dfmm), type(uint256).max);
         MockERC20(tokenY).approve(address(dfmm), type(uint256).max);
     }
@@ -51,8 +53,7 @@ contract LogNormalTest is Test {
         });
         uint256 init_p = ONE * 2345;
         uint256 init_x = ONE * 10;
-        bytes memory initData =
-            solver.getInitialPoolData(init_x, init_p, params);
+        bytes memory initData = solver.prepareInit(init_x, init_p, params);
 
         address[] memory tokens = new address[](2);
         tokens[0] = tokenX;
@@ -84,8 +85,7 @@ contract LogNormalTest is Test {
         });
         uint256 init_p = TWO;
         uint256 init_x = ONE;
-        bytes memory initData =
-            solver.getInitialPoolData(init_x, init_p, params);
+        bytes memory initData = solver.prepareInit(init_x, init_p, params);
 
         address[] memory tokens = new address[](2);
         tokens[0] = tokenX;
@@ -116,8 +116,7 @@ contract LogNormalTest is Test {
         });
         uint256 init_p = 1_329_956_352_651_532_999;
         uint256 init_x = 70.658087306013359413 ether;
-        bytes memory initData =
-            solver.getInitialPoolData(init_x, init_p, params);
+        bytes memory initData = solver.prepareInit(init_x, init_p, params);
 
         address[] memory tokens = new address[](2);
         tokens[0] = tokenX;
@@ -163,19 +162,15 @@ contract LogNormalTest is Test {
     */
 
     function test_ln_swap_x_in() public basic {
-        bool xIn = true;
         uint256 amountIn = 0.1 ether;
-        (,,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, xIn, amountIn);
+        (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 0, 1, amountIn);
 
         dfmm.swap(POOL_ID, address(this), swapData, "");
     }
 
     function test_ln_swap_y_in() public basic {
-        bool xIn = false;
         uint256 amountIn = 0.1 ether;
-        (,,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, xIn, amountIn);
+        (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 1, 0, amountIn);
 
         dfmm.swap(POOL_ID, address(this), swapData, "");
     }
@@ -184,8 +179,10 @@ contract LogNormalTest is Test {
     function test_price_formulas() public basic {
         (uint256[] memory reserves, uint256 L) =
             solver.getReservesAndLiquidity(POOL_ID);
-        uint256 priceGivenX = solver.getPriceGivenXL(POOL_ID, reserves[0], L);
-        uint256 priceGivenY = solver.getPriceGivenYL(POOL_ID, reserves[1], L);
+        uint256 priceGivenX =
+            computePriceGivenX(reserves[0], L, solver.getPoolParams(POOL_ID));
+        uint256 priceGivenY =
+            computePriceGivenY(reserves[1], L, solver.getPoolParams(POOL_ID));
         assertApproxEqAbs(priceGivenY, priceGivenX, 100);
     }
 

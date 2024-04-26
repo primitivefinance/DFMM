@@ -10,11 +10,9 @@ contract ConstantSumSwapTest is ConstantSumSetUp {
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        bool isSwapXForY = true;
         uint256 amountIn = 0.1 ether;
 
-        (,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
+        (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 0, 1, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), swapData, "");
 
@@ -34,10 +32,8 @@ contract ConstantSumSwapTest is ConstantSumSetUp {
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        bool isSwapXForY = true;
         uint256 amountIn = 0.1 ether;
-        (,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
+        (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 0, 1, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), swapData, "");
 
@@ -57,10 +53,8 @@ contract ConstantSumSwapTest is ConstantSumSetUp {
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        bool isSwapXForY = false;
         uint256 amountIn = 0.1 ether;
-        (,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
+        (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 1, 0, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), swapData, "");
 
@@ -80,10 +74,8 @@ contract ConstantSumSwapTest is ConstantSumSetUp {
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        bool isSwapXForY = false;
         uint256 amountIn = 0.1 ether;
-        (,, bytes memory swapData) =
-            solver.simulateSwap(POOL_ID, isSwapXForY, amountIn);
+        (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 1, 0, amountIn);
         (,, uint256 inputAmount, uint256 outputAmount) =
             dfmm.swap(POOL_ID, address(this), swapData, "");
 

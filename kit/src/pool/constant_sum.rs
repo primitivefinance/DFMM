@@ -13,11 +13,15 @@ pub struct ConstantSumParameters {
     pub swap_fee: eU256,
 }
 
+pub enum ConstantSumAllocationData {
+    GivenX(eU256),
+    GivenY(eU256),
+}
 impl PoolType for ConstantSumPool {
-    type Parameters = ConstantSumParameters;
+    type UpdateParameters = ConstantSumParameters;
     type StrategyContract = ConstantSum<ArbiterMiddleware>;
     type SolverContract = ConstantSumSolver<ArbiterMiddleware>;
-    type AllocationData = (AllocateOrDeallocate, eU256, eU256);
+    type AllocationData = ConstantSumAllocationData;
 
     async fn swap_data(
         &self,
@@ -46,7 +50,7 @@ impl PoolType for ConstantSumPool {
         }
     }
 
-    async fn update_data(&self, parameters: Self::Parameters) -> Result<Bytes> {
+    async fn update_data(&self, parameters: Self::UpdateParameters) -> Result<Bytes> {
         let price_update_data = self
             .solver_contract
             .prepare_price_update(parameters.price)
@@ -60,19 +64,23 @@ impl PoolType for ConstantSumPool {
         pool_id: eU256,
         allocation_data: Self::AllocationData,
     ) -> Result<Bytes> {
-        let (amount_x, amount_y, allocate) = match allocation_data.0 {
-            AllocateOrDeallocate::Allocate => (allocation_data.1, allocation_data.2, true),
-            AllocateOrDeallocate::Deallocate => (allocation_data.1, 0.into(), false),
-        };
-        let (valid, data) = self
-            .solver_contract
-            .simulate_allocate_or_deallocate(pool_id, allocate, amount_x, amount_y)
-            .call()
-            .await?;
-        if valid {
-            Ok(data)
-        } else {
-            anyhow::bail!("allocation was invalid!")
+        match allocation_data {
+            ConstantSumAllocationData::GivenX(amount_x) => {
+                let data = self
+                    .solver_contract
+                    .prepare_allocation_delta_given_delta_x(pool_id, amount_x)
+                    .call()
+                    .await?;
+                Ok(data)
+            }
+            ConstantSumAllocationData::GivenY(amount_y) => {
+                let data = self
+                    .solver_contract
+                    .prepare_allocation_delta_given_delta_y(amount_y)
+                    .call()
+                    .await?;
+                Ok(data)
+            }
         }
     }
 }
