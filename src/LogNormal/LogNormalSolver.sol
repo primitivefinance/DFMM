@@ -133,7 +133,10 @@ contract LogNormalSolver is ISolver {
         uint256 tokenOutIndex,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
-        if (tokenInIndex > 1 || tokenOutIndex > 1) revert InvalidTokenIndex();
+        if (
+            tokenInIndex > 1 || tokenOutIndex > 1
+                || tokenInIndex == tokenOutIndex
+        ) revert InvalidTokenIndex();
 
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
@@ -158,8 +161,9 @@ contract LogNormalSolver is ISolver {
 
                 endReserves.rx = preReserves[0] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
-                uint256 approxPrice =
-                    getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
+                uint256 approxPrice = computePriceGivenX(
+                    endReserves.rx, endReserves.L, poolParams
+                );
 
                 endReserves.ry = getNextReserveY(
                     poolId, endReserves.rx, endReserves.L, approxPrice
@@ -181,8 +185,9 @@ contract LogNormalSolver is ISolver {
 
                 endReserves.ry = preReserves[1] + amountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
-                uint256 approxPrice =
-                    getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
+                uint256 approxPrice = computePriceGivenY(
+                    endReserves.ry, endReserves.L, poolParams
+                );
 
                 endReserves.rx = getNextReserveX(
                     poolId, endReserves.ry, endReserves.L, approxPrice
@@ -222,7 +227,10 @@ contract LogNormalSolver is ISolver {
         uint256 tokenInIndex,
         uint256 tokenOutIndex
     ) public view returns (uint256 price) {
-        if (tokenInIndex > 1 || tokenOutIndex > 1) revert InvalidTokenIndex();
+        if (
+            tokenInIndex > 1 || tokenOutIndex > 1
+                || tokenInIndex == tokenOutIndex
+        ) revert InvalidTokenIndex();
 
         if (tokenInIndex == 0) {
             (uint256[] memory reserves, uint256 L) =
@@ -257,16 +265,25 @@ contract LogNormalSolver is ISolver {
         return abi.decode(strategy.getPoolParams(poolId), (LogNormalParams));
     }
 
-    /// @notice used by kit
-    function prepareFeeUpdate(uint256 swapFee)
-        external
+    /**
+     * @notice Prepares the data for updating the swap fee.
+     * @param newSwapFee New swap fee to set.
+     * @return Encoded data for updating the swap fee.
+     */
+    function prepareSwapFeeUpdate(uint256 newSwapFee)
+        public
         pure
         returns (bytes memory)
     {
-        return encodeFeeUpdate(swapFee);
+        return encodeFeeUpdate(newSwapFee);
     }
 
-    /// @notice used by kit
+    /**
+     * @notice Prepares the data for updating the mean.
+     * @param targetMean Final value of the mean parameter.
+     * @param targetTimestamp Timestamp of the end of the update.
+     * @return Encoded data for updating the mean.
+     */
     function prepareMeanUpdate(
         uint256 targetMean,
         uint256 targetTimestamp
@@ -274,7 +291,12 @@ contract LogNormalSolver is ISolver {
         return encodeMeanUpdate(targetMean, targetTimestamp);
     }
 
-    /// @notice used by kit
+    /**
+     * @notice Prepares the data for updating the width.
+     * @param targetWidth Final value of the width parameter.
+     * @param targetTimestamp Timestamp of the end of the update.
+     * @return Encoded data for updating the width.
+     */
     function prepareWidthUpdate(
         uint256 targetWidth,
         uint256 targetTimestamp
@@ -282,13 +304,17 @@ contract LogNormalSolver is ISolver {
         return encodeWidthUpdate(targetWidth, targetTimestamp);
     }
 
-    /// @notice used by kit
-    function prepareControllerUpdate(address controller)
-        external
+    /**
+     * @notice Prepares the data for updating the controller address.
+     * @param newController Address of the new controller.
+     * @return Encoded data for updating the controller.
+     */
+    function prepareControllerUpdate(address newController)
+        public
         pure
         returns (bytes memory)
     {
-        return encodeControllerUpdate(controller);
+        return encodeControllerUpdate(newController);
     }
 
     function getNextLiquidity(
@@ -327,21 +353,5 @@ contract LogNormalSolver is ISolver {
         int256 invariant =
             computeTradingFunction(rx, approximatedRy, L, poolParams);
         return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
-    }
-
-    function getPriceGivenYL(
-        uint256 poolId,
-        uint256 ry,
-        uint256 L
-    ) public view returns (uint256 price) {
-        price = computePriceGivenY(ry, L, getPoolParams(poolId));
-    }
-
-    function getPriceGivenXL(
-        uint256 poolId,
-        uint256 rx,
-        uint256 L
-    ) public view returns (uint256 price) {
-        price = computePriceGivenX(rx, L, getPoolParams(poolId));
     }
 }
