@@ -78,7 +78,7 @@ contract ConstantSumSolver {
             swapData = abi.encode(1, 0, amountIn, amountOut);
         }
 
-        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
         return (valid, amountOut, swapData);

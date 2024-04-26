@@ -14,8 +14,8 @@ import {
     encodeControllerUpdate,
     computeInitialPoolData,
     computeInitialPoolDataGivenY
-} from "src/CoveredCall/CoveredCallUtils.sol";
-import { CoveredCallParams } from "src/CoveredCall/CoveredCall.sol";
+} from "src/SYCoveredCall/SYCoveredCallUtils.sol";
+import { SYCoveredCallParams } from "src/SYCoveredCall/SYCoveredCall.sol";
 import {
     computeTradingFunction,
     computeNextLiquidity,
@@ -31,12 +31,13 @@ import {
     computeAllocationGivenDeltaY,
     computeDeallocationGivenDeltaX,
     computeDeallocationGivenDeltaY,
+    computeKGivenLastPrice,
     YEAR,
     ONE
-} from "src/CoveredCall/CoveredCallMath.sol";
+} from "src/SYCoveredCall/SYCoveredCallMath.sol";
 import "forge-std/console2.sol";
 
-contract CoveredCallSolver {
+contract SYCoveredCallSolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
     using SignedWadMathLib for int256;
@@ -60,18 +61,18 @@ contract CoveredCallSolver {
     function getPoolParams(uint256 poolId)
         public
         view
-        returns (CoveredCallParams memory)
+        returns (SYCoveredCallParams memory)
     {
         return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId), (CoveredCallParams)
+            IStrategy(strategy).getPoolParams(poolId), (SYCoveredCallParams)
         );
     }
 
     function getPoolParamsCustomTimestamp(
         uint256 poolId,
         uint256 timestamp
-    ) public view returns (CoveredCallParams memory) {
-        CoveredCallParams memory params = getPoolParams(poolId);
+    ) public view returns (SYCoveredCallParams memory) {
+        SYCoveredCallParams memory params = getPoolParams(poolId);
         params.lastTimestamp = timestamp;
         return params;
     }
@@ -104,7 +105,7 @@ contract CoveredCallSolver {
     function getInitialPoolDataGivenX(
         uint256 rX,
         uint256 S,
-        CoveredCallParams memory params
+        SYCoveredCallParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolData(rX, S, params);
     }
@@ -112,7 +113,7 @@ contract CoveredCallSolver {
     function getInitialPoolDataGivenY(
         uint256 rY,
         uint256 S,
-        CoveredCallParams memory params
+        SYCoveredCallParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolDataGivenY(rY, S, params);
     }
@@ -120,7 +121,7 @@ contract CoveredCallSolver {
     function prepareInitialPoolDataGivenY(
         uint256 rY,
         uint256 S,
-        CoveredCallParams memory params
+        SYCoveredCallParams memory params
     ) public pure returns (bytes memory) {
         return computeInitialPoolDataGivenY(rY, S, params);
     }
@@ -170,94 +171,95 @@ contract CoveredCallSolver {
     }
 
     function getNextLiquidity(
-        uint256 poolId,
         uint256 rx,
         uint256 ry,
-        uint256 L
-    ) public view returns (uint256) {
-        CoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-
-        int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
-        return computeNextLiquidity(rx, ry, invariant, L, poolParams);
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256) {
+        int256 invariant = computeTradingFunction(rx, ry, L, params);
+        return computeNextLiquidity(rx, ry, invariant, L, params);
     }
 
     function getNextReserveX(
-        uint256 poolId,
         uint256 ry,
         uint256 L,
-        uint256 S
-    ) public view returns (uint256) {
-        CoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        uint256 approximatedRx = computeXGivenL(L, S, poolParams);
+        uint256 S,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256) {
+        uint256 approximatedRx = computeXGivenL(L, S, params);
         int256 invariant =
-            computeTradingFunction(approximatedRx, ry, L, poolParams);
-        return computeNextRx(ry, L, invariant, approximatedRx, poolParams);
+            computeTradingFunction(approximatedRx, ry, L, params);
+        return computeNextRx(ry, L, invariant, approximatedRx, params);
     }
 
     function getNextReserveY(
-        uint256 poolId,
         uint256 rx,
         uint256 L,
-        uint256 S
-    ) public view returns (uint256) {
-        CoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        uint256 approximatedRy = computeYGivenL(L, S, poolParams);
+        uint256 S,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256) {
+        uint256 approximatedRy = computeYGivenL(L, S, params);
         int256 invariant =
-            computeTradingFunction(rx, approximatedRy, L, poolParams);
-        return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
+            computeTradingFunction(rx, approximatedRy, L, params);
+        return computeNextRy(rx, L, invariant, approximatedRy, params);
     }
 
     struct SimulateSwapState {
         uint256 amountOut;
         uint256 deltaLiquidity;
         uint256 fees;
+        uint256 timestamp;
     }
 
-    /// @dev Estimates a swap's reserves and adjustments and returns its validity.
     function simulateSwap(
         uint256 poolId,
         bool swapXIn,
-        uint256 amountIn
+        uint256 amountIn,
+        uint256 timestamp
     ) public view returns (bool, uint256, uint256, bytes memory) {
         Reserves memory endReserves;
         (uint256[] memory preReserves, uint256 preTotalLiquidity) =
             getReservesAndLiquidity(poolId);
-        CoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+        SYCoveredCallParams memory params =
+            getPoolParamsCustomTimestamp(poolId, timestamp);
 
         SimulateSwapState memory state;
+        state.timestamp = timestamp;
+        params.lastTimestamp = timestamp;
+        console2.log("initial K", params.mean);
 
-        uint256 startComputedL = getNextLiquidity(
-            poolId, preReserves[0], preReserves[1], preTotalLiquidity
+        params.mean = computeKGivenLastPrice(
+            preReserves[0], preTotalLiquidity, params 
         );
-        {
-            console2.log("startComputedL", startComputedL);
+        console2.log("updated K", params.mean);
 
-            if (swapXIn) {
+        console2.log("preL", preTotalLiquidity);
+        uint256 startComputedL = getNextLiquidity(
+            preReserves[0], preReserves[1], preTotalLiquidity, params 
+        );
+        console2.log("computedL", startComputedL);
+
+        uint256 poolId = poolId;
+        uint256 swapAmountIn = amountIn;
+        bool swapXToY = swapXIn;
+        {
+            if (swapXToY) {
                 state.deltaLiquidity = computeDeltaLXIn(
-                    amountIn,
+                    swapAmountIn,
                     preReserves[0],
                     preReserves[1],
-                    preTotalLiquidity,
-                    poolParams
+                    startComputedL,
+                    params 
                 );
-                console2.log("state.deltaLiquidity", state.deltaLiquidity);
 
-                endReserves.rx = preReserves[0] + amountIn;
+                endReserves.rx = preReserves[0] + swapAmountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
-                console2.log("endReserves.rx", endReserves.rx);
-                console2.log("endReserves.L", endReserves.L);
                 uint256 approxPrice =
-                    getPriceGivenXL(poolId, endReserves.rx, endReserves.L);
-                console2.log("approxPrice", approxPrice);
+                    getPriceGivenXL(endReserves.rx, endReserves.L, params);
 
                 endReserves.ry = getNextReserveY(
-                    poolId, endReserves.rx, endReserves.L, approxPrice
+                    endReserves.rx, endReserves.L, approxPrice, params 
                 );
-                console2.log("endReserves.ry", endReserves.ry);
 
                 require(
                     endReserves.ry < preReserves[1],
@@ -266,20 +268,20 @@ contract CoveredCallSolver {
                 state.amountOut = preReserves[1] - endReserves.ry;
             } else {
                 state.deltaLiquidity = computeDeltaLYIn(
-                    amountIn,
+                    swapAmountIn,
                     preReserves[0],
                     preReserves[1],
-                    preTotalLiquidity,
-                    poolParams
+                    startComputedL,
+                    params 
                 );
 
-                endReserves.ry = preReserves[1] + amountIn;
+                endReserves.ry = preReserves[1] + swapAmountIn;
                 endReserves.L = startComputedL + state.deltaLiquidity;
                 uint256 approxPrice =
-                    getPriceGivenYL(poolId, endReserves.ry, endReserves.L);
+                    getPriceGivenYL(endReserves.ry, endReserves.L, params);
 
                 endReserves.rx = getNextReserveX(
-                    poolId, endReserves.ry, endReserves.L, approxPrice
+                    endReserves.ry, endReserves.L, approxPrice, params 
                 );
 
                 require(
@@ -296,15 +298,26 @@ contract CoveredCallSolver {
 
         bytes memory swapData;
 
-        if (swapXIn) {
-            swapData =
-                abi.encode(0, 1, amountIn, state.amountOut, startComputedL);
+        if (swapXToY) {
+            swapData = abi.encode(
+                0,
+                1,
+                swapAmountIn,
+                state.amountOut,
+                startComputedL,
+                state.timestamp
+            );
         } else {
-            swapData =
-                abi.encode(1, 0, amountIn, state.amountOut, startComputedL);
+            swapData = abi.encode(
+                1,
+                0,
+                swapAmountIn,
+                state.amountOut,
+                startComputedL,
+                state.timestamp
+            );
         }
 
-        uint256 poolId = poolId;
         (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
@@ -312,28 +325,24 @@ contract CoveredCallSolver {
         return (
             valid,
             state.amountOut,
-            computePriceGivenX(endReserves.rx, endReserves.L, poolParams),
+            computePriceGivenX(endReserves.rx, endReserves.L, params),
             swapData
         );
     }
 
     function getPriceGivenYL(
-        uint256 poolId,
         uint256 ry,
-        uint256 L
-    ) public view returns (uint256 price) {
-        CoveredCallParams memory params =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256 price) {
         price = computePriceGivenY(ry, L, params);
     }
 
     function getPriceGivenXL(
-        uint256 poolId,
         uint256 rx,
-        uint256 L
-    ) public view returns (uint256 price) {
-        CoveredCallParams memory params =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
+        uint256 L,
+        SYCoveredCallParams memory params
+    ) public pure returns (uint256 price) {
         price = computePriceGivenX(rx, L, params);
     }
 

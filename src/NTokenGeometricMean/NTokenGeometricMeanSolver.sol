@@ -120,7 +120,7 @@ contract NTokenGeometricMeanSolver {
         bytes memory swapData =
             abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut);
 
-        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
 
