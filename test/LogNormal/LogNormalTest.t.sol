@@ -165,14 +165,14 @@ contract LogNormalTest is Test {
         uint256 amountIn = 0.1 ether;
         (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 0, 1, amountIn);
 
-        dfmm.swap(POOL_ID, address(this), swapData);
+        dfmm.swap(POOL_ID, address(this), swapData, "");
     }
 
     function test_ln_swap_y_in() public basic {
         uint256 amountIn = 0.1 ether;
         (,, bytes memory swapData) = solver.prepareSwap(POOL_ID, 1, 0, amountIn);
 
-        dfmm.swap(POOL_ID, address(this), swapData);
+        dfmm.swap(POOL_ID, address(this), swapData, "");
     }
 
     // todo: write assertApproxEq

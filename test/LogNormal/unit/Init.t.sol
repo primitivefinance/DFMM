@@ -7,6 +7,7 @@ import {
     computePriceGivenY,
     computePriceGivenX
 } from "src/LogNormal/LogNormalMath.sol";
+import "forge-std/console2.sol";
 
 contract LogNormalInitTest is LogNormalSetUp {
     function test_LogNormal_init_StoresPoolParameters() public init {

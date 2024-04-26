@@ -6,6 +6,7 @@ import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
 import { IStrategy } from "./interfaces/IStrategy.sol";
+import { ISwapCallback } from "./interfaces/ISwapCallback.sol";
 import {
     computeScalingFactor,
     downscaleDown,
@@ -80,7 +81,8 @@ contract DFMM is IDFMM {
             totalLiquidity: 0,
             liquidityToken: address(liquidityToken),
             feeCollector: params.feeCollector,
-            controllerFee: params.controllerFee
+            controllerFee: params.controllerFee,
+            lastSwapTimestamp: block.timestamp
         });
 
         (
@@ -209,6 +211,8 @@ contract DFMM is IDFMM {
         int256 invariant;
         uint256 tokenInIndex;
         uint256 tokenOutIndex;
+        address tokenIn;
+        address tokenOut;
         uint256 amountIn;
         uint256 amountOut;
         uint256 deltaLiquidity;
@@ -218,9 +222,12 @@ contract DFMM is IDFMM {
     function swap(
         uint256 poolId,
         address recipient,
-        bytes calldata data
+        bytes calldata data,
+        bytes calldata callbackData
     ) external payable lock returns (address, address, uint256, uint256) {
         SwapState memory state;
+
+        _pools[poolId].lastSwapTimestamp = block.timestamp;
 
         (
             state.valid,
@@ -249,28 +256,52 @@ contract DFMM is IDFMM {
         _pools[poolId].reserves[state.tokenInIndex] += state.amountIn;
         _pools[poolId].reserves[state.tokenOutIndex] -= state.amountOut;
 
-        address tokenIn = _pools[poolId].tokens[state.tokenInIndex];
-        address tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
+        state.tokenIn = _pools[poolId].tokens[state.tokenInIndex];
+        state.tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
         address[] memory tokens = new address[](1);
-        tokens[0] = tokenIn;
+        tokens[0] = state.tokenIn;
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = state.amountIn;
-        _transferFrom(tokens, amounts);
 
-        _transfer(tokenOut, recipient, state.amountOut);
+        // Optimistically transfer the output tokens to the recipient.
+        _transfer(state.tokenOut, recipient, state.amountOut);
+
+        // If the callbackData is empty, do a regular `_transferFrom()` call, as in the other operations.
+        if (callbackData.length == 0) {
+            _transferFrom(tokens, amounts);
+        } else {
+            // Otherwise, execute the callback and assert the input amount has been paid
+            // given the before and after balances of the input token.
+            uint256 preBalance = ERC20(state.tokenIn).balanceOf(address(this));
+
+            ISwapCallback(msg.sender).swapCallback(
+                state.tokenIn,
+                state.tokenOut,
+                state.amountIn,
+                state.amountOut,
+                callbackData
+            );
+
+            uint256 downscaledAmount =
+                downscaleUp(state.amountIn, computeScalingFactor(state.tokenIn));
+            uint256 postBalance = ERC20(state.tokenIn).balanceOf(address(this));
+            if (postBalance < preBalance + downscaledAmount) {
+                revert InvalidTransfer();
+            }
+        }
 
         emit Swap(
             msg.sender,
             poolId,
             recipient,
-            tokenIn,
-            tokenOut,
+            state.tokenIn,
+            state.tokenOut,
             state.amountIn,
             state.amountOut
         );
 
-        return (tokenIn, tokenOut, state.amountIn, state.amountOut);
+        return (state.tokenIn, state.tokenOut, state.amountIn, state.amountOut);
     }
 
     /// @inheritdoc IDFMM
@@ -423,5 +454,10 @@ contract DFMM is IDFMM {
     /// @inheritdoc IDFMM
     function pools(uint256 poolId) external view returns (Pool memory) {
         return _pools[poolId];
+    }
+
+    /// @inheritdoc IDFMM
+    function nonce() external view returns (uint256) {
+        return _pools.length;
     }
 }
