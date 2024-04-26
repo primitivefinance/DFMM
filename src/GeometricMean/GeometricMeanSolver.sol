@@ -12,13 +12,8 @@ import {
 } from "./G3MUtils.sol";
 import {
     computeInitialPoolData,
-    computeNextRx,
-    computeNextRy,
-    computeTradingFunction,
     computeAllocationGivenDeltaX,
     computeAllocationGivenDeltaY,
-    computeDeallocationGivenDeltaX,
-    computeDeallocationGivenDeltaY,
     computePrice,
     computeSwapDeltaLiquidity,
     computeDeltaGivenDeltaLRoundUp,
@@ -30,6 +25,10 @@ import {
     InvalidDeltasLength
 } from "src/interfaces/ISolver.sol";
 
+/**
+ * @title Solver for the GeometricMean strategy.
+ * @author Primitive
+ */
 contract GeometricMeanSolver is ISolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
@@ -42,6 +41,12 @@ contract GeometricMeanSolver is ISolver {
         strategy = strategy_;
     }
 
+    /**
+     * @notice Prepares the data to initialize a new GeometricMean pool.
+     * @param reserveX Initial reserve of token X.
+     * @param S Price of the pool, in WAD units.
+     * @param poolParams Parameters as defined by the GeometricMean strategy.
+     */
     function prepareInit(
         uint256 reserveX,
         uint256 S,
@@ -203,22 +208,37 @@ contract GeometricMeanSolver is ISolver {
         return (pool.reserves, pool.totalLiquidity);
     }
 
+    /**
+     * @notice Returns the parameters of the pool `poolId`.
+     * @param poolId Id of the target pool.
+     * @return Parameters as defined by the GeometricMean strategy.
+     */
     function getPoolParams(uint256 poolId)
         public
         view
-        returns (GeometricMeanParams memory params)
+        returns (GeometricMeanParams memory)
     {
         return abi.decode(strategy.getPoolParams(poolId), (GeometricMeanParams));
     }
 
-    function prepareFeeUpdate(uint256 swapFee)
+    /**
+     * @notice Prepares the data for updating the swap fee.
+     * @param newSwapFee New swap fee to set.
+     * @return Encoded data for updating the swap fee.
+     */
+    function prepareSwapFeeUpdate(uint256 newSwapFee)
         public
         pure
-        returns (bytes memory data)
+        returns (bytes memory)
     {
-        return encodeFeeUpdate(swapFee);
+        return encodeFeeUpdate(newSwapFee);
     }
 
+    /**
+     * @notice Prepares the data for updating the weight of token X.
+     * @param targetWeightX Final weight of token X.
+     * @param targetTimestamp Timestamp of the end of the weight update.
+     */
     function prepareWeightXUpdate(
         uint256 targetWeightX,
         uint256 targetTimestamp
@@ -226,37 +246,16 @@ contract GeometricMeanSolver is ISolver {
         return encodeWeightXUpdate(targetWeightX, targetTimestamp);
     }
 
-    function prepareControllerUpdate(address controller)
+    /**
+     * @notice Prepares the data for updating the controller address.
+     * @param newController Address of the new controller.
+     * @return Encoded data for updating the controller.
+     */
+    function prepareControllerUpdate(address newController)
         public
         pure
         returns (bytes memory)
     {
-        return encodeControllerUpdate(controller);
-    }
-
-    function getNextReserveX(
-        uint256 poolId,
-        uint256 ry,
-        uint256 L
-    ) public view returns (uint256) {
-        return computeNextRx(ry, L, getPoolParams(poolId));
-    }
-
-    function getNextReserveY(
-        uint256 poolId,
-        uint256 rx,
-        uint256 L
-    ) public view returns (uint256) {
-        return computeNextRy(rx, L, getPoolParams(poolId));
-    }
-
-    function checkSwapConstant(
-        uint256 poolId,
-        bytes calldata data
-    ) public view returns (int256) {
-        (uint256 rx, uint256 ry, uint256 L) =
-            abi.decode(data, (uint256, uint256, uint256));
-        GeometricMeanParams memory params = getPoolParams(poolId);
-        return computeTradingFunction(rx, ry, L, params);
+        return encodeControllerUpdate(newController);
     }
 }
