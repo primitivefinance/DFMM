@@ -1,7 +1,7 @@
 # Pools
-The pool module contains a trait `PoolType` that is generic over dfmm strategies.
-The `PoolType` trait in the `pool` module is a central abstraction designed for different DFMM strategies. 
-It defines the necessary operations and types required to interact with various pool strategies. 
+The pool module contains a trait `PoolType` that is generic over DFMM strategies.
+The `PoolType` trait in the `pool` module is a central abstraction designed for various DFMM strategies. 
+It defines the necessary operations and types required to interact with different pool strategies. 
 Here's a brief overview of its capabilities and structure:
 
 - **Generic Types**:
@@ -23,5 +23,5 @@ Here's a brief overview of its capabilities and structure:
   - `create_instance`: Instantiates a new pool with the specified contracts and parameters.
   - `get_params`: Retrieves the parameters of a pool from its strategy contract.
 
-This trait is crucial for ensuring that different pool strategies can be managed uniformly, providing a consistent interface for operations like swaps, parameter updates, and resource allocations across any pool on any strategy. 
+This trait is crucial for ensuring that different pool strategies can be managed uniformly, providing a consistent interface for operations such as swaps, parameter updates, and resource allocations across any pool on any strategy. 
 Each strategy implements the pool trait in the rest of the pool module.
