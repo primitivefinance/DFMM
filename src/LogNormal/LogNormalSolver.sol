@@ -24,18 +24,17 @@ import {
     computeDeltaLXIn,
     computeDeltaLYIn
 } from "src/LogNormal/LogNormalMath.sol";
-import { ISolver, InvalidTokenIndex } from "src/interfaces/ISolver.sol";
+import {
+    ISolver,
+    InvalidTokenIndex,
+    InvalidDeltasLength
+} from "src/interfaces/ISolver.sol";
 import {
     computeDeltaLGivenDeltaX,
     computeDeltaLGivenDeltaY,
     computeDeltaYGivenDeltaL,
     computeDeltaXGivenDeltaL
 } from "src/lib/StrategyLib.sol";
-
-/**
- * @dev Thrown when an array of deltas is not of length 2.
- */
-error InvalidDeltasLength();
 
 /**
  * @title Solver contract for the LogNormal strategy.
