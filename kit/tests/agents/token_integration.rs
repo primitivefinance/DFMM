@@ -1,15 +1,9 @@
-use std::time::Duration;
-
 use arbiter_engine::messager::To;
 use dfmm_kit::behaviors::TokenAdminQuery;
-use futures_util::StreamExt;
-use tracing::info;
-
-include!("common.rs");
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 4)]
 async fn run_token_admin() {
-    log(Level::DEBUG);
+    // log(Level::DEBUG);
 
     let mut world = World::new("test");
     let mut messager = world.messager.for_agent("test");

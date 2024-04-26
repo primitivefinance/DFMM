@@ -1,18 +1,15 @@
-use std::{str::FromStr, time::Duration};
-
 use arbiter_core::{events::stream_event, middleware::ArbiterMiddleware};
 use arbiter_engine::messager::To;
 use dfmm_kit::bindings::dfmm::DFMM;
-use futures_util::StreamExt;
-use tracing::{info, warn};
-include!("common.rs");
+
+use super::*;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
 async fn run_swapper_constant_sum() {
-    log(Level::TRACE);
+    // log(Level::TRACE);
 
     let mut world = World::new("test");
-    let mut messager = world.messager.for_agent("test");
+    let messager = world.messager.for_agent("test");
     let client = ArbiterMiddleware::new(world.environment.as_ref().unwrap(), None).unwrap();
 
     spawn_deployer(&mut world);
@@ -28,7 +25,10 @@ async fn run_swapper_constant_sum() {
 
         // TODO: Send a specific message and see if we get the swap.
         messager
-            .send(To::Agent(SWAPPER.to_owned()), ExecuteSwap)
+            .send(
+                To::Agent(SWAPPER.to_owned()),
+                mock_agents::swap_agent::ExecuteSwap,
+            )
             .await
             .unwrap();
         debug!("message sent to swapper");

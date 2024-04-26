@@ -1,10 +1,7 @@
-use std::time::Duration;
-
 use arbiter_engine::messager::To;
 use dfmm_kit::behaviors::MessageTypes;
-use futures_util::StreamExt;
-use tracing::{info, warn};
-include!("common.rs");
+
+use super::*;
 
 // TODO: It is a bit odd in this test that when we see the `ConstantSumParams`
 // we see that the controller is the 0 address. This is not actually correct
@@ -14,14 +11,14 @@ include!("common.rs");
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
 async fn run_updater_constant_sum() {
-    log(Level::DEBUG);
+    // log(Level::DEBUG);
 
     let mut world = World::new("test");
     let mut messager = world.messager.for_agent("test");
 
     spawn_deployer(&mut world);
     spawn_token_admin(&mut world);
-    spawn_constant_sum_updater(&mut world);
+    spawn_constant_sum_creator_and_updater(&mut world);
 
     // NOTE: This test should be improved so that we check the contract state was
     // actually changed and updated correctly
@@ -51,7 +48,7 @@ async fn run_updater_constant_sum() {
                         MessageTypes::TokenAdmin(_) => continue,
                         MessageTypes::Update(params) => {
                             info!("TEST SEES updated params: {:#?}", params);
-                            let mock_data = constant_sum_parameters_vec();
+                            let mock_data = mock_constant_sum_parameters();
                             assert_eq!(params, mock_data[count]);
                             if count >= 2 {
                                 break;
@@ -62,7 +59,7 @@ async fn run_updater_constant_sum() {
                     }
                 }
                 Err(_) => {
-                    warn!(
+                    info!(
                         "Failed to parse message data into ConstantSumParams, instead got: {:#?}",
                         message.data
                     );

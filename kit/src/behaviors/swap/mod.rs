@@ -6,7 +6,8 @@ pub trait SwapType<E> {
     fn compute_swap_amount(&self, event: E) -> Option<(eU256, InputToken)>;
 }
 
-// this is somewhat all encompassing. It has everything.
+// TODO: This may not want to ever have a phantom data in it, but this is
+// working for now.
 #[derive(Clone, Debug, Serialize, Deserialize, State)]
 pub struct Swap<S, T: SwapType<E>, E>
 where
@@ -14,7 +15,7 @@ where
 {
     pub data: S::Data,
     pub swap_type: T,
-    _phantom: PhantomData<E>,
+    pub _phantom: PhantomData<E>,
 }
 
 // Should also get some data necessary for mint amounts and what not.

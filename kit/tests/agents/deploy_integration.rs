@@ -1,13 +1,8 @@
-include!("common.rs");
-
-use std::str::FromStr;
-
-use dfmm_kit::behaviors::deploy::DeploymentData;
-use tracing::info;
+use super::*;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
 async fn run_deployer() {
-    log(Level::DEBUG);
+    // log(Level::DEBUG);
 
     let mut world = World::new("test");
     let mut messager = world.messager.clone();
@@ -16,7 +11,10 @@ async fn run_deployer() {
 
     world.run().await.unwrap();
 
-    if let Ok(message) = messager.get_next::<DeploymentData>().await {
+    if let Ok(message) = messager
+        .get_next::<dfmm_kit::behaviors::deploy::DeploymentData>()
+        .await
+    {
         let data = message.data;
         info!("Saw message data: {:#?}", data);
 

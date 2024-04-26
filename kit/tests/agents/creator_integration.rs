@@ -1,11 +1,8 @@
-use std::{str::FromStr, time::Duration};
-
-use tracing::info;
-include!("common.rs");
+use super::*;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 5)]
 async fn run_creator_constant_sum() {
-    log(Level::DEBUG);
+    // log(Level::DEBUG);
 
     let mut world = World::new("test");
     let mut messager = world.messager.clone();
