@@ -17,7 +17,7 @@ import {
     computeDeallocationDeltasGivenDeltaT,
     computeNextLiquidity,
     computeSwapDeltaLiquidity,
-    computeDeltaGivenDeltaLRoundUp
+    computeDeltaGivenDeltaLRoundDown
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import {
     ISolver,
@@ -102,7 +102,7 @@ contract NTokenGeometricMeanSolver is ISolver {
         uint256[] memory deltas = new uint256[](length);
 
         for (uint256 i = 0; i < length; i++) {
-            deltas[i] = computeDeltaGivenDeltaLRoundUp(
+            deltas[i] = computeDeltaGivenDeltaLRoundDown(
                 reserves[i], deltaLiquidity, totalLiquidity
             );
         }
