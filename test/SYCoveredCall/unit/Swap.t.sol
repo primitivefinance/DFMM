@@ -8,7 +8,8 @@ import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
     using FixedPointMathLib for uint256;
 
-    function test_SYCoveredCall_swap_SwapsXforYNoWarp() public init {
+    function test_SYCoveredCall_swap_SwapsXforYWarpOneBlock() public init {
+        vm.warp(block.timestamp + 12);
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
 
