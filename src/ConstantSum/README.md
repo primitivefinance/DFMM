@@ -20,7 +20,7 @@ $$
 where $L$ is the **liquidity** of the pool. 
 
 ## Price
-The reported price of the pool given the reseres is $P$.
+The reported price of the pool given the reserves is $P$.
 
 ## Pool initialization
 The `ConstantSum` pool can be initialized with any given price and any given value of reserves. 

@@ -10,6 +10,7 @@ pub use mock_strategy::*;
     non_camel_case_types
 )]
 pub mod mock_strategy {
+    pub use super::super::shared_types::*;
     #[allow(deprecated)]
     fn __abi() -> ::ethers::core::abi::Abi {
         ::ethers::core::abi::ethabi::Contract {
@@ -105,126 +106,33 @@ pub mod mock_strategy {
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("poolId"),
+                                name: ::std::string::String::new(),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("uint256"),
                                 ),
                             },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("data"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("bytes"),
-                                ),
-                            },
-                        ],
-                        outputs: ::std::vec![
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("valid"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Bool,
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("bool"),
-                                ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("swapConstantGrowth",),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("int256"),
-                                ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("reserveX"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("uint256"),
-                                ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("reserveY"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("uint256"),
-                                ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("totalLiquidity"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("uint256"),
-                                ),
-                            },
-                        ],
-                        constant: ::core::option::Option::None,
-                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
-                    },],
-                ),
-                (
-                    ::std::borrow::ToOwned::to_owned("name"),
-                    ::std::vec![::ethers::core::abi::ethabi::Function {
-                        name: ::std::borrow::ToOwned::to_owned("name"),
-                        inputs: ::std::vec![],
-                        outputs: ::std::vec![::ethers::core::abi::ethabi::Param {
-                            name: ::std::string::String::new(),
-                            kind: ::ethers::core::abi::ethabi::ParamType::String,
-                            internal_type: ::core::option::Option::Some(
-                                ::std::borrow::ToOwned::to_owned("string"),
-                            ),
-                        },],
-                        constant: ::core::option::Option::None,
-                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
-                    },],
-                ),
-                (
-                    ::std::borrow::ToOwned::to_owned("update"),
-                    ::std::vec![::ethers::core::abi::ethabi::Function {
-                        name: ::std::borrow::ToOwned::to_owned("update"),
-                        inputs: ::std::vec![
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("sender"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Address,
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("address"),
-                                ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("poolId"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("uint256"),
-                                ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("data"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("bytes"),
-                                ),
-                            },
-                        ],
-                        outputs: ::std::vec![],
-                        constant: ::core::option::Option::None,
-                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
-                    },],
-                ),
-                (
-                    ::std::borrow::ToOwned::to_owned("validateAllocateOrDeallocate"),
-                    ::std::vec![::ethers::core::abi::ethabi::Function {
-                        name: ::std::borrow::ToOwned::to_owned("validateAllocateOrDeallocate",),
-                        inputs: ::std::vec![
                             ::ethers::core::abi::ethabi::Param {
                                 name: ::std::string::String::new(),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                ],),
                                 internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("address"),
-                                ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("poolId"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ::std::borrow::ToOwned::to_owned("struct Pool"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
@@ -251,17 +159,14 @@ pub mod mock_strategy {
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("reserveX"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                name: ::std::borrow::ToOwned::to_owned("reserves"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                    ::std::boxed::Box::new(
+                                        ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ),
                                 ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("reserveY"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ::std::borrow::ToOwned::to_owned("uint256[]"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
@@ -273,16 +178,74 @@ pub mod mock_strategy {
                             },
                         ],
                         constant: ::core::option::Option::None,
+                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                    },],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("name"),
+                    ::std::vec![::ethers::core::abi::ethabi::Function {
+                        name: ::std::borrow::ToOwned::to_owned("name"),
+                        inputs: ::std::vec![],
+                        outputs: ::std::vec![::ethers::core::abi::ethabi::Param {
+                            name: ::std::string::String::new(),
+                            kind: ::ethers::core::abi::ethabi::ParamType::String,
+                            internal_type: ::core::option::Option::Some(
+                                ::std::borrow::ToOwned::to_owned("string"),
+                            ),
+                        },],
+                        constant: ::core::option::Option::None,
                         state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
                     },],
                 ),
                 (
-                    ::std::borrow::ToOwned::to_owned("validateSwap"),
+                    ::std::borrow::ToOwned::to_owned("tradingFunction"),
                     ::std::vec![::ethers::core::abi::ethabi::Function {
-                        name: ::std::borrow::ToOwned::to_owned("validateSwap"),
+                        name: ::std::borrow::ToOwned::to_owned("tradingFunction"),
                         inputs: ::std::vec![
                             ::ethers::core::abi::ethabi::Param {
                                 name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                    ::std::boxed::Box::new(
+                                        ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ),
+                                ),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256[]"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("bytes"),
+                                ),
+                            },
+                        ],
+                        outputs: ::std::vec![::ethers::core::abi::ethabi::Param {
+                            name: ::std::string::String::new(),
+                            kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                            internal_type: ::core::option::Option::Some(
+                                ::std::borrow::ToOwned::to_owned("int256"),
+                            ),
+                        },],
+                        constant: ::core::option::Option::None,
+                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                    },],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("update"),
+                    ::std::vec![::ethers::core::abi::ethabi::Function {
+                        name: ::std::borrow::ToOwned::to_owned("update"),
+                        inputs: ::std::vec![
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("sender"),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Address,
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("address"),
@@ -293,6 +256,84 @@ pub mod mock_strategy {
                                 kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("pool"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                ],),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("struct Pool"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("data"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("bytes"),
+                                ),
+                            },
+                        ],
+                        outputs: ::std::vec![],
+                        constant: ::core::option::Option::None,
+                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                    },],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("validateAllocate"),
+                    ::std::vec![::ethers::core::abi::ethabi::Function {
+                        name: ::std::borrow::ToOwned::to_owned("validateAllocate"),
+                        inputs: ::std::vec![
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("address"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                ],),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("struct Pool"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
@@ -312,35 +353,25 @@ pub mod mock_strategy {
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("swapConstantGrowth",),
+                                name: ::std::borrow::ToOwned::to_owned("invariant"),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("int256"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("liquidityDelta"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                                name: ::std::borrow::ToOwned::to_owned("deltas"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                    ::std::boxed::Box::new(
+                                        ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ),
+                                ),
                                 internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("int256"),
+                                    ::std::borrow::ToOwned::to_owned("uint256[]"),
                                 ),
                             },
                             ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("reserveX"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("uint256"),
-                                ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("reserveY"),
-                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
-                                internal_type: ::core::option::Option::Some(
-                                    ::std::borrow::ToOwned::to_owned("uint256"),
-                                ),
-                            },
-                            ::ethers::core::abi::ethabi::Param {
-                                name: ::std::borrow::ToOwned::to_owned("totalLiquidity"),
+                                name: ::std::borrow::ToOwned::to_owned("deltaLiquidity"),
                                 kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
                                 internal_type: ::core::option::Option::Some(
                                     ::std::borrow::ToOwned::to_owned("uint256"),
@@ -348,12 +379,234 @@ pub mod mock_strategy {
                             },
                         ],
                         constant: ::core::option::Option::None,
-                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                    },],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("validateDeallocate"),
+                    ::std::vec![::ethers::core::abi::ethabi::Function {
+                        name: ::std::borrow::ToOwned::to_owned("validateDeallocate"),
+                        inputs: ::std::vec![
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("address"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                ],),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("struct Pool"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("data"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("bytes"),
+                                ),
+                            },
+                        ],
+                        outputs: ::std::vec![
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("valid"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("bool"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("invariant"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("int256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("deltas"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                    ::std::boxed::Box::new(
+                                        ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ),
+                                ),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256[]"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("deltaLiquidity"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                        ],
+                        constant: ::core::option::Option::None,
+                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                    },],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("validateSwap"),
+                    ::std::vec![::ethers::core::abi::ethabi::Function {
+                        name: ::std::borrow::ToOwned::to_owned("validateSwap"),
+                        inputs: ::std::vec![
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("address"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::string::String::new(),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Tuple(::std::vec![
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ),
+                                    ),
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                ],),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("struct Pool"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("data"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("bytes"),
+                                ),
+                            },
+                        ],
+                        outputs: ::std::vec![
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("valid"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("bool"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("invariant"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("int256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("tokenInIndex"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("tokenOutIndex"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("amountIn"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("amountOut"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("deltaLiquidity"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                        ],
+                        constant: ::core::option::Option::None,
+                        state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
                     },],
                 ),
             ]),
             events: ::std::collections::BTreeMap::new(),
             errors: ::core::convert::From::from([
+                (
+                    ::std::borrow::ToOwned::to_owned("DeltaError"),
+                    ::std::vec![::ethers::core::abi::ethabi::AbiError {
+                        name: ::std::borrow::ToOwned::to_owned("DeltaError"),
+                        inputs: ::std::vec![
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("expected"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                            ::ethers::core::abi::ethabi::Param {
+                                name: ::std::borrow::ToOwned::to_owned("actual"),
+                                kind: ::ethers::core::abi::ethabi::ParamType::Uint(256usize,),
+                                internal_type: ::core::option::Option::Some(
+                                    ::std::borrow::ToOwned::to_owned("uint256"),
+                                ),
+                            },
+                        ],
+                    },],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("InvalidReservesLength"),
+                    ::std::vec![::ethers::core::abi::ethabi::AbiError {
+                        name: ::std::borrow::ToOwned::to_owned("InvalidReservesLength",),
+                        inputs: ::std::vec![],
+                    },],
+                ),
                 (
                     ::std::borrow::ToOwned::to_owned("InvalidSender"),
                     ::std::vec![::ethers::core::abi::ethabi::AbiError {
@@ -384,12 +637,12 @@ pub mod mock_strategy {
     pub static MOCKSTRATEGY_ABI: ::ethers::contract::Lazy<::ethers::core::abi::Abi> =
         ::ethers::contract::Lazy::new(__abi);
     #[rustfmt::skip]
-    const __BYTECODE: &[u8] = b"`\xA04a\0iW`\x1Fa\x05\xB58\x81\x90\x03\x91\x82\x01`\x1F\x19\x16\x83\x01\x91`\x01`\x01`@\x1B\x03\x83\x11\x84\x84\x10\x17a\0nW\x80\x84\x92` \x94`@R\x839\x81\x01\x03\x12a\0iWQ`\x01`\x01`\xA0\x1B\x03\x81\x16\x81\x03a\0iW`\x80R`@Qa\x050\x90\x81a\0\x85\x829`\x80Q\x81`\xEF\x01R\xF3[`\0\x80\xFD[cNH{q`\xE0\x1B`\0R`A`\x04R`$`\0\xFD\xFE`\x80`@\x81\x81R`\x046\x10\x15a\0\x14W`\0\x80\xFD[`\0\x91\x825`\xE0\x1C\x90\x81b.RK\x14a\x03\xF9WP\x80c\x06\xFD\xDE\x03\x14a\x03VW\x80ch\xBD>8\x14a\x03\x1DW\x80cs\xCB-\x03\x14a\x02NW\x80c\x8A\x04\xBD\xD5\x14a\x017W\x80c\xAC\xAD)\x89\x14a\x01\x1EW\x80c\xAF\xBA\x13\xC4\x14a\0\xDBWc\xDC\x17\x83U\x14a\0yW`\0\x80\xFD[4a\0\xD7W` \x80`\x03\x196\x01\x12a\0\xD3W\x91\x81Q\x92\x83\x91` \x83R``Q\x91\x82` \x85\x01R\x81[\x83\x81\x10a\0\xBEWPP\x82\x82\x01\x84\x01R`\x1F\x01`\x1F\x19\x16\x81\x01\x03\x01\x90\xF3[`\x80\x81\x01Q\x87\x82\x01\x87\x01R\x86\x94P\x81\x01a\0\xA1V[\x82\x80\xFD[P\x80\xFD[P4a\0\xD7W\x81`\x03\x196\x01\x12a\0\xD7WQ\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\x01`\x01`\xA0\x1B\x03\x16\x81R` \x90\xF3[\x824a\x014Wa\x01-6a\x04\x93V[PPPP\x80\xF3[\x80\xFD[P\x904a\x014Wa\x01G6a\x04\x93V[\x84\x93P\x83\x92P\x82\x91\x82\x91\x82\x90` \x90\x83\x01\x83\x90\x03\x12a\x014WP5`\x01\x81\x03a\x01\xC4WPPPPPP`\x01a\x01\xC0g\r\xE0\xB6\xB3\xA7d\0\0\x92h\x02\xB5\xE3\xAF\x16\xB1\x88\0\0\x80gEc\x91\x82D\xF4\0\0\x92[Q\x95\x86\x95\x86\x91\x92`\x80\x93\x96\x95\x94\x91\x96`\xA0\x84\x01\x97\x15\x15\x84R` \x84\x01R`@\x83\x01R``\x82\x01R\x01RV[\x03\x90\xF3[`\t\x81\x03a\x02\x05WPPPPPP`\x01a\x01\xC0g\r\xE0\xB6\xB3\xA7d\0\0\x92h\x05k\xC7^-c\x10\0\0h\x06\x81U\xA46v\xE0\0\0\x90g\x8A\xC7#\x04\x89\xE8\0\0\x92a\x01\x95V[`\x08\x14a\x02\x18W[a\x01\xC0\x93\x94\x95a\x01\x95V[Pg\r\xE0\xB6\xB3\xA7d\0\0\x93P`\x01\x92Pg\x8A\xC7#\x04\x89\xE8\0\0\x91Ph\x05k\xC7^-c\x10\0\0\x90Ph\x06\x81U\xA46v\xE0\0\0a\x02\rV[P\x904a\x014Wa\x02^6a\x04\x93V[\x84\x93P\x83\x92P\x82\x91\x82\x91\x82\x90` \x90\x83\x01\x83\x90\x03\x12a\x014WP5`\x01\x81\x14a\x02\xE8W[`\x02\x14a\x02\xBBW[a\x01\xC0\x93\x94\x95Q\x95\x86\x95\x86\x91\x92`\x80\x93\x96\x95\x94\x91\x96`\xA0\x84\x01\x97\x15\x15\x84R` \x84\x01R`@\x83\x01R``\x82\x01R\x01RV[Pg\r\xE0\xB6\xB3\xA7d\0\0\x93P`\x01\x92Pg\x8A\xC7#\x04\x89\xE8\0\0\x91Ph\x05k\xC7^-c\x10\0\0\x90P\x80a\x02\x8AV[g\r\xE0\xB6\xB3\xA7d\0\0\x95P`\x01\x94Pg7\x82\xDA\xCE\x9D\x90\0\0\x93Pg)\xA2$\x1A\xF6,\0\0\x92Pg\x1B\xC1mgN\xC8\0\0\x91Pa\x02\x82V[P4a\0\xD7W`\xC0\x91a\x03/6a\x04\x93V[PPPP\x80\x82Q\x92\x81\x84R\x81` \x85\x01R\x83\x01R\x80``\x83\x01R\x80`\x80\x83\x01R`\xA0\x82\x01R\xF3[P4a\0\xD7W\x81`\x03\x196\x01\x12a\0\xD7W\x80Q\x81\x81\x01\x81\x81\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x17a\x03\xE5W\x82R`\x0C\x81R` \x90kMockStrategy`\xA0\x1B` \x82\x01R\x82Q\x93\x84\x92` \x84R\x82Q\x92\x83` \x86\x01R\x82[\x84\x81\x10a\x03\xCFWPPP\x82\x82\x01\x84\x01R`\x1F\x01`\x1F\x19\x16\x81\x01\x03\x01\x90\xF3[\x81\x81\x01\x83\x01Q\x88\x82\x01\x88\x01R\x87\x95P\x82\x01a\x03\xB1V[cNH{q`\xE0\x1B\x84R`A`\x04R`$\x84\xFD[\x83\x834a\0\xD7W\x80`\x03\x196\x01\x12a\0\xD7Wg\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x92`$5\x84\x81\x11a\x04{W6`#\x82\x01\x12\x15a\x04{W\x80`\x04\x015\x94\x80\x86\x11a\x04\x7FW`\x1F\x86\x01`\x1F\x19\x90\x81\x16`?\x01\x16\x83\x01\x90\x81\x11\x83\x82\x10\x17a\x04\x7FW\x83R\x84\x82R6`$\x86\x83\x01\x01\x11a\x04{W\x84\x84\x92` \x96`$\x88\x94\x01\x84\x83\x017\x01\x01RQ\x90\x81R\xF3[\x83\x80\xFD[cNH{q`\xE0\x1B\x85R`A`\x04R`$\x85\xFD[\x90```\x03\x19\x83\x01\x12a\x04\xF5W`\x045`\x01`\x01`\xA0\x1B\x03\x81\x16\x81\x03a\x04\xF5W\x91`$5\x91`D5g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x92\x83\x82\x11a\x04\xF5W\x80`#\x83\x01\x12\x15a\x04\xF5W\x81`\x04\x015\x93\x84\x11a\x04\xF5W`$\x84\x83\x01\x01\x11a\x04\xF5W`$\x01\x91\x90V[`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \t\xA66\x83.\xC6\x84x\x84\xE7a\xE1\x1E\x93\xE4\xC9\x9C\x16\xC8vpB\xC5\x16\xD6\xF7\xD4\xBB'\xFB\x9B\xB0dsolcC\0\x08\x16\x003";
+    const __BYTECODE: &[u8] = b"`\xA0`@R4\x80\x15a\0\x10W`\0\x80\xFD[P`@Qa\x07h8\x03\x80a\x07h\x839\x81\x01`@\x81\x90Ra\0/\x91a\0@V[`\x01`\x01`\xA0\x1B\x03\x16`\x80Ra\0pV[`\0` \x82\x84\x03\x12\x15a\0RW`\0\x80\xFD[\x81Q`\x01`\x01`\xA0\x1B\x03\x81\x16\x81\x14a\0iW`\0\x80\xFD[\x93\x92PPPV[`\x80Qa\x06\xDDa\0\x8B`\09`\0a\x01\x8C\x01Ra\x06\xDD`\0\xF3\xFE`\x80`@R4\x80\x15a\0\x10W`\0\x80\xFD[P`\x046\x10a\0\x9DW`\x005`\xE0\x1C\x80c|\x10\x12D\x11a\0fW\x80c|\x10\x12D\x14a\0\xCBW\x80c\x8D\xDA\0=\x14a\x01pW\x80c\xAF\xBA\x13\xC4\x14a\x01\x87W\x80c\xD8\xB5\xED\x12\x14a\x01\xC6W\x80c\xDC\x17\x83U\x14a\x01\xDDW`\0\x80\xFD[\x80b.RK\x14a\0\xA2W\x80c\x04\r\x95\x1E\x14a\0\xCBW\x80c\x06\xFD\xDE\x03\x14a\0\xEEW\x80cO\x17\xD9\x13\x14a\0\xCBW\x80cu\xE6D\x0F\x14a\x01&W[`\0\x80\xFD[a\0\xB8a\0\xB06`\x04a\x03\x0CV[`\0\x92\x91PPV[`@Q\x90\x81R` \x01[`@Q\x80\x91\x03\x90\xF3[a\0\xDEa\0\xD96`\x04a\x03SV[a\x01\xF1V[`@Qa\0\xC2\x94\x93\x92\x91\x90a\x04\x18V[a\x01\x19`@Q\x80`@\x01`@R\x80`\x0C\x81R` \x01kMockStrategy`\xA0\x1B\x81RP\x81V[`@Qa\0\xC2\x91\x90a\x04\xC0V[a\x019a\x0146`\x04a\x03SV[a\x02\x16V[`@\x80Q\x97\x15\x15\x88R` \x88\x01\x96\x90\x96R\x94\x86\x01\x93\x90\x93R``\x85\x01\x91\x90\x91R`\x80\x84\x01R`\xA0\x83\x01R`\xC0\x82\x01R`\xE0\x01a\0\xC2V[a\0\xB8a\x01~6`\x04a\x05ZV[`\0\x93\x92PPPV[a\x01\xAE\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x81V[`@Q`\x01`\x01`\xA0\x1B\x03\x90\x91\x16\x81R` \x01a\0\xC2V[a\x01\xDBa\x01\xD46`\x04a\x03SV[PPPPPV[\0[a\x01\x19a\x01\xEB6`\x04a\x05\xC7V[P``\x90V[`\0\x80``\x81a\x02\x03\x85\x87\x01\x87a\x05\xF5V[\x92\x9C\x91\x9BP\x99P\x90\x97P\x95PPPPPPV[`\0\x80\x80\x80\x80\x80\x80a\x02*\x88\x8A\x01\x8Aa\x06TV[\x80\x97P\x81\x98P\x82\x99P\x83\x9AP\x84\x9BP\x85\x9CP\x86\x9DPPPPPPPP\x95\x9B\x94\x9AP\x95P\x95P\x95P\x95PV[cNH{q`\xE0\x1B`\0R`A`\x04R`$`\0\xFD[`@Q`\x1F\x82\x01`\x1F\x19\x16\x81\x01g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x82\x82\x10\x17\x15a\x02\x94Wa\x02\x94a\x02UV[`@R\x91\x90PV[`\0\x82`\x1F\x83\x01\x12a\x02\xADW`\0\x80\xFD[\x815g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x15a\x02\xC7Wa\x02\xC7a\x02UV[a\x02\xDA`\x1F\x82\x01`\x1F\x19\x16` \x01a\x02kV[\x81\x81R\x84` \x83\x86\x01\x01\x11\x15a\x02\xEFW`\0\x80\xFD[\x81` \x85\x01` \x83\x017`\0\x91\x81\x01` \x01\x91\x90\x91R\x93\x92PPPV[`\0\x80`@\x83\x85\x03\x12\x15a\x03\x1FW`\0\x80\xFD[\x825\x91P` \x83\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x15a\x03=W`\0\x80\xFD[a\x03I\x85\x82\x86\x01a\x02\x9CV[\x91PP\x92P\x92\x90PV[`\0\x80`\0\x80`\0`\x80\x86\x88\x03\x12\x15a\x03kW`\0\x80\xFD[\x855`\x01`\x01`\xA0\x1B\x03\x81\x16\x81\x14a\x03\x82W`\0\x80\xFD[\x94P` \x86\x015\x93P`@\x86\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80\x82\x11\x15a\x03\xA6W`\0\x80\xFD[\x90\x87\x01\x90`\xE0\x82\x8A\x03\x12\x15a\x03\xBAW`\0\x80\xFD[\x90\x93P``\x87\x015\x90\x80\x82\x11\x15a\x03\xD0W`\0\x80\xFD[\x81\x88\x01\x91P\x88`\x1F\x83\x01\x12a\x03\xE4W`\0\x80\xFD[\x815\x81\x81\x11\x15a\x03\xF3W`\0\x80\xFD[\x89` \x82\x85\x01\x01\x11\x15a\x04\x05W`\0\x80\xFD[\x96\x99\x95\x98P\x93\x96P` \x01\x94\x93\x92PPPV[`\0`\x80\x82\x01\x86\x15\x15\x83R` \x86` \x85\x01R`\x80`@\x85\x01R\x81\x86Q\x80\x84R`\xA0\x86\x01\x91P` \x88\x01\x93P`\0[\x81\x81\x10\x15a\x04cW\x84Q\x83R\x93\x83\x01\x93\x91\x83\x01\x91`\x01\x01a\x04GV[PP\x80\x93PPPP\x82``\x83\x01R\x95\x94PPPPPV[`\0\x81Q\x80\x84R`\0[\x81\x81\x10\x15a\x04\xA0W` \x81\x85\x01\x81\x01Q\x86\x83\x01\x82\x01R\x01a\x04\x84V[P`\0` \x82\x86\x01\x01R` `\x1F\x19`\x1F\x83\x01\x16\x85\x01\x01\x91PP\x92\x91PPV[` \x81R`\0a\x04\xD3` \x83\x01\x84a\x04zV[\x93\x92PPPV[`\0\x82`\x1F\x83\x01\x12a\x04\xEBW`\0\x80\xFD[\x815` g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x15a\x05\x07Wa\x05\x07a\x02UV[\x81`\x05\x1Ba\x05\x16\x82\x82\x01a\x02kV[\x92\x83R\x84\x81\x01\x82\x01\x92\x82\x81\x01\x90\x87\x85\x11\x15a\x050W`\0\x80\xFD[\x83\x87\x01\x92P[\x84\x83\x10\x15a\x05OW\x825\x82R\x91\x83\x01\x91\x90\x83\x01\x90a\x056V[\x97\x96PPPPPPPV[`\0\x80`\0``\x84\x86\x03\x12\x15a\x05oW`\0\x80\xFD[\x835g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80\x82\x11\x15a\x05\x87W`\0\x80\xFD[a\x05\x93\x87\x83\x88\x01a\x04\xDAV[\x94P` \x86\x015\x93P`@\x86\x015\x91P\x80\x82\x11\x15a\x05\xB0W`\0\x80\xFD[Pa\x05\xBD\x86\x82\x87\x01a\x02\x9CV[\x91PP\x92P\x92P\x92V[`\0` \x82\x84\x03\x12\x15a\x05\xD9W`\0\x80\xFD[P5\x91\x90PV[\x805\x80\x15\x15\x81\x14a\x05\xF0W`\0\x80\xFD[\x91\x90PV[`\0\x80`\0\x80`\x80\x85\x87\x03\x12\x15a\x06\x0BW`\0\x80\xFD[a\x06\x14\x85a\x05\xE0V[\x93P` \x85\x015\x92P`@\x85\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x15a\x067W`\0\x80\xFD[a\x06C\x87\x82\x88\x01a\x04\xDAV[\x94\x97\x93\x96P\x93\x94``\x015\x93PPPV[`\0\x80`\0\x80`\0\x80`\0`\xE0\x88\x8A\x03\x12\x15a\x06oW`\0\x80\xFD[a\x06x\x88a\x05\xE0V[\x99` \x89\x015\x99P`@\x89\x015\x98``\x81\x015\x98P`\x80\x81\x015\x97P`\xA0\x81\x015\x96P`\xC0\x015\x94P\x92PPPV\xFE\xA2dipfsX\"\x12 \xC9{\x8C\xDE\xABs-T\xEDK\xDA\xAD]\xFD\x03\xA0\xA6\xBA\xEF\x07\xBD5B\x83j\xF8@wm\x1D\xEF\xD5dsolcC\0\x08\x16\x003";
     /// The bytecode of the contract.
     pub static MOCKSTRATEGY_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__BYTECODE);
     #[rustfmt::skip]
-    const __DEPLOYED_BYTECODE: &[u8] = b"`\x80`@\x81\x81R`\x046\x10\x15a\0\x14W`\0\x80\xFD[`\0\x91\x825`\xE0\x1C\x90\x81b.RK\x14a\x03\xF9WP\x80c\x06\xFD\xDE\x03\x14a\x03VW\x80ch\xBD>8\x14a\x03\x1DW\x80cs\xCB-\x03\x14a\x02NW\x80c\x8A\x04\xBD\xD5\x14a\x017W\x80c\xAC\xAD)\x89\x14a\x01\x1EW\x80c\xAF\xBA\x13\xC4\x14a\0\xDBWc\xDC\x17\x83U\x14a\0yW`\0\x80\xFD[4a\0\xD7W` \x80`\x03\x196\x01\x12a\0\xD3W\x91\x81Q\x92\x83\x91` \x83R``Q\x91\x82` \x85\x01R\x81[\x83\x81\x10a\0\xBEWPP\x82\x82\x01\x84\x01R`\x1F\x01`\x1F\x19\x16\x81\x01\x03\x01\x90\xF3[`\x80\x81\x01Q\x87\x82\x01\x87\x01R\x86\x94P\x81\x01a\0\xA1V[\x82\x80\xFD[P\x80\xFD[P4a\0\xD7W\x81`\x03\x196\x01\x12a\0\xD7WQ\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0`\x01`\x01`\xA0\x1B\x03\x16\x81R` \x90\xF3[\x824a\x014Wa\x01-6a\x04\x93V[PPPP\x80\xF3[\x80\xFD[P\x904a\x014Wa\x01G6a\x04\x93V[\x84\x93P\x83\x92P\x82\x91\x82\x91\x82\x90` \x90\x83\x01\x83\x90\x03\x12a\x014WP5`\x01\x81\x03a\x01\xC4WPPPPPP`\x01a\x01\xC0g\r\xE0\xB6\xB3\xA7d\0\0\x92h\x02\xB5\xE3\xAF\x16\xB1\x88\0\0\x80gEc\x91\x82D\xF4\0\0\x92[Q\x95\x86\x95\x86\x91\x92`\x80\x93\x96\x95\x94\x91\x96`\xA0\x84\x01\x97\x15\x15\x84R` \x84\x01R`@\x83\x01R``\x82\x01R\x01RV[\x03\x90\xF3[`\t\x81\x03a\x02\x05WPPPPPP`\x01a\x01\xC0g\r\xE0\xB6\xB3\xA7d\0\0\x92h\x05k\xC7^-c\x10\0\0h\x06\x81U\xA46v\xE0\0\0\x90g\x8A\xC7#\x04\x89\xE8\0\0\x92a\x01\x95V[`\x08\x14a\x02\x18W[a\x01\xC0\x93\x94\x95a\x01\x95V[Pg\r\xE0\xB6\xB3\xA7d\0\0\x93P`\x01\x92Pg\x8A\xC7#\x04\x89\xE8\0\0\x91Ph\x05k\xC7^-c\x10\0\0\x90Ph\x06\x81U\xA46v\xE0\0\0a\x02\rV[P\x904a\x014Wa\x02^6a\x04\x93V[\x84\x93P\x83\x92P\x82\x91\x82\x91\x82\x90` \x90\x83\x01\x83\x90\x03\x12a\x014WP5`\x01\x81\x14a\x02\xE8W[`\x02\x14a\x02\xBBW[a\x01\xC0\x93\x94\x95Q\x95\x86\x95\x86\x91\x92`\x80\x93\x96\x95\x94\x91\x96`\xA0\x84\x01\x97\x15\x15\x84R` \x84\x01R`@\x83\x01R``\x82\x01R\x01RV[Pg\r\xE0\xB6\xB3\xA7d\0\0\x93P`\x01\x92Pg\x8A\xC7#\x04\x89\xE8\0\0\x91Ph\x05k\xC7^-c\x10\0\0\x90P\x80a\x02\x8AV[g\r\xE0\xB6\xB3\xA7d\0\0\x95P`\x01\x94Pg7\x82\xDA\xCE\x9D\x90\0\0\x93Pg)\xA2$\x1A\xF6,\0\0\x92Pg\x1B\xC1mgN\xC8\0\0\x91Pa\x02\x82V[P4a\0\xD7W`\xC0\x91a\x03/6a\x04\x93V[PPPP\x80\x82Q\x92\x81\x84R\x81` \x85\x01R\x83\x01R\x80``\x83\x01R\x80`\x80\x83\x01R`\xA0\x82\x01R\xF3[P4a\0\xD7W\x81`\x03\x196\x01\x12a\0\xD7W\x80Q\x81\x81\x01\x81\x81\x10g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x17a\x03\xE5W\x82R`\x0C\x81R` \x90kMockStrategy`\xA0\x1B` \x82\x01R\x82Q\x93\x84\x92` \x84R\x82Q\x92\x83` \x86\x01R\x82[\x84\x81\x10a\x03\xCFWPPP\x82\x82\x01\x84\x01R`\x1F\x01`\x1F\x19\x16\x81\x01\x03\x01\x90\xF3[\x81\x81\x01\x83\x01Q\x88\x82\x01\x88\x01R\x87\x95P\x82\x01a\x03\xB1V[cNH{q`\xE0\x1B\x84R`A`\x04R`$\x84\xFD[\x83\x834a\0\xD7W\x80`\x03\x196\x01\x12a\0\xD7Wg\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x92`$5\x84\x81\x11a\x04{W6`#\x82\x01\x12\x15a\x04{W\x80`\x04\x015\x94\x80\x86\x11a\x04\x7FW`\x1F\x86\x01`\x1F\x19\x90\x81\x16`?\x01\x16\x83\x01\x90\x81\x11\x83\x82\x10\x17a\x04\x7FW\x83R\x84\x82R6`$\x86\x83\x01\x01\x11a\x04{W\x84\x84\x92` \x96`$\x88\x94\x01\x84\x83\x017\x01\x01RQ\x90\x81R\xF3[\x83\x80\xFD[cNH{q`\xE0\x1B\x85R`A`\x04R`$\x85\xFD[\x90```\x03\x19\x83\x01\x12a\x04\xF5W`\x045`\x01`\x01`\xA0\x1B\x03\x81\x16\x81\x03a\x04\xF5W\x91`$5\x91`D5g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x92\x83\x82\x11a\x04\xF5W\x80`#\x83\x01\x12\x15a\x04\xF5W\x81`\x04\x015\x93\x84\x11a\x04\xF5W`$\x84\x83\x01\x01\x11a\x04\xF5W`$\x01\x91\x90V[`\0\x80\xFD\xFE\xA2dipfsX\"\x12 \t\xA66\x83.\xC6\x84x\x84\xE7a\xE1\x1E\x93\xE4\xC9\x9C\x16\xC8vpB\xC5\x16\xD6\xF7\xD4\xBB'\xFB\x9B\xB0dsolcC\0\x08\x16\x003";
+    const __DEPLOYED_BYTECODE: &[u8] = b"`\x80`@R4\x80\x15a\0\x10W`\0\x80\xFD[P`\x046\x10a\0\x9DW`\x005`\xE0\x1C\x80c|\x10\x12D\x11a\0fW\x80c|\x10\x12D\x14a\0\xCBW\x80c\x8D\xDA\0=\x14a\x01pW\x80c\xAF\xBA\x13\xC4\x14a\x01\x87W\x80c\xD8\xB5\xED\x12\x14a\x01\xC6W\x80c\xDC\x17\x83U\x14a\x01\xDDW`\0\x80\xFD[\x80b.RK\x14a\0\xA2W\x80c\x04\r\x95\x1E\x14a\0\xCBW\x80c\x06\xFD\xDE\x03\x14a\0\xEEW\x80cO\x17\xD9\x13\x14a\0\xCBW\x80cu\xE6D\x0F\x14a\x01&W[`\0\x80\xFD[a\0\xB8a\0\xB06`\x04a\x03\x0CV[`\0\x92\x91PPV[`@Q\x90\x81R` \x01[`@Q\x80\x91\x03\x90\xF3[a\0\xDEa\0\xD96`\x04a\x03SV[a\x01\xF1V[`@Qa\0\xC2\x94\x93\x92\x91\x90a\x04\x18V[a\x01\x19`@Q\x80`@\x01`@R\x80`\x0C\x81R` \x01kMockStrategy`\xA0\x1B\x81RP\x81V[`@Qa\0\xC2\x91\x90a\x04\xC0V[a\x019a\x0146`\x04a\x03SV[a\x02\x16V[`@\x80Q\x97\x15\x15\x88R` \x88\x01\x96\x90\x96R\x94\x86\x01\x93\x90\x93R``\x85\x01\x91\x90\x91R`\x80\x84\x01R`\xA0\x83\x01R`\xC0\x82\x01R`\xE0\x01a\0\xC2V[a\0\xB8a\x01~6`\x04a\x05ZV[`\0\x93\x92PPPV[a\x01\xAE\x7F\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x81V[`@Q`\x01`\x01`\xA0\x1B\x03\x90\x91\x16\x81R` \x01a\0\xC2V[a\x01\xDBa\x01\xD46`\x04a\x03SV[PPPPPV[\0[a\x01\x19a\x01\xEB6`\x04a\x05\xC7V[P``\x90V[`\0\x80``\x81a\x02\x03\x85\x87\x01\x87a\x05\xF5V[\x92\x9C\x91\x9BP\x99P\x90\x97P\x95PPPPPPV[`\0\x80\x80\x80\x80\x80\x80a\x02*\x88\x8A\x01\x8Aa\x06TV[\x80\x97P\x81\x98P\x82\x99P\x83\x9AP\x84\x9BP\x85\x9CP\x86\x9DPPPPPPPP\x95\x9B\x94\x9AP\x95P\x95P\x95P\x95PV[cNH{q`\xE0\x1B`\0R`A`\x04R`$`\0\xFD[`@Q`\x1F\x82\x01`\x1F\x19\x16\x81\x01g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x82\x82\x10\x17\x15a\x02\x94Wa\x02\x94a\x02UV[`@R\x91\x90PV[`\0\x82`\x1F\x83\x01\x12a\x02\xADW`\0\x80\xFD[\x815g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x15a\x02\xC7Wa\x02\xC7a\x02UV[a\x02\xDA`\x1F\x82\x01`\x1F\x19\x16` \x01a\x02kV[\x81\x81R\x84` \x83\x86\x01\x01\x11\x15a\x02\xEFW`\0\x80\xFD[\x81` \x85\x01` \x83\x017`\0\x91\x81\x01` \x01\x91\x90\x91R\x93\x92PPPV[`\0\x80`@\x83\x85\x03\x12\x15a\x03\x1FW`\0\x80\xFD[\x825\x91P` \x83\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x15a\x03=W`\0\x80\xFD[a\x03I\x85\x82\x86\x01a\x02\x9CV[\x91PP\x92P\x92\x90PV[`\0\x80`\0\x80`\0`\x80\x86\x88\x03\x12\x15a\x03kW`\0\x80\xFD[\x855`\x01`\x01`\xA0\x1B\x03\x81\x16\x81\x14a\x03\x82W`\0\x80\xFD[\x94P` \x86\x015\x93P`@\x86\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80\x82\x11\x15a\x03\xA6W`\0\x80\xFD[\x90\x87\x01\x90`\xE0\x82\x8A\x03\x12\x15a\x03\xBAW`\0\x80\xFD[\x90\x93P``\x87\x015\x90\x80\x82\x11\x15a\x03\xD0W`\0\x80\xFD[\x81\x88\x01\x91P\x88`\x1F\x83\x01\x12a\x03\xE4W`\0\x80\xFD[\x815\x81\x81\x11\x15a\x03\xF3W`\0\x80\xFD[\x89` \x82\x85\x01\x01\x11\x15a\x04\x05W`\0\x80\xFD[\x96\x99\x95\x98P\x93\x96P` \x01\x94\x93\x92PPPV[`\0`\x80\x82\x01\x86\x15\x15\x83R` \x86` \x85\x01R`\x80`@\x85\x01R\x81\x86Q\x80\x84R`\xA0\x86\x01\x91P` \x88\x01\x93P`\0[\x81\x81\x10\x15a\x04cW\x84Q\x83R\x93\x83\x01\x93\x91\x83\x01\x91`\x01\x01a\x04GV[PP\x80\x93PPPP\x82``\x83\x01R\x95\x94PPPPPV[`\0\x81Q\x80\x84R`\0[\x81\x81\x10\x15a\x04\xA0W` \x81\x85\x01\x81\x01Q\x86\x83\x01\x82\x01R\x01a\x04\x84V[P`\0` \x82\x86\x01\x01R` `\x1F\x19`\x1F\x83\x01\x16\x85\x01\x01\x91PP\x92\x91PPV[` \x81R`\0a\x04\xD3` \x83\x01\x84a\x04zV[\x93\x92PPPV[`\0\x82`\x1F\x83\x01\x12a\x04\xEBW`\0\x80\xFD[\x815` g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x82\x11\x15a\x05\x07Wa\x05\x07a\x02UV[\x81`\x05\x1Ba\x05\x16\x82\x82\x01a\x02kV[\x92\x83R\x84\x81\x01\x82\x01\x92\x82\x81\x01\x90\x87\x85\x11\x15a\x050W`\0\x80\xFD[\x83\x87\x01\x92P[\x84\x83\x10\x15a\x05OW\x825\x82R\x91\x83\x01\x91\x90\x83\x01\x90a\x056V[\x97\x96PPPPPPPV[`\0\x80`\0``\x84\x86\x03\x12\x15a\x05oW`\0\x80\xFD[\x835g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x80\x82\x11\x15a\x05\x87W`\0\x80\xFD[a\x05\x93\x87\x83\x88\x01a\x04\xDAV[\x94P` \x86\x015\x93P`@\x86\x015\x91P\x80\x82\x11\x15a\x05\xB0W`\0\x80\xFD[Pa\x05\xBD\x86\x82\x87\x01a\x02\x9CV[\x91PP\x92P\x92P\x92V[`\0` \x82\x84\x03\x12\x15a\x05\xD9W`\0\x80\xFD[P5\x91\x90PV[\x805\x80\x15\x15\x81\x14a\x05\xF0W`\0\x80\xFD[\x91\x90PV[`\0\x80`\0\x80`\x80\x85\x87\x03\x12\x15a\x06\x0BW`\0\x80\xFD[a\x06\x14\x85a\x05\xE0V[\x93P` \x85\x015\x92P`@\x85\x015g\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x81\x11\x15a\x067W`\0\x80\xFD[a\x06C\x87\x82\x88\x01a\x04\xDAV[\x94\x97\x93\x96P\x93\x94``\x015\x93PPPV[`\0\x80`\0\x80`\0\x80`\0`\xE0\x88\x8A\x03\x12\x15a\x06oW`\0\x80\xFD[a\x06x\x88a\x05\xE0V[\x99` \x89\x015\x99P`@\x89\x015\x98``\x81\x015\x98P`\x80\x81\x015\x97P`\xA0\x81\x015\x96P`\xC0\x015\x94P\x92PPPV\xFE\xA2dipfsX\"\x12 \xC9{\x8C\xDE\xABs-T\xEDK\xDA\xAD]\xFD\x03\xA0\xA6\xBA\xEF\x07\xBD5B\x83j\xF8@wm\x1D\xEF\xD5dsolcC\0\x08\x16\x003";
     /// The deployed bytecode of the contract.
     pub static MOCKSTRATEGY_DEPLOYED_BYTECODE: ::ethers::core::types::Bytes =
         ::ethers::core::types::Bytes::from_static(__DEPLOYED_BYTECODE);
@@ -502,24 +755,24 @@ pub mod mock_strategy {
                 .method_hash([220, 23, 131, 85], pool_id)
                 .expect("method not found (this should never happen)")
         }
-        /// Calls the contract's `init` (0x73cb2d03) function
+        /// Calls the contract's `init` (0x4f17d913) function
         pub fn init(
             &self,
             p0: ::ethers::core::types::Address,
-            pool_id: ::ethers::core::types::U256,
+            p1: ::ethers::core::types::U256,
+            p2: Pool,
             data: ::ethers::core::types::Bytes,
         ) -> ::ethers::contract::builders::ContractCall<
             M,
             (
                 bool,
                 ::ethers::core::types::I256,
-                ::ethers::core::types::U256,
-                ::ethers::core::types::U256,
+                ::std::vec::Vec<::ethers::core::types::U256>,
                 ::ethers::core::types::U256,
             ),
         > {
             self.0
-                .method_hash([115, 203, 45, 3], (p0, pool_id, data))
+                .method_hash([79, 23, 217, 19], (p0, p1, p2, data))
                 .expect("method not found (this should never happen)")
         }
         /// Calls the contract's `name` (0x06fdde03) function
@@ -528,57 +781,90 @@ pub mod mock_strategy {
                 .method_hash([6, 253, 222, 3], ())
                 .expect("method not found (this should never happen)")
         }
-        /// Calls the contract's `update` (0xacad2989) function
+        /// Calls the contract's `tradingFunction` (0x8dda003d) function
+        pub fn trading_function(
+            &self,
+            p0: ::std::vec::Vec<::ethers::core::types::U256>,
+            p1: ::ethers::core::types::U256,
+            p2: ::ethers::core::types::Bytes,
+        ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::I256> {
+            self.0
+                .method_hash([141, 218, 0, 61], (p0, p1, p2))
+                .expect("method not found (this should never happen)")
+        }
+        /// Calls the contract's `update` (0xd8b5ed12) function
         pub fn update(
             &self,
             sender: ::ethers::core::types::Address,
             pool_id: ::ethers::core::types::U256,
+            pool: Pool,
             data: ::ethers::core::types::Bytes,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
-                .method_hash([172, 173, 41, 137], (sender, pool_id, data))
+                .method_hash([216, 181, 237, 18], (sender, pool_id, pool, data))
                 .expect("method not found (this should never happen)")
         }
-        /// Calls the contract's `validateAllocateOrDeallocate` (0x8a04bdd5)
-        /// function
-        pub fn validate_allocate_or_deallocate(
+        /// Calls the contract's `validateAllocate` (0x7c101244) function
+        pub fn validate_allocate(
             &self,
             p0: ::ethers::core::types::Address,
-            pool_id: ::ethers::core::types::U256,
+            p1: ::ethers::core::types::U256,
+            p2: Pool,
             data: ::ethers::core::types::Bytes,
         ) -> ::ethers::contract::builders::ContractCall<
             M,
             (
                 bool,
                 ::ethers::core::types::I256,
-                ::ethers::core::types::U256,
-                ::ethers::core::types::U256,
+                ::std::vec::Vec<::ethers::core::types::U256>,
                 ::ethers::core::types::U256,
             ),
         > {
             self.0
-                .method_hash([138, 4, 189, 213], (p0, pool_id, data))
+                .method_hash([124, 16, 18, 68], (p0, p1, p2, data))
                 .expect("method not found (this should never happen)")
         }
-        /// Calls the contract's `validateSwap` (0x68bd3e38) function
+        /// Calls the contract's `validateDeallocate` (0x040d951e) function
+        pub fn validate_deallocate(
+            &self,
+            p0: ::ethers::core::types::Address,
+            p1: ::ethers::core::types::U256,
+            p2: Pool,
+            data: ::ethers::core::types::Bytes,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            (
+                bool,
+                ::ethers::core::types::I256,
+                ::std::vec::Vec<::ethers::core::types::U256>,
+                ::ethers::core::types::U256,
+            ),
+        > {
+            self.0
+                .method_hash([4, 13, 149, 30], (p0, p1, p2, data))
+                .expect("method not found (this should never happen)")
+        }
+        /// Calls the contract's `validateSwap` (0x75e6440f) function
         pub fn validate_swap(
             &self,
             p0: ::ethers::core::types::Address,
-            pool_id: ::ethers::core::types::U256,
+            p1: ::ethers::core::types::U256,
+            p2: Pool,
             data: ::ethers::core::types::Bytes,
         ) -> ::ethers::contract::builders::ContractCall<
             M,
             (
                 bool,
                 ::ethers::core::types::I256,
-                ::ethers::core::types::I256,
+                ::ethers::core::types::U256,
+                ::ethers::core::types::U256,
                 ::ethers::core::types::U256,
                 ::ethers::core::types::U256,
                 ::ethers::core::types::U256,
             ),
         > {
             self.0
-                .method_hash([104, 189, 62, 56], (p0, pool_id, data))
+                .method_hash([117, 230, 68, 15], (p0, p1, p2, data))
                 .expect("method not found (this should never happen)")
         }
     }
@@ -587,6 +873,41 @@ pub mod mock_strategy {
             Self::new(contract.address(), contract.client())
         }
     }
+    /// Custom Error type `DeltaError` with signature
+    /// `DeltaError(uint256,uint256)` and selector `0x6d685fa7`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    #[etherror(name = "DeltaError", abi = "DeltaError(uint256,uint256)")]
+    pub struct DeltaError {
+        pub expected: ::ethers::core::types::U256,
+        pub actual: ::ethers::core::types::U256,
+    }
+    /// Custom Error type `InvalidReservesLength` with signature
+    /// `InvalidReservesLength()` and selector `0xc7f63e5e`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    #[etherror(name = "InvalidReservesLength", abi = "InvalidReservesLength()")]
+    pub struct InvalidReservesLength;
     /// Custom Error type `InvalidSender` with signature `InvalidSender()` and
     /// selector `0xddb5de5e`
     #[derive(
@@ -647,6 +968,8 @@ pub mod mock_strategy {
         Hash,
     )]
     pub enum MockStrategyErrors {
+        DeltaError(DeltaError),
+        InvalidReservesLength(InvalidReservesLength),
         InvalidSender(InvalidSender),
         InvalidUpdateCode(InvalidUpdateCode),
         NotDFMM(NotDFMM),
@@ -664,6 +987,14 @@ pub mod mock_strategy {
             {
                 return Ok(Self::RevertString(decoded));
             }
+            if let Ok(decoded) = <DeltaError as ::ethers::core::abi::AbiDecode>::decode(data) {
+                return Ok(Self::DeltaError(decoded));
+            }
+            if let Ok(decoded) =
+                <InvalidReservesLength as ::ethers::core::abi::AbiDecode>::decode(data)
+            {
+                return Ok(Self::InvalidReservesLength(decoded));
+            }
             if let Ok(decoded) = <InvalidSender as ::ethers::core::abi::AbiDecode>::decode(data) {
                 return Ok(Self::InvalidSender(decoded));
             }
@@ -680,6 +1011,10 @@ pub mod mock_strategy {
     impl ::ethers::core::abi::AbiEncode for MockStrategyErrors {
         fn encode(self) -> ::std::vec::Vec<u8> {
             match self {
+                Self::DeltaError(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::InvalidReservesLength(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::InvalidSender(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::InvalidUpdateCode(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::NotDFMM(element) => ::ethers::core::abi::AbiEncode::encode(element),
@@ -691,6 +1026,12 @@ pub mod mock_strategy {
         fn valid_selector(selector: [u8; 4]) -> bool {
             match selector {
                 [0x08, 0xc3, 0x79, 0xa0] => true,
+                _ if selector == <DeltaError as ::ethers::contract::EthError>::selector() => true,
+                _ if selector
+                    == <InvalidReservesLength as ::ethers::contract::EthError>::selector() =>
+                {
+                    true
+                }
                 _ if selector == <InvalidSender as ::ethers::contract::EthError>::selector() => {
                     true
                 }
@@ -707,6 +1048,8 @@ pub mod mock_strategy {
     impl ::core::fmt::Display for MockStrategyErrors {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
             match self {
+                Self::DeltaError(element) => ::core::fmt::Display::fmt(element, f),
+                Self::InvalidReservesLength(element) => ::core::fmt::Display::fmt(element, f),
                 Self::InvalidSender(element) => ::core::fmt::Display::fmt(element, f),
                 Self::InvalidUpdateCode(element) => ::core::fmt::Display::fmt(element, f),
                 Self::NotDFMM(element) => ::core::fmt::Display::fmt(element, f),
@@ -717,6 +1060,16 @@ pub mod mock_strategy {
     impl ::core::convert::From<::std::string::String> for MockStrategyErrors {
         fn from(value: String) -> Self {
             Self::RevertString(value)
+        }
+    }
+    impl ::core::convert::From<DeltaError> for MockStrategyErrors {
+        fn from(value: DeltaError) -> Self {
+            Self::DeltaError(value)
+        }
+    }
+    impl ::core::convert::From<InvalidReservesLength> for MockStrategyErrors {
+        fn from(value: InvalidReservesLength) -> Self {
+            Self::InvalidReservesLength(value)
         }
     }
     impl ::core::convert::From<InvalidSender> for MockStrategyErrors {
@@ -792,7 +1145,8 @@ pub mod mock_strategy {
         pub pool_id: ::ethers::core::types::U256,
     }
     /// Container type for all input parameters for the `init` function with
-    /// signature `init(address,uint256,bytes)` and selector `0x73cb2d03`
+    /// signature `init(address,uint256,(address,address[],uint256[],uint256,
+    /// address,address,uint256),bytes)` and selector `0x4f17d913`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -805,10 +1159,14 @@ pub mod mock_strategy {
         Eq,
         Hash,
     )]
-    #[ethcall(name = "init", abi = "init(address,uint256,bytes)")]
+    #[ethcall(
+        name = "init",
+        abi = "init(address,uint256,(address,address[],uint256[],uint256,address,address,uint256),bytes)"
+    )]
     pub struct InitCall {
         pub p0: ::ethers::core::types::Address,
-        pub pool_id: ::ethers::core::types::U256,
+        pub p1: ::ethers::core::types::U256,
+        pub p2: Pool,
         pub data: ::ethers::core::types::Bytes,
     }
     /// Container type for all input parameters for the `name` function with
@@ -827,30 +1185,9 @@ pub mod mock_strategy {
     )]
     #[ethcall(name = "name", abi = "name()")]
     pub struct NameCall;
-    /// Container type for all input parameters for the `update` function with
-    /// signature `update(address,uint256,bytes)` and selector `0xacad2989`
-    #[derive(
-        Clone,
-        ::ethers::contract::EthCall,
-        ::ethers::contract::EthDisplay,
-        serde::Serialize,
-        serde::Deserialize,
-        Default,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash,
-    )]
-    #[ethcall(name = "update", abi = "update(address,uint256,bytes)")]
-    pub struct UpdateCall {
-        pub sender: ::ethers::core::types::Address,
-        pub pool_id: ::ethers::core::types::U256,
-        pub data: ::ethers::core::types::Bytes,
-    }
-    /// Container type for all input parameters for the
-    /// `validateAllocateOrDeallocate` function with signature
-    /// `validateAllocateOrDeallocate(address,uint256,bytes)` and selector
-    /// `0x8a04bdd5`
+    /// Container type for all input parameters for the `tradingFunction`
+    /// function with signature `tradingFunction(uint256[],uint256,bytes)` and
+    /// selector `0x8dda003d`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -864,17 +1201,17 @@ pub mod mock_strategy {
         Hash,
     )]
     #[ethcall(
-        name = "validateAllocateOrDeallocate",
-        abi = "validateAllocateOrDeallocate(address,uint256,bytes)"
+        name = "tradingFunction",
+        abi = "tradingFunction(uint256[],uint256,bytes)"
     )]
-    pub struct ValidateAllocateOrDeallocateCall {
-        pub p0: ::ethers::core::types::Address,
-        pub pool_id: ::ethers::core::types::U256,
-        pub data: ::ethers::core::types::Bytes,
-    }
-    /// Container type for all input parameters for the `validateSwap` function
-    /// with signature `validateSwap(address,uint256,bytes)` and selector
-    /// `0x68bd3e38`
+    pub struct TradingFunctionCall(
+        pub ::std::vec::Vec<::ethers::core::types::U256>,
+        pub ::ethers::core::types::U256,
+        pub ::ethers::core::types::Bytes,
+    );
+    /// Container type for all input parameters for the `update` function with
+    /// signature `update(address,uint256,(address,address[],uint256[],uint256,
+    /// address,address,uint256),bytes)` and selector `0xd8b5ed12`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -887,10 +1224,92 @@ pub mod mock_strategy {
         Eq,
         Hash,
     )]
-    #[ethcall(name = "validateSwap", abi = "validateSwap(address,uint256,bytes)")]
+    #[ethcall(
+        name = "update",
+        abi = "update(address,uint256,(address,address[],uint256[],uint256,address,address,uint256),bytes)"
+    )]
+    pub struct UpdateCall {
+        pub sender: ::ethers::core::types::Address,
+        pub pool_id: ::ethers::core::types::U256,
+        pub pool: Pool,
+        pub data: ::ethers::core::types::Bytes,
+    }
+    /// Container type for all input parameters for the `validateAllocate`
+    /// function with signature
+    /// `validateAllocate(address,uint256,(address,address[],uint256[],uint256,
+    /// address,address,uint256),bytes)` and selector `0x7c101244`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    #[ethcall(
+        name = "validateAllocate",
+        abi = "validateAllocate(address,uint256,(address,address[],uint256[],uint256,address,address,uint256),bytes)"
+    )]
+    pub struct ValidateAllocateCall {
+        pub p0: ::ethers::core::types::Address,
+        pub p1: ::ethers::core::types::U256,
+        pub p2: Pool,
+        pub data: ::ethers::core::types::Bytes,
+    }
+    /// Container type for all input parameters for the `validateDeallocate`
+    /// function with signature
+    /// `validateDeallocate(address,uint256,(address,address[],uint256[],
+    /// uint256,address,address,uint256),bytes)` and selector `0x040d951e`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    #[ethcall(
+        name = "validateDeallocate",
+        abi = "validateDeallocate(address,uint256,(address,address[],uint256[],uint256,address,address,uint256),bytes)"
+    )]
+    pub struct ValidateDeallocateCall {
+        pub p0: ::ethers::core::types::Address,
+        pub p1: ::ethers::core::types::U256,
+        pub p2: Pool,
+        pub data: ::ethers::core::types::Bytes,
+    }
+    /// Container type for all input parameters for the `validateSwap` function
+    /// with signature
+    /// `validateSwap(address,uint256,(address,address[],uint256[],uint256,
+    /// address,address,uint256),bytes)` and selector `0x75e6440f`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    #[ethcall(
+        name = "validateSwap",
+        abi = "validateSwap(address,uint256,(address,address[],uint256[],uint256,address,address,uint256),bytes)"
+    )]
     pub struct ValidateSwapCall {
         pub p0: ::ethers::core::types::Address,
-        pub pool_id: ::ethers::core::types::U256,
+        pub p1: ::ethers::core::types::U256,
+        pub p2: Pool,
         pub data: ::ethers::core::types::Bytes,
     }
     /// Container type for all of the contract's call
@@ -910,8 +1329,10 @@ pub mod mock_strategy {
         GetPoolParams(GetPoolParamsCall),
         Init(InitCall),
         Name(NameCall),
+        TradingFunction(TradingFunctionCall),
         Update(UpdateCall),
-        ValidateAllocateOrDeallocate(ValidateAllocateOrDeallocateCall),
+        ValidateAllocate(ValidateAllocateCall),
+        ValidateDeallocate(ValidateDeallocateCall),
         ValidateSwap(ValidateSwapCall),
     }
     impl ::ethers::core::abi::AbiDecode for MockStrategyCalls {
@@ -937,13 +1358,23 @@ pub mod mock_strategy {
             if let Ok(decoded) = <NameCall as ::ethers::core::abi::AbiDecode>::decode(data) {
                 return Ok(Self::Name(decoded));
             }
+            if let Ok(decoded) =
+                <TradingFunctionCall as ::ethers::core::abi::AbiDecode>::decode(data)
+            {
+                return Ok(Self::TradingFunction(decoded));
+            }
             if let Ok(decoded) = <UpdateCall as ::ethers::core::abi::AbiDecode>::decode(data) {
                 return Ok(Self::Update(decoded));
             }
             if let Ok(decoded) =
-                <ValidateAllocateOrDeallocateCall as ::ethers::core::abi::AbiDecode>::decode(data)
+                <ValidateAllocateCall as ::ethers::core::abi::AbiDecode>::decode(data)
             {
-                return Ok(Self::ValidateAllocateOrDeallocate(decoded));
+                return Ok(Self::ValidateAllocate(decoded));
+            }
+            if let Ok(decoded) =
+                <ValidateDeallocateCall as ::ethers::core::abi::AbiDecode>::decode(data)
+            {
+                return Ok(Self::ValidateDeallocate(decoded));
             }
             if let Ok(decoded) = <ValidateSwapCall as ::ethers::core::abi::AbiDecode>::decode(data)
             {
@@ -962,8 +1393,10 @@ pub mod mock_strategy {
                 Self::GetPoolParams(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::Init(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::Name(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::TradingFunction(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::Update(element) => ::ethers::core::abi::AbiEncode::encode(element),
-                Self::ValidateAllocateOrDeallocate(element) => {
+                Self::ValidateAllocate(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::ValidateDeallocate(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::ValidateSwap(element) => ::ethers::core::abi::AbiEncode::encode(element),
@@ -978,10 +1411,10 @@ pub mod mock_strategy {
                 Self::GetPoolParams(element) => ::core::fmt::Display::fmt(element, f),
                 Self::Init(element) => ::core::fmt::Display::fmt(element, f),
                 Self::Name(element) => ::core::fmt::Display::fmt(element, f),
+                Self::TradingFunction(element) => ::core::fmt::Display::fmt(element, f),
                 Self::Update(element) => ::core::fmt::Display::fmt(element, f),
-                Self::ValidateAllocateOrDeallocate(element) => {
-                    ::core::fmt::Display::fmt(element, f)
-                }
+                Self::ValidateAllocate(element) => ::core::fmt::Display::fmt(element, f),
+                Self::ValidateDeallocate(element) => ::core::fmt::Display::fmt(element, f),
                 Self::ValidateSwap(element) => ::core::fmt::Display::fmt(element, f),
             }
         }
@@ -1011,14 +1444,24 @@ pub mod mock_strategy {
             Self::Name(value)
         }
     }
+    impl ::core::convert::From<TradingFunctionCall> for MockStrategyCalls {
+        fn from(value: TradingFunctionCall) -> Self {
+            Self::TradingFunction(value)
+        }
+    }
     impl ::core::convert::From<UpdateCall> for MockStrategyCalls {
         fn from(value: UpdateCall) -> Self {
             Self::Update(value)
         }
     }
-    impl ::core::convert::From<ValidateAllocateOrDeallocateCall> for MockStrategyCalls {
-        fn from(value: ValidateAllocateOrDeallocateCall) -> Self {
-            Self::ValidateAllocateOrDeallocate(value)
+    impl ::core::convert::From<ValidateAllocateCall> for MockStrategyCalls {
+        fn from(value: ValidateAllocateCall) -> Self {
+            Self::ValidateAllocate(value)
+        }
+    }
+    impl ::core::convert::From<ValidateDeallocateCall> for MockStrategyCalls {
+        fn from(value: ValidateDeallocateCall) -> Self {
+            Self::ValidateDeallocate(value)
         }
     }
     impl ::core::convert::From<ValidateSwapCall> for MockStrategyCalls {
@@ -1075,7 +1518,8 @@ pub mod mock_strategy {
         pub params: ::ethers::core::types::Bytes,
     }
     /// Container type for all return fields from the `init` function with
-    /// signature `init(address,uint256,bytes)` and selector `0x73cb2d03`
+    /// signature `init(address,uint256,(address,address[],uint256[],uint256,
+    /// address,address,uint256),bytes)` and selector `0x4f17d913`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -1090,9 +1534,8 @@ pub mod mock_strategy {
     )]
     pub struct InitReturn {
         pub valid: bool,
-        pub swap_constant_growth: ::ethers::core::types::I256,
-        pub reserve_x: ::ethers::core::types::U256,
-        pub reserve_y: ::ethers::core::types::U256,
+        pub invariant: ::ethers::core::types::I256,
+        pub reserves: ::std::vec::Vec<::ethers::core::types::U256>,
         pub total_liquidity: ::ethers::core::types::U256,
     }
     /// Container type for all return fields from the `name` function with
@@ -1110,10 +1553,9 @@ pub mod mock_strategy {
         Hash,
     )]
     pub struct NameReturn(pub ::std::string::String);
-    /// Container type for all return fields from the
-    /// `validateAllocateOrDeallocate` function with signature
-    /// `validateAllocateOrDeallocate(address,uint256,bytes)` and selector
-    /// `0x8a04bdd5`
+    /// Container type for all return fields from the `tradingFunction` function
+    /// with signature `tradingFunction(uint256[],uint256,bytes)` and selector
+    /// `0x8dda003d`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -1126,16 +1568,55 @@ pub mod mock_strategy {
         Eq,
         Hash,
     )]
-    pub struct ValidateAllocateOrDeallocateReturn {
+    pub struct TradingFunctionReturn(pub ::ethers::core::types::I256);
+    /// Container type for all return fields from the `validateAllocate`
+    /// function with signature
+    /// `validateAllocate(address,uint256,(address,address[],uint256[],uint256,
+    /// address,address,uint256),bytes)` and selector `0x7c101244`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    pub struct ValidateAllocateReturn {
         pub valid: bool,
         pub invariant: ::ethers::core::types::I256,
-        pub reserve_x: ::ethers::core::types::U256,
-        pub reserve_y: ::ethers::core::types::U256,
-        pub total_liquidity: ::ethers::core::types::U256,
+        pub deltas: ::std::vec::Vec<::ethers::core::types::U256>,
+        pub delta_liquidity: ::ethers::core::types::U256,
+    }
+    /// Container type for all return fields from the `validateDeallocate`
+    /// function with signature
+    /// `validateDeallocate(address,uint256,(address,address[],uint256[],
+    /// uint256,address,address,uint256),bytes)` and selector `0x040d951e`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash,
+    )]
+    pub struct ValidateDeallocateReturn {
+        pub valid: bool,
+        pub invariant: ::ethers::core::types::I256,
+        pub deltas: ::std::vec::Vec<::ethers::core::types::U256>,
+        pub delta_liquidity: ::ethers::core::types::U256,
     }
     /// Container type for all return fields from the `validateSwap` function
-    /// with signature `validateSwap(address,uint256,bytes)` and selector
-    /// `0x68bd3e38`
+    /// with signature
+    /// `validateSwap(address,uint256,(address,address[],uint256[],uint256,
+    /// address,address,uint256),bytes)` and selector `0x75e6440f`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -1150,10 +1631,11 @@ pub mod mock_strategy {
     )]
     pub struct ValidateSwapReturn {
         pub valid: bool,
-        pub swap_constant_growth: ::ethers::core::types::I256,
-        pub liquidity_delta: ::ethers::core::types::I256,
-        pub reserve_x: ::ethers::core::types::U256,
-        pub reserve_y: ::ethers::core::types::U256,
-        pub total_liquidity: ::ethers::core::types::U256,
+        pub invariant: ::ethers::core::types::I256,
+        pub token_in_index: ::ethers::core::types::U256,
+        pub token_out_index: ::ethers::core::types::U256,
+        pub amount_in: ::ethers::core::types::U256,
+        pub amount_out: ::ethers::core::types::U256,
+        pub delta_liquidity: ::ethers::core::types::U256,
     }
 }

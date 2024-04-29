@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { ConstantSumSolver } from "src/ConstantSum/ConstantSumSolver.sol";
+import {
+    ConstantSumSolver,
+    NotEnoughLiquidity
+} from "src/ConstantSum/ConstantSumSolver.sol";
 import { ConstantSumSetUp } from "./SetUp.sol";
 
 contract ConstantSumValidateSwapTest is ConstantSumSetUp {
@@ -9,19 +12,17 @@ contract ConstantSumValidateSwapTest is ConstantSumSetUp {
         public
         defaultPool
     {
-        bool xIn = true;
         uint256 amountIn = 1.1 ether;
-        vm.expectRevert(ConstantSumSolver.NotEnoughLiquidity.selector);
-        solver.simulateSwap(POOL_ID, xIn, amountIn);
+        vm.expectRevert(NotEnoughLiquidity.selector);
+        solver.prepareSwap(POOL_ID, 0, 1, amountIn);
     }
 
     function test_ConstantSum_simulateSwap_RevertsInvalidSwapY()
         public
         defaultPool
     {
-        bool xIn = false;
         uint256 amountIn = 2.1 ether;
-        vm.expectRevert(ConstantSumSolver.NotEnoughLiquidity.selector);
-        solver.simulateSwap(POOL_ID, xIn, amountIn);
+        vm.expectRevert(NotEnoughLiquidity.selector);
+        solver.prepareSwap(POOL_ID, 1, 0, amountIn);
     }
 }

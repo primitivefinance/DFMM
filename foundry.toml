@@ -2,6 +2,7 @@
 remappings = [
   "solmate/=lib/solstat/lib/solmate/src/",
   "solstat/=lib/solstat/src/",
+  "pendle/=lib/pendle-core-v2-public/contracts/"
 ]
 solc_version = "0.8.22"
 
@@ -23,6 +24,7 @@ number_underscore = "thousands"
 [rpc_endpoints]
 local = "http://localhost:8545"
 optimism_sepolia = "${OPTIMISM_SEPOLIA_RPC_URL}"
+mainnet = "${MAINNET_RPC_URL}"
 
 [etherscan]
 optimism_sepolia = { key = "${ETHERSCAN_API_KEY}" }

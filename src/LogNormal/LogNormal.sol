@@ -88,7 +88,7 @@ contract LogNormal is Strategy {
         (reserves, totalLiquidity, params) =
             abi.decode(data, (uint256[], uint256, LogNormalParams));
 
-        if (params.mean < MIN_WIDTH || params.mean > MAX_MEAN) {
+        if (params.mean < MIN_MEAN || params.mean > MAX_MEAN) {
             revert InvalidMean();
         }
 

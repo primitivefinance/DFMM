@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.22;
 
+import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { IStrategy } from "src/interfaces/IStrategy.sol";
 import { IDFMM, Pool } from "src/interfaces/IDFMM.sol";
 import { NTokenGeometricMeanParams } from
@@ -15,44 +16,98 @@ import {
     computeAllocationDeltasGivenDeltaT,
     computeDeallocationDeltasGivenDeltaT,
     computeNextLiquidity,
-    computeSwapDeltaLiquidity
+    computeSwapDeltaLiquidity,
+    computeDeltaGivenDeltaLRoundDown
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
-import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
+import {
+    ISolver,
+    InvalidTokenIndex,
+    InvalidDeltasLength
+} from "src/interfaces/ISolver.sol";
 
-contract NTokenGeometricMeanSolver {
+/**
+ * @title Solver for the NTokenGeometricMean strategy.
+ * @author Primitive
+ */
+contract NTokenGeometricMeanSolver is ISolver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for int256;
 
-    /// @dev Structure to hold reserve information
-    struct Reserves {
-        uint256[] reserves;
-        uint256 L;
+    /// @inheritdoc ISolver
+    IStrategy public strategy;
+
+    /// @param strategy_ Address of the NTokenGeometricMean strategy contract.
+    constructor(IStrategy strategy_) {
+        strategy = strategy_;
     }
 
-    address public strategy;
-
-    constructor(address _strategy) {
-        strategy = _strategy;
+    /**
+     * @notice Prepares the data to initialize a new NTokenGeometricMean pool.
+     * @param numeraireAmount Amount of the numeraire token to deposit.
+     * @param prices Prices of the tokens in the pool in WAD units.
+     * @param params Parameters as defined by the NTokenGeometricMean strategy.
+     */
+    function prepareInit(
+        uint256 numeraireAmount,
+        uint256[] memory prices,
+        NTokenGeometricMeanParams memory params
+    ) external pure returns (bytes memory) {
+        return computeInitialPoolData(numeraireAmount, prices, params);
     }
 
-    function getPoolParams(uint256 poolId)
-        public
-        view
-        returns (NTokenGeometricMeanParams memory)
-    {
-        return abi.decode(
-            IStrategy(strategy).getPoolParams(poolId),
-            (NTokenGeometricMeanParams)
+    /// @inheritdoc ISolver
+    function prepareAllocation(
+        uint256 poolId,
+        uint256[] calldata deltas
+    ) public view returns (bytes memory) {
+        (uint256[] memory reserves, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        uint256 length = deltas.length;
+        if (deltas.length != reserves.length) revert InvalidDeltasLength();
+
+        uint256 minDeltaLiquidity =
+            totalLiquidity.mulDivDown(deltas[0], reserves[0]);
+        uint256 minDeltaLiquidityIndex = 0;
+
+        for (uint256 i = 0; i < length; i++) {
+            uint256 dLiquidity =
+                totalLiquidity.mulDivDown(deltas[i], reserves[i]);
+
+            if (dLiquidity < minDeltaLiquidity) {
+                minDeltaLiquidity = dLiquidity;
+                minDeltaLiquidityIndex = i;
+            }
+        }
+
+        (uint256[] memory deltaTokens, uint256 deltaLiquidity) =
+        computeAllocationDeltasGivenDeltaT(
+            deltas[minDeltaLiquidityIndex],
+            minDeltaLiquidityIndex,
+            reserves,
+            totalLiquidity
         );
+
+        return abi.encode(deltaTokens, deltaLiquidity);
     }
 
-    function getReservesAndLiquidity(uint256 poolId)
-        public
-        view
-        returns (uint256[] memory, uint256)
-    {
-        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
-        return (pool.reserves, pool.totalLiquidity);
+    /// @inheritdoc ISolver
+    function prepareDeallocation(
+        uint256 poolId,
+        uint256 deltaLiquidity
+    ) public view returns (bytes memory) {
+        (uint256[] memory reserves, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        uint256 length = reserves.length;
+
+        uint256[] memory deltas = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            deltas[i] = computeDeltaGivenDeltaLRoundDown(
+                reserves[i], deltaLiquidity, totalLiquidity
+            );
+        }
+
+        return abi.encode(deltas, deltaLiquidity);
     }
 
     struct SimulateSwapState {
@@ -66,15 +121,24 @@ contract NTokenGeometricMeanSolver {
         uint256 fees;
     }
 
-    function simulateSwap(
+    /// @inheritdoc ISolver
+    function prepareSwap(
         uint256 poolId,
         uint256 tokenInIndex,
         uint256 tokenOutIndex,
         uint256 amountIn
     ) public view returns (bool, uint256, bytes memory) {
-        NTokenGeometricMeanParams memory params = getPoolParams(poolId);
-        Pool memory pool = IDFMM(IStrategy(strategy).dfmm()).pools(poolId);
+        Pool memory pool = IDFMM(strategy.dfmm()).pools(poolId);
 
+        uint256 maxIndex = pool.reserves.length - 1;
+        if (
+            tokenInIndex > maxIndex || tokenOutIndex > maxIndex
+                || tokenInIndex == tokenOutIndex
+        ) {
+            revert InvalidTokenIndex();
+        }
+
+        NTokenGeometricMeanParams memory params = getPoolParams(poolId);
         SimulateSwapState memory state;
 
         state.inReserve = pool.reserves[tokenInIndex];
@@ -120,21 +184,57 @@ contract NTokenGeometricMeanSolver {
         bytes memory swapData =
             abi.encode(tokenInIndex, tokenOutIndex, amountIn, state.amountOut);
 
-        (bool valid,,,,,,) = IStrategy(strategy).validateSwap(
+        (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
             address(this), poolId, pool, swapData
         );
 
         return (valid, state.amountOut, swapData);
     }
 
-    function prepareFeeUpdate(uint256 swapFee)
+    /**
+     * @notice Returns the parameters of the pool `poolId`.
+     * @param poolId Id of the target pool.
+     * @return params Pool parameters as defined by the NTokenGeometricMean strategy.
+     */
+    function getPoolParams(uint256 poolId)
         public
-        pure
-        returns (bytes memory data)
+        view
+        returns (NTokenGeometricMeanParams memory)
     {
-        return encodeFeeUpdate(swapFee);
+        return abi.decode(
+            strategy.getPoolParams(poolId), (NTokenGeometricMeanParams)
+        );
     }
 
+    /// @inheritdoc ISolver
+    function getReservesAndLiquidity(uint256 poolId)
+        public
+        view
+        returns (uint256[] memory, uint256)
+    {
+        Pool memory pool = IDFMM(strategy.dfmm()).pools(poolId);
+        return (pool.reserves, pool.totalLiquidity);
+    }
+
+    /**
+     * @notice Prepares the data for updating the swap fee.
+     * @param newSwapFee New swap fee to set.
+     * @return Encoded data for updating the swap fee.
+     */
+    function prepareSwapFeeUpdate(uint256 newSwapFee)
+        public
+        pure
+        returns (bytes memory)
+    {
+        return encodeFeeUpdate(newSwapFee);
+    }
+
+    /**
+     * @notice Prepares the data for updating the weights.
+     * @param targetWeights New weights to set.
+     * @param targetTimestamp Timestamp at which the update will end.
+     * @return Encoded data for updating the weights.
+     */
     function prepareWeightsUpdate(
         uint256[] calldata targetWeights,
         uint256 targetTimestamp
@@ -142,59 +242,34 @@ contract NTokenGeometricMeanSolver {
         return encodeWeightsUpdate(targetWeights, targetTimestamp);
     }
 
-    function prepareControllerUpdate(address controller)
+    /**
+     * @notice Prepares the data for updating the controller address.
+     * @param newController Address of the new controller.
+     * @return Encoded data for updating the controller.
+     */
+    function prepareControllerUpdate(address newController)
         public
         pure
         returns (bytes memory)
     {
-        return encodeControllerUpdate(controller);
+        return encodeControllerUpdate(newController);
     }
 
-    function computePriceOfToken(
-        uint256 rT,
-        uint256 rNumeraire,
-        uint256 wT,
-        uint256 wNumeraire
-    ) public pure returns (uint256 price) {
-        uint256 a = wT.divWadDown(wNumeraire);
-        uint256 b = rNumeraire.divWadDown(rT);
-        price = a.mulWadDown(b);
-    }
-
-    function getInitialPoolData(
-        uint256 numeraireAmount,
-        uint256[] memory prices,
-        NTokenGeometricMeanParams memory params
-    ) public pure returns (bytes memory) {
-        return computeInitialPoolData(numeraireAmount, prices, params);
-    }
-
-    function getAllocationDeltasGivenDeltaT(
+    /// @inheritdoc ISolver
+    function getEstimatedPrice(
         uint256 poolId,
-        uint256 indexT,
-        uint256 deltaT
-    ) public view returns (uint256[] memory, uint256) {
-        (uint256[] memory reserves, uint256 totalLiquidity) =
-            getReservesAndLiquidity(poolId);
-        return computeAllocationDeltasGivenDeltaT(
-            deltaT, indexT, reserves, totalLiquidity
-        );
-    }
-
-    function getDeallocationDeltasGivenDeltaT(
-        uint256 poolId,
-        uint256 indexT,
-        uint256 deltaT
-    ) public view returns (uint256[] memory, uint256) {
-        (uint256[] memory reserves, uint256 totalLiquidity) =
-            getReservesAndLiquidity(poolId);
-        return computeDeallocationDeltasGivenDeltaT(
-            deltaT, indexT, reserves, totalLiquidity
-        );
-    }
-
-    function getNextLiquidity(uint256 poolId) public view returns (uint256) {
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex
+    ) external view returns (uint256) {
         (uint256[] memory reserves,) = getReservesAndLiquidity(poolId);
-        return computeNextLiquidity(reserves, getPoolParams(poolId));
+        NTokenGeometricMeanParams memory params = getPoolParams(poolId);
+
+        // TODO: Use a predefined function ideally defined in the related
+        // Math library instead of the following implementation.
+        uint256 a = params.weights[tokenInIndex].divWadDown(
+            params.weights[tokenOutIndex]
+        );
+        uint256 b = reserves[tokenOutIndex].divWadDown(reserves[tokenInIndex]);
+        return a.mulWadDown(b);
     }
 }

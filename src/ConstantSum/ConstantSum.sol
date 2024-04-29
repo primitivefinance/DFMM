@@ -5,7 +5,8 @@ import {
     FixedPointMathLib,
     computeTradingFunction,
     computeSwapDeltaLiquidity,
-    computeDeltaLiquidity
+    computeDeltaLiquidityRoundDown,
+    computeDeltaLiquidityRoundUp
 } from "./ConstantSumMath.sol";
 import {
     decodePriceUpdate,
@@ -67,8 +68,9 @@ contract ConstantSum is Strategy {
         ConstantSumParams memory params;
 
         (reserves, params) = abi.decode(data, (uint256[], ConstantSumParams));
-        totalLiquidity =
-            computeDeltaLiquidity(reserves[0], reserves[1], params.price);
+        totalLiquidity = computeDeltaLiquidityRoundDown(
+            reserves[0], reserves[1], params.price
+        );
 
         if (pool.reserves.length != 2 || reserves.length != 2) {
             revert InvalidReservesLength();
@@ -85,6 +87,86 @@ contract ConstantSum is Strategy {
         valid = invariant >= 0 && invariant <= EPSILON;
 
         return (valid, invariant, reserves, totalLiquidity);
+    }
+
+    function validateAllocate(
+        address,
+        uint256 poolId,
+        Pool memory pool,
+        bytes calldata data
+    )
+        external
+        view
+        override
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256[] memory deltas,
+            uint256 deltaLiquidity
+        )
+    {
+        (uint256 deltaX, uint256 deltaY, uint256 minDeltaL) =
+            abi.decode(data, (uint256, uint256, uint256));
+
+        deltaLiquidity = computeDeltaLiquidityRoundDown(
+            deltaX, deltaY, internalParams[poolId].price
+        );
+        if (deltaLiquidity < minDeltaL) revert InvalidDeltaLiquidity();
+
+        deltas = new uint256[](2);
+        deltas[0] = deltaX;
+        deltas[1] = deltaY;
+
+        pool.reserves[0] += deltaX;
+        pool.reserves[1] += deltaY;
+
+        invariant = tradingFunction(
+            pool.reserves,
+            pool.totalLiquidity + deltaLiquidity,
+            getPoolParams(poolId)
+        );
+
+        valid = invariant >= 0;
+    }
+
+    function validateDeallocate(
+        address,
+        uint256 poolId,
+        Pool memory pool,
+        bytes calldata data
+    )
+        external
+        view
+        override
+        returns (
+            bool valid,
+            int256 invariant,
+            uint256[] memory deltas,
+            uint256 deltaLiquidity
+        )
+    {
+        (uint256 deltaX, uint256 deltaY, uint256 maxDeltaL) =
+            abi.decode(data, (uint256, uint256, uint256));
+
+        deltaLiquidity = computeDeltaLiquidityRoundUp(
+            deltaX, deltaY, internalParams[poolId].price
+        );
+        if (deltaLiquidity > maxDeltaL) revert InvalidDeltaLiquidity();
+
+        deltas = new uint256[](2);
+        deltas[0] = deltaX;
+        deltas[1] = deltaY;
+
+        pool.reserves[0] -= deltaX;
+        pool.reserves[1] -= deltaY;
+
+        invariant = tradingFunction(
+            pool.reserves,
+            pool.totalLiquidity - deltaLiquidity,
+            getPoolParams(poolId)
+        );
+
+        valid = invariant >= 0;
     }
 
     /// @inheritdoc IStrategy

@@ -6,6 +6,7 @@ import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 import { WETH } from "solmate/tokens/WETH.sol";
 import { IStrategy } from "./interfaces/IStrategy.sol";
+import { ISwapCallback } from "./interfaces/ISwapCallback.sol";
 import {
     computeScalingFactor,
     downscaleDown,
@@ -110,15 +111,17 @@ contract DFMM is IDFMM {
 
         for (uint256 i = 0; i < tokensLength; i++) {
             address token = params.tokens[i];
-            uint256 decimals = ERC20(params.tokens[i]).decimals();
+            uint256 decimals = ERC20(token).decimals();
 
             if (decimals > 18 || decimals < 6) {
                 revert InvalidTokenDecimals();
             }
 
-            for (uint256 j = i + 1; j < tokensLength; j++) {
-                if (token == params.tokens[j]) {
-                    revert InvalidDuplicateTokens();
+            unchecked {
+                for (uint256 j = i + 1; j < tokensLength; j++) {
+                    if (token == params.tokens[j]) {
+                        revert InvalidDuplicateTokens();
+                    }
                 }
             }
         }
@@ -207,16 +210,19 @@ contract DFMM is IDFMM {
         int256 invariant;
         uint256 tokenInIndex;
         uint256 tokenOutIndex;
+        address tokenIn;
+        address tokenOut;
         uint256 amountIn;
         uint256 amountOut;
         uint256 deltaLiquidity;
+        bytes postSwapHookData;
     }
 
-    /// @inheritdoc IDFMM
     function swap(
         uint256 poolId,
         address recipient,
-        bytes calldata data
+        bytes calldata data,
+        bytes calldata callbackData
     ) external payable lock returns (address, address, uint256, uint256) {
         SwapState memory state;
 
@@ -227,10 +233,13 @@ contract DFMM is IDFMM {
             state.tokenOutIndex,
             state.amountIn,
             state.amountOut,
-            state.deltaLiquidity
+            state.deltaLiquidity,
+            state.postSwapHookData
         ) = IStrategy(_pools[poolId].strategy).validateSwap(
             msg.sender, poolId, _pools[poolId], data
         );
+
+        uint256 poolId = poolId;
 
         if (!state.valid) revert InvalidInvariant(state.invariant);
 
@@ -247,28 +256,55 @@ contract DFMM is IDFMM {
         _pools[poolId].reserves[state.tokenInIndex] += state.amountIn;
         _pools[poolId].reserves[state.tokenOutIndex] -= state.amountOut;
 
-        address tokenIn = _pools[poolId].tokens[state.tokenInIndex];
-        address tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
+        state.tokenIn = _pools[poolId].tokens[state.tokenInIndex];
+        state.tokenOut = _pools[poolId].tokens[state.tokenOutIndex];
 
-        address[] memory tokens = new address[](1);
-        tokens[0] = tokenIn;
-        uint256[] memory amounts = new uint256[](1);
-        amounts[0] = state.amountIn;
-        _transferFrom(tokens, amounts);
+        // Optimistically transfer the output tokens to the recipient.
+        _transfer(state.tokenOut, recipient, state.amountOut);
 
-        _transfer(tokenOut, recipient, state.amountOut);
+        IStrategy(_pools[poolId].strategy).postSwapHook(
+            msg.sender, poolId, _pools[poolId], state.postSwapHookData
+        );
+
+        // If the callbackData is empty, do a regular `_transferFrom()` call, as in the other operations.
+        if (callbackData.length == 0) {
+            address[] memory tokens = new address[](1);
+            tokens[0] = state.tokenIn;
+            uint256[] memory amounts = new uint256[](1);
+            amounts[0] = state.amountIn;
+            _transferFrom(tokens, amounts);
+        } else {
+            // Otherwise, execute the callback and assert the input amount has been paid
+            // given the before and after balances of the input token.
+            uint256 preBalance = ERC20(state.tokenIn).balanceOf(address(this));
+
+            ISwapCallback(msg.sender).swapCallback(
+                state.tokenIn,
+                state.tokenOut,
+                state.amountIn,
+                state.amountOut,
+                callbackData
+            );
+
+            uint256 downscaledAmount =
+                downscaleUp(state.amountIn, computeScalingFactor(state.tokenIn));
+            uint256 postBalance = ERC20(state.tokenIn).balanceOf(address(this));
+            if (postBalance < preBalance + downscaledAmount) {
+                revert InvalidTransfer();
+            }
+        }
 
         emit Swap(
             msg.sender,
             poolId,
             recipient,
-            tokenIn,
-            tokenOut,
+            state.tokenIn,
+            state.tokenOut,
             state.amountIn,
             state.amountOut
         );
 
-        return (tokenIn, tokenOut, state.amountIn, state.amountOut);
+        return (state.tokenIn, state.tokenOut, state.amountIn, state.amountOut);
     }
 
     /// @inheritdoc IDFMM
@@ -281,9 +317,13 @@ contract DFMM is IDFMM {
     // Internals
 
     /**
-     * @dev Transfers `amounts` of `tokens` from the sender to the contract. Note
-     * that if any ETH is present in the contract, it will be wrapped to WETH and
-     * used if sufficient. Any excess of ETH will be sent back to the sender.
+     * @notice Transfers `amounts` of `tokens` from the sender to the contract.
+     * @dev Note that for pools with `WETH` as a token, the contract will accept
+     * full payments in native ether. If the contract receives more ether than
+     * the amount of `WETH` needed, the contract will refund the remaining ether.
+     * If the contract receives less ether than the amount of `WETH` needed, the
+     * contract will refund the native ether and request the full amount of `WETH`
+     * needed instead.
      * @param tokens An array of token addresses to transfer.
      * @param amounts An array of amounts to transfer expressed in WAD.
      */
@@ -301,7 +341,9 @@ contract DFMM is IDFMM {
                 downscaleUp(amount, computeScalingFactor(token));
             uint256 preBalance = ERC20(token).balanceOf(address(this));
 
-            if (token == weth && address(this).balance >= amount) {
+            // note: `msg.value` can be used safely in a loop because `weth` is a unique token,
+            // therefore we only enter this branch once.
+            if (token == weth && msg.value >= amount) {
                 WETH(payable(weth)).deposit{ value: amount }();
             } else {
                 SafeTransferLib.safeTransferFrom(
@@ -309,14 +351,19 @@ contract DFMM is IDFMM {
                 );
             }
 
+            // If not enough native ether was sent as payment
+            // or too much ether was sent,
+            // refund all the remaining ether back to the sender.
+            if (token == weth && msg.value != 0) {
+                SafeTransferLib.safeTransferETH(
+                    msg.sender, address(this).balance
+                );
+            }
+
             uint256 postBalance = ERC20(token).balanceOf(address(this));
             if (postBalance < preBalance + downscaledAmount) {
                 revert InvalidTransfer();
             }
-        }
-
-        if (address(this).balance > 0) {
-            SafeTransferLib.safeTransferETH(msg.sender, address(this).balance);
         }
     }
 
@@ -334,6 +381,7 @@ contract DFMM is IDFMM {
         } else {
             uint256 downscaledAmount =
                 downscaleDown(amount, computeScalingFactor(token));
+            if (downscaledAmount == 0) return;
             uint256 preBalance = ERC20(token).balanceOf(address(this));
             SafeTransferLib.safeTransfer(ERC20(token), to, downscaledAmount);
             uint256 postBalance = ERC20(token).balanceOf(address(this));
@@ -409,5 +457,10 @@ contract DFMM is IDFMM {
     /// @inheritdoc IDFMM
     function pools(uint256 poolId) external view returns (Pool memory) {
         return _pools[poolId];
+    }
+
+    /// @inheritdoc IDFMM
+    function nonce() external view returns (uint256) {
+        return _pools.length;
     }
 }

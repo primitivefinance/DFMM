@@ -31,12 +31,20 @@ function computeInitialPoolData(
     return abi.encode(reserves, params);
 }
 
-function computeDeltaLiquidity(
+function computeDeltaLiquidityRoundUp(
     uint256 deltaX,
     uint256 deltaY,
     uint256 price
 ) pure returns (uint256) {
     return price.mulWadUp(deltaX) + deltaY;
+}
+
+function computeDeltaLiquidityRoundDown(
+    uint256 deltaX,
+    uint256 deltaY,
+    uint256 price
+) pure returns (uint256) {
+    return price.mulWadDown(deltaX) + deltaY;
 }
 
 function computeSwapDeltaLiquidity(
@@ -45,8 +53,15 @@ function computeSwapDeltaLiquidity(
     bool isSwapXForY
 ) pure returns (uint256) {
     if (isSwapXForY) {
-        return (params.swapFee).mulWadUp(delta);
+        return params.swapFee.mulWadUp(delta.mulWadUp(params.price));
     } else {
-        return (params.swapFee).mulDivUp(delta, params.price);
+        return params.swapFee.mulWadUp(delta);
     }
+}
+
+/**
+ * @dev Computes the price using the reserve of token X.
+ */
+function computePrice(ConstantSumParams memory params) pure returns (uint256) {
+    return params.price;
 }

@@ -3,7 +3,8 @@ pragma solidity ^0.8.13;
 
 import {
     GeometricMean,
-    GeometricMeanParams
+    GeometricMeanParams,
+    IStrategy
 } from "src/GeometricMean/GeometricMean.sol";
 import { GeometricMeanSolver } from "src/GeometricMean/GeometricMeanSolver.sol";
 import "test/utils/SetUp.sol";
@@ -32,13 +33,13 @@ contract G3MSetUp is SetUp {
     );
 
     bytes default100InitialPoolData = computeInitialPoolData(
-      defaultReserveX * 100, defaultStrikePrice, defaultParams
+        defaultReserveX * 100, defaultStrikePrice, defaultParams
     );
 
     function setUp() public override {
         SetUp.setUp();
         g3m = new GeometricMean(address(dfmm));
-        solver = new GeometricMeanSolver(address(g3m));
+        solver = new GeometricMeanSolver(IStrategy(g3m));
     }
 
     modifier init() {
@@ -64,7 +65,7 @@ contract G3MSetUp is SetUp {
     }
 
     modifier init_100() {
-      address[] memory tokens = new address[](2);
+        address[] memory tokens = new address[](2);
         tokens[0] = address(tokenX);
         tokens[1] = address(tokenY);
 
