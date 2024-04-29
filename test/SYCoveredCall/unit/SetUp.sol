@@ -24,8 +24,6 @@ contract SYCoveredCallSetUp is SetUp {
     uint256 public constant FEE = 0.00001 ether;
 
     uint256 defaultReserveX = 100 ether;
-    uint256 defaultReserveXMil = 1_000_000 ether;
-    uint256 defaultReserveXDeep = ONE * 10_000_000;
 
     uint256 defaultPrice = ONE;
     uint256 defaultPricePoint9Rate = 0.84167999326 ether;

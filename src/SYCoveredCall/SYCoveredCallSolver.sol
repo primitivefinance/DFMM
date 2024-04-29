@@ -46,6 +46,7 @@ import {
     computeDeltaYGivenDeltaL,
     computeDeltaXGivenDeltaL
 } from "src/lib/StrategyLib.sol";
+import "forge-std/console2.sol";
 
 contract SYCoveredCallSolver is ISolver {
     using FixedPointMathLib for uint256;
@@ -184,7 +185,6 @@ contract SYCoveredCallSolver is ISolver {
         uint256 amountOut;
         uint256 deltaLiquidity;
         uint256 fees;
-        uint256 timestamp;
     }
 
     function prepareSwap(
@@ -200,14 +200,16 @@ contract SYCoveredCallSolver is ISolver {
             getPoolParamsCustomTimestamp(poolId, block.timestamp);
 
         SimulateSwapState memory state;
-        state.timestamp = block.timestamp;
 
-        uint256 startComputedL = getNextLiquidity(
-            poolId, preReserves[0], preReserves[1], preTotalLiquidity
-        );
         poolParams.mean = computeKGivenLastPrice(
             preReserves[0], preTotalLiquidity, poolParams
         );
+
+        int256 prevInvariant = computeTradingFunction(
+            preReserves[0], preReserves[1], preTotalLiquidity, poolParams
+        );
+
+        console2.log("prevInvariant", prevInvariant);
 
         uint256 poolId = poolId;
         uint256 swapAmountIn = amountIn;
@@ -222,11 +224,17 @@ contract SYCoveredCallSolver is ISolver {
                 );
 
                 endReserves.rx = preReserves[0] + swapAmountIn;
-                endReserves.L = startComputedL + state.deltaLiquidity;
-                uint256 approxPrice = getEstimatedPrice(poolId, 0, 1);
+                endReserves.L = preTotalLiquidity + state.deltaLiquidity;
+                uint256 approxPrice = getIntermediatePrice(
+                    endReserves.rx, endReserves.L, 0, 1, poolParams
+                );
 
                 endReserves.ry = getNextReserveY(
-                    poolId, endReserves.rx, endReserves.L, approxPrice
+                    endReserves.rx,
+                    endReserves.L,
+                    approxPrice,
+                    prevInvariant,
+                    poolParams
                 );
 
                 require(
@@ -244,11 +252,17 @@ contract SYCoveredCallSolver is ISolver {
                 );
 
                 endReserves.ry = preReserves[1] + swapAmountIn;
-                endReserves.L = startComputedL + state.deltaLiquidity;
-                uint256 approxPrice = getEstimatedPrice(poolId, 1, 0);
+                endReserves.L = preTotalLiquidity + state.deltaLiquidity;
+                uint256 approxPrice = getIntermediatePrice(
+                    endReserves.ry, endReserves.L, 1, 0, poolParams
+                );
 
                 endReserves.rx = getNextReserveX(
-                    poolId, endReserves.ry, endReserves.L, approxPrice
+                    endReserves.ry,
+                    endReserves.L,
+                    approxPrice,
+                    prevInvariant,
+                    poolParams
                 );
 
                 require(
@@ -266,23 +280,9 @@ contract SYCoveredCallSolver is ISolver {
         bytes memory swapData;
 
         if (tokenInIndex == 0) {
-            swapData = abi.encode(
-                0,
-                1,
-                swapAmountIn,
-                state.amountOut,
-                startComputedL,
-                state.timestamp
-            );
+            swapData = abi.encode(0, 1, swapAmountIn, state.amountOut);
         } else {
-            swapData = abi.encode(
-                1,
-                0,
-                swapAmountIn,
-                state.amountOut,
-                startComputedL,
-                state.timestamp
-            );
+            swapData = abi.encode(1, 0, swapAmountIn, state.amountOut);
         }
 
         (bool valid,,,,,,,) = IStrategy(strategy).validateSwap(
@@ -290,6 +290,25 @@ contract SYCoveredCallSolver is ISolver {
         );
 
         return (valid, state.amountOut, swapData);
+    }
+
+    function getIntermediatePrice(
+        uint256 independentReserve,
+        uint256 L,
+        uint256 tokenInIndex,
+        uint256 tokenOutIndex,
+        SYCoveredCallParams memory params
+    ) public view returns (uint256 price) {
+        if (
+            tokenInIndex > 1 || tokenOutIndex > 1
+                || tokenInIndex == tokenOutIndex
+        ) revert InvalidTokenIndex();
+
+        if (tokenInIndex == 0) {
+            price = computePriceGivenX(independentReserve, L, params);
+        } else {
+            price = computePriceGivenY(independentReserve, L, params);
+        }
     }
 
     /// @inheritdoc ISolver
@@ -344,30 +363,32 @@ contract SYCoveredCallSolver is ISolver {
     }
 
     function getNextReserveX(
-        uint256 poolId,
         uint256 ry,
         uint256 L,
-        uint256 S
+        uint256 S,
+        int256 prevInvariant,
+        SYCoveredCallParams memory params
     ) public view returns (uint256) {
-        SYCoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        uint256 approximatedRx = computeXGivenL(L, S, poolParams);
-        int256 invariant =
-            computeTradingFunction(approximatedRx, ry, L, poolParams);
-        return computeNextRx(ry, L, invariant, approximatedRx, poolParams);
+        uint256 approximatedRx = computeXGivenL(L, S, params);
+        int256 invariant = computeTradingFunction(approximatedRx, ry, L, params);
+        console2.log("intermediate invariant", invariant);
+        return computeNextRx(
+            ry, L, invariant, prevInvariant, approximatedRx, params
+        );
     }
 
     function getNextReserveY(
-        uint256 poolId,
         uint256 rx,
         uint256 L,
-        uint256 S
+        uint256 S,
+        int256 prevInvariant,
+        SYCoveredCallParams memory params
     ) public view returns (uint256) {
-        SYCoveredCallParams memory poolParams =
-            getPoolParamsCustomTimestamp(poolId, block.timestamp);
-        uint256 approximatedRy = computeYGivenL(L, S, poolParams);
-        int256 invariant =
-            computeTradingFunction(rx, approximatedRy, L, poolParams);
-        return computeNextRy(rx, L, invariant, approximatedRy, poolParams);
+        uint256 approximatedRy = computeYGivenL(L, S, params);
+        int256 invariant = computeTradingFunction(rx, approximatedRy, L, params);
+        console2.log("intermediate invariant", invariant);
+        return computeNextRy(
+            rx, L, invariant, prevInvariant, approximatedRy, params
+        );
     }
 }

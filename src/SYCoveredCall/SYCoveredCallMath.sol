@@ -323,20 +323,28 @@ function computeDeallocationGivenDeltaY(
 
 /// @dev This is a pure anonymous function defined at the file level, which allows
 /// it to be passed as an argument to another function. BisectionLib.sol takes this
-/// function as an argument to find the root of the trading function given the reserveYWad.
+/// function as an argument to find the root of the trading function given the reserveXWad.
 function findRootY(bytes memory data, uint256 ry) pure returns (int256) {
-    (uint256 rx, uint256 L, SYCoveredCallParams memory params) =
-        abi.decode(data, (uint256, uint256, SYCoveredCallParams));
-    return computeTradingFunction(rx, ry, L, params);
+    (
+        uint256 rx,
+        uint256 L,
+        int256 prevInvariant,
+        SYCoveredCallParams memory params
+    ) = abi.decode(data, (uint256, uint256, int256, SYCoveredCallParams));
+    return computeTradingFunction(rx, ry, L, params) - (prevInvariant + 1);
 }
 
 /// @dev This is a pure anonymous function defined at the file level, which allows
 /// it to be passed as an argument to another function. BisectionLib.sol takes this
-/// function as an argument to find the root of the trading function given the reserveXWad.
+/// function as an argument to find the root of the trading function given the reserveYWad.
 function findRootX(bytes memory data, uint256 rx) pure returns (int256) {
-    (uint256 ry, uint256 L, SYCoveredCallParams memory params) =
-        abi.decode(data, (uint256, uint256, SYCoveredCallParams));
-    return computeTradingFunction(rx, ry, L, params);
+    (
+        uint256 ry,
+        uint256 L,
+        int256 prevInvariant,
+        SYCoveredCallParams memory params
+    ) = abi.decode(data, (uint256, uint256, int256, SYCoveredCallParams));
+    return computeTradingFunction(rx, ry, L, params) - (prevInvariant + 1);
 }
 
 /// @dev This is a pure anonymous function defined at the file level, which allows
@@ -404,15 +412,16 @@ function computeNextRx(
     uint256 rY,
     uint256 L,
     int256 invariant,
+    int256 prevInvariant,
     uint256 approximatedRx,
     SYCoveredCallParams memory params
 ) pure returns (uint256 rX) {
     uint256 upper = approximatedRx;
     uint256 lower = approximatedRx;
     int256 computedInvariant = invariant;
-    if (computedInvariant < 0) {
-        while (computedInvariant < 0) {
-            upper = upper.mulDivUp(1001, 1000);
+    if (computedInvariant - prevInvariant < 0) {
+        while (computedInvariant - prevInvariant < 0) {
+            upper = upper.mulDivUp(101, 100);
             upper = upper > L ? L : upper;
             computedInvariant = computeTradingFunction({
                 rX: upper,
@@ -422,8 +431,8 @@ function computeNextRx(
             });
         }
     } else {
-        while (computedInvariant > 0) {
-            lower = lower.mulDivDown(999, 1000);
+        while (computedInvariant - prevInvariant > 0) {
+            lower = lower.mulDivDown(99, 100);
             lower = lower > L ? L : lower;
             computedInvariant = computeTradingFunction({
                 rX: lower,
@@ -434,7 +443,12 @@ function computeNextRx(
         }
     }
     (uint256 rootInput, uint256 upperInput,) = bisection(
-        abi.encode(rY, L, params), lower, upper, 0, MAX_ITER, findRootX
+        abi.encode(rY, L, prevInvariant, params),
+        lower,
+        upper,
+        0,
+        MAX_ITER,
+        findRootX
     );
     // `upperInput` should be positive, so if root is < 0 return upperInput instead
     if (
@@ -451,15 +465,16 @@ function computeNextRy(
     uint256 rX,
     uint256 L,
     int256 invariant,
+    int256 prevInvariant,
     uint256 approximatedRy,
     SYCoveredCallParams memory params
 ) pure returns (uint256 rY) {
     uint256 upper = approximatedRy;
     uint256 lower = approximatedRy;
     int256 computedInvariant = invariant;
-    if (computedInvariant < 0) {
-        while (computedInvariant < 0) {
-            upper = upper.mulDivUp(1001, 1000);
+    if (computedInvariant - prevInvariant < 0) {
+        while (computedInvariant - prevInvariant < 0) {
+            upper = upper.mulDivUp(101, 100);
             computedInvariant = computeTradingFunction({
                 rX: rX,
                 rY: upper,
@@ -468,8 +483,8 @@ function computeNextRy(
             });
         }
     } else {
-        while (computedInvariant > 0) {
-            lower = lower.mulDivDown(999, 1000);
+        while (computedInvariant - prevInvariant > 0) {
+            lower = lower.mulDivDown(99, 100);
             computedInvariant = computeTradingFunction({
                 rX: rX,
                 rY: lower,
@@ -479,7 +494,12 @@ function computeNextRy(
         }
     }
     (uint256 rootInput, uint256 upperInput,) = bisection(
-        abi.encode(rX, L, params), lower, upper, 0, MAX_ITER, findRootY
+        abi.encode(rX, L, prevInvariant, params),
+        lower,
+        upper,
+        0,
+        MAX_ITER,
+        findRootY
     );
     // `upperInput` should be positive, so if root is < 0 return upperInput instead
     if (

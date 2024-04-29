@@ -8,14 +8,14 @@ import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
 contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
     using FixedPointMathLib for uint256;
 
-    function test_SYCoveredCall_swap_SwapsXforY() public init {
+    function test_SYCoveredCall_swap_SwapsXforYNoWarp() public init {
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
 
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        uint256 amountIn = 0.1 ether;
+        uint256 amountIn = 0.75 ether;
         bool swapXForY = true;
 
         (bool valid,, bytes memory payload) =
@@ -64,14 +64,14 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
         );
     }
 
-    function test_SYCoveredCall_swap_SwapsYforX() public init {
+    function test_SYCoveredCall_swap_SwapsYforXNoWarp() public init {
         uint256 preDfmmBalanceX = tokenX.balanceOf(address(dfmm));
         uint256 preDfmmBalanceY = tokenY.balanceOf(address(dfmm));
 
         uint256 preUserBalanceX = tokenX.balanceOf(address(this));
         uint256 preUserBalanceY = tokenY.balanceOf(address(this));
 
-        uint256 amountIn = 0.1 ether;
+        uint256 amountIn = 0.75 ether;
         bool swapXForY = false;
 
         (bool valid,, bytes memory payload) =
@@ -108,8 +108,13 @@ contract SYCoveredCallSwapTest is SYCoveredCallSetUp {
         uint256 ry = preReserves[1] + amountIn;
         uint256 L = startL + deltaLiquidity;
         uint256 approxPrice = solver.getEstimatedPrice(POOL_ID, 1, 0);
+        int256 prevInvariant = computeTradingFunction(
+            preReserves[0], preReserves[1], preTotalLiquidity, poolParams
+        );
 
-        uint256 rx = solver.getNextReserveX(POOL_ID, ry, L, approxPrice);
+        uint256 rx = solver.getNextReserveX(
+            ry, L, approxPrice, prevInvariant, poolParams
+        );
 
         int256 invariant = computeTradingFunction(rx, ry, L, poolParams);
         while (invariant >= 0) {
