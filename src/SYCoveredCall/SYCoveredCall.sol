@@ -218,45 +218,19 @@ contract SYCoveredCall is PairStrategy {
         SYCoveredCallParams memory ccParams =
             abi.decode(params, (SYCoveredCallParams));
 
-        uint256 computedL;
-        uint256 swapTimestamp;
-        (
-            tokenInIndex,
-            tokenOutIndex,
-            amountIn,
-            amountOut,
-            computedL,
-            swapTimestamp
-        ) = abi.decode(
-            data, (uint256, uint256, uint256, uint256, uint256, uint256)
+        (tokenInIndex, tokenOutIndex, amountIn, amountOut) =
+            abi.decode(data, (uint256, uint256, uint256, uint256));
+
+        ccParams.lastTimestamp = block.timestamp;
+
+        ccParams.mean = computeKGivenLastPrice(
+            pool.reserves[0], pool.totalLiquidity, ccParams
         );
 
-        console2.log("swapTimestamp", swapTimestamp);
-        console2.log("block.timestamp", block.timestamp);
+        int256 prevInvariant = tradingFunction(
+            pool.reserves, pool.totalLiquidity, abi.encode(ccParams)
+        );
 
-        if (
-            swapTimestamp < internalParams[poolId].lastTimestamp
-                || swapTimestamp < block.timestamp - T_EPSILON
-                || swapTimestamp > block.timestamp + T_EPSILON
-        ) {
-            revert InvalidTimestamp();
-        }
-
-        // if timestamp is valid, append it to the poolParams for validation check
-        ccParams.lastTimestamp = swapTimestamp;
-
-        ccParams.mean =
-            computeKGivenLastPrice(pool.reserves[0], computedL, ccParams);
-
-        int256 computedInvariant =
-            tradingFunction(pool.reserves, computedL, abi.encode(ccParams));
-        console2.log("got here");
-
-        if (computedInvariant < 0 || computedInvariant > EPSILON) {
-            revert InvalidComputedLiquidity(computedInvariant);
-        }
-
-        console2.log("now we compute dl");
         deltaLiquidity = _computeSwapDeltaLiquidity(
             pool,
             abi.encode(ccParams),
@@ -265,18 +239,21 @@ contract SYCoveredCall is PairStrategy {
             amountIn,
             amountOut
         );
-        console2.log("deltaLiquidity", deltaLiquidity);
 
         pool.reserves[tokenInIndex] += amountIn;
         pool.reserves[tokenOutIndex] -= amountOut;
 
         invariant = tradingFunction(
-            pool.reserves, computedL + deltaLiquidity, abi.encode(ccParams)
+            pool.reserves,
+            pool.totalLiquidity + deltaLiquidity,
+            abi.encode(ccParams)
         );
 
         params = abi.encode(ccParams);
-        valid = invariant >= 0;
-        //valid = invariant >= 0 && invariant <= EPSILON;
+        console2.log("prevInvariant: ", prevInvariant);
+        console2.log("invariant: ", invariant);
+        console2.log("deltaLiquidity: ", deltaLiquidity);
+        valid = prevInvariant <= invariant;
     }
 
     function postSwapHook(
