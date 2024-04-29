@@ -12,6 +12,13 @@ contract ConstantSumAllocateTest is ConstantSumSetUp {
         uint256 deltaX = 0.1 ether;
         uint256 deltaY = 0.1 ether;
 
+        (uint256[] memory reserves, uint256 liquidity) =
+            getReservesAndLiquidity(POOL_ID);
+
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = deltaX;
+        deltas[1] = deltaY;
+
         ConstantSumParams memory params =
             abi.decode(constantSum.getPoolParams(POOL_ID), (ConstantSumParams));
 

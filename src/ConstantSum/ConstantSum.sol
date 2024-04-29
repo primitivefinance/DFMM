@@ -13,7 +13,7 @@ import {
     decodeFeeUpdate,
     decodeControllerUpdate
 } from "./ConstantSumUtils.sol";
-import { PairStrategy, IStrategy, Pool } from "src/PairStrategy.sol";
+import { Strategy, IStrategy, Pool } from "src/Strategy.sol";
 import { EPSILON } from "src/lib/StrategyLib.sol";
 
 struct InternalParams {
@@ -35,7 +35,7 @@ enum UpdateCode {
     Controller
 }
 
-contract ConstantSum is PairStrategy {
+contract ConstantSum is Strategy {
     using FixedPointMathLib for uint256;
 
     /// @notice Thrown when the expected liquidity is not met.
@@ -47,7 +47,7 @@ contract ConstantSum is PairStrategy {
     mapping(uint256 => InternalParams) public internalParams;
 
     /// @param dfmm_ Address of the DFMM contract.
-    constructor(address dfmm_) PairStrategy(dfmm_) { }
+    constructor(address dfmm_) Strategy(dfmm_) { }
 
     /// @inheritdoc IStrategy
     function init(
@@ -219,25 +219,7 @@ contract ConstantSum is PairStrategy {
         );
     }
 
-    /// @inheritdoc PairStrategy
-    function _computeAllocateDeltasGivenDeltaL(
-        uint256,
-        Pool memory,
-        bytes memory
-    ) internal pure override returns (uint256[] memory) {
-        return new uint256[](2);
-    }
-
-    /// @inheritdoc PairStrategy
-    function _computeDeallocateDeltasGivenDeltaL(
-        uint256,
-        Pool memory,
-        bytes memory
-    ) internal pure override returns (uint256[] memory) {
-        return new uint256[](2);
-    }
-
-    /// @inheritdoc PairStrategy
+    /// @inheritdoc Strategy
     function _computeSwapDeltaLiquidity(
         Pool memory,
         bytes memory params,

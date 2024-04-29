@@ -56,6 +56,7 @@ contract G3MAllocateTest is G3MSetUp {
         dfmm.allocate(POOL_ID, data);
     }
 
+    /// todo: need to replace this with proper min liquidity minted checks
     function test_G3M_allocate_RevertsIfMoreThanMaxDeltaX() public init {
         uint256[] memory deltas = new uint256[](2);
         deltas[0] = 1 ether;
@@ -70,6 +71,7 @@ contract G3MAllocateTest is G3MSetUp {
         dfmm.allocate(POOL_ID, data);
     }
 
+    /// todo: need to replace this with proper min liquidity minted checks
     function test_G3M_allocate_RevertsIfMoreThanMaxDeltaY() public init {
         uint256[] memory deltas = new uint256[](2);
         deltas[0] = 1 ether;

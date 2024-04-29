@@ -25,8 +25,10 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
 
         // TODO: See if we can get a better rounding because the transaction fails
         // if we don't provide a small slippage toleralance.
-        bytes memory data =
-            abi.encode(minDeltaX - 10, minDeltaY - 10, deltaLiquidity);
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = minDeltaX - 10;
+        deltas[1] = minDeltaY - 10;
+        bytes memory data = abi.encode(deltas, deltaLiquidity);
         dfmm.deallocate(POOL_ID, data);
 
         /*
@@ -55,8 +57,10 @@ contract LogNormalDeallocateTest is LogNormalSetUp {
 
         // TODO: See if we can get a better rounding because the transaction fails
         // if we don't provide a small slippage toleralance.
-        bytes memory data =
-            abi.encode(minDeltaX - 10, minDeltaY - 10, deltaLiquidity);
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = minDeltaX - 10;
+        deltas[1] = minDeltaY - 10;
+        bytes memory data = abi.encode(deltas, deltaLiquidity);
         dfmm.deallocate(POOL_ID, data);
 
         /*

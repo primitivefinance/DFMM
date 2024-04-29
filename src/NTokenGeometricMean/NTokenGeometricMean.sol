@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import { DynamicParam, DynamicParamLib } from "src/lib/DynamicParamLib.sol";
-import { NTokenStrategy, IStrategy } from "src/NTokenStrategy.sol";
+import { Strategy, IStrategy } from "src/Strategy.sol";
 import { Pool } from "src/interfaces/IDFMM.sol";
 import {
     decodeFeeUpdate,
@@ -39,7 +39,7 @@ enum UpdateCode {
 /**
  * @notice N-Token Geometric Mean Market Maker.
  */
-contract NTokenGeometricMean is NTokenStrategy {
+contract NTokenGeometricMean is Strategy {
     using DynamicParamLib for DynamicParam;
 
     struct InternalParams {
@@ -54,7 +54,7 @@ contract NTokenGeometricMean is NTokenStrategy {
     mapping(uint256 => InternalParams) public internalParams;
 
     /// @param dfmm_ Address of the DFMM contract.
-    constructor(address dfmm_) NTokenStrategy(dfmm_) { }
+    constructor(address dfmm_) Strategy(dfmm_) { }
 
     /// @dev Thrown when the sum of the weights is not equal to 1 (in WAD).
     error InvalidWeights(uint256 totalWeight);
@@ -201,57 +201,7 @@ contract NTokenGeometricMean is NTokenStrategy {
         );
     }
 
-    /// @inheritdoc NTokenStrategy
-    function _computeAllocateDeltasAndReservesGivenDeltaL(
-        uint256 deltaLiquidity,
-        uint256[] memory maxDeltas,
-        Pool memory pool
-    )
-        internal
-        pure
-        override
-        returns (uint256[] memory deltas, uint256[] memory nextReserves)
-    {
-        deltas = new uint256[](pool.reserves.length);
-        nextReserves = new uint256[](pool.reserves.length);
-        for (uint256 i = 0; i < pool.reserves.length; i++) {
-            uint256 reserveT = pool.reserves[i];
-            deltas[i] = computeDeltaGivenDeltaLRoundUp(
-                pool.reserves[i], deltaLiquidity, pool.totalLiquidity
-            );
-            if (deltas[i] > maxDeltas[i]) {
-                revert DeltaError(maxDeltas[i], deltas[i]);
-            }
-            nextReserves[i] = reserveT + deltas[i];
-        }
-    }
-
-    /// @inheritdoc NTokenStrategy
-    function _computeDeallocateDeltasAndReservesGivenDeltaL(
-        uint256 deltaLiquidity,
-        uint256[] memory minDeltas,
-        Pool memory pool
-    )
-        internal
-        pure
-        override
-        returns (uint256[] memory deltas, uint256[] memory nextReserves)
-    {
-        deltas = new uint256[](pool.reserves.length);
-        nextReserves = new uint256[](pool.reserves.length);
-        for (uint256 i = 0; i < pool.reserves.length; i++) {
-            uint256 reserveT = pool.reserves[i];
-            deltas[i] = computeDeltaGivenDeltaLRoundDown(
-                reserveT, deltaLiquidity, pool.totalLiquidity
-            );
-            if (minDeltas[i] > deltas[i]) {
-                revert DeltaError(minDeltas[i], deltas[i]);
-            }
-            nextReserves[i] = reserveT - deltas[i];
-        }
-    }
-
-    /// @inheritdoc NTokenStrategy
+    /// @inheritdoc Strategy
     function _computeSwapDeltaLiquidity(
         Pool memory pool,
         bytes memory params,
@@ -271,4 +221,17 @@ contract NTokenGeometricMean is NTokenStrategy {
             poolParams.swapFee
         );
     }
+
+    /// todo: work on this
+    /// @inheritdoc Strategy
+    /* function _computeDeltaLGivenDeltas(
+        uint256[] memory tokenDeltas,
+        Pool memory pool,
+        bytes memory params
+    ) internal view override returns (uint256) {
+        NTokenGeometricMeanParams memory poolParams =
+            abi.decode(params, (NTokenGeometricMeanParams));
+
+        return computeL(pool.reserves, poolParams);
+    } */
 }

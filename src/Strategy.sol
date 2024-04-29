@@ -4,13 +4,19 @@ pragma solidity ^0.8.13;
 import { IStrategy, Pool } from "src/interfaces/IStrategy.sol";
 
 /**
- * @title Pair strategy base contract for DFMM.
- * @notice This abstract contract defines the basic behavior of
- * a two-token strategy for DFMM. It is meant to be inherited by
- * a concrete strategy implementation.
+ * @dev Thrown when the length of the deltas array is not the
+ * same as the length of the reserves array.
+ */
+error InvalidTokenDeltas();
+
+/**
+ * @title Strategy base contract for DFMM.
+ * @notice This abstract contract defines the basic implementations of
+ * validating allocate, deallocate, and swap operations.
+ * It is meant to be inherited by a concrete strategy implementation.
  * @author Primitive
  */
-abstract contract PairStrategy is IStrategy {
+abstract contract Strategy is IStrategy {
     /// @inheritdoc IStrategy
     address public immutable dfmm;
 
@@ -29,7 +35,7 @@ abstract contract PairStrategy is IStrategy {
     function validateAllocate(
         address,
         uint256 poolId,
-        Pool memory pool,
+        Pool calldata pool,
         bytes calldata data
     )
         external
@@ -38,33 +44,33 @@ abstract contract PairStrategy is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256[] memory deltas,
+            uint256[] memory tokenDeltas,
             uint256 deltaLiquidity
         )
     {
-        // We use `deltaL` as a temporary variable because
-        // we cannot assign to `deltaLiquidity` directly.
-        (uint256 maxDeltaX, uint256 maxDeltaY, uint256 deltaL) =
-            abi.decode(data, (uint256, uint256, uint256));
-        deltaLiquidity = deltaL;
-
-        deltas = _computeAllocateDeltasGivenDeltaL(
-            deltaLiquidity, pool, getPoolParams(poolId)
-        );
-
-        if (deltas[0] > maxDeltaX) {
-            revert DeltaError(maxDeltaX, deltas[0]);
+        uint256 len = pool.reserves.length;
+        (tokenDeltas, deltaLiquidity) = abi.decode(data, (uint256[], uint256));
+        if (tokenDeltas.length != len) {
+            revert InvalidTokenDeltas();
         }
 
-        if (deltas[1] > maxDeltaY) {
-            revert DeltaError(maxDeltaY, deltas[1]);
+        uint256[] memory nextReserves = new uint256[](len);
+        for (uint256 i = 0; i < len; i++) {
+            nextReserves[i] = pool.reserves[i] + tokenDeltas[i];
         }
 
-        pool.reserves[0] += deltas[0];
-        pool.reserves[1] += deltas[1];
+        // todo: work on this
+        /* uint256 expectedDeltaL =
+            _computeDeltaLGivenDeltas(tokenDeltas, pool, getPoolParams(poolId));
+
+        if (expectedDeltaL < deltaLiquidity) {
+            revert DeltaError(expectedDeltaL, deltaLiquidity);
+        }
+
+        deltaLiquidity = expectedDeltaL; */
 
         invariant = tradingFunction(
-            pool.reserves,
+            nextReserves,
             pool.totalLiquidity + deltaLiquidity,
             getPoolParams(poolId)
         );
@@ -76,7 +82,7 @@ abstract contract PairStrategy is IStrategy {
     function validateDeallocate(
         address,
         uint256 poolId,
-        Pool memory pool,
+        Pool calldata pool,
         bytes calldata data
     )
         external
@@ -85,31 +91,23 @@ abstract contract PairStrategy is IStrategy {
         returns (
             bool valid,
             int256 invariant,
-            uint256[] memory deltas,
+            uint256[] memory tokenDeltas,
             uint256 deltaLiquidity
         )
     {
-        (uint256 minDeltaX, uint256 minDeltaY, uint256 deltaL) =
-            abi.decode(data, (uint256, uint256, uint256));
-
-        deltaLiquidity = deltaL;
-        deltas = _computeDeallocateDeltasGivenDeltaL(
-            deltaLiquidity, pool, getPoolParams(poolId)
-        );
-
-        if (minDeltaX > deltas[0]) {
-            revert DeltaError(minDeltaX, deltas[0]);
+        uint256 len = pool.reserves.length;
+        (tokenDeltas, deltaLiquidity) = abi.decode(data, (uint256[], uint256));
+        if (tokenDeltas.length != pool.reserves.length) {
+            revert InvalidTokenDeltas();
         }
 
-        if (minDeltaY > deltas[1]) {
-            revert DeltaError(minDeltaY, deltas[1]);
+        uint256[] memory nextReserves = new uint256[](len);
+        for (uint256 i = 0; i < len; i++) {
+            nextReserves[i] = pool.reserves[i] - tokenDeltas[i];
         }
-
-        pool.reserves[0] -= deltas[0];
-        pool.reserves[1] -= deltas[1];
 
         invariant = tradingFunction(
-            pool.reserves,
+            nextReserves,
             pool.totalLiquidity - deltaLiquidity,
             getPoolParams(poolId)
         );
@@ -179,36 +177,6 @@ abstract contract PairStrategy is IStrategy {
     ) public view virtual returns (int256);
 
     /**
-     * @dev Computes the deltas to allocate given a liquidity delta.
-     * This function is meant to be implemented by the strategy
-     * inheriting from this contract.
-     * @param deltaLiquidity Amount of liquidity to allocate.
-     * @param pool Structure containing the pool.
-     * @param data Additional data for the strategy.
-     * @return deltas Amount of tokens to allocate (expressed in WAD).
-     */
-    function _computeAllocateDeltasGivenDeltaL(
-        uint256 deltaLiquidity,
-        Pool memory pool,
-        bytes memory data
-    ) internal view virtual returns (uint256[] memory);
-
-    /**
-     * @dev Computes the deltas to deallocate given a liquidity.
-     * delta. This function is meant to be implemented by the
-     * strategy inheriting from this contract.
-     * @param deltaLiquidity Amount of liquidity to deallocate.
-     * @param pool Structure containing the pool.
-     * @param data Additional data for the strategy.
-     * @return deltas Amount of tokens to deallocate (expressed in WAD).
-     */
-    function _computeDeallocateDeltasGivenDeltaL(
-        uint256 deltaLiquidity,
-        Pool memory pool,
-        bytes memory data
-    ) internal view virtual returns (uint256[] memory);
-
-    /**
      * @dev Computes the deltaLiquidity for a swap operation.
      */
     function _computeSwapDeltaLiquidity(
@@ -219,4 +187,44 @@ abstract contract PairStrategy is IStrategy {
         uint256 amountIn,
         uint256 amountOut
     ) internal view virtual returns (uint256);
+
+    /// todo: We most likely need functions to compute liquidity on allocates given the token deltas,
+    /// and compute deltas given the liquidity on deallocates.
+    /// Then we compare these values against the max/min deltas provided by the user to validate the operation.
+    /// Additionally, we might want to use the computed values if they are beneficial to the user while also passing the invariant.
+    /// Where I am hesitant about this is that not all computations might be clean, like in the log normal case where we usually use solvers
+    /// that are doing root finding to find these values to submit for the users.
+    /// If we do make these, they'd look something like `computeLiquidityGivenDeltas` and `computeDeltasGivenLiquidity`.
+    /// Which would be implemented by the strategy contracts and used in the `validateAllocate` and `validateDeallocate` functions
+    /// to compute the actual values to compare against the user provided values.
+
+    /**
+     * @dev Computes the deltas to allocate given a liquidity delta.
+     * This function is meant to be implemented by the strategy
+     * inheriting from this contract.
+     * @param tokenDeltas Amount of tokens to allocate.
+     * @param pool Structure containing the pool.
+     * @param params Strategy parameters
+     * @return deltaLiquidity Amount of liquidity allocated computed from the token deltas.
+     */
+    /* function _computeDeltaLGivenDeltas(
+        uint256[] memory tokenDeltas,
+        Pool memory pool,
+        bytes memory params
+    ) internal view virtual returns (uint256); */
+
+    /**
+     * @dev Computes the amounts of tokens deallocated given
+     * `deltaLiquidity`. This function is meant to be implemented by the
+     * strategy inheriting from this contract.
+     * @param deltaLiquidity Amount of liquidity to deallocate.
+     * @param pool Structure containing the pool.
+     * @param data Additional data for the strategy.
+     * @return deltas Amount of tokens to deallocate (expressed in WAD).
+     */
+    /* function _computeDeltasGivenDeltaL(
+        uint256 deltaLiquidity,
+        Pool memory pool,
+        bytes memory data
+    ) internal view virtual returns (uint256[] memory); */
 }
