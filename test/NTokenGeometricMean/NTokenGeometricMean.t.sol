@@ -192,9 +192,13 @@ contract NTokenGeometricMeanTest is Test {
 
     /// @dev `forge test --match-test test_4_token_single_sided_allocate -vvv`
     function test_4_token_single_sided_allocate() public basic {
+        uint256[] memory deltas = createTokenDeltas(1 ether);
+        bytes memory proportionalData = solver.prepareAllocationProportional(
+            POOL_ID, deltas
+        );
         // Find the deltas of an equal proportion of 1 ether of each token. Also get the array.
         (uint256[] memory amounts, uint256 dLiquidity) =
-            solver.getAllocationDeltasGivenDeltaT(POOL_ID, 0, ONE);
+           abi.decode(proportionalData, (uint256[], uint256));
 
         console.log(amounts[0], dLiquidity);
 

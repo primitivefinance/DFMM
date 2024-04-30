@@ -17,6 +17,7 @@ import {
     computePrice,
     computeSwapDeltaLiquidity,
     computeDeltaGivenDeltaLRoundUp,
+    computeL,
     ONE
 } from "./G3MMath.sol";
 import {
@@ -65,6 +66,24 @@ contract GeometricMeanSolver is ISolver {
         (uint256[] memory reserves, uint256 totalLiquidity) =
             getReservesAndLiquidity(poolId);
 
+        GeometricMeanParams memory params = getPoolParams(poolId);
+
+        uint256 deltaLiquidity =
+            computeL(reserves[0] + deltas[0], reserves[1] + deltas[1], params) - totalLiquidity;
+
+        return abi.encode(deltas, deltaLiquidity);
+    }
+
+    /// @inheritdoc ISolver
+    function prepareAllocationProportional(
+        uint256 poolId,
+        uint256[] memory deltas
+    ) external view returns (bytes memory) {
+        if (deltas.length != 2) revert InvalidDeltasLength();
+
+        (uint256[] memory reserves, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+
         (uint256 deltaYGivenX, uint256 deltaLGivenX) =
         computeAllocationGivenDeltaX(
             deltas[0], reserves[0], reserves[1], totalLiquidity
@@ -76,9 +95,11 @@ contract GeometricMeanSolver is ISolver {
         );
 
         if (deltaLGivenX < deltaLGivenY) {
-            return abi.encode(deltas[0], deltaYGivenX, deltaLGivenX);
+            deltas[1] = deltaYGivenX;
+            return abi.encode(deltas, deltaLGivenX);
         } else {
-            return abi.encode(deltaXGivenY, deltas[1], deltaLGivenY);
+            deltas[0] = deltaXGivenY;
+            return abi.encode(deltas, deltaLGivenY);
         }
     }
 
@@ -98,7 +119,11 @@ contract GeometricMeanSolver is ISolver {
             reserves[1], deltaLiquidity, liquidity
         );
 
-        return abi.encode(deltaX, deltaY, deltaLiquidity);
+        uint[] memory deltas = new uint[](reserves.length);
+        deltas[0] = deltaX;
+        deltas[1] = deltaY;
+
+        return abi.encode(deltas, deltaLiquidity);
     }
 
     struct SimulateSwapState {

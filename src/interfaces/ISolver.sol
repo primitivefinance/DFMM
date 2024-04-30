@@ -42,6 +42,15 @@ interface ISolver {
     ) external view returns (bytes memory data);
 
     /**
+     * @notice Prepares the token deltas and liquidity amounts expecting a proportion of tokens
+     * that aligns with the pool's proportions.
+     */
+    function prepareAllocationProportional(
+        uint256 poolId,
+        uint256[] memory deltas
+    ) external view returns (bytes memory data);
+
+    /**
      * @notice Prepares the data to deallocate liquidity from a pool.
      * @param poolId Id of the target DFMM pool.
      * @param liquidityDelta Amount of liquidity to remove from the pool.

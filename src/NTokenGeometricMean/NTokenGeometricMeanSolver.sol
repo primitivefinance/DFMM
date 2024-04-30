@@ -17,7 +17,8 @@ import {
     computeDeallocationDeltasGivenDeltaT,
     computeNextLiquidity,
     computeSwapDeltaLiquidity,
-    computeDeltaGivenDeltaLRoundDown
+    computeDeltaGivenDeltaLRoundDown,
+    computeL
 } from "src/NTokenGeometricMean/NTokenGeometricMeanMath.sol";
 import {
     ISolver,
@@ -57,6 +58,27 @@ contract NTokenGeometricMeanSolver is ISolver {
 
     /// @inheritdoc ISolver
     function prepareAllocation(
+        uint256 poolId,
+        uint256[] calldata deltas
+    ) public view returns (bytes memory) {
+        (uint256[] memory reserves, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+        uint256 length = deltas.length;
+        if (deltas.length != reserves.length) revert InvalidDeltasLength();
+
+        uint256[] memory nextReserves = new uint256[](length);
+        for (uint256 i; i < length; i++) {
+            nextReserves[i] = reserves[i] + deltas[i];
+        }
+
+        NTokenGeometricMeanParams memory params = getPoolParams(poolId);
+        uint256 deltaLiquidity = computeL(reserves, params) - totalLiquidity;
+
+        return abi.encode(deltas, deltaLiquidity);
+    }
+
+    /// @inheritdoc ISolver
+    function prepareAllocationProportional(
         uint256 poolId,
         uint256[] calldata deltas
     ) public view returns (bytes memory) {

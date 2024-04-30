@@ -24,12 +24,17 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
             reserves[1], deltaLiquidity, totalLiquidity
         );
 
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = maxDeltaX;
+        deltas[1] = maxDeltaY;
+
         (, uint256 preTotalLiquidity) = solver.getReservesAndLiquidity(POOL_ID);
         uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         console2.log(preTotalLiquidity);
         console2.log(preLiquidityBalance);
 
-        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
+        bytes memory data =
+            solver.prepareAllocationProportional(POOL_ID, deltas);
         dfmm.allocate(POOL_ID, data);
 
         (, uint256 postTotalLiquidity) = solver.getReservesAndLiquidity(POOL_ID);
@@ -57,7 +62,12 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
         // uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
-        bytes memory data = abi.encode(deltaX, deltaYMax, deltaLiquidity);
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = deltaX;
+        deltas[1] = deltaYMax;
+
+        bytes memory data =
+            solver.prepareAllocationProportional(POOL_ID, deltas);
         dfmm.allocate(POOL_ID, data);
 
         /*
@@ -84,10 +94,15 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
             computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
         console2.log(maxDeltaX);
 
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = maxDeltaX;
+        deltas[1] = maxDeltaY;
+
         // uint256 preLiquidityBalance = liquidityOf(address(this), POOL_ID);
         // (,, uint256 preTotalLiquidity) = dfmm.getReservesAndLiquidity(POOL_ID);
 
-        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
+        bytes memory data =
+            solver.prepareAllocationProportional(POOL_ID, deltas);
         dfmm.allocate(POOL_ID, data);
 
         /*
@@ -112,7 +127,12 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
         uint256 deltaYMax =
             computeDeltaYGivenDeltaL(deltaLiquidity, liquidity, reserves[1]);
 
-        bytes memory data = abi.encode(deltaX, deltaYMax, deltaLiquidity);
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = deltaX;
+        deltas[1] = deltaYMax;
+
+        bytes memory data =
+            solver.prepareAllocationProportional(POOL_ID, deltas);
         dfmm.allocate(POOL_ID, data);
 
         uint256 endPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
@@ -132,7 +152,12 @@ contract CoveredCallAllocateTest is CoveredCallSetUp {
         uint256 maxDeltaX =
             computeDeltaXGivenDeltaL(deltaLiquidity, liquidity, reserves[0]);
 
-        bytes memory data = abi.encode(maxDeltaX, maxDeltaY, deltaLiquidity);
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = maxDeltaX;
+        deltas[1] = maxDeltaY;
+
+        bytes memory data =
+            solver.prepareAllocationProportional(POOL_ID, deltas);
         dfmm.allocate(POOL_ID, data);
         uint256 endPrice = solver.getEstimatedPrice(POOL_ID, 0, 1);
 

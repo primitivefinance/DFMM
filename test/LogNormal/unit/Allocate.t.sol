@@ -64,8 +64,8 @@ contract LogNormalAllocateTest is LogNormalSetUp {
 
         bool swapXForY = true;
 
-        (bool valid, uint256 amountOut,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, deltaX);
+        (bool valid, uint256 amountOut, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 0, 1, deltaX);
 
         console2.log("Amount out: ", amountOut);
 
@@ -123,8 +123,8 @@ contract LogNormalAllocateTest is LogNormalSetUp {
 
         bool swapXForY = true;
 
-        (bool valid, uint256 amountOut,, bytes memory payload) =
-            solver.simulateSwap(POOL_ID, swapXForY, deltaX);
+        (bool valid, uint256 amountOut, bytes memory payload) =
+            solver.prepareSwap(POOL_ID, 0, 1, deltaX);
 
         console2.log("Estimated delta y given delta x: ", amountOut);
 

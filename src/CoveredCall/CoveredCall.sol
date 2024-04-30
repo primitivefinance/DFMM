@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import { Pool } from "src/interfaces/IDFMM.sol";
-import { PairStrategy, IStrategy } from "src/PairStrategy.sol";
+import { Strategy, IStrategy } from "src/Strategy.sol";
 import { IDFMM } from "src/interfaces/IDFMM.sol";
 import { DynamicParamLib, DynamicParam } from "src/lib/DynamicParamLib.sol";
 import {
@@ -67,7 +67,7 @@ uint256 constant MAX_MEAN = uint256(type(int256).max);
  * @title CoveredCall Strategy for DFMM.
  * @author Primitive
  */
-contract CoveredCall is PairStrategy {
+contract CoveredCall is Strategy {
     using DynamicParamLib for DynamicParam;
 
     /// @inheritdoc IStrategy
@@ -76,7 +76,7 @@ contract CoveredCall is PairStrategy {
     mapping(uint256 => InternalParams) public internalParams;
 
     /// @param dfmm_ Address of the DFMM contract.
-    constructor(address dfmm_) PairStrategy(dfmm_) { }
+    constructor(address dfmm_) Strategy(dfmm_) { }
 
     /// @inheritdoc IStrategy
     function init(
@@ -238,43 +238,6 @@ contract CoveredCall is PairStrategy {
         return computeTradingFunction(
             reserves[0], reserves[1], totalLiquidity, poolParams
         );
-    }
-
-    /// @inheritdoc PairStrategy
-    function _computeAllocateDeltasGivenDeltaL(
-        uint256 deltaLiquidity,
-        Pool memory pool,
-        bytes memory
-    ) internal pure override returns (uint256[] memory) {
-        uint256[] memory deltas = new uint256[](2);
-
-        deltas[0] = computeDeltaGivenDeltaLRoundUp(
-            pool.reserves[0], deltaLiquidity, pool.totalLiquidity
-        );
-
-        deltas[1] = computeDeltaGivenDeltaLRoundUp(
-            pool.reserves[1], deltaLiquidity, pool.totalLiquidity
-        );
-
-        return deltas;
-    }
-
-    /// @inheritdoc PairStrategy
-    function _computeDeallocateDeltasGivenDeltaL(
-        uint256 deltaLiquidity,
-        Pool memory pool,
-        bytes memory
-    ) internal pure override returns (uint256[] memory) {
-        uint256[] memory deltas = new uint256[](2);
-
-        deltas[0] = computeDeltaGivenDeltaLRoundDown(
-            pool.reserves[0], deltaLiquidity, pool.totalLiquidity
-        );
-
-        deltas[1] = computeDeltaGivenDeltaLRoundDown(
-            pool.reserves[1], deltaLiquidity, pool.totalLiquidity
-        );
-        return deltas;
     }
 
     function _computeSwapDeltaLiquidity(

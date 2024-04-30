@@ -65,6 +65,21 @@ contract ConstantSumSolver is ISolver {
 
         ConstantSumParams memory params = getPoolParams(poolId);
 
+        uint256 deltaLiquidity =
+            computeDeltaLiquidityRoundDown(deltas[0], deltas[1], params.price);
+
+        return abi.encode(deltas, deltaLiquidity);
+    }
+
+    /// @inheritdoc ISolver
+    function prepareAllocationProportional(
+        uint256 poolId,
+        uint256[] memory deltas
+    ) external view returns (bytes memory) {
+        if (deltas.length != 2) revert InvalidDeltasLength();
+
+        ConstantSumParams memory params = getPoolParams(poolId);
+
         uint256 deltaLGivenDeltaX =
             computeDeltaLiquidityRoundDown(deltas[0], 0, params.price);
 
@@ -72,9 +87,11 @@ contract ConstantSumSolver is ISolver {
             computeDeltaLiquidityRoundDown(0, deltas[1], params.price);
 
         if (deltaLGivenDeltaX < deltaLGivenDeltaY) {
-            return abi.encode(deltas[0], 0, deltaLGivenDeltaX);
+            deltas[1] = 0;
+            return abi.encode(deltas, deltaLGivenDeltaX);
         } else {
-            return abi.encode(0, deltas[1], deltaLGivenDeltaY);
+            deltas[0] = 0;
+            return abi.encode(deltas, deltaLGivenDeltaY);
         }
     }
 
