@@ -85,6 +85,31 @@ contract LogNormalSolver is ISolver {
         (uint256[] memory reserves, uint256 totalLiquidity) =
             getReservesAndLiquidity(poolId);
 
+        LogNormalParams memory params = getPoolParams(poolId);
+        int256 lastInvariant = computeTradingFunction(
+            reserves[0], reserves[1], totalLiquidity, params
+        );
+
+        uint256 nextReserveX = reserves[0] + deltas[0];
+        uint256 nextReserveY = reserves[1] + deltas[1];
+        uint256 nextLiquidity = computeNextLiquidity(
+            nextReserveX, nextReserveY, lastInvariant, totalLiquidity, params
+        );
+        uint deltaLiquidity = nextLiquidity - totalLiquidity;
+
+        return abi.encode(deltas, deltaLiquidity);
+    }
+
+    /// @inheritdoc ISolver
+    function prepareAllocationProportional(
+        uint256 poolId,
+        uint256[] calldata deltas
+    ) external view override returns (bytes memory) {
+        if (deltas.length != 2) revert InvalidDeltasLength();
+
+        (uint256[] memory reserves, uint256 totalLiquidity) =
+            getReservesAndLiquidity(poolId);
+
         uint256 deltaLGivenDeltaX =
             computeDeltaLGivenDeltaX(deltas[0], totalLiquidity, reserves[0]);
         uint256 deltaYGivenDeltaX = computeDeltaYGivenDeltaL(
@@ -117,7 +142,11 @@ contract LogNormalSolver is ISolver {
         uint256 deltaY =
             computeDeltaYGivenDeltaL(deltaLiquidity, liquidity, reserves[1]);
 
-        return abi.encode(deltaX, deltaY, deltaLiquidity);
+        uint256[] memory deltas = new uint256[](reserves.length);
+        deltas[0] = deltaX;
+        deltas[1] = deltaY;
+
+        return abi.encode(deltas, deltaLiquidity);
     }
 
     struct SimulateSwapState {
@@ -220,11 +249,7 @@ contract LogNormalSolver is ISolver {
             address(this), poolId, pool, swapData
         );
 
-        return (
-            valid,
-            state.amountOut,
-            swapData
-        );
+        return (valid, state.amountOut, swapData);
     }
 
     /// @inheritdoc ISolver

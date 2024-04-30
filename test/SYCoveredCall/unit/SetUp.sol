@@ -55,6 +55,8 @@ contract SYCoveredCallSetUp is SetUp {
     }
 
     function setUp() public override {
+        vm.envString("MAINNET_RPC_URL"); // fails if cant find it.
+
         vm.createSelectFork({ urlOrAlias: "mainnet", blockNumber: 19_662_269 });
         SetUp.setUp();
         (SY, PT, YT) = IPMarket(market).readTokens();
